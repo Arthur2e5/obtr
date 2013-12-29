@@ -1,0 +1,67 @@
+; More named surface features as far as they're not covered (in detail, or not
+; at all) in the Rükl, adapted from the common USGS list.
+
+BEGIN_HEADER
+InitialState on
+ColourIdx 1
+Size 0.6
+DistanceFactor 0.6
+END_HEADER
+
+BEGIN_DATA
+
+-86.6 +12.4             : Vallis Bohr
++56 -31.1               : Vallis Snellius
++51.3 -7.8              : MARE FECUNDITATIS
++56 +1.4                : MARE FRIGORIS
+-15.6 +32.8             : MARE IMBRIUM
+-57.7 +18.4             : OCEANUS PROCELLARUM
++17.5 +28               : MARE SERENITATIS
++31.4 +8.5              : MARE TRANQUILLITATIS
++5.3 +18.6              : Mons Agnes
+-53 +29                 : Rima Agricola
+-39 +27                 : Rima Artsimovich
+-71.5 +11.4             : Rima Cardanus
++29.3 +19.8             : Rima Carmen
++57 +27                 : Rima Cleomedes
+-53.8 +30               : Rima Cleopatra
++26.6 +27.5             : Rima Dawes
+-25 +18                 : Rima Draper
+-31 +21                 : Rima Euler
++61 -35                 : Rima Furnerius
++36 +59                 : Rima Gärtner
++7.8 +7.4               : Rima Hyginus
+-45.6 +29.2             : Rima Krieger
++27.7 +18.6             : Rima Marcello
+; +27.7 +18.6             : Rima Reiko
++29.6 +19.6             : Rima Rudolf
+-50.5 +46.7             : Rima Sharp
++11.3 +24.6             : Rima Sung-Mei
+-31 +13                 : Rima T.Mayer
+-31.5 +19.9             : Rima Wan-Yu
++4.6 +16.7              : Rima Yangel'
+-29.5 +25               : Rima Zahia
+-2 -14                  : Rimae Alphonsus
++53 +5                  : Rimae Apollonius
+-2 -18                  : Rimae Arzachel
++43.6 -47.5             : Rimae Atlas
+; -4 +10                  : Rimae Bode
++11.1 +9.85             : Rimae Boscovich
+-40 -18                 : Rimae Gassendi
+-84 +46                 : Rimae Gerard
+; +62.5 -29.4             : Rimae Hase
+; -37 -13                 : Rimae Herigonius
++40 -45.6               : Rimae Janssen
+-89.65 -17.45           : Rimae Kopff
+; -45 -20                 : Rimae Liebig
++29.9 +22.1             : Rimae Littrow
+-13.8 -28.5             : Rimae Pitatus
+-3.2 +52.9              : Rimae Plato
++28.7 +32               : Rimae Posidonius
++46.6 +5.4              : Rimae Taruntius
+-82 +10                 : Rimae Vasco da Gama
+
++1.7 +2.4               : Sinus Medii
+-56.6 +54               : Sinus Roris
+-33.5 +30.5             : Rupes Boris
++45 +14.1               : Palus Somni

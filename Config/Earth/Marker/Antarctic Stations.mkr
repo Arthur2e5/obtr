@@ -1,0 +1,59 @@
+; Various Stations in the Antarctic
+;
+; Adapted from multiple sources, most notably:
+; http://www.geoscience.scar.org/stations/
+; http://www.spri.cam.ac.uk/resources/infosheets/3.html
+
+BEGIN_HEADER
+InitialState off
+ColourIdx 4
+Size 0.5
+END_HEADER
+
+BEGIN_DATA
+
+-119.533 -80.0833       : Camp Byrd
+-68.12 -67.569444       : Rothera Stn.                  : (UK)
+-67.1033 -68.129722     : San Martin Stn.               : (Argentina)
+-64.2567 -65.245278     : Vernadsky Stn.                : (Ukraine)
+-64.05111 -64.775       : Palmer Stn.                   : (USA)
+-59.6833 -62.5          : Capitan Arturo Prat Stn.      : (Chile)
+-58.964167 -62.2        : Presidente Eduardo Frei Stn.  : (Chile)
+-58.9625 -62.201111     : Escudero Stn.                 : (Chile)
+-58.962222 -62.216389   : Great Wall Stn.               : (China)
+-58.960833 -62.196389   : Bellingshausen Stn.           : (Russia)
+-58.9025 -62.184444     : Artigas Stn.                  : (Uruguay)
+-58.789167 -62.223333   : King Sejong Stn.              : (South Korea)
+-58.664444 -62.237778   : Jubany Stn.                   : (Argentina)
+-58.470833 -62.159444   : Arctowski Stn.                : (Poland)
+-58.391111 -62.083333   : Comandante Ferraz Stn.        : (Brazil)
+-57.900287 -63.329833   : General Bernardo O'Higgins Stn. : (Chile)
+-56.99611 -63.395       : Esperanza Stn.                : (Argentina)
+-56.656944 -64.245      : Marambio Stn.                 : (Argentina)
+-44.738056 -60.738889   : Orcadas Stn.                  : (Argentina)
+-38.052222 -54.008611   : Bird Island Stn.              : (UK)
+-36.493611 -54.283333   : King Edward Point Stn.        : (UK)
+-34.626944  -77.874722  : Belgrano II Stn.              : (Argentina)
+-26.541111 -75.581667   : Halley Stn.                   : (UK)
+-9.866667 -40.365556    : Gough Island Stn.             : (South Africa)
+-8.263333 -70.63333     : Georg von Neumayer Stn.       : (Germany)
+-2.8288889 -71.673611   : SANAE Stn.                    : (South Africa)
++11.7358333 -70.765833  : Maitri Stn.                   : (India)
++11.865 -70.773889      : Novolazarevskaya Stn.         : (Russia)
++37.8588889 -46.786111  : Marion Island Stn.            : (South Africa)
++39.5836111 -69.006944  : Syowa Stn.                    : (Japan)
++45.8558333 -67.671667  : Molodezhnaya Stn.             : (Russia)
++51.8611111 -46.43      : Alfred Faure Stn.             : (France)
++62.8708333 -67.604722  : Mawson Stn.                   : (Australia)
++70.2055556 -49.351389  : Port aux Francais Stn.        : (France)
++76.386944 -69.371111   : Zhongshan Stn.                : (China)
++77.57 -37.83           : Martin de Vivies Stn.         : (France)
++77.9725 -68.577222     : Davis Stn.                    : (Australia)
++93.0147222 -66.551944  : Mirny Stn.                    : (Russia)
++106.8 -78.466667       : Vostok Stn.                   : (Russia)
++110.519722 -66.283333  : Casey Stn.                    : (Australia)
++139.272778 -89.9975    : Amundsen-Scott Stn.           : (USA)
++140.001389 -66.662778  : Dumont d'Urville Stn.         : (France)
++158.935833 -54.499444  : Macquarie Island Stn.         : (Australia)
++166.668333 -77.848056  : McMurdo Stn.                  : (USA)
++166.762778 -77.85      : Scott Base                    : (New Zealand)

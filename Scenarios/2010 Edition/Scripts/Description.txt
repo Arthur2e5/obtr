@@ -1,0 +1,11 @@
+BEGIN_HYPERDESC
+<h1>Orbiter Scripts</h1>
+
+<p>Orbiter 2010 features support for script-based missions, scenarios and flight control systems. Scripts are based on the Lua script language. They can be used in different components:</p>
+
+<p>Scenario scripts can provide feedback during a live simulation session to provide user feedback, e.g. as an interactive tutor.</p>
+
+<p>Flight control scripts can be used to implement autopilots, automated launch sequences, or complex control systems.</p>
+
+<p>Scripts can be executed during a simulation either via the Console MFD mode, or Console dialog box. To enable these features, the LuaMFD and LuaConsole plugin modules must be activated under the 'Modules' tab.</p>
+END_HYPERDESC

@@ -1,0 +1,207 @@
+; Meteor Craters and Impact Structures on Earth
+;
+; Suggested reading:
+; http://www.unb.ca/passc/ImpactDatabase/CILocSort.html
+; http://www.fmnh.helsinki.fi/users/haaramo/Meteor_Impacts/Meteor_craters.htm
+; http://gisp.gi.alaska.edu/craterbase/cbase.htm
+; http://www.es.ucl.ac.uk/research/planet/crater.htm
+; http://www.solarviews.com/eng/tercrate.htm
+;
+; This is a more or less complete list of all so-far known impact structures
+; on Earth. Included are features that most likely cannot be spotted in
+; Orbiter, due to all sorts of factors (too large, too small, sub-sea, too
+; old and thus eroded, etc.). Feature visibility also depends a great deal on
+; the planetary texture used. Take a geologic field trip from orbit and see
+; for yourself - if it looks round, it might in fact be a crater... ;)
+; To help you with evaluating your chances of actually being able to see a
+; crater, their diameter in meters and kilometers is additionally given.
+
+BEGIN_HEADER
+InitialState on
+ColourIdx 1
+ShapeIdx 1
+Size 0.9
+END_HEADER
+
+BEGIN_DATA
+
++135.45 -32.02          : Acraman Crater                : 90 km
+-98.17 +36.25           : Ames Crater                   : 16 km
++4.38 +26.08            : Amguid Crater                 : 450 m
++19.25 +19.1            : Aorounga Crater               : 12.6 km
+-12.68 +20.25           : Aouelloul Crater              : 390 m
+-52.98 -16.77           : Araguainha Dome Crater        : 40 km
++23.75 +22.66           : Arkenu Crater                 : 6.8/10 km
+-156.63 +71.25          : Avak Crater                   : 12 km
+-0.916 +41.166          : Azuara Crater                 : 30 km
++24.33 +25.32           : BP Structure Crater           : 2 km
+-111.02 +35.03          : Barringer Crater              : 1.186 km
+-113 +44.6              : Beaverhead Crater             : 60 km
++123.5 +71.83           : Beyenchime-Salaatin Crater    : 8 km
++82 +48.05              : Bigach Crater                 : 8 km
++32.166 +48.75          : Boltysh Crater                : 24 km
+-1.4166  +6.533         : Bosumtwi Crater               : 10.5 km
++135.2 -22.62           : Boxhole Crater                : 170 m
+-78.48 +46.08           : Brent Crater                  : 3.8 km
+-85.95 +41.83           : Calvin Crater                 : 8.5 km
+-61.70 -27.63           : Campo del Cielo Crater        : 50 m
+-109.5 +58.45           : Carswell Crater               : 39 km
+-70.3 +47.53            : Charlevoix Crater             : 54 km
+-76.14 +37.27           : Chesapeake Bay Impact         : 90 km
+-89.516 +21.33          : Chicxulub Impact              : 170 km
++97.8 +75.7             : Chukcha Crater                : 6 km
+-74.12 +56.08           : Clearwater Lake East Crater   : 26 km
+-74.5 +56.22            : Clearwater Lake West Crater   : 36 km
+-106.75 +43.2           : Cloud Creek Crater            : 7 km
++124.75 -23.53          : Connolly Basin Crater         : 9 km
++139.03 -34.72          : Crawford Crater               : 8.5 km
+-91.38 +37.83           : Crooked Creek Crater          : 7 km
++117.08 -27.75          : Dalgaranga Crater             : 24 m
+-92.72 +37.9            : Decaturville Crater           : 6 km
+-102.983 +56.4          : Deep Bay Crater               : 13 km
++16.35 +61.92           : Dellen Crater                 : 19 km
+-87.87 +42.05           : Des Plaines Crater            : 8 km
++23.25 +56.58           : Dobele Crater                 : 4.5 km
+-110.58 +49.7           : Eagle Butte Crater            : 10 km
+-106.72 +50.98          : Elbow Crater                  : 8 km
++172.083 +67.5          : El'gygytgyn Crater            : 18 km
++139.06 -34.62          : Flaxman Crater                : 10 km
+-85.67 +38.28           : Flynn Creek Crater            : 3.8 km
++136.78 -16.66          : Foelsche Crater               : 6 km
++9 +60.65               : Gardnos Crater                : 5 km
+-89.78 +40.6            : Glasford Crater               : 4 km
+-89.53 +43-97           : Glover Bluff Crater           : 8 km
++126.67 -18.33          : Goat Paddock Crater           : 5.1 km
++132.316 -23.82         : Gosses Bluff Crater           : 22 km
+-104.48 +56.45          : Gow Lake Crater               : 5 km
++135.03 -13.15          : Goyder Crater                 : 3 km
++14.93 +58.42           : Granby Crater                 : 3 km
++40.23 +48.35           : Gusev Crater                  : 3 km
++21.75 +17.42           : Gweni-Fada Crater             : 14 km
+-89.67 +75.366          : Haughton Crater               : 24 km
+-99.17 +37.58           : Haviland Crater               : 15 m
++133.15 -24.58          : Henbury Crater                : 157 m
++30.15 -17.08           : Highbury Crater               : 15 km
+-76.63 +44.47           : Holleford Crater              : 2.35 km
+-73.88 +50.68           : Ile Rouleau Crater            : 4 km
++25.42 +57.97           : Ilumetsä Crater               : 80 m
++29.2 +49.1             : Ilyinets Crater               : 8.5 km
++27.15 +62.2            : Iso-Naakkima Crater           : 3 km
++30.92 +61.97           : Jänisjärvi Crater             : 14 km
++22.67 +58.4            : Kaalijärvi Crater             : 110 m
++24.57 -32.72           : Kalkkop Crater                : 640 m
++36.25 +54.5            : Kaluga Crater                 : 15 km
++40.25 +48.33           : Kamensk Crater                : 25 km
++64.3 +69.08            : Kara Crater                   : 65 km
++73.45 +39.02           : Kara-Kul Crater               : 52 km
++22.7 +57               : Kärdla Crater                 : 7 km
++48 +54.9               : Karla Crater                  : 10 km
++25.25 +63.22           : Karrikkoselkä Crater          : 1.5
++25 +24.5               : Kebira Crater                 : 31 km
++133.95 -19.93          : Kelly West Crater             : 10 km
+-87.4 +40.75            : Kentland Crater               : 13 km
++24.6 +62.13            : Keurusselkä Crater            : 30 km
++27.58 -22.48           : Kgagodi Crater                : 3.5 km
++36 +51.69              : Kursk Crater                  : 6 km
+-75.33 +60.13           : Lac Couture Crater            : 8 km
+-66.62 +57.43           : Lac La Moinere Crater         : 8 km
++23.7 +63.15            : Lappajärvi Crater             : 23 km
++138.65 -18.67          : Lawn Hill Crater              : 18 km
++134.05 -12.40          : Liverpool Crater              : 1.6 km
++14.8 +63               : Lockne Crater                 : 7.5 km
++27.8 +54.2             : Logoisk Crater                : 15 km
++95.8 +65.5             : Logancha Crater               : 20 km
++76.52 +19.98           : Lonar Crater                  : 1.83 km
++20.1 +60.2             : Lumparn Crater                : 9 km
++118 +59.98             : Macha Crater                  : 300 m
+-68.7 +51.38            : Manicouagan Crater            : 100 km
+-94.516 +42.583         : Manson Crater                 : 35 km
+-109.1 +49.8            : Maple Creek Crater            : 6 km
+-96.3 31.283            : Marquez Dome Crater           : 12.7 km
+-83.73 +36.62           : Middlesboro Crater            : 6 km
++14.87 +56.42           : Mien Crater                   : 9 km
++23.9 +54.01            : Misarai Crater                : 5 km
++28 +58.67              : Mishina Gora Crater           : 4 km
+-63.3 +55.883           : Mistasin Lake Crater          : 28 km
++29.66 +73.8            : Mjølnir Impact                : 40 km
+-64.2166 +42.883        : Montagnais Impact             : 45 km
+-68.28 -23.93           : Monturaqui Crater             : 460 m
++16.9 +52.48            : Morasko Crater                : 100 m
++23.533 -26.47          : Morokweng Crater              : 70 km
++135.366 -27.95         : Mount Toondina Crater         : 4 km
++23.67 +59.33           : Neugrund Crater               : 8 km
+-73.67 +61.28           : New Quebec Crater             : 3.44 km
+-101.97 +48.97          : Newporte Crater               : 3.2 km
+-102.68 +62.67          : Nicholson Lake Crater         : 12.5 km
++24.45 +24.583          : Oasis Crater                  : 18 km
++32.92 +49.50           : Obolon' Crater                : 20 km
+-102.48 +31.75          : Odessa Crater                 : 168 m
+-7.55 +29               : Ouarkziz Crater               : 3.5 km
++29.38 +62.15           : Paasselkä Crater              : 10 km
++128.42 -17.53          : Piccaninny Crater             : 7 km
+-111.02 +60.28          : Pilot Lake Crater             : 6 km
++111.2 +71.63           : Popigai Crater                : 100 km
+-78.8 +49.72            : Presqu'ile Crater             : 24 km
++43.58 +57.1            : Puchezh-Katunki Crater        : 80 km
++61.8 +58.3             : Ragozinka Crater              : 9 km
+-103.55 +47.6           : Red Wing Crater               : 9 km
+-46.65 -7.72            : Riachao Ring Crater           : 4.5 km
++10.616 +48.883         : Nördlinger Ries Crater        : 24 km
+-64.23 -30.87           : Rio Cuarto Crater             : 1x4.5 km
++0.93 +45.83            : Rochechouart Crater           : 23 km
+-92.23 +44.72           : Rock Elm Crater               : 6 km
++16.3 -27.77            : Roter Kamm Crater             : 2.5 km
++32.75 +49.18           : Rotmistrovka Crater           : 2.7 km
++22.42 +61.38           : Sääksjärvi Crater             : 6 km
++28.38 +65.28           : Saarijärvi Crater             : 1.5 km
+-98.53 +51.78           : Saint Martin Crater           : 40 km
+-83.4 +39.03            : Serpent Mound Crater          : 8 km
+-46.87 -8.08            : Serra de Cangalha Crater      : 12 km
++57.85 +49.17           : Shiyli Crater                 : 5.5 km
++72.7 +47.2             : Shunak Crater                 : 2.8 km
+-102.92 +30.6           : Sierra Madera Crater          : 13 km
++134.67 +46.12          : Sikhote Alin Crater           : 27 m
++14.87 +61.03           : Siljan Crater                 : 52 km
++27.79 -17.2            : Sinamwenda Crater             : 200 m
+-87 +48.67              : Slate Islands Crater          : 30 km
++137.86 +46.3           : Sobolev Crater                : 53 m
++21.58 63.03            : Söderfjärden Crater           : 5.5 km
++126.08 -16.73          : Spider Crater                 : 13 km
+-117.6166 +59.5166      : Steen River Crater            : 25 km
++10.07 +48.67           : Steinheimer Becken Crater     : 3.8 km
++133.58 -15.2           : Strangways Crater             : 25 km
++33.38 +63.12           : Suavjärvi Crater              : 16 km
+-81.18 +46.6            : Sudbury Crater                : 250 km
++28 +62.7               : Suvasvesi N Crater            : 4 km
++109.6 +44.1            : Tabun-Khara-Obo Crater        : 1.3 km
++4.03 +33.32            : Talemzane Crater              : 1.75 km
++120.88 -25.87          : Shoemaker Crater              : 30 km
+-10.4 +22.92            : Tenoumer Crater               : 1.9 km
++33.5 +48.25            : Ternovka Crater               : 11 km
++5.12 +27.6             : Tin Bider Crater              : 6 km
++143 -27                : Tookoonooka Crater            : 55 km
++28.08 -27.4            : Tswaing Crater                : 1.13 km
++17.42 +58.77           : Tvären Crater                 : 2 km
+-109.9 +38.43           : Upheaval Dome Crater          : 10 km
++65.38 +69.25           : Ust-Kara Impact
+-52.1166 -26.833        : Vargeao Dome Crater           : 12 km
++125.37 -22.97          : Veevers Crater                : 80 m
++24.57 +55.08           : Vebriaj Crater                : 8 km
+-103.07 +49.58          : Viewfield Crater              : 2.5 km
++27.5 -27               : Vredefort Crater              : 300 km
++50.47 +21.5            : Wabar Crater                  : 116 m
+-80.75 +46.75           : Wanapitei Lake Crater         : 7.5 km
+-87.665 +36.383         : Wells Creek Crater            : 12 km
+-95.18 +49.77           : West Hawk Lake Crater         : 2.44 km
+-86.18 +32.53           : Wetumpka Crater               : 6.5 km
++127.77 -19.3           : Wolfe Creek Crater            : 875 m
++114.66 -26.06          : Woodleigh Crater              : 40 km
++118.83 -27.16          : Yarrabubba Crater             : 30 km
++29 +49.73              : Zapadnaya Crater              : 3.2 km
++32.9 +48.7             : Zeleny Gai Crater             : 2.5 km
++60.966 +48.35          : Zhamanshin Crater             : 14 km
+
++90.8 -57.7833          : Eltain Impact Structure
+-73 +39.33              : Tom's Canyon Impact Structure
++101.95 +60.9166        : Tunguska Meteor Event
+

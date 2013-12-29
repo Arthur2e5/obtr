@@ -1,0 +1,17 @@
+BEGIN_HEADER
+InitialState on
+ColourIdx 2
+END_HEADER
+
+BEGIN_DATA
++338.00	+46.70	:	Acidalia Planitia			
++196.00	+24.80	:	Amazonis Planitia			
++192.00	+46.70	:	Arcadia Planitia			
++316.00	-49.70	:	Argyre Planitia			
++320.00	+26.70	:	Chryse Planitia			
++155.00	+2.00	:	Elysium Planitia			
++70.00	-42.70	:	Hellas Planitia			
++87.00	+12.90	:	Isidis Planitia			
++180.00	+81.40	:	[Olympia Planitia]			
++69.50	+9.40	:	[Syrtis Major Planitia]			
++118.00	+49.70	:	Utopia Planitia			

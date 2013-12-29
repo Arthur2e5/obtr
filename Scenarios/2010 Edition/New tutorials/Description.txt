@@ -1,0 +1,9 @@
+BEGIN_HYPERDESC
+<h1>New tutorials</h1>
+
+<p>New and improved playback tutorials for the Orbiter 2010 Edition.</p>
+
+<p>Sit back and watch pre-recorded and annotated missions.</p>
+
+<p>For a full list of tutorials, check out the scenarios in the 'Tutorials' folder.</p>
+END_HYPERDESC

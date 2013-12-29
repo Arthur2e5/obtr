@@ -1,0 +1,281 @@
+0 NOTECOL 0.8 0.7 1
+0 NOTESIZE 1.1
+0 NOTEPOS 0.02 0.2 0.4 0.9
+1 NOTE Welcome! You are in command of Space Shuttle Atlantis to fly a resupply mission to the International Space Station.
+11 NOTE Atlantis is ready on pad 39C of Kennedy Space Center. T-100 and counting.
+21 NOTE This flight is pre-recorded, but I will explain the procedures and the use of the autopilot, so you can fly your own mission later.
+31 NOTE (If the left MFD display is not visible, then the console MFD module is not active. This doesn't affect the replay, but if you want to follow the autopilot instructions, exit the simulation now, activate the 'LuaMFD' module, and restart).
+46 NOTE The following commands show how to use the launch programme during an active simulation (but they will not affect this tutorial playback).
+56 TACC 0.600000
+56 NOTE To load the shuttle launch programme, press the 'INP' button on the left MFD, then type: run('atlantis/launch'), and press Enter.
+69 NOTE We need to enter the launch parameters for this particular flight. To set the target orbit altitude to 350km, press 'INP' and type: orbit_alt=350e3
+82 NOTE To set the launch direction to 139° (south-east, to intercept the orbital path of the ISS, as it crosses the launch site), type: azimuth=139*RAD
+95 NOTE To disable the OMS-2 orbit circularisation burn (which we will perform manually), type: do_oms2=false
+108 NOTE All set! To execute the launch programme, type: launch(). (Enter this at simulation time 120s, to synchronise with the playback).
+124 NOTE Space Shuttle main engine ignition!
+125 TACC 1.000000
+125 CAMERA SET Ground:STS-101:20.00:Earth -80.62049 28.62425 1.00 1.68 0.17
+126 NOTE Space Shuttle main engine ignition! Ignition of the solid rocket boosters!
+126 NOTE Space Shuttle main engine ignition! Ignition of the solid rocket boosters! Liftoff of Space Shuttle Altlantis on its mission to the International Space Station.
+131 CAMERA SET Ground:STS-101:40.00:Earth -80.62103 28.62703 113.91
+145 CAMERA SET Ground:STS-101:10.00:Earth -80.62742 28.60086 42.52
+145 NOTE The autopilot performs the entire ascent to the initial orbit, so there is time to enjoy the view.
+177.231 CAMERA SET Ground:STS-101:10.00:Earth -80.61150 28.58650 42.52 1.53 1.20
+177 NOTEOFF
+186.167 CAMERA SET Cockpit:STS-101:50.00
+186.167 NOTE After the initial roll to target azimuth, the autopilot initiates the pitch programme for the ascent profile.
+209.528 CAMERA SET Track:STS-101:50.00:GLOBAL 4.000 0.971 -0.394
+247.313 CAMERA SET Track:STS-101:40.00:GLOBAL 5.620 0.726 -0.004
+254 NOTE Separation of the solid rocket boosters!
+303.671 CAMERA SET Track:STS-101:40.00:GLOBAL 6.294 2.703 -0.789
+303.7 NOTE The remaining delta-V for the ascent is provided by the external tank and the Shuttle main engines (SSME).
+335.387 CAMERA SET Cockpit:STS-101:50.00
+337 NOTE Fast-forwarding to external tank separation ...
+339.91 TACC 10.000000 1.000000
+641.869 TACC 1.000000 1.000000
+643 NOTEOFF
+656.062 CAMERA SET Track:STS-101:50.00:GLOBAL 3.571 2.085 0.086
+665 NOTE SSME cut-off.
+674 NOTE Performing roll-upright maneuver.
+703 NOTEOFF
+703.434 CAMERA SET Track:STS-101:30.00:GLOBAL 3.571 1.263 0.579
+734 NOTE Separation of the external tank.
+744 NOTE A short RCS impulse moves the orbiter away from the tank.
+757 NOTE Pitch attitude adjustment for OMS-1 burn.
+774.883 CAMERA SET Track:STS-101:40.00:GLOBAL 7.894 1.203 0.561
+776 NOTE OMS engine ignition for orbital insertion.
+795 NOTE The spent tank is left behind on a suborbital trajectory. It will reenter over the southern Indian Ocean.
+839 NOTE The OMS engines are mounted above the orbiter's centre of gravity, generating a thrust vector that is pointed down 15° from the centre line.
+839 CAMERA SET Track:STS-101:40.00:GLOBAL 5.017 2.323 -0.537
+854 NOTE Therefore the orbiter must compensate by pitching up 15° above the flight path.
+869 CAMERA SET Cockpit:STS-101:50.00
+869 NOTE To help maintaining the correct angle of attack during manual OMS manoeuvers, the HUD provides an OMS thrust vector indicator (the cross below the longitudinal axis indicator).
+884 NOTEPOS 0.65 0.2 0.96 0.9
+884 NOTE To follow the ascent to orbit, set the right MFD to orbit mode: Press 'SEL', 'Orbit'. Then press 'Proj' and 'Dst'.
+904 NOTE To select the ISS as target object, press 'TGT', <Enter>, type 'iss', <Enter>.
+924 NOTE Finally, press 'HUD' to set the HUD to orbit mode.
+939 NOTE Fast forwarding to the end of the OMS burn.
+939 TACC 10.000000 1.000000
+1064 TACC 1.000000 1.000000
+1076 NOTE OMS cut-off. We have reached the the target apoapsis altitude (ApA) of 350km.
+1086 NOTEPOS 0.02 0.2 0.4 0.9
+1086 NOTE This is the end of the ascent programme (we are skipping the automated OMS-2 burn at apoapsis).
+1096 CAMERA SET Track:STS-101:38.12:RELATIVE 0.723 3.122 -0.222
+1096 NOTEOFF
+1098 NOTEPOS 0.65 0.2 0.96 0.9
+1098 NOTE Opening the payload doors to expose the radiator panels.
+1108 NOTE You can operate the payload doors and radiators by using the 'Payload door operation panel' (available via Ctrl-Space).
+1118 NOTE The panel (R13L) is also available in the Atlantis virtual cockpit from the payload operator position (see Doc\Atlantis.pdf for details).
+1128 NOTE Or just press shortcut 'K'.
+1138 CAMERA SET Track:STS-101:50.00:GLOBAL 2.847 1.118 0.286
+1138 NOTEOFF
+1173 CAMERA SET Track:STS-101:30.00:GLOBAL 5.017 1.602 0.562
+1200 CAMERA SET Track:STS-101:20.00:GLOBAL 7.389 -2.490 -2.833
+1235 CAMERA SET Cockpit:STS-101:50.00
+1235 NOTEPOS 0.02 0.2 0.4 0.9
+1235 NOTE Switch the left MFD to orbit sync mode in preparation for the ISS rendezvous manoeuver: Press 'SEL', 'Sync Orbit'.
+1255 NOTE  Then press 'TGT', <Enter>, type 'iss', press <Enter>.
+1275 NOTE Next, press 'MOD' twice until the 'Ref' readout shows 'Sh periapsis'. This sets the target rendezvous point to our periapsis position.
+1295 NOTE Finally, press 'LEN', type '15', <Enter>. This increases the orbit list to 15 entries.
+1315 NOTE The next manoeuver will take place at apoapsis. We will perform a prograde burn to raise periapsis and adjust the orbit period to intercept the ISS.
+1330 NOTE Fast-forwarding to apoapsis.
+1330 TACC 50.000000 1.000000
+3000 TACC 1.000000 1.000000
+3000 NOTEOFF
+3020 NOTE We are approaching apoapsis. This will be our designated rendezvous point with the ISS.
+3035 NOTE The ISS is currently trailing us by about 20°. In order to let it catch up, we need to increase our orbit period by increasing the orbit semi-major axis.
+3050 NOTE We will do this by performing a prograde burn now to raise periapsis (soon to become apoapsis).
+3065 NOTE The delta-V budget of the Shuttle's OMS tanks is very limited (and we need to keep enough fuel for rendezvous and deorbiting).
+3080 NOTE Therefore we can change our orbit parameters only by a small amount. This means that it will take the ISS several orbits to catch up.
+3095 NOTE The burn will be timed so that we will intercept the ISS in about 7 orbits.
+3110 NOTE The orbiter's attitude has been adjusted to OMS-prograde. Ready for orbit adjustment burn.
+3152 NOTE OMS engine ignition.
+3167 NOTEPOS 0.65 0.2 0.96 0.9
+3167 NOTE Note how the periapsis altitude (PeA) is increasing.
+3182 NOTE Eventually, the apoapsis point (hollow green circle) will swing around to the opposite side of the orbit, and the apoapsis altitude (ApA) will increase.
+3197 NOTE The required velocity difference is quite small, but the burn takes a while because the OMS engines don't provide much thrust.
+3262 NOTEPOS 0.02 0.2 0.4 0.9
+3262 NOTE The periapsis indicator is now rotating towards our current position. This is the reference point to which the arrival times in the list refer.
+3280 NOTE The yellow pair of entries indicate the closest match of arrival times between you and the ISS.
+3295 NOTE As your orbit period increases, this will eventually jump to the end of the list, and then start moving up the list.
+3336 NOTE OMS engine cut-off.
+3351 NOTE The projected rendezvous will take place at your 6th (the ISS' 7th) crossing of the rendezvous point, in a bit over 10 hours.
+3366 NOTE We could have terminated the burn earlier to save fuel, in which case the rendezvous would have taken place later.
+3381 NOTEPOS 0.65 0.2 0.96 0.9
+3381 NOTE At the next apoapsis passage, we will need to fine-tune the periapsis altitude to coincide with the ISS altitude at rendezvous point.
+3396 NOTE For this, note the ISS altitude as soon as it passes your periapsis point. It should be about 369km, so we need to raise periapsis to this altitude.
+3411 NOTEPOS 0.02 0.2 0.4 0.9
+3411 NOTE The next manoeuver will be an orbit plane adjustment. Switch the left MFD to plane alignment mode: Press 'SEL', 'Align planes'.
+3426 NOTE Press 'TGT', <Enter>, type 'iss', press <Enter>.
+3441 NOTE The alignment burn will take place at the descending node (DN) with the orbital plane of the ISS.
+3456 NOTE Fast-forwarding to node ...
+3456 TACC 50.000000 1.000000
+5685 TACC 1.000000 1.000000
+5710 NOTE Turning orbit-normal (+) for plane alignment burn.
+5740 NOTE Due to careful planning of launch time and ascent azimuth, your orbital plane is already nearly aligned with the ISS (about 0.1° relative inclination), so we won't need much delta-V for the burn.
+5760 NOTEOFF
+5760 TACC 10.000000 1.000000
+5934 TACC 1.000000 1.000000
+5939 NOTE OMS engines engaged for plane alignment burn.
+5968 NOTE OMS engine cut-off. Your orbital plane is now aligned with that of the ISS.
+5983 NOTEPOS 0.65 0.2 0.96 0.9
+5983 NOTE The next manoeuver will be a periapsis altitude adjustment burn at apoapsis. This will require a prograde burn.
+5998 NOTE Fast-forwarding to apoapsis ...
+5998 TACC 10.000000 1.000000
+6110 TACC 1.000000 1.000000
+6116 NOTE Remember that the target periapsis altitude was 369km. This will require only a very short burn.
+6131 NOTE OMS engines engaged for periapsis adjustment burn.
+6146 NOTE OMS engine cut-off. The periapsis altitude is now 369km.
+6161 NOTE Fast-forwarding to next periapsis passage.
+6161 TACC 50.000000 1.000000
+8650 TACC 1.000000 1.000000
+8670 TACC 1.000000
+8670 NOTEPOS 0.02 0.2 0.4 0.9
+8670 NOTE For the next manoeuver, switch the left MFD back to Sync Orbit mode.
+8685 NOTE Additional adjustment burns can be performed at periapsis, since this will not disturb the location of the rendezvous point.
+8700 NOTE For example, we can bring the rendezvous forward to an earlier orbit by performing another prograde burn.
+8705 TACC 10.000000 1.000000
+8825 TACC 1.000000 1.000000
+8827 NOTE Like this ...
+8850 NOTE The rendezvous has brought forward by one orbit, from 4 to 3 orbits.
+8865 NOTEPOS 0.65 0.2 0.96 0.9
+8865 NOTE Next, let's have a look at the periapsis altitude. Remember, we performed an apoapsis burn half an orbit ago, to raise periapsis to the target altitude of 369km.
+8880 NOTE But you can now see that the actual periapsis altitude is about 9km lower, at 360.4km. What is going on?
+8895 NOTE The Orbit MFD displays the elements of an unperturbed 2-body orbit that corresponds to the vessel's current state vectors (position and velocity).
+8910 NOTE However, the state vectors are perturbed along the trajectory due to various effects, such as the nonspherical shape of Earth. The result is a continuous change of the corresponding momentary orbital elements (osculating elements).
+8925 NOTE In this particular case, the osculating elements at apoapsis and periapsis predict different periapsis altitudes. So what can we do?
+8940 NOTE It is fairly straightforward to perform a 0-th order correction. We assume that small changes in periapsis altitude are consistent between periapsis and apoapsis, even if the absolute altitudes are not.
+8955 NOTE Therefore, we will raise the apoapsis altitude by another 9km at the next apoapsis passage (independent of the absolute indicated value).
+8970 NOTE Fast-forwarding to apoapsis ...
+8970 TACC 50.000000 1.000000
+11610 TACC 1.000000 1.000000
+11635 NOTE We now have to perform another prograde burn to apply the periapsis altitude correction.
+11650 NOTE Periapsis altitude is predicted at about 368km. We want to raise this by 9km, so need to aim for 377km. This should give us a true periapsis altitude of about 369km.
+11665 NOTE Engaging OMS engines for prograde burn.
+11671 NOTE Done. (Well, actually a bit short at 375.3km, but it should do).
+11686 NOTE All parameters are good for rendezvous now. I'll fast-forward through the next orbit to the final correction burns.
+11701 NOTE Fast-forwarding ...
+11701 TACC 100.000000 1.000000
+16675 TACC 1.000000 1.000000
+16720 NOTEPOS 0.02 0.2 0.4 0.9
+16720 NOTE We are slowly approaching our rendezvous orbit (one and a half orbits to go), so it is time to apply the final adjustment burns, to make sure we will encounter the ISS at close range.
+16735 NOTE First, orbital plane alignment. We are approaching the node with the ISS plane of orbit, so this is a good opportunity to cancel out any residual inclination that might have built up.
+16750 NOTE Switch the left MFD to Align Plane mode.
+16765 NOTE As a matter of fact, we are still quite well aligned (relative inclination 0.02°). Let's do it anyway, out of principle ...
+16780 NOTE We have rotated to align the OMS thrust direction normal to the orbital plane.
+16800 NOTE Engaging OMS engines for tiny plane alignment burn.
+16808 NOTE Done. Our orbital plane matches that of the ISS.
+16823 NOTE The final correction burn will take place at periapsis.
+16823 TACC 50.000000 1.000000
+19915 TACC 1.000000 1.000000
+19935 NOTE Switch the left MFD back to Sync Orbit mode.
+19950 NOTE The periapsis passage times for the next orbit (the rendezvous event) have gone slightly out of sync, with the ISS arriving about 3 seconds earlier than we.
+19965 NOTE This doesn't sound much, but remember that each second corresponds to a distance of nearly 8km.
+19980 NOTE We need to perform a retrograde burn to reduce the orbital period.
+19995 NOTE Engaging OMS engines for rendezvous time adjustment.
+20017 NOTE Done. The periapsis arrival times are now matching.
+20032 NOTEPOS 0.65 0.2 0.96 0.9
+20032 NOTE We are now entering the last orbit before rendezvous. Time to get ready for approach and docking.
+20047 NOTE Switch the right MFD to Docking mode.
+20062 NOTE The NAV-1 radio receiver has been pre-set to the ISS' (fictional) transponder frequency of 131.3MHz.
+20077 NOTE For now, use the Docking MFD to monitor the distance (DST) and closing speed (CVEL) to the ISS.
+20092 NOTE Fast-forwarding through the last orbit to ISS rendezvous ...
+20092 TACC 100.000000 1.000000
+25207 TACC 1.000000 1.000000
+25251.1 CAMERA SET Track:STS-101:10.00:GLOBAL 13.022 2.336 1.335
+25251.1 NOTE We approaching the rendezvous point, and right on cue the ISS is coming into view.
+25312 CAMERA SET Cockpit:STS-101:50.00
+25312 NOTE Distance to target 3.1km, and closing at 35m/s.
+25327 NOTE Just be careful not to actually crash into the ISS, if you have planned your rendezvous spot-on. Not only would you receive a frosty welcome by the ISS crew, but you'd also ruin your ride home.
+25342 NOTE On arriving at the rendezvous point (periapsis), we must match our orbit with that of the ISS.
+25357 NOTE This will approximately be a retrograde burn (but be prepared to execute it early, if you are getting too close).
+25380 NOTE Switch the HUD to Docking mode, by pressing 'HUD' on the Docking MFD.
+25395 NOTE The velocity vector of the ISS relative to us is indicated in the HUD by a circle and cross symbol.
+25410 NOTE To match orbits, we need to null the relative velocity.
+25425 NOTE This is done by performing an OMS burn after aligning the OMS thrust direction with the ISS velocity indicator.
+25439.6 NOTE Engaging OMS engines to match velocity with ISS.
+25500.8 NOTE Done. Relative velocity is less than 1m/s. Distance to the ISS is 3.2km.
+25513.7 NOTE Rotating towards the ISS.
+25532 CAMERA SET Track:STS-101:10.00:GLOBAL 13.022 -1.712 -0.375
+25532 NOTE We are now all set up for final approach and docking.
+25541.4 NOTE Unfortunately, we are just about to enter Earth's shadow. We have the instruments to perform docking in the dark, but for security reasons we will wait until emerging into daylight.
+25551.9 CAMERA SET Cockpit:STS-101:50.00
+25551.9 NOTE For the next half orbit, we keep station relative to the ISS, performing small burns as required.
+25563.1 NOTE Fast-forwarding through the night ...
+25563.1 TACC 50.000000 1.000000
+27863.9 TACC 1.000000 1.000000
+27903 NOTE We are finally emerging into daylight.
+27918 NOTE Rotating into ISS velocity vector again to cancel relative velocity.
+27943 NOTE Engaging OMS engines to cancel residual velocity.
+27963 NOTE Done.
+27973 NOTE Rotating towards the ISS.
+27973 CAMERA SET Track:STS-101:10.00:GLOBAL 13.022 -1.792 -0.947
+27990 NOTE Engaging engines to close distance.
+28014 NOTE Done, closing speed is about 12m/s, at a distance of 5km.
+28029 NOTE You can now switch the Docking MFD to NAV-2 receiver by pressing 'NAV'. This has been pre-set to the IDS (instrument docking system) frequency of docking port 1.
+28029 CAMERA SET Cockpit:STS-101:50.00
+28044 NOTE Then slave the HUD to the same receiver by pressing the 'HUD' button on the MFD.
+28059 NOTE The row of small green rectangles extending from the ISS symbolise the approach path to dock 1.
+28074 NOTE We are using the RCS thrusters in linear mode to move our velocity vector (green cross) onto the approach path.
+28089 NOTE Speeding up the approach ...
+28089 TACC 10.000000 1.000000
+28220.3 CAMERA SET Track:STS-101:30.00:GLOBAL 13.022 -1.437 -0.992
+28380 TACC 1.000000 1.000000
+28383 NOTE Engaging retro RCS to slow down the approach.
+28384.4 CAMERA SET Cockpit:STS-101:50.00
+28486 NOTE Oops - I am overshooting (overestimated the retro deceleration).
+28488.7 CAMERA SET Track:STS-101:30.00:GLOBAL 13.022 3.129 -0.425
+28522.3 NOTEOFF
+28522.3 CAMERA SET Track:ISS:20.00:GLOBAL 10.381 0.712 -0.458
+28544 NOTE Finally cancelled relative velocity. Distance to ISS: 190m.
+28550.2 CAMERA SET Track:STS-101:20.00:GLOBAL 13.022 -3.110 0.004
+28553 NOTE Turning back to the approach path for a second pass.
+28586 NOTE We are above and to the left of the approach path. We will use linear RCS to move onto the path.
+28601 NOTE This is a slow manoeuver, so I am speeding things up a bit ...
+28601 TACC 10.000000 1.000000
+28713.1 CAMERA SET Track:ISS:20.00:GLOBAL 5.890 -2.778 2.449
+28815 CAMERA SET Track:STS-101:20.00:GLOBAL 5.890 0.170 -2.532
+28947.8 CAMERA SET Cockpit:STS-101:20.00
+29215 TACC 1.000000 1.000000
+29220 NOTE Aligned with approach path.
+29230 NOTE The Shuttle's docking port is mounted in the payload bay, pointing upwards.
+29240 NOTE Therefore we need to tilt forward 90° and approach the dock nose-down.
+29250 NOTE Rotating the orbiter to approach attitude.
+29254.9 CAMERA SET Track:ISS:10.00:GLOBAL 5.890 2.590 2.126
+29271.6 CAMERA SET Track:STS-101:20.00:GLOBAL 10.380 -1.163 -2.455
+29293.4 CAMERA SET Cockpit:STS-101:50.00
+29293.4 NOTE Done. The ISS is now overhead.
+29304.4 NOTE Approaching the dock in this orientation takes a bit of practice. The docking MFD is adjusted to the docking port orientation, so it represents an 'upward' view.
+29317.9 NOTE Your position is in the centre of the circular display, with the Shuttle's nose pointing down.
+29331.6 NOTE The 'X' symbol shows angular alignment with the docking approach direction. In the centre of the display, your orientation is aligned correctly.
+29345.3 NOTE You can move it with RCS in rotational mode: bank left/right to move it right/left, and pitch up/down to move it down/up.
+29355.2 NOTE The red arrow on top shows longitudinal alignment. Correct alignment is in 12o'clock position. You can move it with yaw left/right.
+29369.7 NOTE The yellow cross (+) shows the lateral position of the approach path relative to your position. In the centre, it indicates correct alignment.
+29385.4 NOTE You can move it with RCS in linear mode: left/right to move it left/right, and forward/back to move it up/down.
+29400.8 NOTE The yellow arrow indicates your relative lateral velocity vector. Pointing it towards the approach path marker indicates closing towards it.
+29421.5 NOTE The red circle represents the approach cone. It turns green if you are within.
+29429.9 NOTE Your approach speed is indicated by the CVEL bar (on a logarithmic scale). Yellow indicates positive closing, green indicates separation.
+29440.8 NOTE So the task is pretty straightforward: keep all markers centered while closing slowly. Switch between linear and rotational RCS mode as required - easy!
+29457.2 NOTE It gets a bit tricky because the ISS is rotating under the influence of gravity gradient torque (no active attitude stabilisation is currently implemented).
+29475.3 NOTE But then, it would be boring if it was too easy.
+29484.3 NOTE Distance 150m and closing.
+29490.3 CAMERA SET Track:STS-101:20.00:GLOBAL 18.293 -1.278 -2.695
+29530.9 CAMERA SET Track:ISS:10.00:GLOBAL 10.380 2.587 2.081
+29544.6 CAMERA SET Cockpit:STS-101:50.00
+29544.6 NOTE Still busy keeping on approach path ...
+29556.4 NOTE Speeding the approach up a bit ...
+29556.4 TACC 5.000000 1.000000
+29593.5 CAMERA SET Track:ISS:20.00:GLOBAL 4.695 -1.496 -2.505
+29723.7 CAMERA SET Track:ISS:20.00:GLOBAL 9.267 -0.619 2.673
+29833.8 CAMERA SET Track:STS-101:20.00:GLOBAL 9.267 1.936 -0.864
+29917 CAMERA SET Cockpit:STS-101:20.00
+29917 NOTE Distance 25m, closing at 0.2m/s.
+29983 TACC 1.000000 1.000000
+29983.4 CAMERA SET Track:STS-101:20.00:GLOBAL 6.596 -1.975 1.058
+30028.5 NOTE 5 metres to go, closing at 0.1m/s.
+30039.7 CAMERA SET Track:STS-101:20.00:GLOBAL 3.743 2.986 0.448
+30072.6 NOTE Confirmed hard dock. Welcome to the International Space Station!
+30087 CAMERA SET Track:STS-101:20.00:GLOBAL 50.726 -2.842 0.653
+30087 NOTE This completes the tutorial. If you like, you can unload the MPLM module from the payload bay using the RMS arm, and attach it to the station.
+30103.8 NOTE Or you can undock and try reentry and landing at KSC.
+30128.6 NOTE Signing off. Good luck for the rest of your flight.

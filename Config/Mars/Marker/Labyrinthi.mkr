@@ -1,0 +1,11 @@
+BEGIN_HEADER
+InitialState on
+ColourIdx 2
+END_HEADER
+
+BEGIN_DATA
++105.70	+35.40	:	Adamas Labyrinthus			
++348.00	+41.20	:	Cydonia Labyrinthus			
++299.80	+80.10	:	Hyperboreus Labyrinthus			
++257.80	-6.90	:	Noctis Labyrinthus			
++101.10	-15.80	:	Tyrrhenus Labyrinthus			

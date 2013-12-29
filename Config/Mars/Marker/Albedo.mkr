@@ -1,0 +1,134 @@
+BEGIN_HEADER
+InitialState on
+ColourIdx 4
+END_HEADER
+
+BEGIN_DATA
++145.00	-4.90	:	Aeolis		
++50.00	+9.90	:	Aeria		
++130.00	+39.70	:	Aetheria		
++130.00	+9.90	:	Aethiopis		
++220.00	+0.00	:	Amazonis		
++110.00	+4.90	:	Amenthes		
++255.00	-44.70	:	Aonium Sinus		
++30.00	+19.80	:	Arabia		
++260.00	+44.70	:	Arcadia		
++335.00	-44.70	:	Argyre		
++25.00	+47.70	:	Arnon		
++310.00	-14.80	:	Aurorae Sinus		
++110.00	-39.70	:	Ausonia		
++310.00	+59.70	:	Baltia		
++70.00	+54.70	:	Boreosyrtis		
++285.00	+3.00	:	Candor		
++100.00	+39.70	:	Casius		
++150.00	+49.70	:	Cebrenia		
++40.00	+59.70	:	Cecropia		
++267.00	+19.80	:	Ceraunius		
++155.00	+14.80	:	Cerberus		
++360.00	-49.70	:	Chalce		
++100.00	-49.70	:	Chersonesus		
++330.00	+9.90	:	Chryse		
++250.00	-49.70	:	Chrysokeras		
++250.00	-34.70	:	Claritas		
++80.00	+54.70	:	Copais Palus		
++295.00	-14.80	:	Coprates		
++130.00	-4.90	:	Cyclopia		
++360.00	+39.70	:	Cydonia		
++55.00	-4.00	:	Deltoton Sinus		
++20.00	-59.70	:	Depressio Hellespontica		
++20.00	-14.80	:	Deucalionis Regio		
++360.00	+34.70	:	Deuteronilus		
++180.00	+49.70	:	Diacria		
++40.00	+49.70	:	Dioscuria		
++15.00	+0.00	:	Edom		
++170.00	-44.70	:	Electris		
++150.00	+24.80	:	Elysium		
++140.00	-44.70	:	Eridania		
++240.00	+21.80	:	Eunostos		
++25.00	+19.80	:	Euphrates		
++360.00	+14.80	:	Gehon		
++70.00	-39.70	:	Hellas		
++35.00	-49.70	:	Hellespontus		
++120.00	-19.80	:	Hesperia		
++15.00	+14.80	:	Hiddekel		
++300.00	+74.80	:	Hyperboreus (Lacus)		
++65.00	-19.80	:	Iapygia (Iapigia)		
++230.00	-39.70	:	Icaria		
++180.00	-69.80	:	II Thyle I		
++85.00	+19.80	:	[Isidis Regio]		
++30.00	+39.70	:	Ismenius Lacus		
++320.00	+9.90	:	Jamuna		
++297.00	-4.90	:	Juventae Fons		
++160.00	+0.00	:	Laestrygon (Laestrigon)		
++160.00	+69.80	:	Lemuria		
++90.00	+0.00	:	Libya		
++295.00	+14.80	:	Lunae Palus		
++330.00	+44.70	:	Mare Acidalium		
++350.00	-59.70	:	Mare Australe		
++180.00	+59.70	:	Mare Boreum		
++150.00	-57.70	:	Mare Chronium		
++140.00	-19.80	:	Mare Cimmerium		
++320.00	-24.80	:	Mare Erythraeum		
++90.00	-39.70	:	Mare Hadriacum		
++40.00	-29.70	:	Mare Serpentis		
++205.00	-29.70	:	Mare Sirenum		
++105.00	-19.80	:	Mare Tyrrhenum		
++335.00	-9.90	:	Margaritifer Sinus		
++210.00	-19.80	:	Memnonia		
++75.00	+34.70	:	Meroe		
++10.00	+19.80	:	Moab		
++90.00	+7.90	:	Moeris Lacus		
++288.00	-27.70	:	Nectar		
++88.00	+37.70	:	Neith Regio		
++100.00	+19.80	:	Nepenthes		
++305.00	-44.70	:	Nereidum Fretum		
++330.00	+29.70	:	Niliacus Lacus		
++305.00	+29.70	:	Nilokeras		
++70.00	+41.70	:	Nilosyrtis		
++230.00	+19.80	:	Nix Olympica		
++30.00	-44.70	:	Noachis		
++295.00	-44.70	:	Ogygis Regio		
++160.00	+79.90	:	Olympia		
++295.00	-9.90	:	Ophir		
++360.00	+59.70	:	Ortygia		
++342.00	+7.90	:	Oxia Palus		
++348.00	+19.80	:	Oxus		
++160.00	+59.70	:	Panchaia		
++44.00	-24.80	:	Pandorae Fretum		
++205.00	-49.70	:	Phaethontis		
++40.00	+19.80	:	Phison		
++172.20	+31.00	:	Phlegra		
++250.00	-11.90	:	Phoenicis Lacus		
++290.00	-39.70	:	Phrixi Regio		
++80.00	-64.80	:	Promethei Sinus		
++175.00	+44.70	:	Propontis		
++310.00	-22.80	:	Protei Regio		
++45.00	+41.70	:	Protonilus		
++322.00	-14.80	:	Pyrrhae Regio		
++212.10	+60.20	:	Scandia		
++290.00	-19.80	:	Sinai		
++360.00	-4.90	:	Sinus Meridiani		
++20.00	-7.90	:	Sinus Sabaeus		
++115.00	+44.70	:	Sithonius Lacus		
++270.00	-27.70	:	Solis Lacus		
++160.00	+29.70	:	Styx		
++260.00	-19.80	:	Syria		
++70.00	+9.90	:	Syrtis Major		
++290.00	+49.70	:	Tanais		
++290.00	+39.70	:	Tempe		
++360.00	+0.00	:	Tharsis		
++275.00	-34.70	:	Thaumasia		
++105.00	+29.70	:	Thoth		
++350.00	+9.90	:	Thymiamata		
++275.00	-4.90	:	Tithonius Lacus		
++280.00	+29.70	:	Tractus Albus		
++92.00	-24.80	:	Trinacria		
++162.00	+19.80	:	Trivium Charontis		
++100.00	+69.80	:	Uchronia		
++70.00	+49.70	:	Umbra		
++110.00	+49.70	:	Utopia		
++345.00	-34.70	:	Vulcani Pelagus		
++310.00	+9.90	:	Xanthe		
++40.00	-39.70	:	Yaonis Regio		
++165.00	+0.00	:	Zephyria		
++226.80	-28.40	:	Zumba		

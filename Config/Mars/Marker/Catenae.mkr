@@ -1,0 +1,24 @@
+BEGIN_HEADER
+InitialState on
+ColourIdx 4
+END_HEADER
+
+BEGIN_DATA
++259.00	+37.30	:	Acheron Catena
++245.30	+35.00	:	Alba Catena
++103.20	-26.90	:	[Apodis Catena]
++240.40	+47.60	:	Artynia Catena
++275.70	+38.80	:	Baphyras Catena
++251.80	+37.10	:	Ceraunius Catena
++297.80	-14.90	:	Coprates Catena
++241.60	+36.30	:	Cyane Catena
++149.60	+17.60	:	Elysium Catena
++291.30	-2.80	:	Ganges Catena
++140.50	+21.60	:	Hyblaeus Catena
++266.70	+19.50	:	Labeatis Catenae
++300.60	-9.50	:	Ophir Catenae
++256.70	+38.90	:	Phlegethon Catena
++150.50	+23.30	:	Stygis Catena
++278.00	-5.40	:	[Tithoniae Catena]
++277.60	-5.30	:	Tithoniae Catenae
++257.30	+27.80	:	Tractus Catena

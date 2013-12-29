@@ -1,0 +1,41 @@
+; Miscellaneous labels
+
+BEGIN_HEADER
+InitialState on
+ColourIdx 3
+ShapeIdx 5
+END_HEADER
+
+BEGIN_DATA
+
++0 +90                  : North Pole
++0 -90                  : South Pole
++70 -71                 : Lambert Glacier
+-112.57 +36.35          : Grand Canyon
+-69.40 -15.82           : Lake Titicaca
+-85.33 +11.53           : Lake Nicaragua
+-110.37 +44.44          : Yellowstone
+-80.79 +26.95           : Lake Okeechobee
+-116.81 +36.15          : Death Valley
+-114.41 +36.15          : Lake Mead
++16.34 -18.82           : Etosha Pan
++22.56 -19.10           : Okavango Delta
++25.8618 -17.9617       : Victoria Falls
++34.62 -11.72           : Lake Malawi
++33.09 -1.03            : Lake Victoria
++35.5787 -3.1759        : Ngorongoro Crater
++14.01 +13.35           : Lake Tchad
++0.21 +7.39             : Lake Volta
+-54 -25.5               : Iguacu Falls
+-62.51 +6.02            : Angel Falls
+-72.57 -13.12           : Machu Picchu
+-1.82 +51.18            : Stonehenge
+-68.18 -23.55           : Salar de Atacama
+-118.82 +41.03          : Black Rock Desert
+-89.63 +17.33           : Tikal
+-75.08 -14.75           : Nazca
++17.5 -27.8             : Fish River Canyon
+-79 +43                 : Niagara Falls
+-115.8032 +37.255       : Groom Lake
+-115.8518 +37.1011      : Papoose Lake
+-116.0315 +36.9546      : Yucca Lake

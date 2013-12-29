@@ -1,0 +1,180 @@
+; Various Mountains and Volcanos
+;
+; Assembled from a variety of sources.
+; The volcano data is largely derived from the activity list at:
+; http://volcano.und.nodak.edu/vwdocs/current_volcs/history.html
+ 
+BEGIN_HEADER
+InitialState on
+ColourIdx 1
+ShapeIdx 3
+Size 0.8
+END_HEADER
+
+BEGIN_DATA
+
++6.9166 +45.9164        : Mont Blanc
++37.35 -3.066           : Kilimanjaro
++86.9444 +27.98777      : Mt.Everest
++138.733 +35.366        : Mt.Fuji
+-155.46889 +19.8252778  : Mauna Kea
+-70.233 -32.65          : Aconcagua
++76.5166 +35.8833       : Mt.Godwin-Austen ("K2")
++86.933 +27.966         : Lhotse
++148.266 -36.45         : Mt.Kosciuzko
++7.65 +45.966           : Matterhorn
+-140.3833 +60.566       : Mt.Logan
+-78.433 -0.666          : Cotopaxi
+-75.366 +4.8833         : Nevado del Ruiz
++74.6 +35.233           : Nanga Parbat
+-85.4166 -78.5833       : Vinson Massif
++167.2833 -77.533       : Mt.Erebus
++162.6 -74.55           : Mt.Fridtjof Nansen
++166.4166 -84.33        : Mt.Kirkpatrick
+-151.003611 +63.069166  : Mt.McKinley
+-121.7599 +46.8533      : Mt.Rainier
+-121.4988 +46.2088      : Mt.Adams
+-123.6962 +47.8043      : Mt.Olympus
+-119.155833 +53.11055   : Mt.Robson
+-116.86388 +33.355833   : Mt.Palomar
+-103.375 +43.875        : Mt.Rushmore
+-104.72055 +44.59055    : Devil's Tower
+-122.194166 +46.19111   : Mount St.Helens
++76.573611 +35.809722   : Broad Peak ("K3")
++42.439166 +43.355      : Mt.Elbrus
+-121.695919 +45.373514  : Mt.Hood
+-117.43611 +52.14722    : Mt.Columbia
+-70.734 -29.25          : La Silla
+-70.4167 -24.67         : Cerro Paranal
+-118.6 +34.234          : Mt.Wilson
++130.9 -25.25           : Uluru/Ayers Rock
+-155.292 +19.452        : Kilauea
+-155.6 +19.5            : Mauna Loa
+-62.2 +16.7             : Montserrat
++15 +37.7               : Etna
++15.2 +38.8             : Stromboli
+-98.63 +19.03           : Popocatépetl
+-17.36 +64.5            : Grimsvotn
++9.17 +4.2              : Mount Cameroon
++105.42 -6.2            : Anak Krakatoa
++120.3549 +15.14        : Pinatubo
++159.5 +54              : Karymsky
+-90.9 +14.5             : Fuego
+-78.44 -1.467           : Tungurahua
+-91.5 +14.8             : Santa Maria
++161.36 +56.65          : Sheveluch
++127.87 +1.7            : Dukono
+-103.62 +19.51          : Colima
++145.67 +16.35          : Anatahan
++130.67 +31.58          : Sakura-Jima
++112.9 -8.1             : Semeru
++151.3 -5.1             : Ulawun
+-159.38 +56.17          : Veniaminof
++145 -4.1               : Manam
++150.52 -5.58           : Pago
++169.43 -19.52          : Yasur
++168.1 -16.2            : Ambrym Island
++168.37 -16.68          : East Epi
++130.3 +30.8            : Kikai
+-121.75 +44.1           : Three Sisters
++158 -9.5               : Kavachi Seamount
++160.64 +56.06          : Kliuchevskoi
+-77.67 -0.07            : Reventador
++123.1 +10.4            : Canlaon
++152.2 -4.27            : Rabaul
++122.55 -8.7            : Egoni
++160.58 +55.98          : Bezymianny
+-86.7 +12.5             : Cerro Negro
++122.975 -8.53          : Mt.Lewotobi
++131.1 +32.88           : Aso
++55.71 -21.23           : Piton de la Fournaise
++123.7 +13.3            : Mayon
++139.53 +34.08          : Mt.Oyama
++127.3 +0.8             : Gamalama
++125.48 +2.78           : Karangetang
++29.25 -1.52            : Nyiragongo
+-78.6 -0.17             : Guagua Pichincha
+-86.2 +12               : Masaya
+-67.73 -23.57           : Lascar
++113.34 -8              : Lamongan
++122.84 -8.36           : Leroboleng
++124.79 +1.36           : Lokon
+-84.7 +10.46            : Arenal
++109.9 -7.2             : Dieng
++124 +1.11              : Soputan
+-90.6 +14.4             : Pacaya
++155.46 +50.325         : Chikurachki
++168.346 -16.507        : Lopevi
+-71.73 -38.69           : Llaima
++138.53 +36.4           : Asama
++139.77 +33.13          : Hachijo-Jima
++29.2 -1.4              : Nyamuragira
++93.88 +12.29           : Barren Island
+-61.6 +12.3             : Kick-'em Jenny
++107.73 -7.32           : Papandayan
++40.7 +13.6             : Erta Ale
+-87 +12.7               : San Cristobal
++107.6 -6.77            : Tangkubanparahu
+-71.42 -39.25           : Villarrica
++125.43 +2.28           : Raung
++101.27 -1.69           : Kerinci
++35.902 -2.751          : Ol Doinyo Lengai
++110.44 -7.54           : Merapi
++148.4 -5.5             : Langila
++176.1 -38.4            : Maroa
++114.2 -8.1             : Ijen
++112.3 -7.9             : Kelut
++176.3 -38.1            : Rotorua
++113 -7.9               : Bromo
++140.58 +42.07          : Komagatake
++152.2 -4.3             : Tavurvur
++102.62 -3.52           : Kaba
++140.1 +37.6            : Bandai
++177.18 -37.52          : White Island
+-71.17 -37.85           : Copahue
+-163.96 +54.75          : Shishaldin
++140.8 +42.5            : Usu
+-19.7 +63.98            : Hekla
++120.993 +14.002        : Taal
++175.6 -39.3            : Ruapehu
++130.22 +30.43          : Shin-dake
+-86.845 +12.603         : Telica
+-27.3 +38.7             : Terceira
+-91.42 -0.9             : Cerro Azul
++141 +39.85             : Iwate-san
+-174.15 +52.38          : Korovin
++96.33 +4.925           : Mt.Peuet Sague
+-85.5 +10.2             : Rincon de la Vieja
+-157 +57.13             : Chiginagak
++140.28 +37.62          : Adatara
++140.88 +40.65          : Hakkoda
+-161.9 +55.42           : Pavlof
+-168.17 +53.4           : Okmok
+-85.5 +11.4             : La Madera
+-171.25 +52.5           : Amuktak
+-24.35 +14.95           : Fogo
+-86.5 +12.4             : Momotombo
+-166 +54.1              : Akutan
++131.2 +33.1            : Hosho
+-91.55 -0.37            : Fernandina
+-174.87 -19.18          : Metis Shoal
+-152.251 +61.299        : Mt.Spurr
+-77.37 +1.22            : Galeras
++129.72 +29.53          : Suwanose-Jima
++116.47 -8.42           : Rinjani
++112.95 -7.942          : Tengger
++100.47 -0.38           : Marapi
++125.5 +3.67            : Awu
++155.19 -6.14           : Bagana
+-75.4 +4.48             : Machin
+-16.641 +28.271         : Tenerife
+-78.34 -2.03            : Sangay
+-169.94 +52.83          : Cleveland
++14.45 +40.83           : Vesuvio
+
+-177.15 -25.92          : Monowai Seamount
+-155.27 +18.92          : Loihi Seamount
++170.17 -20.58          : Eastern Gemini Seamount
++145.6 +15.6            : Ruby Seamount
+-118.8 +37.6            : Long Valley Caldera
+-126.78 +42.66          : Jackson Segment

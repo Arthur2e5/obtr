@@ -1,0 +1,25 @@
+BEGIN_HEADER
+InitialState on
+ColourIdx 5
+END_HEADER
+
+BEGIN_DATA
++250.40	+40.50	:	Alba Patera
++60.90	-58.70	:	Amphitrites Patera
++280.50	-80.60	:	Angusta Patera
++174.40	-9.30	:	Apollinaris Patera
++308.30	-80.10	:	Australis Patera
++235.40	+2.70	:	Biblis Patera
++227.40	+34.60	:	Diacria Patera
++91.80	-32.10	:	Hadriaca Patera
++269.50	+38.30	:	Issedon Paterae
++51.90	-63.40	:	Malea Patera
++68.60	+6.90	:	Meroe Patera
++89.00	+11.90	:	[Nepenthes Patera]
++67.00	+8.90	:	Nili Patera
++178.50	+14.10	:	Orcus Patera
++52.50	-57.80	:	Peneus Patera
++36.90	-66.80	:	Pityusa Patera
++106.50	-21.40	:	Tyrrhena Patera
++238.40	+2.90	:	Ulysses Patera
++267.80	+26.80	:	Uranius Patera

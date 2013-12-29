@@ -1,0 +1,565 @@
+; All named features on the lunar farside, adapted from the common USGS lists,
+; and as far as not already covered by Rükl in the libration area charts.
+
+BEGIN_HEADER
+InitialState on
+ColourIdx 1
+Size 0.6
+DistanceFactor 0.6
+END_HEADER
+
+BEGIN_DATA
+
++91 +1                  : Dorsum Cloos
++125.1 -58.4            : Vallis Planck
++163.5 -33.7            : MARE INGENII
++147.9 +27.3            : MARE MOSCOVIENSE
++103 -25.9              : Rima Siegfried
++98 -28                 : Rimae Focas
+-92 -23                 : Rimae Pettit
++120.6 +5.2             : Mons André
++121 +5                 : Mons Ardeshir
++120.2 +5               : Mons Dieter
++120.8 +5.6             : Mons Dilip
++120.6 +4.8             : Mons Ganau
++176 +19                : Lacus Luxuriae
+-168 -21                : Lacus Oblivionis
++104.3 -27.8            : Lacus Solitudinis
++105.9 +26              : Catena Artamonov
++100 +19                : Catena Dziewulski
++129.9 -0.6             : Catena Gregory
++136.3 +37.2            : Catena Kurchatov
+-110.1 +4.7             : Catena Leuschner
+-126.1 -3.4             : Catena Lucretius
++139.4 +6.3             : Catena Mendeleev
+-113.4 +1.4             : Catena Michelson
++112.3 +37.3            : Catena Sumner
++175.2 -57.2            : Abbe
++116.6 +1               : Abul Wáfa
++173.4 -16.8            : Aitken
++110.8 -23.6            : Alden
+-177.4 -48.6            : Alder
+-131.3 -68.2            : Alekhin
++106.4 +7.1             : Al-Khwarizmi
+-107.5 +18.7            : Alter
+-172.1 -9.9             : Amici
+-142.9 -41.3            : Anders
++171.1 +15.8            : Anderson
++146.1 -22.7            : Andronov
+-172 -69.7              : Antoniadi
+-151.8 -36.1            : Apollo
++158.3 +37.2            : Appleton
++154.2 -16.4            : Armínski
++103.5 +25.5            : Artamonov
+-144.4 +10.8            : Artem'ev
+-112.5 -81.4            : Ashbrook
++164.9 +63.1            : Avogadro
++123.3 -20.8            : Babakin
++103 -16                : Backlund
++152.6 -18.9            : Balandin
+-151.1 -53.3            : Baldet
++157.9 -23.8            : Barbier
+-149.7 -28              : Barringer
++102.6 -25.3            : Bawa
++129.7 +40.7            : Becquerel
++125.2 -1.9             : Becvár
++151.8 -13.5            : Beijerinck
+-164.6 -60.6            : Bellinsgauzen
+-128.1 -17.2            : Belopolskiy
++143.5 +23.3            : Belyaev
++141.5 +4.4             : Benedict
++137.5 +7               : Bergman
++176.3 -18.8            : Bergstrand
+-105.2 +25.2            : Berkner
+-162.8 -63.2            : Berlage
+-164.5 -55.1            : Bhabha
++115.1 +8.1             : Bingham
++173.9 -30.2            : Birkeland
+-146.1 +58.7            : Birkhoff
++113 -38.4              : Bjerknes
+-116.1 -37.5            : Blackett
+-148 +31.6              : Blazhko
+-131.8 +26.9            : Bobone
+-171.6 -20.2            : Bok
++125.9 -33.6            : Bolyai
++136.3 -17.8            : Bondarenko
+-147.7 -38.8            : Borman
+-168.6 -53.5            : Bose
++103.1 -25              : Bowditch
++178.1 -53.1            : Boyle
+-170.7 -73.8            : Brashear
+-158.2 +17.3            : Bredikhin
++137.1 +43.5            : Bridgman
+-134.5 +26.1            : Bronk
+-126 -36.2              : Brouwer
+-133.4 -40.4            : Buffon
++112.5 -1.4             : Buisson
+-108.7 +12.5            : Butlerov
++174.5 +20.8            : Buys-Ballot
+-169.6 -60.9            : Cabannes
++168.8 -47.4            : Cajori
++151.4 +45.3            : Campbell
++118.6 +38.2            : Cantor
+-143.5 +52.3            : Carnot
++122.3 +8.5             : Carol
++126.9 -43              : Carver
++113.5 -52.4            : Cassegrain
+-153.9 -38.8            : Chaffee
+-117.3 -21.2            : Chalonge
++175.2 +37.4            : Champollion
++171.5 +43.8            : Chandler
++112.2 +19              : Chang Heng
+-109.2 -40              : Chant
++150.3 -6.2             : Chaplygin
+-91.5 -61.2             : Chappe
+-177 +54.7              : Chappell
+-131.5 +36.6            : Charlier
+-140 +3.7               : Chaucer
++137 -11.5              : Chauvenet
+-133.1 -33.7            : Chebyshev
++174.2 +47.3            : Chernyshev
++162.9 -45.9            : Chrétien
++118.9 -38.4            : Clark
++126.1 -37.9            : Coblentz
+-162.6 +31.3            : Cockcroft
+-112.7 +23.3            : Comrie
+-121.5 +21.8            : Comstock
+-167.3 -0.2             : Congreve
++175.6 +52.9            : Cooper
+-151.9 -50.6            : Cori
++171.8 +0.1             : Coriolis
+-114.6 +54.7            : Coulomb
++150.2 -47.5            : Crocco
+-146.9 -68.1            : Crommelin
+-164.5 -10.3            : Crookes
++118.7 +0.8             : Ctesibius
++157.7 -20.5            : Cyrano
++179.4 -5.9             : Daedalus
++163.9 +50.8            : D'Alembert
++124 -11.4              : Danjon
++180 +25.5              : Dante
++124.6 -10.3            : D'Arsonval
+-136.8 -16.6            : Das
+-174.6 -37.5            : Davisson
+-134.7 -67.4            : Dawson
+-162.1 -77.3            : De Forest
++143.2 +49.5            : De Moraes
+-176.7 -19.9            : De Vries
+-176.2 +49.6            : Debye
++140.6 -6.8             : Dellinger
++121.6 -16              : Delporte
++142.6 -16.4            : Denning
++110.5 +24.1            : Deutsch
++165.5 -2.7             : Dewar
++121.5 -20.4            : Diderot
+-151.4 +11.1            : Dirichlet
++129.7 -12.8            : Dobrovolskiy
+-159.6 -12.6            : Doppler
+-122.4 +35.9            : Douglass
+-155.2 -33              : Dryden
++169.5 +5.5             : Dufay
++179.5 +44.8            : Dunér
+-121.2 +61.3            : Dyson
++102.3 -25.8            : Edith
+-172.4 +40.9            : Ehrlich
+-143 -63.1              : Eijkman
++109.6 -4.9             : Einthoven
+-120.1 -25.3            : Ellerman
+-100.5 +8.8             : Elvey
+-177.3 +63.3            : Emden
+-159 +5.7               : Engelhardt
++133.8 -35.5            : Eötvös
+-141.4 +47.7            : Esnault-Pelterie
++109.1 +28.1            : Espin
+-133.5 -9.5             : Evans
+-153 +34.8              : Evdokimov
+-159.5 +35.7            : Evershed
++121.4 +7.7             : Ewen
++102.9 -26.1            : Fairouz
++124.9 -59              : Fechner
++140.7 +30.9            : Feoktistov
++122.6 -19.3            : Fermi
+-126 +18.7              : Fersman
++135.1 -23.2            : Fesenkov
+-177.9 -42              : Finsen
++112.2 +4.5             : Firsov
++142.4 +8               : Fischer
+-171.7 +27.5            : Fitzgerald
+-133.9 -58.6            : Fizeau
++109.6 +15              : Fleming
++131.5 +25.3            : Florensky
+-141.5 +23.7            : Foster
+-145 +42.3              : Fowler
++171 +25                : Freundlich
+-126 -12.6              : Fridman
+-118.4 +37.7            : Frost
+-147.3 +36.4            : Gadomski
++149.2 -20.2            : Gagarin
+-151.9 -14.2            : Galois
++145.3 +65.3            : Gamow
++156.7 -47.5            : Garavito
++130.9 +17.4            : Gavrilov
++158.5 -14.6            : Geiger
+-122.6 -22.9            : Gerasimovich
++102.8 +35.9            : Giordano Bruno
++142.6 +11.5            : Glauber
++137.6 -1.6             : Glazenap
+-105 -25.1              : Golitsyn
++161.1 +39.9            : Golovin
+-108.2 -3.7             : Grachev
++150.3 -17.1            : Grave
++132.9 +4.1             : Green
++127.2 +2.2             : Gregory
+-129.4 +12.9            : Grigg
+-147.4 -47              : Grissom
++128.3 -66.5            : Grotrian
+-173.4 +45.4            : Guillaume
+-129.3 +45.2            : Gullstrand
++117.5 +11.4            : Guyot
++122.8 +40.7            : H.G.Wells
++135.1 -48.3            : Hagen
++143.5 +5.5             : Harden
+-175.6 -58.4            : Haret
++114.3 +33.1            : Harriot
++135.3 +3.2             : Hartmann
+-146.5 +19.5            : Harvey
+-121.5 +29.7            : Hatanaka
+-176.4 +12.7            : Hayford
+-110.5 +32.8            : Healy
++167.1 -10.4            : Heaviside
+-102.2 +22.5            : Helberg
++152.1 +4.8             : Henderson
+-159.2 -46.6            : Hendrix
+-151.6 +13.5            : Henyey
++119.8 +0.7             : Heron
++104.5 +13.4            : Hertz
+-129.2 +2.6             : Hertzsprung
++174.6 -54.3            : Hess
+-144.1 +75.3            : Heymans
++108.2 -17.9            : Hilbert
+-145.9 +70.7            : Hippocrates
++136.9 +15.2            : Hoffmeister
++121.9 +33.6            : Hogg
++150.9 -27.6            : Holetschek
++160.3 -50.8            : Hopmann
+-123.5 -17.1            : Houzeau
++168.7 +37.3            : Hutton
++122.3 +6.8             : Ibn Firnas
+-173.2 -5.3             : Icarus
+-153.1 +26.4            : Ingalls
++119.2 +27.8            : Innes
+-129.2 -14.4            : Ioffe
++147.5 -17.5            : Isaev
++117.1 -23.3            : Izsak
+-163.1 +22.4            : Jackson
+-148.9 -34.9            : Jarvis
+-144.2 +27.3            : Joule
++147 -35                : Jules Verne
+-115.8 +15              : Kamerlingh Onnes
++103.1 -25.8            : Karima
++166.3 +73.3            : Karpinskiy
+-141.8 -52.1            : Karrer
++122.1 +8.3             : Kasper
++116.1 +5.9             : Katchalsky
+;+116.1 +5.9             : Kathleen
+-112.6 -11.4            : Kearons
++161.9 -10.2            : Keeler
+-138.1 +16.4            : Kekulé
++126.6 +28.8            : Kepínski
++111.4 -13.8            : Khvol'son
+-146.5 +3               : Kibal'chich
++122.9 +35.9            : Kidinnu
++118.4 -57.1            : Kimura
++120.5 +5               : King
++132.8 -17.6            : Kira
+-156.1 +68.8            : Kirkwood
+-140.2 -32.4            : Kleymenov
+-141.3 +37.2            : Klute
++150.1 -42.8            : Koch
++154 +14.4              : Kohlschütter
+-114.6 +11.2            : Kolhörster
++152.5 +24.7            : Komarov
++115.5 -14.9            : Kondratyuk
+-125.5 -28.5            : Konoplev
++158.4 +19.8            : Konstantinov
+-157.4 -4               : Korolev
++149.6 -20.2            : Kosberg
++118.8 +14.7            : Kostinskiy
+-129.6 +30.8            : Kovalevskaya
++101 -21.9              : Koval'skij
+-127.6 +53.6            : Kramers
+-175.5 +3.9             : Krasovskiy
+-165.8 +35.6            : Krylov
+-154.5 +42.4            : Kulik
+-133.7 +8.4             : Kuo Shou Ching
++142.1 +38.3            : Kurchatov
+-107.5 +41.7            : Lacchini
++131 -31                : Lampland
+-118.1 +41.6            : Landau
++131.8 -15.3            : Lander
++132 -9.5               : Lane
++118.7 -10.3            : Langemak
++162.7 +44.3            : Langevin
+-128.4 -35.7            : Langmuir
+-179.7 +32.1            : Larmor
+-139.3 -44.8            : Leavitt
++107.8 -47.3            : Lebedev
+-164.3 +8.3             : Lebedinskiy 
+-178.7 -29.3            : Leeuwenhoek
++179.2 -38.2            : Leibnitz
+-149.6 -61.2            : Lemaître
+-102.1 +2.8             : Lenz
++148.2 +19              : Leonov
+-116 +29.1              : Leucippus
+-108.8 +1.8             : Leuschner
++143.4 -23.7            : Levi-Civita
+-113.8 -18.5            : Lewis
++154.9 +42.2            : Ley
+-114.9 -56              : Lippmann
+-179.5 -2.2             : Lipskiy
++123.1 -16.8            : Lütke
++112.6 +9.9             : Lobachevskiy
+-146.8 -17.7            : Lodygin
++129 -6.3               : Love
+-141.9 -36.8            : Lovell
+-103.1 -12.9            : Lowell
+-120.8 -8.2             : Lucretius
++152.5 -39.7            : Lundmark
++163.6 -64.8            : Lyman
+-149.3 +18.5            : Mach
+-168.7 -40.5            : Maksutov
++105.3 +21.9            : Malyy
++162.4 +5.4             : Mandel'shtam
+-167 +22.6              : Marci
++145.1 -9.6             : Marconi
+-139.1 -28.5            : Mariotte
+-148.9 -33              : McAuliffe
+-170.8 -15.7            : McKellar
+-165.6 +17.3            : McMath
+-147.3 -35.7            : McNair
+-127.2 +22.6            : McNally
+-149 -11                : Mechnikov
++123 +24.3              : Meggers
++112.7 -10.5            : Meitner
++121.8 +8.1             : Melissa
++140.9 +5.7             : Mendeleev
++125.5 +12.2            : Meshcherskiy
+-128.7 +72.1            : Mezentsev
+-120.7 +7.2             : Michelson
++168.8 +77.2            : Milankovic
++121.5 +46.8            : Millikan
++156 +8.6               : Mills
++112.2 -31.4            : Milne
+-161.3 +25              : Mineur
+-146 -56.5              : Minkowski
++179.6 -67.8            : Minnaert
+-154.7 +18              : Mitra
++101.2 +15.8            : Möbius
+-165 -19                : Mohoróvicic
++103.3 +9.5             : Moiseev
++137.4 +4.8             : Moissan
+-159.8 +47.3            : Montgolfier
+-177.5 +37.4            : Moore
++127.4 +5               : Morozov
+-175.1 +22.1            : Morse
+-140.5 -23.3            : Murakami
++154 +19.4              : Nagaoka
++177.4 -24.9            : Nassau
++123.1 -5               : Necho
++125 -27                : Neujmin
++134.1 +33              : Nijland
++151.3 +35.2            : Nikolaev
+-170.4 -44.6            : Nishina
+-101.3 +15              : Nobel
+-160.7 -70.7            : Numerov
++167.6 +32.3            : Nüsl
++162.1 -38.9            : Obruchev
++157.5 -30.6            : O'Day
+-113.5 +18.4            : Ohm
++117.8 +20.6            : Olcott
++138.5 +59.1            : Olivier
+-148.9 -36.2            : Onizuka
+-166.3 -35.2            : Oppenheimer
++169.2 -42.4            : Oresme
+-175 -25.7              : Orlov
++121.9 +10.4            : Ostwald
++140.5 -4.2             : Pannekoek
++164 +10.2              : Papaleksi
++163.1 -23              : Paracelsus
+-149.9 +50.4            : Paraskevopoulos
+-108.5 +25.9            : Parenago
++103.6 -33.4            : Parkhurst
+-171.2 +37.3            : Parsons
+-139.8 -13.5            : Paschen
++104.6 -11.9            : Pasteur
++133.4 -16.7            : Patsaev
++136.4 -44.5            : Pauli
++142.5 -28.8            : Pavlov
++145 +44.5              : Pawsey
+-106.1 +12.5            : Pease
++106 -24                : Perel'man
++129 -10                : Perepelkin
+-175.9 +47.2            : Perkin
+-127.8 +42.5            : Perrine
++108.4 +45.3            : Petrie
+-114.8 +37.2            : Petropavlovskiy
++123.3 -47.9            : Pikel'ner
++139.6 -20.3            : Pirquet
++118.9 -34.9            : Pizzetti
++136.8 -57.9            : Planck
++163.3 -10.2            : Planté
+-155 -25                : Plummer
++110.5 -42.2            : Pogson
++163.6 -56.7            : Poincaré
+-145.7 +79.5            : Poinsot
++114.6 +25.3            : Polzunov
+-133.4 +18.1            : Poynting
++130.5 -3.9             : Prager
++141.8 -60.1            : Prandtl
+-134.9 +43.1            : Quetelet
+-179.8 -13.8            : Racah
+-159.3 +14.6            : Raimond
++144.5 -40.2            : Ramsay
++151.8 -22.5            : Raspletin
+;+151.8 -22.5            : Ravi
++114.5 +44.7            : Rayet
+-114.3 +39.1            : Razumov
++124 +9.8               : Recht
+-150.1 -38.8            : Resnik
++176.3 +75.8            : Ricco
++140.1 +7.7             : Richards
+-139.6 -48.9            : Riedel
+-174.5 +71.1            : Roberts
+-105.2 +21.8            : Robertson
++136.5 -42.3            : Roche
++122.6 +7.5             : Romeo
++131 -41                : Rosseland
+-162.5 +57.4            : Rowland
+-169.8 -28.8            : Rumford
++137 +10.7              : Rutherford
++102.4 +4.3             : Saenger
++176.9 +10.6            : Safarík
++102.7 -1.6             : Saha
+-138.9 +32.6            : Sanford
+-121.1 +49.3            : Sarton
++108.9 -27.1            : Scaliger
++117.2 -26.2            : Schaeberle
++157.1 +69.7            : Schjellerup
+-138.6 +47.4            : Schlesinger
++155.2 -2.1             : Schliemann
+-163.6 +41.8            : Schneller
++146.5 +4.2             : Schuster
+-148.9 -31.1            : Scobee
++145.8 +73.5            : Seares
+-142.6 -7.1             : Sechenov
++127.7 +47.1            : Segers
++152.2 -32.8            : Seidel
++114.6 +29.1            : Seyfert
++122.4 +7.5             : Shahinaz
++173.3 +12.4            : Sharonov
++141.5 +24.3            : Shatalov
++172.5 +32.6            : Shayn
++118 -11.1              : Sherrington
++128.6 -12.1            : Shirakatsi
+-116.3 +19.5            : Sternberg
++135.5 +22              : Siedentopf
++154.5 -27.2            : Sierpinski
++109 +41.2              : Sisakyan
++120.8 +4.6             : Sita
++160.1 +49.5            : Slipher
+-150.2 -31.6            : Smith
+-168.9 -22.5            : Sniadecki
++121.8 +0.4             : Soddy
+-162.4 +65.2            : Sommerfeld
++165.6 +13.3            : Spencer Jones
++150.2 +10.2            : St.John
++134.6 -25.5            : Stark
++162.6 +34.8            : Stearns
+-141.8 +64.8            : Stebbins
+-108.3 +46              : Stefan
++179 +7.2               : Stein
+-104.9 -36.7            : Steklov
++161.8 +32.8            : Steno
+-141.2 -19.6            : Sternfeld
+-118.3 -39.6            : Stetson
+-155.2 +45.1            : Stoletov
+-156.1 -55.3            : Stoney
++146.3 +57.3            : Störmer
++164.6 -5.8             : Stratton
+-132.4 -21.7            : Strömgren
++135.3 -29.2            : Subbotin
++108.7 +37.5            : Sumner
++112.7 +52              : Swann
++105.7 +34              : Szilard
++146.4 -4.4             : Tamm
+-135.9 +32.2            : Teisserenc
++134.4 -9.5             : Ten Bruggencate
++144.3 +28.4            : Tereshkova
++124.7 +38.5            : Tesla
+-134.5 +40.7            : Thiel
+-169 +75.4              : Thiessen
++166.2 -32.7            : Thomson
++162 +25.2              : Tikhomirov
++171.7 +62.3            : Tikhov
+-132.6 -53.1            : Tiling
+-147 -5.5               : Timiryazev
++176.5 +7               : Tiselius
++150.5 +28.6            : Titov
++167.1 +29.3            : Trumpler
+-149.3 +6.2             : Tsander
++141.6 -49              : Tseraskiy
++175.6 +56.7            : Tsinger
++128.9 -21.2            : Tsiolkovskiy
++145.1 +17.3            : Tsu Chung-Chi
++117 -34.9              : Tyndall
++174.5 +6.8             : Valier
++172.2 -27.4            : Van de Graaff
++119.9 -43.9            : Van del Waals
+-159.1 +31.3            : van den Bergh
++146 -5.3               : van den Bos
++160.4 +15.4            : van Gent
++128 +35.7              : Van Maanen
++146.4 +52.6            : van Rhijn
++118.8 -62.8            : Van Wijk
+-131.8 +62.1            : van't Hoff
+-137.9 -0.8             : Vavilov
++162.6 -0.3             : Vening Meinesz
++158 -4.9               : Ventris
++130.5 +23.2            : Vernadskiy
++171.1 -19.8            : Vertregt
++114.5 -3.1             : Vesalius
++131.3 +10.2            : Vetchinkin
++144.4 -6.1             : Vil'ev
++176.7 +15.5            : Virtanen
++117.1 +5.2             : Viviani
++131.7 -13.6            : Volkov
++132.2 +56.8            : Volterra
++126.8 +51.9            : von Békésy
+-132.7 -24.8            : von der Pahlen
++175.9 -44.8            : Von Kármán
++152.3 +40.4            : Von Neumann
+-141.6 +42.6            : von Zeipel
+-162.2 -26              : Walker
+-138.8 -9.8             : Wan-Hoo
++128 -25.9              : Waterman
+-124.5 -62.6            : Watson
+-123.4 +50.4            : Weber
+-113.3 +45.2            : Wegener
+-120.2 +17.5            : Weyl
+-158.3 -44.6            : White
++146.6 +40.8            : Wiener
+-155.2 -21.5            : Wilsing
+-179 +42.2              : Winkler
+-105.6 +35.6            : Winlock
+-159.6 +45.2            : Woltjer
+-120.8 +43              : Wood
++152.8 -24              : Wróblewski
++122.1 -22.8            : Xenophon
++128.3 +60.9            : Yablochkov
++160.9 +58.1            : Yamamoto
++124.7 +2.9             : Zanstra
++166.8 -28.9            : Zelinskiy
++168.2 +18.4            : Zernike
++120.3 -24.8            : Zhiritskiy
+-167 +7.8               : Zhukovskiy
++168.1 -15.4            : Zwicky

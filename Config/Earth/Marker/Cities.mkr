@@ -1,0 +1,967 @@
+; Cities, Towns, Villages, ...
+
+BEGIN_HEADER
+InitialState on
+ColourIdx 4
+ShapeIdx 1
+Size 0.5
+END_HEADER
+
+BEGIN_DATA
+
+; Afghanistan
++69.2 +34.6             : Kabul
+
+; Algeria
++3.2 +36.7              : Algiers
+-0.64 +35.67            : Oran
+
+; Angola
++13.31 -8.83            : Luanda
++12.35 -5.83            : Capinda
++13.43 -12.58           : Benguela
+
+; Argentina
+-58.53 -34.55           : Buenos Aires
+-64.18 -31.41           : Cordoba
+-62.29 -38.72           : Bahia Blanca
+-65.21 -26.81           : Tucuman
+-68.29 -54.79           : Ushuaia
+-67.52 -45.84           : Comodoro Rivadavia
+-69.29 -46.17           : Sarmiento
+-65.01 -42.74           : Puerto Madryn
+-62.96 -40.81           : Viedma
+-57.56 -38.01           : Mar del Plata
+-64.29 -36.64           : Santa Rosa
+-60.71 -32.93           : Rosario
+-65.43 -24.78           : Salta
+
+; Australia
++151 -34                : Sydney
++138.5 -34.8            : Adelaide
++133.9 -23.7            : Alice Springs
++153.2 -27.5            : Brisbane
++149.2 -35.3            : Canberra
++131 -12.4              : Darwin
++145.1 -37.9            : Melbourne
++116 -32                : Perth
++147.36 -42.87          : Hobart
++113.65 -24.87          : Carnarvon
+
+; Austria
++16.39 +48.18           : Wien
++14.33 +48.26           : Linz
+
+; Bahamas
+-77.37 +25.02           : Nassau
+
+; Bahrain
++50.5 +26               : Al Manamah
+
+; Bangladesh
++90.38 +23.82           : Dhaka
++91.83 +22.36           : Chittagong
+
+; Barbados
+-59.53 +13.14           : Bridgetown
+
+; Belarus
++27.63 +53.89           : Minsk
++30.99 +52.45           : Homyel'
+
+; Belgium
++4.4 +50.85             : Bruxelles
+
+; Bolivia
+-68.11 -16.52           : La Paz
+-63.15 -17.77           : Santa Cruz
+
+; Brazil
+-43.37 -22.84           : Rio de Janeiro
+-47.93 -15.85           : Brasilia
+-46.53 -23.62           : Sao Paulo
+-43.96 -19.85           : Belo Horizonte
+-56.05 -15.61           : Cuiaba
+-59.96 -3.05            : Manaus
+-49.25 -25.44           : Curitiba
+-51.14 -30.01           : Porto Alegre
+-34.88 -8.05            : Recife
+-38.5 -3.74             : Fortaleza
+-38.39 -12.87           : Salvador
+-48.38 -1.37            : Belem
+-60.68 +2.81            : Boa Vista
+-67.82 -9.96            : Rio Branco
+-63.84 -8.75            : Porto Velho
+-54.59 -20.47           : Campo Grande
+-57.64 -19              : Corumba
+-40.31 -20.29           : Vitoria
+-48.56 -27.61           : Florianopolis
+-52.11 -32.1            : Rio Grande
+-42.78 -5.08            : Teresina
+-44.22 -2.54            : Sao Luis
+-51.07 +0.01            : Macapa
+-49.27 -16.74           : Goiania
+-48.26 -18.9            : Uberlandia
+-51.12 -23.29           : Londrina
+
+; Bulgaria
++23.36 +42.69           : Sofiya
+
+; Cambodia
++104.94 +11.59          : Phnom Penh
++103.87 +13.34          : Angkor-Vat
+
+; Cameroon
++9.74 +4.02             : Douala
++11.54 +3.87            : Yaounde
+
+; Canada
+-79.47 +43.75           : Toronto
+-73.63 +45.56           : Montreal
+-75.75 +45.42           : Ottawa
+-114.01 +51.04          : Calgary
+-113.47 +53.56          : Edmonton
+-123.03 +49.22          : Vancouver
+-106.62 +52.15          : Saskatoon
+-104.57 +50.45          : Regina
+-97.11 +49.88           : Winnipeg
+-71.19 +46.85           : Quebec
+-89.28 +48.41           : Thunder Bay
+-81 +46.53              : Sudbury
+-105.71 +53.22          : Prince Albert
+-113.76 +52.31          : Red Deer
+-63.57 +44.67           : Halifax
+-122.75 +53.9           : Prince George
+-94.11 +58.76           : Churchill
+-66.66 +45.94           : Fredericton
+-64.78 +46.11           : Moncton
+-60.17 +46.15           : Sidney
+-52.72 +47.57           : St.John's
+-57.96 +48.96           : Corner Brook
+-60.35 +53.31           : Goose Bay
+-68.51 +63.76           : Frobisher Bay
+-66.88 +52.93           : Labrador City
+-114.36 +62.47          : Yellowknife
+-126.83 +65.29          : Norman Wells
+-135.08 +60.74          : Whitehorse
+-111.38 +56.73          : McMurray
+-115.77 +60.83          : Hay River
+-105.28 +55.13          : La Ronge
+-101.84 +54.77          : Flin Flon
+-101.22 +53.84          : The Pas
+-54.58 +48.95           : Gander
+-59.13 +47.59           : Port aux Basques
+-57.17 +51.42           : Blanc Sablon
+-63.61 +50.25           : Havre-St.-Pierre
+-66.38 +50.23           : Sept-Iles
+-68.26 +49.19           : Baie-Comeau
+-71.06 +48.42           : Chicoutimi
+-74.33 +49.94           : Chibougamau
+-79.02 +48.25           : Noranda
+-80.62 +51.28           : Moosonee
+-78.55 +53.72           : Fort George
+-78.08 +58.46           : Inoucdjouac
+-75.64 +62.21           : Saglouc
+-76.53 +64.23           : Cape Dorset
+-92.07 +62.81           : Rankin Inlet
+-94.01 +61.11           : Eskimo Point
+-96 +64.31              : Baker Lake
+-105.07 +69.12          : Cambridge Bay
+-115.11 +67.83          : Coppermine
+-68.4 +58.12            : Fort Chimo
+-66.78 +54.84           : Schefferville
+-81.26 +68.79           : Hall Beach
+-97.76 +54.62           : Norway House
+-93.76 +51.05           : Red Lake
+-84.32 +46.52           : Sault Ste. Marie
+-81.29 +48.5            : Timmins
+-112.81 +49.69          : Lethbridge
+-110.68 +50.04          : Medicine Hat
+-99.93 +49.85           : Brandon
+-130.32 +54.32          : Prince Rupert
+-131.69 +55.39          : Ketchikan
+-135.33 +57.08          : Sitka
+-122.66 +58.77          : Fort Nelson
+-139.39 +64.07          : Dawson
+-120.34 +50.69          : Kamloops
+-128.71 +60.07          : Watson Lake
+-93.39 +48.62           : Fort Frances
+
+; Central Africa
++18.56 +4.35            : Bangui
+
+; Chad
++15.1 +12.1             : N'djamina
+
+; Chile
+-70.62 -33.45           : Santiago de Chile
+-70.86 -53.14           : Punta Arenas
+-72.59 -38.73           : Temuco
+-73.04 -36.82           : Talcahuano
+-72.94 -41.47           : Puerto Montt
+-70.28 -18.48           : Arica
+-70.38 -23.61           : Antofagasta
+
+; China
++116.4 +39.9            : Beijing
++113.2 +23.1            : Guangzhou
++114.1 +22.3            : Hong Kong
++121.4 +31.2            : Shanghai
++120.44 +36.13          : Qingdao
++117.21 +39.14          : Tianjin
++113.13 +40.06          : Datong
++111.71 +40.82          : Hohhot
++109.83 +40.63          : Baotou
++106.85 +39.66          : Yinchuan
++103.72 +36.06          : Lanzhou
++101.78 +36.63          : Xining
++97.55 +39.84           : Lao-jun-miao
++98.3 +39.78            : Jiu-quan
++100.49 +38.94          : Zhang-ye
++102.19 +38.51          : Wuwei
++123.41 +41.82          : Shenyang
++125.31 +43.87          : Changchun
++126.65 +45.73          : Harbin
++102.74 +25.04          : Kunming
++100.25 +25.6           : Xia-guan
++103.23 +23.35          : Gejiu
++108.33 +22.8           : Nanning
++109.39 +24.3           : Liuzhou
++110.28 +25.26          : Guilin
++104.05 +30.65          : Chengdu
++106.5 +29.52           : Chongqing
++108.96 +34.26          : Xi'an
++114.3 +30.55           : Wuhan
++115.9 +28.7            : Nanchang
++113.02 +28.19          : Changsha
++110.34 +20.01          : Haikou
++87.58 +43.87           : Di-hua
++85 +45.63              : Ke-la-mai
++81.34 +43.93           : Yi-ning
++123.99 +47.33          : Qiqihar
++109.54 +18.23          : Yulin
++120.19 +30.29          : Hangzhou
++120.68 +27.99          : Wenzhou
++119.32 +26.07          : Fuzhou
++116.71 +23.38          : Shantou
++117.18 +34.28          : Xuzhou
++121.67 +38.98          : Dalian
++118.82 +32.09          : Nanjing
+
+; Colombia
+-74.1 +4.7              : Bogota
+-75.51 +6.22            : Medellin
+-76.49 +3.47            : Cali
+-74.82 +10.93           : Baranquilla
+
+; Congo
++11.88 -4.75            : Pointe Noire
+
+; Costa Rica
+-84.1 +9.9              : San Jose
+
+; Croatia
++16.03 +45.78           : Zagreb
+
+; Cuba
+-75.1 +19.9             : Guantanamo
+-82.4 +23.1             : Habana
+-79.96 +22.41           : Santa Clara
+-81.24 +23.11           : Cardenas
+-82.78 +21.88           : Nueva Gerona
+-83.68 +22.42           : Pinar del Rio
+-80.44 +22.16           : Cienfuegos
+-77.88 +21.39           : Camaguey
+-75.81 +20.04           : Santiago de Cuba
+-76.25 +20.88           : Holguin
+
+; Cyprus
++33.33 +35.14           : Nikosia
+
+; Czech Republic
++14.49 +50.07           : Prague
++16.61 +49.19           : Brno
+
+; Denmark
++12.4 +55.7             : København
+
+; Dominican Republic
+-70.62 +19.44           : Santiago
+-69.93 +18.5            : Santo Domingo
+
+; Ecuador
+-79.91 -2.16            : Guayaquil
+-78.42 -0.18            : Quito
+
+; Egypt
++29.79 +31.05           : Alexandria
++32.98 +24.48           : Assuan
++31.30 +30.09           : Cairo
++32.55 +29.95           : Suez
+
+; El Salvador
+-89.1 +13.7             : San Salvador
+
+; Ethiopia
++39 +15.4               : Asmara
++38.78 +9.01            : Adis Abeba
+
+; Finland
++24.9 +60.2             : Helsinki
++25.49 +65.02           : Oulu
+
+; France
+-0.6 +44.9              : Bordeaux
++7 +43.6                : Cannes
++5.4 +43.3              : Marseille
++2.3 +48.8              : Paris
++1.5 +43.6              : Toulouse
++0.8 +47.4              : Tours
++9.44 +42.62            : Bastia
++3.84 +43.61            : Montpellier
++4.91 +45.74            : Lyon
+-1.63 +48.11            : Rennes
+-4.45 +48.41            : Brest
+
+; Gabun
++8.81 -0.71             : Port Gentil
++9.43 +0.36             : Libreville
+
+; Gambia
+-16.6 +13.4             : Banjul
+
+; Germany
++13.4 +52.5             : Berlin
++8.8 +53.1              : Bremen
++7.47 +51.52            : Dortmund
++13.73 +51.05           : Dresden
++11.03 +50.98           : Erfurt
++8.68 +50.13            : Frankfurt/Main
++10 +53.55              : Hamburg
++9.75 +52.37            : Hannover
++9.5 +51.32             : Kassel
++10.14 +54.33           : Kiel
++6.95 +50.93            : Köln
++12.38 +51.33           : Leipzig
++11.63 +52.13           : Magdeburg
++11.57 +48.13           : München
++11.05 +49.47           : Nürnberg
++12.12 +54.08           : Rostock
++9.18 +48.82            : Stuttgart
+
+; Ghana
+-1.59 +6.7              : Kumasi
+
+; Greece
++23.75 +38              : Athina
++22.93 +40.68           : Thessaloniki
+
+; Greenland
+-50.7 +67               : Sondrestromfjord
+-68.7 +76.5             : Thule
+-51.73 +64.17           : Godthab
+-22.08 +70.52           : Scoresbysund
+
+; Guatemala
+-90.58 +14.62           : Guatemala
+
+; Guinea
+-13.62 +9.59            : Conakry
+
+; Guyana
+-58.11 +6.81            : Georgetown
+
+; Haiti
+-72.3 +18.6             : Port-au-Prince
+
+; Honduras
+-87.16 +14.07           : Tegucigalpa
+
+; Hungary
++19.13 +47.48           : Budapest
+
+; Iceland
+-22.6 +64               : Keflavik
+-21.9 +64.1             : Reykjavik
+-18.04 +65.67           : Akureyri
+-23.14 +66.09           : Isafjordur
+
+; India
++72.8 +19.1             : Bombay
++88.4 +22.5             : Calcutta
++77.21 +28.6            : Delhi
++80.20 +13.03           : Madras
++92.73 +11.66           : Port Blair
++78.5 +17.39            : Hyderabad
++77.61 +12.99           : Bangalore
++79.12 +21.18           : Nagpur
++72.6 +23.02            : Ahmadabad
++77.43 +23.25           : Bhopal
++75.81 +26.92           : Jaipur
++80.32 +26.45           : Kampur
++78 +27.2               : Agra
+
+; Indonesia
++106.83 -6.22           : Jakarta
++112.72 -7.35           : Surabaya
++107.59 -6.93           : Bandung
++95.32 +5.53            : Banda Aceh
+
+; Iran
++51.2 +35.6             : Teheran
++51.72 +32.69           : Isfahan
+
+; Iraq
++47.8 +30.3             : Basrah
++44.4 +33.4             : Baghdad
++45.42 +35.58           : Kirkuk
++43.15 +36.36           : Mossul
+
+; Ireland
+-6.35 +53.27            : Dublin
+-8.37 +51.87            : Cork
+
+; Israel
++35.22 +31.79           : Jerusalem
+
+; Italy
++11.34 +44.51           : Bologna
++9.2 +45.5              : Milano
++12.6 +41.9             : Roma
++12.34 +45.43           : Venezia
++14.21 +40.9            : Napoli
++16.84 +41.09           : Bari
++13.31 +38.13           : Palermo
++15.05 +37.51           : Catania
++9.06 +39.26            : Cagliari
++7.63 +45.04            : Torino
++13.53 +43.56           : Ancona
++14.17 +42.41           : Pescara
++11.17 +43.81           : Firenze
++8.94 +44.42            : Genova
+
+; Ivory Coast
+-3.98 +5.34             : Abidjan
+
+; Jamaica
+-76.8 +18               : Kingston
+
+; Japan
++139.6 +35.4            : Yokohama
++141.7 +42.8            : Chitose
++130.4 +33.6            : Fukuoka
++135.94 +35.06          : Kyoto
++129.9 +32.7            : Nagasaki
++136.9 +35.2            : Nagoya
++135.5 +34.61           : Osaka
++141.4 +43.1            : Sapporo
++139.7 +35.7            : Tokyo
++139.06 +37.81          : Niigata
++135.06 +34.7           : Kobe
++132.47 +34.37          : Hiroshima
++140.51 +40.64          : Hirosaki
+
+; Jordan
++35.9 +31.95            : Amman
+
+; Kazakhstan
++76.93 +43.27           : Alma-Ata
++69.27 +41.28           : Tashkent
++68.78 +38.54           : Dushanbe
++80.25 +50.39           : Semipalatinsk
++73.11 +49.84           : Karaganda
++51.4 +51.21            : Ural'sk
++65.5 +44.85            : Kzyl-Orda
++67.46 +47.86           : Zhezkazgan
++61.68 +46.8            : Aral'sk
++64.1 +45.5             : Dzhusaly
++63.31 +45.9            : Novokazalinsk
+
+; Kenya
++36.8 -1.3              : Nairobi
++39.69 -4.03            : Mombasa
+
+; Kuwait
++48.03 +29.24           : Kuwait City
+
+; Laos
++102.62 +17.95          : Vientiane
+
+; Lebanon
++35.63 +33.91           : Beirut
+
+; Libya
++13.2 +32.8             : Tripolis
++20.07 +32.1            : Benghazi
+
+; Madagascar
++47.53 -18.9            : Tananarive
++49.4 -18.15            : Taomasina
+
+; Malawi
++33.81 -13.94           : Lilongwe
++35.03 -15.79           : Blantyre
+
+; Malaysia
++101.6 +3.12            : Kuala Lumpur
++100.35 +5.39           : Pinang
+
+; Maledives
++73.53 +4.21            : Male
+
+; Mali
+-7.95 +12.62            : Bamako
+
+; Mexico
+-99.8 +16.8             : Acapulco
+-99.1 +19.5             : Mexico City
+-103.35 +20.63          : Guadalajara
+-100.24 +25.73          : Monterrey
+-86.81 +21.15           : Cancun
+-89.61 +20.98           : Merida
+-94.48 +18.05           : Minatitlan
+-97.83 +22.26           : Tampico
+-103.41 +25.61          : Torreon
+-106.06 +28.66          : Chihuahua
+-110.95 +29.07          : Hermosillo
+-115.38 +32.59          : Mexicali
+-116.96 +32.49          : Tijuana
+-110.3 +24.15           : La Paz
+
+; Mongolia
++106.9 +47.91           : Ulaanbaatar
+
+; Morocco
+-7.9 +32.1              : Ben Guerir
+-7.7 +33.5              : Casablanca
+-6.8 +34                : Rabat
+
+; Mosambique
++32.54 -25.93           : Maputo
++34.87 -19.81           : Beira
++39.3 -15.12            : Nampula
+
+; Myanmar
++96.17 +16.83           : Rangoon
++96.09 +21.98           : Mandalay
+
+; Namibia
++14.51 -22.93           : Walfischbai
++17.08 -22.55           : Windhoek
++15.17 -26.63           : Lüderitz
++18.13 -26.58           : Seeheim
+
+; Nepal
++85.4 +27.7             : Kathmandu
+
+; Netherlands
++4.9 +52.3              : Amsterdam
+
+; New Zealand
++174.8 -36.9            : Auckland
++172.6 -43.5            : Christchurch
++170.4 -45.9            : Dunedin
++168.4 -46.4            : Invercargill
++174.9 -41.2            : Wellington
+
+; Nicaragua
+-86.25 +12.13           : Managua
+
+; Niger
++2.12 +13.52            : Niamey
+
+; Nigeria
++8.5 +12                : Kano
++3.35 +6.53             : Lagos
++5.64 +6.34             : Benin
++7.44 +10.49            : Kaduna
++13.18 +11.86           : Maiduguri
+
+; North Korea
++125.75 +39.03          : P'yongyang
++127.54 +39.92          : Hamhung
++127.64 +39.83          : Hungnam
++127.43 +39.17          : Wonsan
++129.78 +41.77          : Ch'ongjin
+
+; Norway
++5.2 +60.3              : Bergen
++10.7 +59.9             : Oslo
++10.33 +63.36           : Trondheim
+
+; Pakistan
++74.34 +31.53           : Lahore
++73.06 +33.63           : Rawalpindi
++71.53 +34.01           : Peshawar
++71.48 +30.17           : Multan
++67.01 +30.21           : Quetta
++67.1 +24.9             : Karachi
++68.47 +25.38           : Hyderabad
+
+; Panama
+-79.4 +9.1              : Panama City
+
+; Paraguay
+-57.48 -25.36           : Asuncion
+
+; Peru
+-76.94 -12.05           : Lima
+-71.51 -16.41           : Arequipa
+-71.92 -13.54           : Cuzco
+-79.02 -8.11            : Trujillo
+-74.54 -8.36            : Pucallpa
+
+; Philippines
++122.98 +10.66          : Bacolod
++121.01 +14.41          : Manila
++123.95 +10.31          : Cebu
++125.61 +7.11           : Davao
+
+; Poland
++18.53 +54.42           : Gdansk
++21.01 +52.22           : Warszawa
++19.47 +51.75           : Lodz
+
+; Portugal
+-8.6 +41.17             : Porto
+-9.16 +38.79            : Lisboa
+
+; Romania
++26.12 +44.45           : Bucuresti
+
+; Russia and various former Soviet Union
++37.48 +55.64           : Moskva
++20.3 +54.7             : Kaliningrad
++30.3 +60               : St.Petersburg
++132 +43.1              : Vladivostok
++135.16 +48.47          : Khabarovsk
++137 +50.58             : Komsomol'sk
++104.32 +52.29          : Irkutsk
++107.59 +51.84          : Ulan-Ude
++40.55 +64.55           : Archangel'sk
++33.17 +68.99           : Murmansk
++82.92 +55.02           : Novosibirsk
++101.78 +56.3           : Bratsk
++92.9 +56.05            : Krasnoyarsk
++73.36 +54.98           : Omsk
++58.5 +51.21            : Orsk
++56.05 +54.85           : Ufa
++60.71 +56.83           : Yekaterinburg
++56.15 +57.98           : Perm'
++63.94 +67.56           : Vorkuta
++50.82 +61.68           : Syktyvkar
++49.66 +58.6            : Vyatka
++43.94 +56.29           : Nizhniy Novgorod
++45.92 +51.58           : Saratov
++44.46 +48.73           : Volgograd
++48.06 +46.36           : Astrakhan'
++129.74 +62.07          : Yakutsk
++113.43 +52.06          : Tchita
++124.72 +56.63          : Aldan
++150.83 +59.61          : Magadan
++127.52 +50.28          : Blagoveshchensk
++142.71 +46.95          : Yuzhno-Sakhalinsk
++143.05 +52.14          : Okha
++158.68 +53.03          : Petropavlovsk-Kamchatskyi
++114.02 +62.54          : Mirnyy
++32.07 +54.79           : Smolensk
++31.28 +58.55           : Novgorod
++36.18 +51.72           : Kursk
++36.28 +54.54           : Kaluga
++39.84 +57.64           : Yaroslavl'
++39.72 +47.23           : Rostov
+-173.23 +64.42          : Provideniya
++177.72 +64.74          : Anadyr
+-179.44 +68.89          : K.Schmidt
++161.38 +68.76          : Arabartchik
+
+; Saudi Arabia
++39.6 +24.49            : Medina
++46.74 +24.72           : Riyadh
++39.89 +21.5            : Mecca
++36.58 +28.37           : Tabuk
++41.73 +27.51           : Hail
+
+; Senegal
+-17.5 +14.8             : Dakar
+
+; Serbia
++20.46 +44.82           : Beograd
+
+; Sierra Leone
+-13.21 +8.48            : Freetown
+
+; Somalia
++45.31 +2.05            : Mogadisciou
+
+; South Africa
++18.51 -33.94           : Cape Town
++28.12 -26.18           : Johannesburg
++25.57 -33.89           : Port Elizabeth
++30.95 -29.84           : Durban
++24.77 -28.73           : Kimberley
++28.22 -25.73           : Pretoria
++27.83 -32.96           : East London
++21.24 -28.47           : Upington
+
+; South Korea
++126.93 +37.52          : Soul
++129.06 +35.2           : Pusan
+
+; Spain
++2.1 +41.4              : Barcelona
+-3.7 +40.4              : Madrid
+-0.88 +41.67            : Zaragoza
++2.62 +39.59            : Palma de Mallorca
+-0.45 +39.51            : Valencia
+-2.69 +36.78            : Almeria
+-5.98 +37.36            : Sevilla
+-2.93 +43.29            : Bilbao
+-5.75 +43.34            : Oviedo
+-8.29 +43.33            : A Coruña
+-4.71 +41.62            : Valladolid
+-8.76 +42.35            : Vigo
+
+; Sri Lanka
++79.9 +7                : Colombo
+
+; Sudan
++32.6 +15.6             : Khartoum
+
+; Surinam
+-55.17 +5.81            : Paramaribo
+
+; Sweden
++18 +59.4               : Stockholm
+
+; Switzerland
++7.5 +47                : Bern
+
+; Syria
++36.33 +33.51           : Damascus
+
+; Taiwan
++121.51 +25.09          : Taipeh
++120.58 +24.08          : Tai-zhong
++120.45 +22.63          : Gao-xiung
+
+; Tanzania
++39.3 -6.8              : Dar es Salaam
+
+; Tibet
++91.1 +29.6             : Lhasa
+
+; Thailand
++100.5 +13.8            : Bangkok
++99.02 +18.79           : Chiangmai
+
+; Tunisia
++10.2 +36.8             : Tunis
+
+; Turkey
++32.83 +39.92           : Ankara
++28.99 +41.01           : Istanbul
++27.13 +38.42           : Izmir
++30.75 +36.91           : Antalya
+
+; United Arab Emirates
++55.41 +25.27           : Dubai
++54.59 +24.42           : Abu Dhabi
+
+; United Kingdom
++0 +51.47               : London
+-1.9 +52.5              : Birmingham
+-2.6 +51.5              : Bristol
+-1.5 +53.8              : Leeds
+-57.94 -51.59           : Stanley
+-3.13 +55.94            : Edinburgh
+-5.36 +36.17            : Gibraltar
+-2.14 +57.16            : Aberdeen
+-4.33 +55.78            : Glasgow
+-1.72 +54.95            : Newcastle
+-2.99 +53.41            : Liverpool
+-5.8 +54.65             : Belfast
+
+; United States of America
+-150 +61.2              : Anchorage
+-71.05 +42.35           : Boston
+-157.9 +21.3            : Honolulu
+-87.74 +41.89           : Chicago
+-81.77 +41.39           : Cleveland
+-122.22 +47.77          : Seattle
+-93.12 +45              : Minneapolis
+-78.72 +42.93           : Buffalo
+-88.01 +43.08           : Milwaukee
+-83.22 +42.44           : Detroit
+-74.04 +40.62           : New York
+-79.87 +40.44           : Pittsburgh
+-75.12 +40              : Philadelphia
+-104.99 +39.74          : Denver
+-76.65 +39.38           : Baltimore
+-84.4 +39.12            : Cincinnati
+-94.46 +39.1            : Kansas City
+-77.2 +38.83            : Washington D.C.
+-90.27 +38.68           : St.Louis
+-122.42 +37.76          : San Francisco
+-118.39 +33.98          : Los Angeles
+-84.37 +33.82           : Atlanta
+-117.18 +32.82          : San Diego
+-96.69 +32.87           : Dallas
+-95.38 +29.78           : Houston
+-80.22 +25.88           : Miami
+-115.13 +36.15          : Las Vegas
+-111.96 +33.51          : Phoenix
+-110.92 +32.22          : Tucson
+-106.32 +31.81          : El Paso
+-106.58 +35.1           : Albuquerque
+-111.94 +40.74          : Salt Lake City
+-122.62 +45.54          : Portland
+-93.61 +41.61           : Des Moines
+-95.98 +41.21           : Omaha
+-97.32 +37.67           : Wichita
+-95.89 +36.09           : Tulsa
+-97.47 +35.46           : Oklahoma City
+-97.73 +30.34           : Austin
+-98.49 +29.44           : San Antonio
+-97.38 +27.82           : Corpus Christi
+-101.82 +35.2           : Amarillo
+-101.86 +33.56          : Lubbock
+-96.78 +46.87           : Fargo
+-100.77 +46.83          : Bismarck
+-103.13 +44.08          : Rapid City
+-117.39 +47.67          : Spokane
+-119.76 +39.53          : Reno
+-121.34 +38.64          : Sacramento
+-119.75 +36.78          : Fresno
+-119.67 +34.43          : Santa Barbara
+-112.45 +42.9           : Pocatello
+-116.3 +43.61           : Boise
+-123.1 +44.06           : Eugene
+-89.92 +35.11           : Memphis
+-90.15 +32.34           : Jackson
+-91.12 +30.5            : Baton Rouge
+-89.99 +29.95           : New Orleans
+-86.69 +36.16           : Nashville
+-86.81 +33.45           : Birmingham
+-83.96 +35.96           : Knoxville
+-82.97 +40.03           : Columbus
+-86.13 +39.81           : Indianapolis
+-83.59 +41.65           : Toledo
+-85.62 +42.94           : Grand Rapids
+-73.75 +42.75           : Albany
+-77.48 +37.56           : Richmond
+-76.18 +36.86           : Norfolk
+-78.71 +35.71           : Raleigh
+-80.8 +35.21            : Charlotte
+-81.05 +34.01           : Columbia
+-79.95 +32.84           : Charleston
+-81.12 +32.01           : Savannah
+-81.670 +30.333         : Jacksonville
+-81.39 +28.53           : Orlando
+-86.33 +32.39           : Montgomery
+-84.95 +32.46           : Columbus
+-84.27 +30.46           : Tallahassee
+-87.23 +30.5            : Pensacola
+-82.03 +33.44           : Augusta
+-82.33 +34.85           : Greenville
+-85.19 +35.07           : Chattanooga
+-86.64 +34.73           : Huntsville
+-75.28 +43.11           : Utica
+-80.08 +42.1            : Eerie
+-92.12 +46.79           : Duluth
+-89.39 +43.09           : Madison
+-96.37 +42.47           : Sioux City
+-96.73 +43.54           : Sioux Falls
+-98.49 +45.48           : Aberdeen
+-104.79 +41.15          : Cheyenne
+-106.35 +42.83          : Casper
+-104.76 +38.85          : Colorado Springs
+-104.57 +38.27          : Pueblo
+-104.49 +33.42          : Roswell
+-92.3 +34.74            : Little Rock
+-93.74 +32.5            : Shreveport
+-97.15 +31.52           : Waco
+-97.32 +32.77           : Fort Worth
+-99.73 +32.46           : Abilene
+-98.51 +33.93           : Wichita Falls
+-85.69 +38.24           : Louisville
+-118.21 +33.74          : Long Beach
+-117.21 +34.01          : San Bernadino
+-121.92 +37.33          : San Jose
+-147.56 +64.83          : Fairbanks
+-148.66 +70.3           : Prudhoe Bay
+-152.46 +57.78          : Kodiak
+-121.87 +36.56          : Monterey
+-70.28 +43.66           : Portland
+-71.41 +41.82           : Providence
+-72.66 +41.8            : Hartford
+-80.12 +26.71           : West Palm Beach
+-82.73 +27.88           : St.Petersburg
+-82.42 +28.07           : Tampa
+-81.04 +29.23           : Daytona Beach
+-81.71 +24.57           : Key West
+-77.91 +34.24           : Wilmington
+-68.79 +44.81           : Augusta
+-117.2075 +38.0623      : Tonopah
+-66.55 +18.02           : Ponce
+-65.91 +18.38           : San Juan
+-124.12 +40.81          : Eureka
+-88.01 +44.51           : Green Bay
+-100.32 +44.37          : Pierre
+-100.76 +41.15          : North Platte
+-111.28 +47.51          : Great Falls
+-111.97 +46.61          : Helena
+-112.52 +45.99          : Butte
+-108.52 +45.77          : Billings
+-165.38 +64.52          : Nome
+-166.53 +53.89          : Dutch Harbor
+-162.31 +55.07          : Cold Bay
+-158.51 +59.06          : Dillingham
+-161.76 +60.81          : Bethel
+-162.55 +66.89          : Kotzebue
+-156.96 +64.74          : Galena
+-156.73 +71.31          : Barrow
+-134.54 +58.37          : Juneau
+
+; Uganda
++32.6 +0.31             : Kampala
+
+; Ukrainia
++30.47 +50.46           : Kyyiv
++30.72 +46.46           : Odessa
++37.89 +48.04           : Donezk
++35.03 +48.47           : Dnipropetrovs'k
++36.24 +49.96           : Kharkiv
++24.05 +49.83           : L'viv
+
+; Upper Volta
+-1.49 +12.37            : Ouagadougou
+-4.27 +11.17            : Bobo Dioulasso
+
+; Uruguay
+-56.11 -34.8            : Montevideo
+
+; Venezuela
+-67 +10.5               : Caracas
+-62.65 +8.32            : Ciudad Guyana
+
+; Vietnam
++105.82 +21.02          : Ha Noi
++108.21 +16.05          : Da Nang
++106.71 +10.81          : Saigon
+
+; Zaire
++15.3 -4.3              : Kinshasa
++25.45 -10.71           : Kolwezi
++26.73 -10.99           : Likasi
++27.5 -11.66            : Lubumbashi
++25.19 +0.52            : Kisangani
+
+; Zambia
++28.4 -15.4             : Lusaka
+
+; Zimbabwe
++31.04 -17.86           : Harare
++28.59 -20.17           : Bulawayo
++26.48 -18.35           : Wankie
++32.65 -18.98           : Umtali

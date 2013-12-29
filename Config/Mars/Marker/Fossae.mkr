@@ -1,0 +1,64 @@
+BEGIN_HEADER
+InitialState on
+ColourIdx 5
+END_HEADER
+
+BEGIN_DATA
++224.20	+37.30	:	Acheron Fossae			
++233.80	-8.20	:	Aganippe Fossa			
++255.20	+53.90	:	Alba Fossae			
++150.70	+18.00	:	Albor Fossae			
++101.80	+8.70	:	Amenthes Fossae			
++271.90	-7.40	:	Calydon Fossa			
++251.00	+29.20	:	Ceraunius Fossae			
++164.00	+8.40	:	Cerberus Fossae			
++320.30	-51.70	:	Chalce Fossa			
++255.90	-31.20	:	Claritas Fossae			
++57.10	+36.20	:	Coloe Fossae			
++279.40	-35.60	:	Coracis Fossae			
++239.90	+32.20	:	Cyane Fossae			
++283.10	+2.90	:	Echus Fossae			
++146.30	+24.60	:	Elysium Fossae			
++329.00	-27.20	:	Erythraea Fossa			
++266.90	+4.20	:	Fortuna Fossae			
++141.80	+36.30	:	Galaxias Fossae			
++230.20	+3.20	:	Gigas Fossae			
++232.40	+14.80	:	Gordii Fossae			
++233.60	+27.10	:	Halex Fossae			
++122.50	+20.90	:	Hephaestus Fossae			
++137.30	+21.20	:	Hyblaeus Fossae			
++236.20	-46.10	:	Icaria Fossae			
++308.10	+36.70	:	Idaeus Fossae			
++37.70	+41.30	:	Ismeniae Fossae			
++243.40	+19.70	:	Jovis Fossae			
++275.90	+25.20	:	Labeatis Fossae			
++265.00	+20.70	:	[Labeatis Fossae]			
++214.00	-17.30	:	Mangala Fossa			
++284.70	+43.70	:	Mareotis Fossae			
++197.00	-3.20	:	Medusae Fossae			
++287.70	-26.50	:	Melas Fossae			
++205.60	-23.40	:	Memnonia Fossae			
++302.60	-24.30	:	Nectaris Fossae			
++287.70	-14.70	:	Nia Fossae			
++76.80	+22.60	:	Nili Fossae			
++302.20	+24.80	:	Nilokeras Fossa			
++261.30	-2.80	:	Noctis Fossae			
++330.60	-61.70	:	Oceanidum Fossa			
++245.90	+24.80	:	Olympica Fossae			
++243.20	-9.20	:	Oti Fossae			
++248.50	+4.10	:	Pavonis Fossae			
++65.80	+50.70	:	Pyramus Fossae			
++291.50	+21.50	:	Sacra Fossae			
++199.10	-34.60	:	Sirenum Fossae			
++149.70	+26.60	:	Stygis Fossae			
++273.40	+38.90	:	Tanais Fossae			
++262.50	+50.60	:	Tantalus Fossae			
++288.60	+39.90	:	Tempe Fossae			
++267.30	-47.20	:	Thaumasia Fossae			
++278.00	-3.50	:	Tithoniae Fossae			
++277.50	-6.30	:	[Tithoniae Fossae]			
++258.60	+25.70	:	Tractus Fossae			
++105.70	-22.30	:	Tyrrhena Fossae			
++236.60	+10.10	:	Ulysses Fossae			
++269.90	+25.40	:	Uranius Fossae			
++143.70	+24.00	:	Zephyrus Fossae			

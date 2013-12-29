@@ -1,0 +1,7 @@
+BEGIN_HYPERDESC
+<h1>Earth views</h1>
+
+<p>Orbiter now supports higher planetary surface texture resolutions. This folder demonstrates some breathtaking new views from low Earth orbit.</p>
+
+<p>To get the most impressive results, you need to install the high-resolution level-11 Earth textures.</p>
+END_HYPERDESC

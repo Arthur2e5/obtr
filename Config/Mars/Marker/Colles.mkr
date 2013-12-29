@@ -1,0 +1,22 @@
+BEGIN_HEADER
+InitialState on
+ColourIdx 4
+END_HEADER
+
+BEGIN_DATA
++288.00	+76.90	:	Abalos Colles			
++336.90	+50.60	:	Acidalia Colles			
++59.70	-39.70	:	Alpheus Colles			
++82.50	+25.20	:	Arena Colles			
++172.40	-34.50	:	Ariadnes Colles			
++87.70	+35.20	:	Astapus Colles			
++171.00	-1.60	:	Avernus Colles			
++62.90	+38.70	:	Colles Nili			
++347.80	+39.10	:	Cydonia Colles			
++21.70	+42.00	:	Deuteronilus Colles			
++145.70	+36.90	:	Galaxias Colles			
++350.40	+53.80	:	Ortygia Colles			
++333.30	+21.50	:	Oxia Colles			
++222.80	+66.20	:	Scandia Colles			
++173.00	+19.80	:	Tartarus Colles			
++277.20	+33.70	:	Tempe Colles

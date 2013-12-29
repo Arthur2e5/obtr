@@ -1,0 +1,44 @@
+BEGIN_HEADER
+InitialState on
+ColourIdx 2
+ShapeIdx 3
+END_HEADER
+
+BEGIN_DATA
++86.60	-29.80	:	Anseris Mons
++238.90	-8.30	:	Arsia Mons
++255.50	+11.80	:	Ascraeus Mons
++98.80	-27.40	:	Ausonia Montes
++14.10	-80.20	:	Australe Montes
++95.20	-38.60	:	Centauri Montes
++322.10	-53.70	:	Chalce Montes
++319.80	-58.00	:	Charitum Montes
++86.40	-34.60	:	Coronae Montes
++282.00	+8.10	:	Echus Montes
++146.90	+24.80	:	Elysium Mons
++185.00	+35.70	:	Erebus Montes
++105.00	-44.80	:	Euripus Mons
++142.20	+34.80	:	Galaxius Mons
++278.00	-7.70	:	Geryon Montes
++269.00	+41.30	:	Gonnus Mons			
++97.70	-37.60	:	Hellas Montes			
++42.80	-44.40	:	Hellespontus Montes			
++171.30	+3.70	:	Hibes Montes			
++323.40	-51.10	:	Horarum Mons			
++283.80	+37.50	:	Labeatis Mons			
++88.90	+2.80	:	Libya Montes			
++316.00	-38.60	:	Nereidum Montes			
++318.70	-54.90	:	Oceanidum Mons			
++317.10	-55.30	:	Octantis Mons			
++226.00	+18.40	:	Olympus Mons			
++246.60	+0.80	:	Pavonis Mons			
++86.10	-30.90	:	[Peneus Mons]			
++86.00	-31.10	:	Peraea Mons			
++165.20	+40.80	:	Phlegra Montes			
++271.30	+39.50	:	Pindus Mons			
++13.90	-69.70	:	Sisyphi Montes			
++268.90	+39.50	:	Tanaica Montes			
++167.00	+15.80	:	Tartarus Montes			
++247.50	+1.20	:	Tharsis Montes			
++101.10	-24.20	:	Tyrrhena Mons			
++305.50	+18.20	:	Xanthe Montes			

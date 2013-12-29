@@ -1,0 +1,21 @@
+BEGIN_HEADER
+InitialState on
+ColourIdx 2
+END_HEADER
+
+BEGIN_DATA
++245.00	-83.40	:	Australe Scopuli			
++255.00	+88.20	:	Boreales Scopuli			
++20.00	-24.60	:	Charybdis Scopulus			
++64.80	-33.50	:	Coronae Scopulus			
++139.00	-53.50	:	Eridania Scopulus			
++176.00	+79.40	:	[Frigoris Scopulus]			
++25.00	+80.90	:	Gemini Scopuli			
++200.00	+82.40	:	[Hyperboreus Scopulus]			
++88.00	-77.90	:	[Hypernotius Scopulus]			
++303.80	+31.60	:	Nilokeras Scopulus			
++76.90	-11.00	:	Oenotria Scopulus			
++18.30	-25.10	:	Scylla Scopulus			
++177.20	-4.30	:	Tartarus Scopulus			
++180.00	-77.40	:	Ultimi Scopuli			
++307.40	+19.30	:	Xanthe Scopulus			

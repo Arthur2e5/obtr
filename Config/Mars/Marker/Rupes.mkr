@@ -1,0 +1,31 @@
+BEGIN_HEADER
+InitialState on
+ColourIdx 2
+END_HEADER
+
+BEGIN_DATA
++110.50	+1.60	:	Amenthes Rupes			
++175.80	-6.50	:	[Ammonii Rupes]			
++70.50	+13.40	:	[Arena Rupes]			
++291.80	-62.40	:	Argyre Rupes			
++212.10	-9.60	:	Arimanes Rupes			
++172.90	-9.50	:	Avernus Rupes			
++302.40	-42.90	:	Bosporos Rupes			
++164.60	+8.30	:	[Cerberus Rup?s]			
++20.50	-55.40	:	Chalcoporos Rup?s			
++254.60	-25.70	:	Claritas Rupes			
++116.00	+55.70	:	Cydnus Rupes			
++148.00	+25.10	:	Elysium Rupes			
++117.00	+21.80	:	Hephaestus Rupes			
++125.50	-36.10	:	Morpheos Rupes			
++305.50	-33.10	:	Ogygis Rupes			
++226.00	+18.40	:	Olympus Rupes			
++130.00	+63.70	:	Panchaia Rupes			
++50.40	+26.40	:	Phison Rupes			
++29.40	-64.10	:	Pityusa Rupes			
++90.60	-75.30	:	Promethei Rupes			
++270.00	+81.90	:	Rupes Tenuis			
++175.60	-6.50	:	Tartarus Rupes			
++130.90	-69.60	:	Thyles Rupes			
++159.90	-68.40	:	Ulyxis Rupes			
++90.00	+39.70	:	Utopia Rupes			

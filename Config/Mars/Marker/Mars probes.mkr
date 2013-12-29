@@ -1,0 +1,19 @@
+BEGIN_HEADER
+InitialState on
+ColourIdx 2
+END_HEADER
+
+BEGIN_DATA
+
+-48.222 +22.697         : Viking 1 lander
++134.26 +47.97          : Viking 2 lander
+-35.55 +19.33           : Pathfinder/Sojourner    : Sagan Memorial Station
+-16 -76                 : Mars Polar Lander       : (intended)
+-89.5 +11.60            : "Valley of the lost Beagle"
++175.4785 -14.5718      : MER-A                   : "Spirit"
+-5.5258 -1.9483         : MER-B                   : "Opportunity"
+-133 -44.2              : Mars 2 crash
+-158 -45                : Mars 3
+-19.42 -23.9            : Mars 6 crash
+-28 -50                 : Mars 7                  : (intended)
++234.2508 +68.2188      : Phoenix Lander

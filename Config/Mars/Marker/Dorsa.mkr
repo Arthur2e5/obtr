@@ -1,0 +1,40 @@
+BEGIN_HEADER
+InitialState on
+ColourIdx 5
+END_HEADER
+
+BEGIN_DATA
++153.10	+36.90	:	Aesacus Dorsum			
++220.00	+54.70	:	Arcadia Dorsa			
++68.90	+12.70	:	Arena Dorsum			
++270.90	+38.20	:	Atrax Dorsum			
++318.20	-55.70	:	Auxo Dorsum			
++170.70	-6.80	:	Avernus Dorsa			
++105.40	-13.70	:	Cerberus Dorsa			
++318.40	-55.90	:	Charis Dorsum			
++314.30	-55.20	:	Cleia Dorsum			
++326.80	-77.80	:	Dorsa Argentea			
++62.90	-71.10	:	Dorsa Brevia			
++203.50	+4.40	:	Eumenides Dorsum			
++294.10	-21.90	:	Felis Dorsa			
++215.90	+4.40	:	Gordii Dorsum			
++314.80	-54.80	:	Hegemone Dorsum			
++113.10	-23.20	:	Hesperia Dorsa			
++129.00	+10.90	:	Hyblaeus Dorsa			
++309.60	+20.90	:	Iamuna Dorsa			
++88.20	+12.10	:	Isidis Dorsa			
++288.60	-0.10	:	Juventae Dorsa			
++288.30	-18.30	:	Melas Dorsa			
++280.70	+20.30	:	Nilus Dorsa			
++318.10	-55.20	:	Pasithea Dorsum			
++316.90	-54.00	:	Phaenna Dorsum			
++176.00	+22.80	:	Phlegra Dorsa			
++29.50	-64.20	:	[Pityusa Dorsa]			
++293.70	+9.80	:	Sacra Dorsa			
++280.40	-13.50	:	Sinai Dorsa			
++280.20	-23.10	:	Solis Dorsa			
++151.80	+30.80	:	Styx Dorsum			
++115.60	-23.80	:	Tyrrhena Dorsa			
++285.00	+23.90	:	Uranius Dorsum			
++325.00	+29.70	:	Xanthe Dorsa			
++80.50	-48.60	:	Zea Dorsa			

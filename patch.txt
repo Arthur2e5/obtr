@@ -1,0 +1,2718 @@
+031218
+* Improved cloud shadow implementation (cloud shadows now appear less "grey")
+
+031225
+* More than 64k stars can now be rendered.
+* New encoding for planets as pixel blocks. Colours are now correct in 16bit
+  modes. "Blockiness" is reduced.
+
+031229
+* Bug fix: Crash on selecting "ignore joystick throttle setting on launch" for
+  joysticks without throttle control.
+* Bug fix: surface bases are now rendered below cloud cover.
+
+040109
+* Nonspherical planet shapes can now be considered in the calculation of the
+  gravitational potential (but the shape must be symmetric w.r.t. its axis of
+  rotation). At the moment, perturbation terms up to the 4th order harmonic
+  (coefficients J2-J4) are used. Perturbation terms for the major planets are
+  included.
+
+040113
+* New feature: shadows projected from vessels onto planetary surfaces.
+* Mesh files now support "FLAG" group entry to specify bit-flags. Bit 0 in
+  vessel meshes indicates "exclude from shadow projection", to improve render
+  efficiency of shadows.
+
+040116
+* Bug fix: Launchpad freezing when selecting a fullscreen-only video mode.
+* Bug fix: Video modes erraneously registered as fullscreen-only.
+
+040121
+* Directories in the Launchpad scenario list are now sorted alphabetically.
+* Scenarios can now be launched by double-clicking in the list.
+* Orbit MJD: Orbital elements can now be displayed in equatorial reference
+  frame, in addition to ecliptic frame. New button ("FRM") added to switch
+  between frames.
+  Target elements are now displayed even if the reference body is not the
+  target's primary gravitational field source.
+
+040122
+* DG: Reduced wheel brake effect.
+* Modified meshes for DG, Atlantis (+SRB and tank) for efficient shadow rendering
+  (added "FLAG 1" entries). Reduced Atlantis mesh by 1300 vertices.
+
+040125
+* Mesh base objects can now cast shadows (must specify the "SHADOW" flag in their
+  base config entry).
+* Mesh base object elevations are now corrected for Earth curvature when
+  "MapObjectsToSphere" flag is specified in the config file. ATTENTION SURFACE
+  BASE ADDON DEVELOPERS: manual y-offsets for mesh objects (defined in the
+  POS entry of the config file or directly in the mesh) should be removed.
+
+040126
+* Specular reflection from water surfaces now depends on reflection angle and
+  atmospheric colour, to correct for the excessively yellow reflection hue.
+
+040127
+* Added more tiles to KSC.
+
+040131
+* Modified the brightness fall-off with distance for planets rendered as pixel
+  blocks. Planet brightnesses compare now better with star brightnesses when
+  viewed from Earth, but it remains a compromise due to limited dynamic range.
+* Adjusted planet AlbedoRGB for Venus and Mercury.
+* Modified darkening of sky during dusk/dawn: sky remains brighter, stars come
+  on later. Sky also darkens less rapidly with altitude.
+* Ground observer camera dialog: Locations can now be entered manually (longitude,
+  latitude, altitude) instead of selecting from the predefined locations.
+  Added new button "Current" to set the current camera location to ground observer
+  mode. This now also provides a kind of flyby mode: move the camera in target-
+  relative mode ahead of the vessel, then click "Current" to fix the camera and
+  see the vessel fly by.
+* Added stencil buffer support to remove the shadow rendering artefacts arising
+  from overlapping projected polygons. Reduced shadow darkness. Launchpad dialog
+  now has an option to enable/disable stencil buffers in the video tab. If
+  disabled, or if video mode doesn't support stencil buffers, shadows are rendered
+  black.
+* Diffuse particle streams can now also generate ground shadows.
+
+040202
+* API: Added oapiGetPlanetJCoeffCount, oapiGetPlanetJCoeff,
+  VESSEL::OrbitStabilised, VESSEL::NonsphericalGravityEnabled.
+* DG: Reduced hover thrust rating. VTOL is now just about possible on Mars, but no
+  longer on Earth.
+
+040205
+* Bug fix: wrong signs in Surface HUD pitch ladder labels.
+* Added signs to Orbit HUD pitch ladder labels.
+
+040206
+* Added azimuth ribbon to Orbit HUD.
+* Experimental implementation of nosewheel steering (used by DG).
+* New particles for Atlantis SRB.
+
+040208
+* Camera can now be rotated in cockpit mode. Some changes in the keyboard controls:
+  - Cursor keys now rotate the view
+  - Panels are scrolled with Ctrl-Cursor keys
+  - Switch between panels with Alt-Cursor keys
+  Changes in joystick coolie hat controls:
+  - Coolie hat now rotates the view
+  - Coolie hat + joystick button 2 scrolls the panel
+
+040212
+* Virtual cockpit implementation started. F8 now cycles through generic, 2D panels,
+  and 3D virtual cockpit where supported.
+* Added callback function ovcLoadVC for vessel modules to initialise the virtual
+  cockpit.
+* New API functions:
+  oapiVCRegisterMFD (register MFD surface in virtual cockpit)
+  oapiVCRegisterArea (register a texture area for dynamic updates in virtual
+	cockpit)
+  oapiGetTextureHandle (retrieve a texture from a mesh - required for accessing
+  textures for dynamic updates)
+* Mesh file extensions:
+  FLAG 2 (bit 1) indicates that the group is not rendered (but its shadow is)
+  FLAG 4 (bit 2) indicates that lighting is disabled when rendering the group
+     (useful for rendering instruments)
+  Flag 'D' following a texture name indicates that the texture can be dynamically
+  updated (for virtual cockpits).
+
+040215
+* Added mouse interface to virtual cockpit.
+* Modified virtual cockpit camera for more 'natural' feeling:
+  - rotation point is offset from camera position ("head-neck offset") to create
+    a parallax when turning the head.
+  - small acceleration/deceleration at the beginning and end of a head rotation.
+* Started on virtual cockpit design for DG
+
+040218
+* Bug fix: Simulation window now receives input focus after double-clicking a
+  scenario from the list.
+
+040220
+* Bug fix: Panels not updated when switching spacecraft with F3.
+
+040302
+* Large distances (>1e4AU) are now displayed as pc (parsec)
+
+040318
+* Virtual cockpit HUD implemented.
+* Meshes marked with MESHVIS_COCKPIT are now again rendered in internal views.
+* Added flag MESHVIS_VC to be used with VESSEL::SetMeshVisibilityMode to mark a
+  mesh to be rendered in virtual cockpit mode only.
+
+040319
+* Base objects remain visible even if camera is below zero altitude.
+
+040322
+* New API vessel callback function ovcGenericCockpit to initialise or disable
+  generic cockpit view.
+
+040327
+* Bug fix: GDI resource leak in Map MFD.
+* Bug fix: File handle leak when loading base surface tiles.
+* Virtual cockpit mode is now stored in the scenario (BEGIN_VC/END_VC)
+
+040328
+* VC HUD: Implemented camera parallax correction.
+
+040330
+* API: added functions
+  VESSEL::GetCameraDefaultDirection
+  VESSEL::SetCameraDefaultDirection
+  (applied to DG overhead and bottom panels)
+* Improved VC camera rotation algorithm
+
+040401
+* API: added functions
+  VESSEL::SetCameraRotationRange
+  oapiCameraSetCockpitDir
+  oapiCameraMode
+
+040406
+* Modified HUD VC implementation: now uses RGB texture format (no alpha channel),
+  and destination blend mode 'ONE' for background blending. Changing the HUD
+  intensity now also affects non-VC cockpit modes.
+
+040407
+* Atlantis module: Trim is now available after loading orbiter-only scenarios.
+* Only meshes with the VISMODE_EXTERNAL attribute cast shadows.
+
+040410
+* Changing mesh visibility flags now also works while the mesh is rendered. Added
+  constant MESHVIS_NEVER (0) for convenience.
+
+040411
+* Docking approach path rectangles now work with VC HUD.
+
+040420
+* Preliminary implementation of atmospheric haze by alpha-gradient texture.
+
+040421
+* New format for surface bases in planet cfg files, to simplify the addition of
+  new bases. The old format is still recognized and can be used simultaneously.
+
+040422
+* API: added functions
+  oapiSwitchPanel
+  oapiSetPanel
+
+040425
+* Bug fix: cloud brightness increased when camera is close to runway lighting
+* Ring systems are now rendered without z-buffer if the camera is inside the inner
+  ring radius. This should get rid of some ring rendering artefacts.
+* Slight modification of Earth AtmColor0: less red, more blue.
+* Ground observer panning speed is now stored in orbiter.cfg
+* Planets rendered through an atmosphere now add the background colour to their
+  surface (check moon from Earth's surface)
+
+040426
+* Twilight: moved the onset of green and blue sky components during dawn/dusk
+  closer together. This reduces the yellow and green hues, and narrows the reddish
+  tips of the crescent Earth.
+* Bug fix: HUD now scales again with FOV in 2D panel mode.
+
+040429
+* Horizon haze adjusted to be less bright at large distances.
+* Bug fix: scenarios without fixed start time are always reset to launch at
+  system time.
+
+040507
+* Keyboard mapper: partially implemented. Key associations read from keymap.cfg.
+  Logical key functions defined in orbitersdk.h (OAPI_LKEY_xxx) for later use in
+  API.
+* Experimental implementation of distance-dependent fog at low altitudes.
+  Problems:
+  - DirectX doesn't allow fog to be applied before lighting transformation, so
+    fog can't cope with lighting variations and only works locally (at low
+    altitudes) Orbiter therefore scales down fog as a function of camera altitude
+  - Fog leads to artefacts when applied to large triangles (apparent size) ->
+    causes artefacts at very low altitudes outside areas covered with hires base
+    tiles.
+* Experimental implementation of increased ambient levels within lit atmospheres.
+  Also works only locally and is therefore faded out as a function of camera
+  altitude -> causes areas close to the terminator, which appear dark from a
+  distance, to brighten as the camera moves in.
+* Ctrl-F3 switches back to the previously active vessel. This allows to quickly
+  switch backwards and forwards between two vessels.
+
+040509
+* Planetarium mode: added labels for surface bases and transmitters.
+* Planetarium mode: status is now saved in orbiter.cfg.
+
+040513
+* Improved stability of calculation of eccentric anomaly.
+
+040515
+* Luna.dll: replaced lunar ephemeris calculation with (partial) ELP2000-82
+  perturbation solution. Moon position and velocity is now significantly more
+  accurate and consistent. (also fixes the old "sliding over lunar surface" bug).
+  Moon.cfg now recognises the ErrorLimit flag (same usage as for major planets)
+* Planet module interface has changed:
+  <Planet>_Ephemeris replaces <Planet>_EclSphData
+  <Planet>_FastEphemeris replaces <Planet>_CurrentData
+  Both new methods accept an additional data format parameter, which allows to
+  provide ephemerides in cartesian coordinates instead of the standard polar
+  coordinates.
+* Added status output to splash screen.
+
+040516
+* Demo/kiosk mode: can now be activated by setting flags in Orbiter.cfg. In demo
+  mode,
+  - Background is covered with an image
+  - only scenario tab is accessible in launchpad
+  - maximum simulation runtime can be limited
+  - maximum launchpad idle time can be limited, before
+  - orbiter auto-launches with one of the scenarios in the Demo folder, if
+    available
+  - Orbiter exit option can be disabled.
+
+040529
+* API: Added vessel callback function ovcDrawHUD to allow modules to draw
+  vessel-specific modifications in the HUD.
+* API: Added function oapiDrawDefaultHUD to generate default HUD from within
+  ovcDrawHUD.
+* DG: Now shows landing gear status in the HUD, using the ovcDrawHUD mechanism.
+
+040531
+* Included Roger Benson's updated Mir. Modified cross sections and PMI values in
+  Mir.cfg.
+* Orbit MFD: Semi-major axis for hyperbolic orbits is now displayed as negative.
+* Bug fix: calculation of eccentric and true anomaly of hyperbolic orbits.
+* Bug fix: potential problems initialising hyperbolic orbits
+* State vectors are now correctly calculated from orbital elements if e>1. Orbit
+  stabilisation is now enabled for hyperbolic orbits.
+
+040605
+* Bug fix: planetarium mode "off" is now remembered across sessions.
+* FlightData module: Data can now be logged in FlightData.log.
+* FlightData module bug fix: worked around a compiler bug which could freeze
+  orbiter when displaying data graphs in some circumstances.
+* Planetarium: constellation labels are now rendered as GDI text instead of
+  blitting from a bitmap, in the hope that this solves some CTD problems.
+  Constellation labels can now be switched independent of lines, and can be
+  displayed in full or abbreviated. The labels are now encoded in Constell2.bin.
+  Constlabel.bmp is no longer necessary.
+
+040607
+* API: Added oapiSetParticleLevelRef
+* DG: started on scramjet implementation (Alt+ / Alt- to increase/decrease scramjet
+  throttle) Some technical specs in DG HTML documentation.
+
+040608
+* Bug fix: Modified method of merging planet textures with background colour. (Now
+  uses an additional texture stage state instead of destination blending). Should
+  get rid of "stars shining through planets" bug.
+
+040610
+* Planetarium mode: custom surface labels now implemented. To use them, add
+  UserLabelFile entry to planet cfg file, and add a file containing the labels.
+  Format for each line of the label file:
+ 	<lng> <lat> : <label>
+* Bug fix: fixed "yellow clouds with space elevator" bug
+
+040612
+* Experimental: Micro-textures for cloud layers.
+* Some more functions included in key mapper.
+
+040616
+* Increased size of launchpad dialog.
+* Bug fix: parent-child attachment chains with more than one level are now
+  correctly updated.
+* Orbiter online help: switched to html-based help browser. Now can also be called
+  during the simulation (Alt-F1). Includes: scenario help (see scenario
+  Checklists|Mission 1 for an example) and vessel help (see any scenario with DG
+  for an example).
+  Known problems: 
+  a) the HTML client sometimes opens message boxes (for example, when using
+  search). This upsets orbiter in fullscreen mode, since it needs to track all
+  windows. Haven't found a fix for this yet.
+  b) the HTML client doesn't provide access to its message queue, which means that
+  the "focus follows mouse" behaviour can't be properly implemented.
+  c) only "compiled" help files (chm) are supported, not plain html files. This
+  requires the MS Html Help Workshop (which can be downloaded from MS). Somewhat
+  annoying...
+  d) Limited modularity. I haven't yet found a way for example to merge a separate
+  help file for an addon MFD into the main help system. May require some JavaScript
+  applet to search a given directory for help files and show them in a html file,
+  but I don't know how.
+
+040623:
+* DG: Hover thrust set to 150kN (realistic flight model) or 230kN (easy model). For
+  vertical lift-off from Earth with the realistic model, main fuel mass < 3600kg is
+  required.
+
+040626
+* Double-clicking on dialog box title bars now minimises the window to its title
+  bar.
+
+040627
+* Bug fix: Orbit HUD: prograde marker no longer shows up in 90 deg. position
+  (orbit-normal).
+* API: new functions
+	VESSEL::GetAtmRef
+	oapiGetPlanetAtmConstants
+
+040629
+* Planet config files: Added more horizon haze options:
+  - AtmHazeExtent to define the amount of bleed-in of horizon haze into the planet
+    disc. Range 0 (thinnest) to 1 (widest). Default 0.1
+  - AtmHazeDensity to modify haze density. Default: 1
+  - AtmHazeColor to define horizon haze colour independent from atmospheric colour.
+* Removed a few more scenario inconsistencies.
+
+040630
+* DG panel: Added scramjet throttle sliders
+
+040701
+* API: new functions
+	oapiColourFill
+	oapiBltPanelAreaBackground (to be used in conjunction with the new
+	PANEL_MAP_BGONREQUEST panel area mapping flag).
+
+040704
+* DG: major redesign of 2D main panel to accomodate scramjet controls. Also
+  redesigned main engine gimbal controls.
+
+040716
+* API: new functions
+  oapiGetOrbiterVersion
+  oapiGetModuleVersion
+  InitModule and ExitModule (replace opcDLLInit and opcDLLExit in plugin modules,
+	  and DllMain in all other modules)
+* DLL interfaces: All modules (including plugins and vessel dlls) should now
+  - use the #define ORBITER_MODULE directive
+  - link Orbitersdk.lib (in addition to Orbiter.lib)
+  - use InitModule() and ExitModule() methods instead of DllMain().
+  This allows orbiter to invoke a common DLL entry point which dumps the module
+  name and version to Orbiter.log.
+
+040717
+* Started on redesigning the vessel callback API. The idea is to replace all ovcXXX
+  callback functions with virtual VESSEL methods which can be overwritten by
+  derived classes. All ovcXXX functions are retained as far as they were present in
+  the 031217 release, but are marked obsolete in the manual. ovcXXX functions added
+  in the beta have been removed. Orbiter probes the module version id (see
+  oapiGetModuleVersion) to check which callback functions are present in the VESSEL
+  interface. The new mechanism has major advantages:
+  - Cleaner module code (no more need to cast from VESSEL pointers, and no need to
+    call a derived vessel method from the ovc callback hook).
+  - Default behaviour can be invoked by calling the base class method, instead of
+    requiring a separate oapiDoSomethingDefault function.
+* API: new functions:
+	VESSEL::clbkSetClassCaps (to replace ovcSetClassCaps)
+	VESSEL::clbkLoadStateEx (to replace ovcLoadStateEx)
+	VESSEL::clbkSaveState (to replace ovcSaveState)
+	VESSEL::clbkTimestep (to replace ovcTimestep)
+	VESSEL::clbkVisualCreated (to replace ovcVisualCreated)
+	VESSEL::clbkVisualDestroyed (to replace ovcVisualDestroyed)
+	VESSEL::clbkDrawHUD (to replace ovcDrawHUD)
+	VESSEL::clbkLoadGenericCockpit (to replace ovcGenericCockpit)
+	VESSEL::clbkLoadPanel (to replace ovcLoadPanel)
+	VESSEL::clbkPanelRedrawEvent (to replace ovcPanelRedrawEvent)
+	VESSEL::clbkPanelMouseEvent (to replace ovcPanelMouseEvent)
+	VESSEL::clbkLoadVC (to replace ovcLoadVC)
+	VESSEL::clbkVCRedrawEvent (to replace ovcVCRedrawEvent)
+	VESSEL::clbkVCMouseEvent (to replace ovcVCMouseEvent)
+* API: deleted functions:
+	ovcDrawHUD (replaced by VESSEL::clbkDrawHUD)
+	ovcGenericCockpit (replaced by VESSEL::clbkLoadGenericCockpit)
+	ovcLoadVC (replaced by VESSEL::clbkLoadVC)
+	ovcVCRedrawEvent (replaced by VESSEL::clbkVCRedrawEvent)
+	ovcVCMouseEvent (replaced by VESSEL::clbkVCMouseEvent)
+        oapiDrawDefaultHUD (no longer required, because functionality is provided
+		by base class VESSEL::clbkDrawHUD)
+
+040721
+* DG: Airbrake, radiator and elevator trim status are now stored in scenario.
+
+040725
+* Bug fix: Planet initialisation with EllipticOrbit = FALSE should now work (but
+  long-term stability of dynamic planet updates still needs to be tested)
+
+040726
+* Bug fix: Reading in hyperbolic orbital vessel elements from scenario did not
+  produce correct orbits. (This may also fix problem with jumps in hyperbolic
+  orbits during simulation)
+
+040729
+* More VESSEL callback functions implemented:
+	VESSEL::clbkPostCreation (to replace ovcPostCreation)
+	VESSEL::clbkFocusChanged (to replace ovcFocusChanged)
+* Bug fix: Dialog context pointer passed in LPARAM to dialog message handler with
+  WM_INITDIALOG message was invalid in last beta.
+* Map MFD: Intersections with planet surface are now indicated.
+
+040801
+* Bug fix: check for orbit stabilisation would occasionally fail incorrectly at
+  large time steps.
+* Orbit stabilisation is now enabled by default.
+
+040813
+* Reworked killrot code: this version should reduce residual rotation for
+  docked stacks, and be more stable at high time accelerations.
+
+040826
+* Added Roger's new DG exterior and VC meshes. Modified DG animations to work
+  with the new meshes. Added DG control dialog (Ctrl-Space).
+* Bug fix: Mapping of global coordinates to HUD screen coordinates (caused
+  artefacts in docking approach markers)
+
+040830
+* DG: added instrumentation for VC.
+* API: new functions
+	VESSEL::GetMesh
+	oapiMeshGroupCount
+
+040901
+* DG-S html help: updated 2-D panel documentation.
+
+040904
+* Orbital elements: Modified iterative calculation of eccentric anomaly E from
+  mean anomaly M: initial guess for E no longer initialised to M, but to previous
+  value of E. This improves the stability of the iteration at eccentricities
+  close to 1. Threshold for residual r_k = M_k - E_k set to 1e-14. Iteration limit
+  set to k_max = 10. Usually no more than 2-3 iterations are now required.
+  This may fix the reported "straight-up" bug.
+
+040921
+* Added latest DG VC (9_11_04)
+* Configured most VC displays and controls
+* Keymapper: added key definitions for 'leaning' mode in VC
+  Defaults: lean forward: Alt+Ctrl+Up, lean left: Alt+Ctrl+Left,
+  lean right: Alt+Ctrl+Right, return: Alt+Ctrl+Down
+* API: new function
+	VESSEL::SetCameraShiftRange
+* 'Leaning' mode implemented for DG.
+
+040922
+* API Guide: updated and extended section 1.11 (designing panels) and added
+  section 1.12 (designing virtual cockpits). If you are in the business of
+  implementing vessel panels, please check if this is intelligible/
+  complete/useful.
+
+040926
+* API:
+  VESSEL::clbkVCMouseEvent has new interface (now returns mouse information)
+  new function oapiVCSetAreaClickmode_Quadrilateral allows definition of
+  quadrilateral mouse regions in VC
+
+041003
+* DG: Included Roger's Sep29 versions of meshes and textures.
+* DG: Moved meshes and textures into 'DG' subdirectories.
+* Camera rotation implemented with mouse right-click and drag.
+* API: Introduced VESSEL2 interface derived from VESSEL, and moved all
+  virtual 'clbkXXX' functions there. This was necessary because it appears that
+  virtual classes can't be expanded without losing backward compatibility, so
+  in the future all vessel addons would stop working if new callback functions
+  are added to the interface. With the new setup, addons remain compatible when
+  they refer to an older VESSEL interface. Propagation to a new interface is
+  simply done by deriving from a newer interface class.
+
+041007
+* API: new functions
+	VESSEL2::clbkADCtrlMode
+	VESSEL2::clbkRCSMode
+* Changed behaviour of opcTimestep: it is now called _after_ simulation state
+  has been updated to current time step, rather than before. Attention addon
+  developers: make sure to take this into account when implementing time-
+  critical applications.
+
+041010
+* Bug fix: rearranged VESSEL data members which may have been responsible for
+  reported CTD of old vessel modules.
+* API: opcTimestep reverts to previous behaviour (called before state update)
+  new functions:
+	opcPreStep (identical behaviour to opcTimeStep)
+	opcPostStep (called after state update)
+	VESSEL2::clbkNavMode
+	VESSEL2::clbkPreStep
+	VESSEL2::clbkPostStep
+  deleted function:
+	VESSEL2::clbkTimestep (replaced by clbkPostStep)
+* API: Orbitersdk.h split into OrbiterAPI.h and VesselAPI.h
+* Surface MFD: vertical acceleration display is now more stable.
+* Support for old-style orbital stations has been removed.
+
+041012
+* Constellation labels: modified text colour
+* Custom surface labels:
+  - modified format for custom label reference in config files: multiple lists
+    are now supported
+  - label lists are now located under Config\<planet name>\Labels
+  - individual lists can be turned on/off from the planetarium dialog
+  - initial on/off state is set in the config file.
+* Added emdot's labels for Earth and Moon
+* HST: Recompiled HST.dll
+* DG: Adjusted hover exhaust position
+
+041017
+* Constellation labels: added missing Constell2.bin to zip.
+* Custom labels:
+  - no longer referenced in planet config file (other than to define a
+    nonstandard location). Instead, orbiter scans the appropriate
+    subdirectory directly. Makes it easier to add new lists via addons.
+  - Label lists can now contain headers to set colour, size, shape, cutoff
+    distance and initial visibility
+
+041021
+* Implemented celestial markers. Added AGC navigation stars.
+* Bug fix: Undocking is now possible again.
+
+041024
+* New interface for planetary modules. Introduced class CELBODY to act as
+  interface class for callbacks. Needs some more work and documentation.
+* Sun is no longer fixed at coordinate origin. Its position is now generated
+  from VSOP87 E series. This could have significant long-term effects on
+  trajectory calculations - NEEDS TESTING! Preliminary tests indicate that the
+  differences between VSOP and dynamic data are now at least an order of
+  magnitude smaller than before! (Unfortunately the effect on Jovian moons
+  is not significant)
+* Re-implemented VSOP module. Now every planet has its own DLL (deriving from
+  CELBODY). All VSOP-controlled planets call a common driver DLL
+  (VsopDriver.dll in the orbiter main directory). Perturbation series are no
+  longer hard-coded in the DLL, but read from data files
+  (Config\<planet>\Data\Vsop87<x>.dll) Only Sun, Mercury, Jupiter make so far
+  use of the new interface.
+
+041028
+* Galilean satellites (Io, Europa, Ganymede, Callisto) are now updated with
+  analytic perturbation code (GALSAT).
+* Jupiter's barycentric offset is now calculated by GALSAT code. Jupiter now
+  uses the VSOP87 A series (rectangular) to allow direct addition of the
+  offset.
+* Adjusted siderial day length of Galilean satellites.
+
+041031
+* New planet config option: AtmHazeShift, to shift the horizon base line of the
+  haze layer (in units of planet radius).
+
+041101
+* Bug fix: calculation of true anomaly from mean anomaly for ecc>1 (voyager
+  scenario failure)
+* Bug fix: vertex buffer for constellation labels is now held in system memory
+  (should fix Alt-Tab CTD)
+* All celestial body modules are now converted to new interface. The old
+  VSOP87.dll has been decomissioned. The new VSOP87 and GALSAT driver routines
+  have been moved to the Modules directory.
+* Updated planet module sections in API Guide and API Reference.
+
+041104
+* Updated moon ephemeris files for moons to Tony's 2005 Horizons data (except
+  for Galilean moons which are now analytically updated)
+* Modified CELBODY ephemeris interface so that both true and barycentric data
+  can be returned by the module.
+* API Reference: Added CELBODY documentation
+
+041112
+* New vessel destruction sequence. Calling oapiDeleteVessel should now be more
+  stable. Vessel destruction is deferred until the end of the frame update, so
+  that suicide (self-destruct) calls are now permitted. Focus vessel can now
+  also be destroyed. If the last focus-enabled vessel is destroyed, Orbiter
+  returns to the launchpad.
+
+041113
+* API: new functions
+	VESSEL::CreateAirfoil2
+	VESSEL::DelAirfoil
+	VESSEL::ClearAirfoilDefinitions
+	VESSEL::DelDock
+	VESSEL::ClearDockDefinitions
+
+041114
+* Bug fix: VESSEL::clbkPreStep and VESSEL::clbkPostStep are no longer called
+  when simulation is paused.
+* DG: Scenario entry 'PSNGR [1 2 3 4]' to enable individual passengers
+  (default none)
+
+041116
+* DG: Added Roger's 11-16-04 external and VC mesh and textures. Adjusted group
+  indices for animation in the code. Added ladder animation to top hatch
+  sequence.
+* Added Tony's Tour of Jupiter scenario.
+
+041121
+* Bug fix: orbit stability problem fixed
+* Particle streams: particles now respond to gravitational forces -> Better
+  dynamics for particles created outside atmospheres.
+* Particle streams: "atmospheric deceleration" now scaled with atmospheric
+  pressure. No slowdown outside the atmosphere independent of 
+  PARTICLESTREAMSPEC::atmslowdown setting.
+* API: new function
+	VESSEL::AddParticleStream
+* DG: condensation cloud when opening hatch in space.
+
+041123
+* Upgraded to emdot's surface markers.
+* Bug fix: fixed a bug which may have been responsible for problems with
+  starting scenarios in "target from" and "target to" camera modes.
+
+041124
+* DG: Added "no-scram" external mesh. Disabled scram-specific groups in the
+  VC mesh of the non-scram version. Activated indicator block on the dashboard.
+
+041130
+* DG: Activated hover balance control in panel mode.
+
+041206
+* DG: Individual fuselage markings
+* API: new functions
+	oapiCreateTextureSurface
+	VESSEL2::clbkConsumeDirectKey
+	VESSEL2::clbkConsumeBufferedKey
+
+041216
+* Map MFD: zoom, track and scroll functions implemented.
+* API: new functions
+	VESSEL2::clbkAnimate
+	VESSEL2::clbkDockEvent
+	VESSEL2::clbkSetStateEx
+  All ovcXXX callback functions (except ovcInit) have now been superseded.
+* VC: Generic engine status indicators in top left screen corner no longer
+  displayed in virtual cockpit mode.
+
+041219
+* Modified algorithm for cloud microstructures: transition is now gradual.
+* Microtexture altitude range can now be controlled with planet config option
+  "CloudMicrotextureAlt". Default is no microtexturing.
+
+041221
+* Bug fix: reentry stream causing CTD.
+
+041231
+* Bug fix: instability when switching to ground observer camera mode in
+  Saturn scenario.
+
+050109
+* Bug fix: CTD on exit for certain docking configurations.
+
+==============================================================================
+||||||                            RELEASE 050116                        ||||||
+==============================================================================
+
+050117
+* Bug fix: corrupt scenario "2005 Edition/Delta-glider/DG and DG-S.scn" fixed.
+* Bug fix: position of direction markers in VC HUD was incorrectly updated
+  with cockpit camera movement.
+* Orbiter Manual: Updated Section 21.4 "Surface bases".
+
+050119
+* Bug fix: VC cockpit camera sometimes locked at forward position.
+* Bug fix: Improved initial estimate for iterative solution of Kepler's equation
+  for open orbits (e>1) at extreme values of mean anomaly. This could cause
+  "jumps" in position when orbit stabilisation was enabled.
+* Bug fix: Camera can now be controlled via mouse in ground observer mode.
+* Added: emdot's latest set of surface markers for Earth, Moon, Venus, Mars
+
+050121
+* Surface MFD: re-arranged components for better compatibility with standard
+  EFIS instrumentation. Added support for IAS/TAS/GS/OS speed mode selection.
+* Surface HUD: switched speed and altitude boxes to make more compatible with
+  standard HUD layouts.
+
+050122
+* Bug fix: DG: ISP for retro thrusters is now pressure-dependent in complex
+  flight model. Retros have no effect on Venus surface any more.
+
+050123
+* Bug fix: direct target selection in Docking HUD and Docking MFD no longer
+  allows to select an invalid dock number.
+* Bug fix: true airspeed calculation inaccurate at very high altitudes.
+
+050124
+* Bug fix: turned-off MFDs no longer reappear after panel switch.
+* Bug fix: Orbit MFD now remembers reference frame (EQU/ECL) between panel
+  switches and simulation sessions.
+
+050125
+* API: mouse position passed to clbkVCMouseEvent is now continuously updated
+  for virtual panel areas with PANEL_MOUSE_{L,R}BPRESSED attributes.
+* API: new VESSEL functions:
+  DWORD GetGroupThrusterCount (THGROUP_HANDLE thg) const
+  DWORD GetGroupThrusterCount (THGROUP_TYPE thgt) const
+  THRUSTER_HANDLE GetGroupThruster (THGROUP_HANDLE thg, DWORD idx) const
+  THRUSTER_HANDLE GetGroupThruster (THGROUP_TYPE thgt, DWORD idx) const
+* Bug fix: long time step problem at simulation start fixed.
+
+==============================================================================
+||||||                             PATCH 050126                         ||||||
+==============================================================================
+
+050127
+* Bug fix: VESSELSTATUS2 pointer passed to clbkSetStateEx after vessel creation
+  with oapiCreateVesselEx was invalid.
+* Bug fix: orbital elements of planets not updated in MFDs.
+* API: Default action of clbkSetStateEx is now to do a standard state
+  initialisation if obsolete ovcSetStateEx is not present.
+* SDK: Atlantis SRB's and ET are now created with oapiCreateVesselEx (instead
+  of oapiCreateVessel).
+* DG: airbrake status is now shown on VC indicator panel.
+* DG: retro thrusters now operative only when retro covers are fully open.
+* Dragonfly: Now uses Radu's updated DLL.
+
+050130
+* Yet another modification to the iteration of Kepler's equation. This should
+  improve the stability of pathologic orbit element calculations (e.g.
+  e ~ 1, a = small, as found in "straight up from planet surface" cases).
+* Orbit MFD: now allows to toggle between planetocentric distance and altitude
+  for vessel, apoapsis and periapsis distances.
+* Orbit MFD: target name is now displayed.
+* DG: Additional switches in 2-D panel mode.
+* DG: Main, hover and scram throttles can now be pushed with mouse in VC
+  cockpit.
+
+050202
+* Fixed Manual errors relating to VC camera and panel scrolling key functions.
+* Reduced sensitivity of initial joystick throttle response when "ignore
+  throttle setting on launch" is selected.
+
+050203
+* Map MFD: bug fixed in drawing the red "below surface" section of the
+  trajectory. Entry and exit intersection points are now marked with red and
+  green boxes, respectively. "Track" mode is now restored from scenario file.
+  Manual has been updated to reflect new Map MFD capabilities.
+
+050206
+* Improved stability of dynamic propagation of vessel state vectors. Dynamic
+  update should be stable to step lengths of ~50 seconds in LEO (at least
+  to time acceleration 100x, in most cases up to 1000x)
+* Bug fix: Switching FoV no longer affects orbital elements.
+* Bug fix: Orbiter now ignores the DIERR_UNPLUGGED flag sometimes returned
+  by DirectInput for no obvious reason, which caused the joystick to stop
+  responding.
+
+050207
+* Bug fix: mesh textures on vessels getting corrupt occasionally.
+* Shuttle-A: Included Radu's VC and cargo management extensions.
+* Bug fix: CTD at MJD 49904.4 while Uranus is rendered.
+
+050214
+* Frame rate plugin: Can now also display simulation time step graph.
+
+==============================================================================
+||||||                             PATCH 050216                         ||||||
+==============================================================================
+
+050224
+* Surface MFD: labels and 5-deg. ticks added to pitch ladder.
+
+050227
+* DG: Effect of elevator trim has been tripled. Control surface authority
+  increased. Tank 2 capacity (scramjet fuel) reduced to 2500 kg.
+* DG: Slope/range indicator replaced with wing load indicator.
+* DG: Digital indicator for propellant mass added.
+
+050301
+* Jupiter, Saturn, Uranus, Neptune: replaced textures with VF2_Rolf's
+  level 6 textures and config mods, including atmospheric parameters.
+* API: new functions:
+	EditAirfoil
+	CreateControlSurface2
+	DelControlSurface
+	ClearControlSurfaceDefinitions
+	GetDamageModel
+	GetWeightVector
+	GetLiftVector
+	GetDragVector
+	GetThrustVector
+	GetTransponder
+	GetIDS
+	SetTransponderChannel
+	SetIDSChannel
+	GetNavSource
+	oapiGetNavType
+	oapiGetNavDescr
+	oapiObjectVisualPtr
+	oapiRand
+
+050305
+* DG: Damage model: airframe failure due to wing loading.
+
+050324
+* "Planetarium" dialog replaced with "Visual helpers" dialog. Now includes
+  a tab for setting display parameters for body forces and coordinate axes.
+
+050405
+* Attached vessels now update their ground-relative parameters (e.g.
+  airspeed, etc.)
+* Started on HTML-based version of the API reference (in Orbitersdk/html)
+* API: Extended interface for controlling NAV radio transmitters/receivers.
+
+050421
+* Saturn moons controlled by TASS1.7 perturbation solutions:
+  Mimas, Enceladus, Tethys, Dione, Rhea, Titan, Hyperion, Iapetus
+* Preliminary configs and textures added for new moons Hyperion and Iapetus
+
+050424
+* New logical keys defined in keymap.cfg: RCSEnable and RCSMode
+  (delete keymap.cfg to generate a new one with all keys listed)
+
+050502
+* Added date converter to Orbitersdk\utils
+* New interface for linking surface bases to planets. Orbiter can now scan
+  directories for base config files without explicit reference in the
+  planet config file. Multiple search directories and conditional loading
+  (subject to scenario time and context) are supported. See Section 21.4 in
+  Orbiter.pdf for details.
+  The old format is still supported, but some format changes are required to
+  make base config files work under the new format (in particular, base
+  location must be defined in the base config file).
+
+050506
+* Support for 2-point mass distribution in vessels, for providing the
+  possibility of attitude-locked orbits. See Doc/Technotes/distmass.pdf for
+  implementation details. Currently implemented by DG, Shuttle-A, Atlantis.
+* API: new functions SetMassDistribution, GetMassDistribution
+
+050510
+* Bug fix: vessel jump when crossing planet SOI with stabilisation enabled.
+
+050607
+* API: new functions:
+	VESSEL::GetElements (extended version)
+	VESSEL::SetElements
+	oapiGetPause
+	oapiSetPause
+      oapiMeshMaterialCount
+      oapiMeshMaterial
+* Started on scenario editor plugin. Allows in-game creation, editing and
+  deleting of vessels.
+* Stabilisation now always off during ground contact.
+* Bug fix: marker configuration buttons displaced in Planetarium dialog.
+
+050611
+* API: fixed broken methods:
+	VESSEL::GetAttitudeRotLevel
+	VESSEL::GetAttitudeLinLevel
+* New config directory layout: vessel configuration files should now be placed
+  in Config\Vessels, to make them appear in the vessel type list of the editor.
+* Atlantis: added clbkSetStateEx method to allow in-game creation.
+
+050621
+* MeshDebug: some bug fixes. Original state now restored when dialog is closed.
+  Selected group is now blinking.
+
+050703
+* API: new functions:
+	opcPause
+	oapiSaveScenario
+* Scenario editor: setting orbital elements now also works for stabilised
+  orbits
+* Scenario editor: can now save scenarios
+
+050717
+* Scenario editor: code extensively reworked. Editor tabs are now represented
+  by separate class instances for a cleaner implementation.
+* Scenario editor: now supports editing of orientation and angular velocity.
+  Editor should now work with superstructures.
+
+050721
+* "System" name in saved scenarios is now taken from solar system configuration
+  file name instead of the "Name" entry, to avoid problems if the names don't
+  match.
+
+050724
+* Bug fix: Vessel config files in the Config directory should now work again.
+* Orbiter now terminates if a vessel config file can't be found in Config or
+  Config\Vessels (instead of generating a zero-size file).
+* Scenario editor: started on API for vessel-specific plugin pages.
+
+050730
+* Bug fix: calculation of weight vector for landed vessels
+* Bug fix: potential division by zero during force vector rendering
+* Scenario editor: more plugin pages for DG.
+* DG: html help sources now included in the SDK under "Help" subdirectory.
+
+050731
+* Bug fix: scenario editor could CTD after unloading custom vessel pages.
+* API: new function VESSEL::Dock
+
+050802
+* Bug fix: jump in supervessel position when docking/undocking during orbit
+  stabilisation
+* Earth.cfg: changed J5 coefficient from 0.13e-6 to -0.15e-6
+* Scenario editor: now supports docking/undocking management.
+
+050803
+* Bug fix: CTD when deleting an IDS transmitter with EnableIDS(...,FALSE) while
+  a vessel MFD is tuned to that transmitter.
+
+050805
+* Generic cockpit view: MFDs now display mouse-activated buttons
+* Launchpad dialog: MFD size in generic cockpit can be adjusted
+* Bug fix: opening an input or selection box no longer blocks mouse events.
+  Instead, mouse button events will close any open input boxes.
+
+050807
+* Bug fix: Map MFD: zoom state not restored in generic cockpit mode
+* MFD behaviour change: Shift-Esc toggles MFDs on/off and replaces Shift-Q.
+  Shift-key combinations can no longer be used to directly switch to a different
+  MFD mode. Instead:
+  - Use "SEL" button (Shift-F1) to page through mode pages.
+  - Select a mode by button, or press Shift-, and Shift-. to highlight a mode,
+    and press Shift-Enter to select.
+  This should avoid conflicts between MFD modes using the same selection button.
+  Within each mode, the Shift-key combinations work as usual. Documentation has
+  been updated.
+
+050809
+* Docking MFD: If a vessel has more than one docking port, an additional button
+  is displayed to allow selection of the port.
+
+050810
+* Tidal effect of distributed vessel masses is now implemented for composite
+  (docked) structures. This means that docked assemblies experience tidal forces
+  even if the individual components do not. See Doc\Technotes\distmass.pdf for
+  implementation details. This will probably require an explicit attitude 
+  stabilisation method for space stations to keep them stable during docking.
+  
+  "DCK" is displayed which allows to select a different docking port on the own
+  vessel, relative to which target data are displayed.
+* API: new function oapiRefreshMFDButtons
+
+050821
+* "PWR" buttons for disabled MFDs in generic cockpit mode now only visible if
+  HUD is displayed.
+* API: new plugin callback functions opcSaveState, opcLoadState to allow plugins
+  to save/load their state to/from a scenario file. (***ADD DOCUMENTATION***)
+
+050826
+* Scenario editor: if the vessel currently being edited is deleted, the editor
+  jumps back to the main page (to avoid CTD due to reference of invalid vessel
+  handle)
+* Scenario editor: fixed bug which caused CTD when deleting a vessel while
+  scneditor module is active but not open.
+* Orbiter can now be lauched directly into a scenario from the command line,
+  bypassing the Launchpad dialog. Syntax is
+  orbiter -s "<scenario path>"
+  where <scenario path> is the name of the scenario file, with path relative to
+  Scenarios folder, and omitting the .scn ending. Double quotes are required.
+* API: new function oapiIsVessel
+
+050828
+* Changed scaling factors for ringed planets to reduce artefacts at low
+  z-buffer setting. Needs testing!
+* vessel clip radius can now be set independent of the "size" parameter.
+  New API functions:
+	VESSEL::GetClipRadius
+	VESSEL::SetClipRadius
+	oapiOpenDialogEx
+	oapiAddTitleButton
+
+050910
+* API: new class ExternMFD: supports display of MFDs in plugins
+* New plugin module: ExtMFD: opens an MFD in a separate window (module allows
+  multiple window instances by using oapiOpenDialogEx, and uses the new title
+  button mechanism)
+
+050913
+* API: new function VESSEL::CreateAirfoil3 which uses a AirfoilCoeffFuncEx
+  callback function that contains additional parameters (VESSEL instance and
+  user-defined pointer)
+
+050914
+* Bug fix: Some problems fixed with nonstandard default cockpit camera direction
+  (invoked with SetCameraDefaultDirection). The angles in oapiSetCockpitDir now
+  are relative to the default direction, as advertised.
+* API: new function VESSEL::SetCameraDefaultDirection (version 2)
+  This allows not only to define the default camera direction, but also the
+  tilt of the camera around that direction.
+
+050915
+* Bug fix: ExternMFD: if the vessel referenced by a sticky MFD is deleted, the
+  MFD now automatically switches to the new focus object.
+
+050916
+* Gravity field gradient-induced torque: is now calculated directly from the
+  vessel's principal moments of inertia. Point mass distribution is no longer
+  required. 
+* API: removed functions
+	VESSEL::GetMassDistribution
+	VESSEL::SetMassDistribution
+* API: added functions
+	VESSEL::SetGravityGradientDamping
+	VESSEL::GetGravityGradientDamping
+
+050918
+* Scenario editor documentation is now in a separate PDF. This also includes a
+  developer section.
+* External MFD documentation added to Orbiter.pdf.
+* Bug fix: calculation of max. group thrust after max. thrust of one of the group
+  thusters is modified.
+
+050921
+* Bug fix: polar component of nonspherical gravitational potential field was
+  scaled incorrectly (in particular at high latitudes), leading e.g. to under-
+  estimation of the propagation of the line of nodes.
+* Added Doc\Technotes\gravity.pdf
+* Added Scenarios\Navigation\Special orbits. This includes also a sun-synchronous
+  orbit which demonstrates the nonspherical gravity bug fix.
+* Bug fix: VOR/VTOL MFD mode: now remembers NAV receiver number
+* Bug fix: scenario editor: sun no longer appears in landing target list.
+* Bug fix: incorrect position of detached child vessels after playback.
+* API: new function: oapiGetObjectType
+* Using oapiOpenDialog before the simulation is started _may_ work now (needs
+  more testing). But use caution: most API functions will be invalid before the
+  render window is opened).
+
+050925
+* Ingame help is now available for all built-in MFD modes.
+
+051017
+* Extensive revision of planetary sphere patch render engine. Levels 1-7 are
+  mostly unaffected, but from level 8 the new engine kicks in.
+  Main points:
+  - mesh resolution independent of available patch texture resolution. When the
+    camera is sufficiently close, a patch is rendered at resolution 9 even if
+    the corresponding texture is only resolution 8.
+  - resolution 9 (and eventually beyond) are only available if the global
+    texture goes up to resolution 8. This is different from previous behaviour
+    where local res 9 areas could be rendered on top of a lower-resolution
+    global texture. (This is because res 8 textures are the last-resort
+    fallback textures for any patch that doesn't have higher-resolution
+    textures).
+  - The "black-coast" syndrom of previous versions has been removed.
+  - The specular mask textures are now implemented differently. They must now
+    be white over specular (water) areas and black over diffuse (land) areas.
+    As a result, the <planet>_lmask.tex texture files are no longer valid.
+  - Level 9 partial land textures are no longer rendered on top of a lower-
+    level specular texture. They now have their own level-9 land masks
+    (<planet>_tile_lmask.tex). Also, the format of the texture description
+    files (<planet>_tile_bin) files has changed. Old ones are no longer valid.
+  - Unlike previous versions, "MaxPatchResolution = 9" in the planet config
+    file is now required to enable the highest resolution level.
+  - Planet night lights haven't yet been incorporated into the new mechanism,
+    and are disabled for now.
+* New version of pltex which incorporates the changes in planetary texture
+  formats. This now allows to create directly level-9 texture files. The
+  TileManager application is obsolete.
+* Re-worked the textures for Earth from scratch, starting from blue-marble
+  textures, with the following global processing steps:
+  - brightened the blue channel (to incorporate atmospheric effects)
+  - brightened overall
+  - water areas only: desaturated and shifted colour balance away from red
+  - sharpened
+* Experimental: introduced a "specular ripple" option in the Launchpad dialog,
+  so that water surfaces no longer appear "polished". May need more work.
+
+051023
+* Changed clipping near-plane calculation: nearplane is now guaranteed to be closer
+  than the closet object (including vessel clip radius) down to limit of 2.5m.
+* Bug fix: erraneous T&L vertex buffer flag for planet resolutions 1-4.
+* Pltex: rewritten global planet surface generator for levels 1-8. (surface and
+  specular mask can now be generated in a single pass).
+
+051108
+* Planets now support resolution levels up to 10. Global level-10 coverage
+  for Earth (excluding water areas) has is provided.
+* Reorganised Earth textures:
+  - level 1-8 textures have been moved from Textures2 to Textures (replacing the
+    old 1-7 textures, since these days all systems should at least support level
+    8).
+  - The local level 9 map for Florida in Textures has been removed but may be
+    replaced with a similar hires local map later.
+  - Textures2 contains the global level 9-10 maps (big!)
+* pltex has been modified to process bitmaps with less than global coverage.
+* pltex has now an option to merge hires texture patches, so they can be 
+  processed in small chunks and merged into the final texture file. This will
+  also become important later when addons provide local hires areas, because
+  users will have to merge them into their texture files (therefore pltex will
+  be moved from Orbitersdk into the main Orbiter directory).
+* pltex can now process levels 1-8 with land-water masks in a single run.
+* Bug fix: Close and help buttons not visible in dialogs when accessed from the
+  main menu. Some more dialogs have now been converted, and more help pages added.
+
+051115
+* Modified Textures\cloud1.dds with higher spatial frequency components for cloud
+  microstructure to compensate for smaller texture coordinate range.
+
+051118
+* Planet rendering: distant patches are now rendered at lower resolution for
+  improved performance. This currently only affects level 10. The distance at which
+  orbiter switches to a lower resolution can be customised via the
+  PlanetHipatchAperture entry in Orbiter.cfg (-0.5-1).
+* New splash screen.
+* Message box during clean-up after a simulation session.
+
+051119
+* Reduced default value for PlanetHipatchAperture to 0.1.
+* Max. planet resolution is now limited during fast camera movement (e.g. in low
+  orbit at high time acceleration) to reduce stutter caused by texture loading.
+
+051126
+* Updated config files for all moons not controlled by perturbation modules from
+  Tony's stockmoons.zip.
+
+051206
+* Updated pltex: high-resolution patches can now be smaller than a single level-8
+  patch.
+* Max. resolution level can now be set in Launchpad dialog (visual effects tab).
+
+051207
+* New utility Orbitersdk\utils\meshc.exe: extracts mesh parameters into a header
+  file that can be included in a vessel project to allow use of named mesh groups
+  instead of referring to group indices. Makes it easier to keep track of mesh
+  groups for animation etc.
+* Mesh file format: mesh groups now support the LABEL tag (must be placed before
+  the GEOM tag of the group). Doesn't affect the mesh directly, but is scanned by
+  meshc to associate group names with indices.
+
+051212
+* Night lights now supported in resolution levels 1-10.
+* Night lights are stored in <planet>_lmask.tex together with the water masks, to
+  save space (lights are stored in the RGB channels, water masks in the alpha
+  channel)
+* The <planet>_lights.tex files previously used for storing night lights are now
+  obsolete.
+* The contents file format <planet>_lmask.bin has been updated to contain night
+  lights information, but the old format is still supported.
+* pltex has been updated for night lights support.
+
+051217
+* The highres tiles listed in a base's surftile list can now carry alpha
+  information. KSC tiles have now cut away the ocean portion, to blend in better
+  with the surrounding surface.
+
+051218
+* Align planet MFD:
+  - bug fix: "time to node" values were incorrect for non-circular orbits.
+  - Angles to ascending and descending nodes are now always displayed positive with
+    range 0-360.
+  - The estimated burn times both at AN and DN are now displayed.
+* Some updates to documentation and help files.
+* pltex, dxtex and date utilities have been moved from Orbitersdk\utils to utils,
+  because they are now regarded as user utilities, rather than developer utilities.
+
+060111
+* Light beacons on vessels now supported. Implemented for DG (activate via
+  overhead panel or Ctrl-Space).
+* Vessel visibility distance is now independent of screen resolution. At small
+  apparent sizes, vessels are represented by spots. Visibility limit can be set
+  with VESSEL::SetVisibilityLimit.
+* API: new functions
+	VESSEL::SetVisibilityLimit
+	VESSEL::SetAlbedoRGB
+	VESSEL::AddBeacon
+	VESSEL::DelBeacon
+	VESSEL::ClearBeacons
+
+060115
+* Vessel illumination is now adjusted when going through a planet shadow.
+  Examples in scenario folder "2006 Edition/Visual effects".
+* higher vessel ambient light levels when within atmospheric layers.
+
+060117
+* "Close down" dialog is now integrated into the Launchpad.
+* Bug fix: a vessel now broadcasts the disappearance of its transponder to all
+  other vessels before being deleted.
+* DG: bug fix: using un-initialised exmesh handles.
+
+060119
+* VC meshes are now included in the lighting modifications caused by planet
+  shadowing.
+* The spectral dispersion during sunrise/set is now less pronounced, and the
+  green component has been reduced.
+* default global ambient level reduced to 12
+* Bug fix: vessel "blob representation" is now affected by planet shadows.
+
+060125
+* Revised lighting algorithm for vessels and surface bases. Both now use the
+  same strategy. Fixed a problem that might have created erraneous lighting
+  direction.
+* Surface base objects now use the same shadow algorithm as vessels and can
+  make use of stencil buffers.
+
+060126
+* With stencil buffer enabled, shadows now fade in and out gradually at dawn/dusk.
+  Also, shadow darkness now depends on atmospheric density (can be overwritten
+  with "ShadowDepth" parameter in planet config files).
+
+060128
+* Night textures on stock buildings are now coming on earlier.
+
+060129
+* Flight recorder: on-screen notes can now be displayed during playback by
+  inserting NOTE tags into the articulation (.atc) stream of the flight record.
+  Some basic formatting options are available. See ASTOS extensions.pdf for
+  details. For an example, check the Glider launch 1 playback scenario.
+* Flight recorder: playback can now be terminated with Ctrl-C before the end of the
+  data stream is reached.
+* Flight recorder: a previous recording is now only overwritten after user
+  confirmation.
+* Vessel beacons: fixed problem with black borders against vessel exhaust.
+* API: new function VESSEL::GetFlightStatus
+* Scenario editor: "State vector" and "Location" pages now contain "copy state
+  from" options to copy a freeflight or landed state from a different vessel.
+
+060131
+* Flight recorder: undock events are now written to and read from the articulation
+  stream. This should fix the bug of vessels undocked during recording snapping
+  back together after end of replay.
+* Flight recorder: bug fix: angular velocity is now continually updated and no
+  longer arbitrarily reset to zero at the end of the replay.
+* Bug fix: incorrect orientation on launch of vessels on the ground of vessels
+  whose local z-axis points up ("tailsitters").
+* Added MESHVIS_EXTPASS mesh visibility modifier flag (can be used in conjuction
+  with any other visibility modes to force a mesh to be rendered during the
+  external pass, even if seen from cockpit view. (see SetMeshVisibilityMode
+  documentation for details).
+* API: new function: oapiGetCelbodyInterface
+
+060201
+* Fixed broken VC display
+* Flight recorder: RCS, ADC and navmode changes are now written and read to/from
+  the atc stream. These parameters can no longer be changed manually during
+  playback. Manual thruster activation/deactivation is now disabled during
+  playback.
+
+060203
+* Flight recorder/playback can now be operated via dialog (Ctrl-F5)
+* Recording scenario name can now be user-defined.
+* Inflight notes can be switched off.
+
+060205
+* Flight recorder: time acceleration events are now recorded and can be used during
+  playback.
+* Flight recorder: landing and takeoff events now recorded in atc stream.
+  Positioning bug fixed for landed vehicles during playback.
+* Flight recorder: bugs during change of reference planet fixed.
+
+060206
+* DG: "Hold Alt" navmode now has a button in 2D panel view.
+* Navmodes: New rule implemented: "killrot" no longer cancels "hlevel" mode.
+* Flight recorder: attitude data can now be saved in ecliptic or local horizon
+  frame.
+
+060207
+* Docking HUD: Now remembers NAV receiver or target.
+* Orbit HUD: Now remembers reference object.
+* Orbit MFD: New button "HUD" to copy reference object from MFD to HUD.
+* Docking MFD: New button "HUD" to copy target data from MFD to HUD.
+* Created "Lunar transfer" playback scenario to demonstrate the new recorder
+  features.
+
+060209
+* Flight recorder: format for .att and .pos data streams has been changed. The
+  redundant MJD entries (1st column) have been removed. A utility (Utils\fdatamod)
+  has been added temporarily to modify existing recordings to the new format.
+  This needs to be applied to all .att and .pos files of a recording. Usage:
+  fdatamod <data file>
+  generates <data file>.mod. Remove the old data file and rename the new one by
+  removing the .mod extension.
+  Note: att data streams that contain 'FRM HORIZON' entries also must define a
+  reference body with a REF entry, e.g. 'REF Earth'.
+
+060211
+* MFDs: More selections can be made from lists instead of typing object names.
+* Flight recorder: TACC tags can now have an optional second parameter defining a
+  delay value for non-instantaneous changes of time acceleration.
+* Transfer MFD: The parameter adjusted while pressing DV- or DV+, and the parameter
+  held constant while pressing EJ- or EJ+, is now Delta-V instead of SMa. SMa is
+  now locked only if no manual adjustment is occurring.
+* Transfer MFD: Now supports hyperbolic transfer orbits (e>1).
+* Bug fix: problem with surface tiles not rendering occasionally when low
+  resolution level was requested.
+* DG: Bug fix: removed white tears in transparent section of overhead panel.
+
+060214
+* Bug fix: Vessels with MESHVIS_ALWAYS tags erraneously rendered in internal pass.
+* Generic cockpit: Now displays mouse-activated navmode button in the bottom centre
+  of the display.
+* API: new functions
+	oapiSetDefNavDisplay
+	oapiSetDefRCSDisplay
+	oapiSetSimMJD
+	oapiGetSysMJD
+* Nicer inline selection menus.
+
+060216
+* Bug fix: MFD and navmode buttons in generic cockpit view, and Surface MFD are
+  now restored after Alt-Tab.
+* Align planes MFD: Now allows user-defined orbit reference.
+
+060218
+* ISS: increased emissive colour of docking ports.
+* Generic cockpit: RCS mode indicators are now clickable buttons.
+* Scenario editor: now has an additional page for setting simulation time.
+
+060221
+* Mars map: standard distribution now contains Seth's version up to level 8
+  globally and level 10 around Olympus Mons. Credits added.
+* Atlantis: Implemented Barrick's code bug patches.
+* Doc: ASTOS extensions document has been updated.
+
+060222
+* Shuttle-A: Animations, pod settings and payload events are now written/read
+  to and from playback streams.
+
+060227
+* Bug fix: MFD displays not updated when backstepping in time.
+* Bug fix: MFD mode page left behind when selecting MFD mode at T<0.
+* Bug fix: incorrect vessel update when backstepping in time beyond T=0.
+* Scenario editor: state vector page modified and some state vector bugs fixed.
+  State vectors below planet surface are now checked and corrected.
+* Bug fix: Atlantis RMS dialog unresponsive after moving, and dialog blocks sim
+  updates while moving.
+* Bug fix: Empty line in base NAVBEACON list no longer causes CTD in info dialog
+  (Ctrl-I).
+* New mouse event flag PANEL_MOUSE_ONREPLAY. By default, panel and VC areas no
+  longer send mouse events during a playback. Use the new flag to force events.
+  This should simplify the writing of playback-aware vessel code.
+* Bug fix: scenario editor: on elements page, setting ecc=1 is now substituted
+  with ecc=1+eps to avoid numerical instability.
+* API: new function HorizonInvRot.
+
+060301
+* pltex: now supports generation of cloud maps up to level 8.
+
+060302
+* API: new functions
+	MFD::InvalidateButtons
+	oapiGetCmdLine
+
+060305
+* New planet config option SpecularRipple. Provides selective activation of water
+  ripple microtexture. By default, planets now don't use specular ripples.
+* Undock key (Ctrl-D) now referenced in keymap.cfg.
+* Undocking on vessels with more than one dock now opens selection dialog.
+* Shuttle-A: Added scenario editor custom animation page.
+* Bug fix: Shuttle-A: reversed left-right pod animations.
+
+060307
+* Rigid body rotation model: now uses RK4 to integrate Euler's equations. In the
+  absence of external torque, constant kinetic rotational energy is enforced.
+
+060319
+* Added Barrick's second Atlantis patch.
+* Scenarios: Added Harmsway's corrections.
+* DG: "Dock release" button added to bottom 2D panel.
+* Earth markers: added emdot's corrections.
+
+060321
+* Bug fix: Setting config entry "MaxPatchLevel" higher than supported by texture
+  file caused problems.
+* Mimas, Enceladus, Tethys, Dione, Rhea, Iapetus: new textures from Cassini data
+  (L6 for standard edition, L7/L8 as separate hires texture packs for some moons).
+* Titan: now with atmosphere, cloud layer and new surface texture - atmospheric
+  parameters still need to be checked!
+* Applied Chode's config file corrections. Still need to do texture corrections
+  for Venus, Miranda, Umbrial, Oberon (I haven't got the source maps for those)
+
+060403
+* Bug fix: Jump of composite vessels at the end of a playback
+* Bug fix: Tilt of Atlantis during liftoff
+* Bug fix: Generic cockpit elements visible in panel mode if generic mode is
+  disabled.
+* API doc: oapiSetMeshProperty is now documented.
+
+060405
+* Bug fix: Flight recorder: During playback, attitude samples are now interpolated
+  in terms of quaternions instead of Euler angles. Fixes spurious rotations during
+  Euler angle phase wrap.
+
+060406
+* Documentation: "ASTOS extensions.pdf" has been renamed to "RecorderRef.pdf"
+  and moved into the Doc\Technotes directory.
+* Documentation: Flight recorder section in Orbiter.pdf has been updated.
+
+060407
+* Triton: Rolf's L6 texture now included in base package (Textures directory)
+
+060417
+* Bug fix: problem with tilt of some vertical launchers during takeoff.
+
+060419
+* Limited vessel angular velocity to 100 rad/s to avoid overflow during time
+  acceleration. This does not really solve the problems of numerical stability
+  of rotation, so qualifies as a hack at best.
+* Bug fix: attitude data written too sparsely during recording for certain
+  rotation axes.
+
+060424
+* Added Mars surface labels from http://planetarynames.wr.usgs.gov/
+* Bug fix: Incorrect relative velocity after undocking a vessel
+  that has been docked via scneditor from "landed" status.
+* Removed "New features" scenario folder since the contents were
+  no longer "new".
+
+060428
+* Replaced KSC surface tiles with Rich Wall's "specular" version
+* Added Mercury and Venus surface label support
+* Replaced L7 Iapetus texture with version by VF2_Rolf
+* Added Albedo_RGB values for various moons.
+* Bug fix: modified damping of angular velocity.
+* Bug fix: problem with tidal lock alignment under gravity gradient
+  torque
+* Replaced Iapetus textures with version provided by VF2_Rolf
+* Replaced Io textures with version from Steve Albers' site
+
+060429
+* Shifted Callisto texture by 180deg in longitude.
+* Added surface labels for Jovian satellites
+* Fixed scenario "Navigation/Special orbits/Orbiting Phobos"
+
+060502
+* Added Rich Wall's mods to his specular KSC tiles
+
+==============================================================================
+||||||                            RELEASE 060504                        ||||||
+==============================================================================
+
+060505
+* Bug fix: Corrected LPAD2 night light rendering artefacts (texture wrap)
+* New landing pad type "LPAD2A" uses different texture layout. Used at
+  Canaveral base.
+* Bug fix: "Free" user-controlled spacecraft in a playback now allow mouse
+  interaction in panels and VCs.
+
+060509
+* Recorder: Vessel attachment/detachment events are now written and read to/from
+  ATC streams.
+* Bug fix: State vectors of attached (passive) vessels were sometimes not
+  correctly updated.
+
+060510
+* Bug fix: glass cockpit buttons no longer mouse-sensitive in external view.
+* Bug fix: Vessel fast-switching (Ctrl-F3) caused CTD when previous focus
+  vessel had been deleted.
+* Vessel selection dialog (F3) now immediately updates its list when vessels
+  are created or deleted.
+* Replaced Iapetus textures with Rolf's new version.
+
+060512
+* MFD interface: Keyboard shortcuts for selecting MFD modes from mode list
+  (via Shift-F1) have been enabled again. Selection by highlighting has been
+  removed. Direct mode selection from within a mode remains disabled.
+
+060513
+* Bug fix: Align Plane MFD: target plane defined by custom elements should now
+  work again.
+* Documentation: oapiSetTexture added to API Reference manual.
+
+060514
+* API: new function oapiLoadTexture
+* DG: is skinnable now. A "blue" variant is included as an example
+* Iapetus: Steve Albers' map now 180deg longitude-shifted applied to L6 and L7
+  textures.
+
+060515
+* Base config files: Comment lines (beginning with ';') are now allowed at the
+  beginning of the file (before the BASE-V2.0 tag).
+* Bug fix: problem with orbit stabilisation for docked vessels when crossing SOI
+  boundaries.
+* Bug fix: 1-frame flicker during mesh reorganisation (e.g. Atlantis SRB and
+  ET separation)
+* Bug fix: animation setting for meshes with index >= 1 was not recognised after
+  mesh rearrangement.
+
+060516
+* Longitude-corrected Iapetus textures included
+* Preliminarily replaced cloud microtexture with one based on McWgogs' addon
+  (reduced to 256x256 and converted to DXT3) -> reduced file size from 1MB to 65kB
+
+060518
+* API: new functions
+	DelMesh
+	ShiftMesh
+	ShiftMeshes
+	ShiftCG
+* Atlantis: code updated to take advantage of selective mesh deletion.
+* Carina: mesh no longer emissive.
+
+060520
+* Lighting model: direct (diffuse) component toned down in atmosphere.
+* Vessel config files: Option "GravityGradientDamping" added.
+* Bug fix: undefined state of vessels docked throughout a playback session.
+* Bug fix: oapiOpenMFD (MFD_NONE, ...) now closes the MFD.
+* Bug fix: oapiGetMFDMode crashing when called for an external MFD window.
+
+060523
+* Bug fix: Joysticks other than first in the list should now be recognised.
+
+060524
+* Bug fix: reset scaling parameters to fix "black hole in Saturn" problem.
+* Bug fix: transition between dynamic/stabilised update mode could cause
+  deterioration of orbit parameters for docked vessels.
+
+060525
+* Upgraded TransX to v3.10, including additional documentation and new
+  scenarios in Scenarios/Navigation/TransX
+  NOTE: Requires deletion of previous scenarios in that folder.
+
+060605
+* Dynamic state propagation: Added new integrator methods. Supported are now
+  Runge-Kutta methods RK2, RK4, RK5, RK6, RK7, RK8 and symplectic methods
+  SY2, SY4, SY6, SY8.
+* Launchpad: new "Extra" tab for advanced or less often used parameters.
+* Integrators are now user-selectable from the Extra/Dynamic propagators option.
+  Up to 5 integrator schemes for different step interval ranges can be defined.
+* Symplectic integrators are now used by default.
+* New document Doc/Technotes/dynamics.pdf contains details of integrators used
+  in orbiter.
+* Launchpad: Orbit stabilisation parameters now moved to "Extra" tab.
+* DG: "blue" version uses Roger's cleaned-up textures.
+
+060607
+* API: new class LaunchpadItem for defining custom items in the Launchpad
+  "Extra" list.
+* API: new functions
+	oapiRegisterLaunchpadItem
+	oapiUnregisterLaunchpadItem
+	oapiOpenFile
+	oapiCloseFile
+	oapiWriteItem_string
+	oapiWriteItem_int
+	oapiWriteItem_float
+	oapiWriteItem_vec
+* SDK: new sample LaunchpadParamTemplate to demonstrate usage of custom param
+  feature
+* Bug fix: CTD when deleting a docking HUD target referenced by the "legacy
+  method" (Ctrl-Alt-R).
+
+060612
+* Bug fix: Mars atmosphere discontinuity at 4km.
+* State integrators: Angular states (orientation, angular velocity) are now
+  included in the integrators. Appear to work ok with RK methods, but may be
+  problematic with SY methods. RK integrators are now used by default.
+* During "stabilised" propagation of linear state, a RK4 method is used to
+  propagate the angular state. The required position parameter is obtained from
+  a 2-body orbit propagation.
+* Bug fix: CTD when module calls ShiftCentreOfMass during ovcLoadState
+
+060615
+* Included Chode's ephemeris modules for Phobos, Deimos, Uranus' moons and
+  Triton.
+
+060621
+* Scenario editor: Vessel types can now provide BMP pictures to be displayed
+  on the vessel creation page. A few of the standard vessels do this already.
+  Requires "ImageBmp" entry in the vessel config file.
+* Scenario editor: Vessel config files can now be placed in subfolders below
+  Config\Vessels. The vessel type list in the Vessel creation page has been
+  replaced with a tree control that allows descending into subfolders.
+* Scenario editor: vessel types with "EditorCreate=FALSE" tag in their config
+  files are not displayed in the vessel creation type list, even if they
+  located under the Config\Vessels directory.
+* Atlantis: Started on code modifications for Atlantis module to adapt to the
+  model by "preacher_mg". This includes re-indexing of animation groups, control
+  surface animation and VC HUD.
+* Atlantis: A new dialog for "payload bay operations" (operating bay doors and
+  radiators) has been added (available via Ctrl-Space). This follows the layout
+  and procedures of panel R13L to make future integration into VC code easier.
+* State integration: angular states are now checked against kinetic energy
+  difference, to avoid instabilities. This code is copied over from the 2005
+  edition and not very satisfactory, but might avoid exposion of angular
+  velocity.
+
+060623
+* Error log: missing mesh file names are now displayed.
+* Bug fix: CTD with docked assemblies.
+
+060625
+* API: Bug fix: CTD in VESSEL::AddMesh after VESSEL::DelMesh
+* API: VESSEL::DelMesh behaviour changed. Indices of remaining meshes
+  no longer change. Instead, the index of the deleted mesh becomes invalid.
+* API: new functions VESSEL::InsertMesh (versions 1 and 2)
+
+060627
+* API: New function oapiSetVCNeighbours
+* Multiple VC positions are now supported. Switching with Ctrl-arrow keys
+  (same method as for 2D panels)
+* Example: MG_Atlantis (pilot, co-pilot, payload bay view)
+
+060630
+* Bug fix: Atlantis: view stuck in backward direction when switching from
+  payload VC position to glass cockpit (F8)
+* Bug fix: CTD when multiple vessels are deleted within a single frame
+* Bug fix: parent vessel not recognizing deletion of attached vessel
+* Added scenario Navigation\Special orbits\Moliniya orbit.scn
+* API: new function VESSEL::SetCameraMovement
+
+060707
+* Atlantis: New VC mesh, commander HUD and MFD displays are now mirrored
+  on the pilot's side. Rear VC position has new movement encoding (looking
+  out of left or right payload bay window, out of top window, or bending
+  towards R13L).
+* Ku-band operation now implemented in dialog.
+
+060722
+* DG: now supports additional VC positions for passenger views (but may requrie
+  editing of VC mesh to provide missing surfaces, e.g. seat backs)
+* DG: documentation moved from Orbiter.pdf to separate DeltaGlider.pdf.
+
+060728
+* API: new function: DelAnimation
+* API: DelMesh and ClearMeshes now have optional parameters to specify if
+  animations should be retained. This should fix problems with inconsistent
+  behaviour with previous versions.
+
+060731
+* De-coupled angular from linear state vector updates so that separate
+  integration rules can be used as required. Intermediate object positions
+  (required for gravity gradient torque calculation) are obtained either by
+  linear interpolation (for small steps) or by Kepler orbit propagation.
+* Cross-axis terms in the integration of Euler's equation are suppressed
+  whenever a time step leads to an object rotation of more than pi. This should
+  increase the stability of rotations at high time acceleration (at the cost
+  of physical accuracy)
+* Bug fix: Main and hover acceleration indicators in generic cockpit view now
+  take into account reduction of Isp in atmosphere, and non-parallel engine
+  thrust vectors.
+
+060804
+* Revised angular state updates. Step subdivisions are now supported. At very
+  high angular steps, torque is suppressed to improve stability (in addition
+  to the suppression of the cross-axis terms).
+
+060806
+* Bug fix: Missing specular reflection on some planet surface tiles at low
+  resolutions.
+* Added dialog for selecting integrators and parameters for angular state
+  propagation (under 'Extra' tab). Default max. subsampling steps set to 100.
+
+060809
+* Added: Ability to propagate simulation by fixed delta t per frame (under
+  debug options in Extra tab).
+
+060811
+* Increased max. stack size of orbiter executable to 4MB.
+
+060813
+* MFD interface: new default key Shift-F2 (switch button page without invoking
+  the button menu display)
+* Atlantis: Activated MFD buttons. Modified mesh to display the button labels
+  on the lower edge of the screen area. 6th button ("PG") is linked to Shift-F2.
+  If this button is pressed for longer than 1.5 seconds, it invokes Shift-F1
+  instead (MFD mode selection). Commander and pilot instruments are currently
+  synchronised.
+* Bug fix: reading and writing scenario parameters for MFDs with index >= 3.
+
+060818
+* Bug fix: Atlantis ET and SRBs visible through payload bay.
+* Bug fix: Atlantis VC buttons not clickable in launch configuration.
+
+060822:
+* Mesh not found errors: downgraded fatal errors (program termination) to
+  warning messages in orbiter.log, to avoid exits on empty mesh file names
+  apparently generated by spacecraft3.dll. Something's amiss here ...
+
+060827:
+* Reworked perturbation integration for stabilised orbit calculation.
+  Subsampling of time steps is now supported. Subsampling parameters and
+  cutoff for nonspherical gravity can now be user-defined (via Orbit
+  Stabilisation item on Extra tab).
+* DG: Added plugin "DGConfigurator". This adds an item to the Extra tab which
+  allows global configuration for the DG. Currently only supports selection
+  of texture resolution.
+
+060830:
+* DG: New "DG configurator" plugin for DG texture resolution selection. Appears
+  in Extra tab. Works by renaming DG highres texture directory.
+* Atlantis: New "Atlantis configurator" pluging for Atlantis texture and mesh
+  resolution selection. Appears in Extra tab. Works by renaming directories and
+  meshes.
+* Directory structure: new directory "Modules\Startup". Similar to
+  "Modules\Plugin", but any plugins in this directory are always loaded, and
+  don't appear in the lists of the Launchpad Modules tab. Allows adding
+  essential plugins without cluttering the modules list. Addons should use this
+  with care. Don't put any addons here which eat CPU cycles during the
+  simulation!
+* New simulation session shutdown options (Extra tab, under Debugging options):
+  respawn orbiter process, terminate orbiter. Both bypass memory deallocation,
+  as suggested by Doug, and should be much faster. Default is respawn.
+  Command line option '-x' enforces termination regardless of Launchpad setting.
+
+060901
+* Incorporated Doug's bug fix for DG flow rate indicators into sources.
+* Activated talkbacks on VC panel R13L.
+
+060905
+* TrackIR: Preliminary support via plugin (only cockpit camera supported yet).
+* New camera API extensions to simplify camera control via external modules.
+* Doc: Updated Atlantis.pdf and Orbiter.pdf to reflect new Atlantis features.
+
+060906
+* Atlantis: bug fix which caused grappled objects to be displaced at simulation
+  start.
+* Atlantis: VC MFDs can now be operated during playbacks.
+* API: Changed oapiSetVCNeighbours to oapiVCSetNeighbours.
+* Bug fix: cleaned up fast shutdown code. MapMFD now doesn't cause CTD.
+* Launchpad: "Sun glare" option disabled for the time being.
+* Base.cfg: generic texture file names can now contain subdirectories (relative
+  to Textures or Textures2). The path must also be present in all references to
+  them from individual base config files.
+* TrackIR module: now supports external track camera view.
+
+060908
+* DG: Added Oliver's VC mesh upgrade for missing surfaces and pilot head.
+* TrackIR module: added preliminary ground observer support (needs a reset
+  function)
+
+060913
+* Bug fix: beaconarray base elements not rendered.
+
+060923
+* DG: bug fix: top hatch always closed on loading.
+* Bug fix: new vessels rendered 1 frame late after creation (caused flicker
+  during staging operations)
+* Playback: New tag "CAMERA PRESET x" in atc stream.
+* API: Methods for displaying onscreen text similar to playback annotation.
+
+060925
+* "Credits" and "contributions" buttons on launchpad "About" tab now combined and
+  generated directly from the Doc\Credit.pdf sources.
+
+==============================================================================
+||||||                            RELEASE 060929                        ||||||
+==============================================================================
+
+061101
+* Atlantis: reversed rudder animation corrected
+* Meshes: support for vertex buffers introduced. Note that any groups which are
+  manipulated at runtime (animation, vertex manipulation, etc.) currently can't
+  be defined in video memory.
+* Mesh format extension: Groups with flag "STATIC" are rendered via video memory
+  vertex buffers (default: system memory). Alternatively, flag "STATICMESH" in
+  the header copies all groups into video memory except those with flag "DYNAMIC".
+
+061113
+* Bug fix: CTD if vessel animation is created after the visual has been
+  instantiated.
+* DG: Bug fix: Skin textures ignored "non-scram" version.
+* Experimental: Orbiter_ng ("no graphics"). Bypasses all render calls and only
+  performs the logical ("physics") updates. Currently still initialises DirectX,
+  but may already be useful as a server in a network setup.
+
+061115
+* API: removed function oapiSetTimeSteppingDebug
+
+061211
+* Stars on celestial sphere are now rendered via vertex buffers. Improved
+  performance on T&L devices when displaying lots of stars.
+* Lower limit for star pixel intensity has been decreased from 0.3 to 0.2.
+* Default number of displayed stars has been increased to 5000.
+
+070211
+* Bug fix: velocity change due to engine thrust not included during orbit
+  stabilisation
+* Class name is now set to vessel name for vessels which don't define a
+  class name.
+
+070214
+* The following vessel module nonmember callback functions are no longer supported:
+  ovcSetClassCaps
+  ovcSaveState
+  ovcLoadState
+  ovcLoadStateEx
+  ovcSetState
+  ovcSetStateEx
+  ovcPostCreation
+  ovcFocusChanged
+  ovcTimestep
+  ovcRCSmode
+  ovcADCtrlmode
+  ovcNavmode
+  ovcHUDmode
+  ovcDockEvent
+  ovcConsumeKey
+  ovcConsumeBufferedKey
+  ovcVisualCreated
+  ovcVisualDestroyed
+  ovcLoadPanel
+  ovcPanelRedrawEvent
+  ovcPanelMouseEvent
+  opcTimestep
+  Any vessel modules that defined classes derived from VESSEL and depended on these
+  callback functions, should use VESSEL2 as base class instead and use the
+  member callback functions.
+
+070628
+* Fixed bug generating zero offset for Saturn barycentric position in initial
+  calculation (before SATSAT module was loaded). This caused displacements of vessels
+  in orbit around Saturn or its moons. Modified Saturn.dll and Satsat.dll. (in
+  response to http://www.orbitersim.com/Forum/default.aspx?g=posts&t=11557 and
+  http://orbit.m6.net/Forum/default.aspx?g=posts&t=14843)
+* Alpha blending enabled for base structures rendered above shadows (in response to
+  http://www.orbitersim.com/Forum/default.aspx?g=posts&t=14619)
+* Added API functions (in response to http://orbit.m6.net/Forum/default.aspx?g=posts&t=14535):
+  oapiGetViewportSize
+  oapiGetPanelScale
+
+070630
+* Flight playback file structure change:
+  - "system events" are now recorded into file "system.dat" instead of individual vessel atc
+    streams. Currently, system events include
+        - annotation-related events
+        - time acceleration events (TACC)
+        - camera events
+  - Vessel-specific events such as engine, animation and user events remain in the vessel atc
+    streams.
+  - The new format is somewhat more logical and should make editing easier. This is also in
+    preparation of a "playback editor" tool.
+  The old format is still supported for backward compatibility
+
+070703
+* New feature: "Playback event editor" (accessible via Ctrl-F5 during playback).
+  - Allows to edit, add and delete events in the "system.dat" file. This should make
+    it easier to add annotations and fine-tune camera angles and time compression.
+    (in response to http://www.orbitersim.com/Forum/default.aspx?g=posts&t=14666)
+
+070718
+* Fixed some bugs in the playback event editor. Some more event types now have explicit
+  edit support. Event time spin control now works.
+* Fixed a bug in playback annotation which would prevent annotations to show if no
+  bounding box was defined.
+* TransX: Orbiter now includes maintainance version (3.10a) by agentgonzo which fixes
+  the "hanging at start screen" bug.
+
+070829
+* More bugfixes in playback event editor. Events can now be inserted at end of list.
+* Script support: Restructured files in LuaScript directory; Lua libraries are now
+  linked dynamically; new LuaInline module for core script support.
+* Scenario files: "Environment" group now supports "Script" tag to specify a script that
+  is launched at simulation start. The "2007 Edition/Challenges/Challenge1" scenario has
+  been modified to make use of this feature.
+
+070905
+* API: new method VESSEL::SetCameraCatchAngle()
+
+071005:
+* Fixed bug that caused spacecraft to get stuck when landed at latitude 90 deg.
+
+======================================================================================
+
+071101
+* Orbiter core sources migrated to VS2005. Main changes: use of std stream libraries,
+  dropped obsolete .h stream headers. 
+* Redesigned Launchpad dialog, now resizable.
+
+071111
+* Core: VS2005 compilation now with "buffer security check" turned off
+* Launchpad: Tab selection buttons synchronised with no-graphics version
+* Launchpad: "Help" button re-activated.
+* Launchpad: "Info" button in scenario selection page added (for displaying scenario
+  help, if available).
+* Launchpad: size & positions is now remembered
+* Launchpad: progress bar for "simulation session closing" window added
+* Script: frame rate dependency bug in alt_ap (dg/atmap.lua) fixed
+* Script: added DG airspeed autopilot (dg/atmap.lua). Syntax:
+      proc.bg(spd_ap, spd)
+  where spd: target airspeed [m/s]
+* Atlantis: reduced tank separation velocity
+
+071119
+* Lua console: fixed CTD bug when history buffer was exhausted.
+* Launchpad: added missing context help for Extra tab.
+
+071121
+* Lua console: scrollbar added
+* DG/Script: added description for DG atmospheric autopilot to Doc/Deltaglider.pdf.
+* Scenarios: added "2007 Edition\Demos\Autopilot" scenario as autopilot tutorial.
+* SDK: Doxygen-generated html API reference manual is now in
+  Orbitersdk/doc/API_Reference.chm.
+
+071123
+* Bug fix: Reserved data of VESSELSTATUS are now cleared in VESSEL::GetState, to avoid
+  problems when passing the structure to VESSEL::DefSetState.
+
+071125
+* HST/Script: Added script support for animations (open/close hatch, antennae, solar
+  arrays)
+* DG/Script: Re-wrote the atmospheric autopilot to make it more user-friendly. The
+  "2007 Edition\Demos\Atmospheric autopilot" scenario has been modified accordingly.
+* DG/Script: Added online helpfile. Invoked with 'help(dg_aap)' from the script prompt.
+* Bug fix: failure to load playback streams in VS2005 compiled binary.
+
+071201
+* NG: Fixed some API problems in connection with fullscreen dialog management. Some
+  new dialog-related functions added to GraphicsClient class.
+* Launchpad: New interface for defining star rendering, including additional
+  parameters.
+
+071204
+* Engine: Initial implementation of radiation pressure (added launchpad option),
+  shadow effects not yet implemented.
+* API: added VESSEL3::clbkGetRadiationForce to allow vessels to implement their own
+  radiation pressure algorithms.
+
+071205
+* Engine: Shadow effects now included in radiation pressure calculation.
+
+071212
+* New vessel type: Solar sail (an exemplar for radiation pressure effects)
+  Sample scenario in: 2007 Edition|Demos|Solar sail
+  Interesting bits:
+  - overloads the VESSEL3:clbkGetRadiationForce method for custom pressure calculation
+  - solar sail elastic deformation (dynamic updates)
+  - steering paddles low-level controlled via script (but badly needs an intelligent
+    autopilot)
+  Current problems:
+  - without autopilot, this is not very useful
+  - sail deformation algorithm is dynamic, so starts out from flat at the beginning
+    of each scenario. Better would be a steady-state thin-plate bending FEM code.
+  - mesh is hand-made in matlab (my hopelessness at 3D modelling). Could do with a
+    professional makeover, but maybe only after physical parameters have been
+    established (size, mass, steering method, etc.)
+
+080517
+* Planetary surface patch resolution increased to level 14
+* Load-on-demand capability for high-resolution surface tiles (level >= 9)
+* Mipmap support for planetary surface textures
+* New dialog in Extra tab for configuration of planetary render engine
+* Level-14 resolution applied to Florida surface area
+* Exhaust textures replaced with McWgogs' version
+* New planet orientation/rotation parameters for config files from IAU data, provided 
+  by Chode
+* Bug fixed: EPHEM_PARENTBARY flag not used for ephemeris calculations
+* D3D7 client: tile manager updated to inline graphics engine (level 14, load on
+  demand)
+
+080522
+* Alpha blending activated for base surface tiles (both inline and D3D7 client)
+* Tile load frequency limit and mipmap bias now user-selectable in Planet Rendering
+  Options dialog
+
+080603
+* Bug fix: long lines (> 511 chars) in config files caused premature parse
+  termination due to change in VS2005 stream::getline implementation. Now scanning
+  continues after line truncation, and line buffer has been increased to 1023
+  characters.
+
+080609
+* Reworked celestial body ephemeris calculations: sub-system barycentre offsets are
+  now evaluated by  recursively calculating child body positions. Absolute positions
+  are calculated in a second pass, starting from the root object (sun). 
+  Note: Currently, only external module or 2-body element updates for celestial
+  bodies are supported. Dynamic updates are disabled at the moment.
+  Affected issue titles: "Orbiter not offsetting true position from barycenter",
+  "EPHEM_PARENTBARY not working correctly".
+* Orbiter_ng: shortcut to modules/server/orbiter.exe has been replaced by launcher
+  application in orbiter root directory. Avoids problem with absolute shortcut paths.
+* Florida textures: Now distributed as a self-installing "texture pack". This is
+  an exe file that extracts itself and calls pltex to merge textures into the global
+  Earth textures.
+
+080612
+* Further work on barycentre calculation: barycentric offset is no longer calculated
+  manually from child positions if the module reports both true and barycentre
+  position. [See issues: 4,5,21]
+* DirectX cooperative level set with DDSCL_MULTITHREADED flag enabled to make DirectX
+  calls threadsafe. This is required for the asynchronous texture loading method of
+  the planetary tile manager. [See issue: 20]
+* Stubs for the API functions oapiGetStationByName, oapiGetStationByIndex and
+  oapiGetStationCount have been inserted again to avoid breaking addons which rely on
+  them. Using one of these functions generates a warning in the log file.
+  [See forum thread: 2279]
+* Using the "respawn" shutdown option no longer causes the new orbiter process to
+  overwrite the log file.
+
+080613
+* Bug fix: DG scram exhaust stream displaced. [See issue: 23]
+
+080614
+* Bug fix: Clipped planet surfaces at large camera apertures. Frustum near-plane
+  calculation now takes into account intersection with planet surface.
+  [See issue: 22]
+
+080615
+* More modifications to near-plane calculation for surface intersection.
+
+080623
+* Phobos.dll and Deimos.dll replaced with new versions provided by Chode.
+
+=============== GAP
+
+090801
+* D3D7Client: Problem with surface base shadow mesh generation addressed. The
+  client merges shadow meshes from multiple base objects into a single vertex
+  list. For complex bases this causes problems (CTD) if the vertex list exceeds
+  the max. vertex count (64000). To solve this, mesh objects are now excluded from
+  merging. This doesn't entirely fix the problem, so may need more thought.
+  -> TODO: mesh object shadows currently not rendered in D3D7Client.
+* AtmAltLimit for major planets (except Earth) raised (see
+  www.orbiter-forum.com/project.php?issueid=95)
+
+091002
+* VESSEL::DelAttachment and VESSEL::ClearAttachment methods added.
+
+091005
+* New Map MFD mode: Vessel data line now has course readout. Target base line now
+  has distance and bearing readout. [see issue: 130]
+* Transient thruster levels (SetThrusterLevel_SingleStep) are now eliminated as
+  soon as they are applied. Should fix the problem of "sticky" single step levels
+  [see issue 143]
+* Latest body rotation and precession data provided by tblaxland applied to 
+  definition files [see thread 8185]
+
+091006
+* Fixed bug in planet ephemeris calculations which caused interpolation errors
+  after jumping back in time. Affected modules: Vsop87.dll, Moon.dll, Galsat.dll,
+  Satsat.dll.
+
+091011
+* VESSEL::MeshgroupTransform(): moved from VVessel.cpp to Vessel.cpp to avoid missing
+symbol in orbiter_ng. However, MeshgroupTransform is not yet supported in orbiter_ng
+and always returns false.
+
+091013
+* DG: Mesh group implementation of artificial horizon in VC. This should
+  improve frame rate by avoiding GDI drawing of the old horizon implementation (and
+  look better).
+
+091017
+* Reverted transient thruster code to version before 091005 to fix side effects
+  (no fuel reduction, no thrust indication) during transient burns.
+* D3D7 client: Enabled specular reflections from mesh objects.
+* VESSEL: Added method SetDockMode to allow reverting to legacy 'snap to dock' mode.
+* Fixed challenge 4 scores
+* Added empty Config/Vessels/Galileo.cfg to fix broken scenarios
+  'The solar system/Jupiter flybys'.
+* Scenarios 'Views/Moon through atmosphere', 'Space Shuttle Atlantis/Altlantis final
+  approach', 'Satellites and Probes/ldef/LDEF retrieval': fixed Atlantis position offset.
+* Added 'Textures2/DG' subfolder to beta package.
+* Issue 155: Fixed 'GGGGGG' fuel readout on default panel for vessels without
+  fuel resources.
+* D3D7 client: Ambient lighting bug fixed (mesh group ambient flag ignored).
+* Atlantis: Added OMS thrust direction marker to HUD.
+
+091020
+* New tutorial: Space Shuttle to ISS.
+* Sync orbit MFD mode: now remembers the number of orbits displayed.
+
+091021
+* Removed obsolete 'Playback/Atlantis launch' playback scenario.
+
+091022
+* Shuttle-A: bug fix (payload mass not initialised). Caused crash in OrbitMFD code for
+  'Shuttle-A | ISS approach' scenario.
+* Jupiter: Moved L-7 surface and cloud textures from Textures2 to Textures to be
+  used as default (fixes the D3D7 client white Jupiter bug).
+* D3D7Client: added support for rendering nonspherical celestial bodies (Phobos
+  and Deimos).
+* D3D7Client: added support for rendering the sun as a billboard.
+* Scenarios: 'Tutorials\Atlantis final approach' has been replaced by
+  'Tutorials\Space Shuttle final approach'. 'Tutorials\Glider launch 1' has been
+  replaced by 'Tutorials\DG stunts'. Obsolete 'Playback\Glider launch 2' has been
+  removed.
+
+091025
+* Inline selection dialogs: replaced HDC with Sketchapd references.
+* D3D7Client: Added support for additive lighting of celestial bodies rendered
+  through a planet's atmosphere.
+
+091027
+* Map MFD: fixed bug when deleting orbit target vessel (issue 164).
+* API: Added method: VESSEL::GetBeacon.
+* D3D7Client: Added support for vessel light beacons.
+* D3D7Client: Added support for vessels entering planet shadows.
+* Neptune: Re-inserted siderial rotation period of 57996s into config file.
+* Added msvcr71.dll and msvcp71.dll to orbiter root directory to avoid missing
+  dependencies on systems that don't have these libraries in the system folders.
+
+091029
+* Scenarios: removed obsolete "2006 Edition|Playback feature" folder.
+  Moved "2006 Edition|Gravity gradients" scenarios into "Navigation|Space physics".
+* Fixed scenarios in Checklists folder.
+* Fixed glass cockpit nav button bug: mouse click registration point offset from
+  visual representation.
+
+091105
+* Graphics bug fix: planet surface rendering: fixed seams between pure and mixed
+  specular tiles for combination specular + distance fog - specular ripples
+  (inline and D3D7 client)
+
+091107
+* D3D7Client: alpha blending enabled for exhaust particles seen from cockpit view.
+* TransX: Updated to version V3.14(beta). Moved documentation into Doc\TransX
+  subdirectory.
+
+091108
+* D3D7Client: base structures lighting: ambient lighting modification through
+  atmosphere, and planet shadowing enabled.
+* Bug fix: orthodome calculation for special cases lat1=lat2 or lng1=lng2. [See
+  issue 196]
+* API: Added function oapiSetHUDMode(int,const HUDPARAM*) [see issue 53]
+
+091111
+* D3D7Client: Fixed bug: MFD buttons left behind in glass cockpit mode when MFD
+  is powered off.
+* D3D7Client: Fixed bug: White MFD surface for powered-off MFD in VC mode.
+
+091122
+* TransX: Updated to version 3.14.0.2
+* TransX: Replaced Navigation\TransX scenarios with flytandem's updated version.
+* Map MFD: fixed problem with scenario data format from previous version.
+
+091124
+* Inline graphics: initial default fullscreen mode is 1024x768 (was 800x600)
+* Scenarios: Added 2009 Edition|Welcome scenario. Runs automatically on first-
+  time install.
+
+091130
+* Planet distance fog modified: fog effects drop to zero at camera altitude >
+  3*planet radius (fix glowing oceans)
+
+091209
+* Bug fix: [issue 236]: scenario editor creates invalid scenario when moving
+  vessel with base reference to a different planet (base not cleared).
+
+091220
+* Bug fix: System time updates for fixed length time steps
+* Distance strings: use 'G' postfix instead of 'AU' up to 1e12
+* Hyperion: Switched to 2-body unperturbed orbit, due to problems with
+  Tass-1.7 module.
+
+091231
+* Uranus moons: Switched to 2-body unperturbed orbits, due to problems
+  with modules.
+* Bug fix: Planet barycentre offsets ignored during vessel position
+  initialisation. Was leading to wrong vessel positions relative to
+  orbited planet.
+
+100126
+* Replaced the following ephemeris modules with Chode's new versions:
+  Ariel.dll, Miranda.dll, Oberon.dll, Titania.dll, Umbriel.dll.
+  Reason: Fixed instability for large time steps.
+
+100127
+* Added "Scan" buttons to COM/NAV MFD.
+
+100203
+* Replaced Triton.dll with Chode's new version. Added Triton precession
+  model by Chode to Triton.cfg.
+* Replaced Enceladus texture (updated Steve Albers map). Default is now
+  L7. L8 is available as highres option.
+
+100305
+* Modified the scenario and config parser so that partial tags no longer
+  match, i.e. XXXYYY is no longer a match for tag XXX.
+* New tag END_PARSE to stop the parser scanning the rest of a file.
+* Started new SDK sample "ScriptVessel": Engine for script-driven
+  vessel definition.
+
+100306
+* Added VESSEL::GetYawMomentScale and VESSEL::SetYawMomentScale
+  Marked VESSEL::GetBankMomentScale and VESSEL::SetBankMomentScale as
+  obsolete.
+
+100313
+* Fixed bug in VESSEL::ShiftMesh (was ignored in inline client, caused CTD
+  in D7 client)
+
+100501
+* HUD in glass cockpit view and 2D panel view now implemented as 2D mesh
+  Only user-defined HUD elements are using the Sketchpad interface anymore
+* ScriptVessel and ScriptMFD modules added (support script-based vessel and
+  MFD implementations.
+* Added script-based vessel example (ScriptPB). Same functionality as
+  ShuttlePB, but implemented in Config\Vessels\ScriptPB.cfg
+* Added script-based MFD example (RCS Attitude): advanced orbital attitude
+  control, including rotational alignment with target docking port.
+  (Config\MFD\Attitude.cfg)
+
+100503
+* Fixed 2D panel rendering (now within BeginScene/EndScene render cycle)
+  This required addition of new GraphicsClient function Render2DOverlay
+* Docking approach boxes now rendered rather than drawn
+* Docking ports inactive for 1second after undocking (to prevent accidental
+  recapture)
+* Updated transx.dll to modified MFD2 interface
+* Bug fix: HUD is now rendered again for old-style 2D instrument panels.
+
+100506
+* Added option FullscreenPageflip = [TRUE|FALSE] to Orbiter.cfg. If false,
+  page flipping is disabled in fullscreen mode (may fix screen flicker problem)
+* Added FlipToGDISurface at beginning of simulation session (might fix
+  problems with flickering GDI elements (e.g. annotations) on some ATI cards.
+* Added method VESSEL::AddExhaust(EXHAUSTSPEC*) for extended control over
+  exhaust definitions (thruster-independent exhaust specs, random amplitude
+  variations).
+* Bug fix: page flipping was not restored in fullscreen mode after closing
+  dialog boxes.
+
+100508
+* Bug fix: Jumpy animation with vsync enabled (caused by incomplete flip).
+
+100511
+* Removed FlipToGDISurface call at session start (did not fix flicker problem)
+* Fixed potential thread deadlock condition in LuaConsole module
+
+100512
+* Added Doug's video mode enumeration for multiple monitors to inline client.
+* Session shutdown mode: "Deallocate memory and display launchpad" is now
+  default.
+* Bug fix: Incorrect fullscreen resolution after change of bitdepth.
+* Addressed bug: loss of keyboard input (fix pending confirmation)
+* Addressed bug: texture bleeding into bottom edge of left info box
+
+100514
+* Launchpad video tab: additional fixed window aspect ratio options
+  (16:10, 16:9)
+
+100515
+* D3D7Client: Bug fix: Alt key intercepted by Windows in windowed mode.
+* Changed behaviour of keymap.cfg: Undefined entries no longer fall back to
+  default key binding, but instead have no binding at all.
+* Added "keymap2006.cfg" to distribution package: users can revert to
+  2006-compatible key binding by copying this to "keymap.cfg".
+* VC camera offset and rotation now preserved when switching between cockpit
+  and external view.
+
+100516
+* Bug fix: orbiter.cfg was not saved during fast shutdown (lost planetarium
+  settings)
+* D3D7Client: Bug fix: device index changes ("hop-2")
+
+100518
+* Attempting to load a graphics client into orbiter.exe now produces a
+  warning dialog box and an error message in orbiter.log.
+* D3D7Client.dll has been removed from distribution package (to be distributed
+  separately).
+* Bug fix: white flash after render window in fullscreen mode when hardware
+  page flip is disabled
+* Cockpit camera: Camera setting stored/recalled only for VC view. 2D panel
+  and glass cockpit views are reset to (default) forward direction.
+* Reworked synchronisation of Lua console interpreter thread, to address
+  reports of program freezing on entering console commands.
+
+100520
+* Re-worked interpreter thread logic for inline, console and MFD interpreters.
+  Threads are now properly terminated before orbiter process closes (no
+  timeout errors). Fast shutdown options now work faster.
+* Added help page "Interpreters for developers" to scripting manual.
+
+100522
+* Bug fix: console freeze on input in Windows 7 [issue #220].
+* Bug fix: DG custom skin textures are now released at vessel destruction.
+* Bug fix: Disabling Earth atmosphere didn't work (atm params were read from
+  config file).
+* Bug fix: Inline client: planetary ring textures: high-resolution textures
+  (level 3) were used instead of level 1 at large distances [issue #337].
+* Bug fix: Scenario script was not cleared when opening a new session
+  without restarting orbiter [issue #334].
+* Sketchpad class: new graphics primitive "TextBox". Default implementation
+  via Sketchpad::Text calls. GDI implementation via "DrawText" GDI function.
+* Sketchpad class: method GetTextWidth has additional optional parameter "len".
+* Screen annotations are now written through Sketchpad::TextBox.
+* API: added function oapiGetHUDMode(HUDPARAM*) [issue #53]
+* Feature: "Auto-refuel on pad" now user-selectable on Parameters tab.
+
+100523
+* API: oapiReadScenario_nextline can now read lines of arbitrary length
+  [issue #320]
+* Bug fix: pltex: night light textures corrupted in combination with
+  water mask.
+* Re-generated Earth textures (L1-8 included. High-res texture torrent
+  needs to be updated.)
+
+100525
+* Updated positions for Edwards, China Lake and Inyokern [issue #328]
+
+100529
+* Fixed Sketchpad::TextBox implementation.
+* GDIClient now overloads the TextBox method.
+* Recompiled transx.dll to work with latest orbiter executables.
+* MSI installer now installs to user's home directory by default
+  (should avoid problems with restricted access to Program Files in
+  Vista/Win7).
+
+100602
+* Bug fix: truncated scenario files no longer hang orbiter on launch.
+
+100603
+* Added API documentation for top-level callback functions.
+
+100611
+* Docking MFD: Bug fix: Zero target (e.g. VIS mode not in range) is now
+  ignored when copying to HUD (caused CTD) [issue #409]
+
+100613
+* Bug fix: Launchpad dialog: Closing minimised launchpad no longer writes
+  erraneous geometry data to Orbiter.cfg. Launchpad placement is now
+  limited to desktop extents. [issue #408]
+
+100616
+* MFD: removed superfluous colour key flag from transparent MFD texture
+  surfaces.
+* Cockpit camera: after resetting default direction, relative direction
+  is adjusted so that absolute direction remains the same.
+* API: VESSEL3::clbkRenderHUD method added
+
+100619
+* Bug fix: TerminalMFD: clbkGeneric(VMSG_LUAINTERPRETER) was not called
+  when opening a terminal MFD instance.
+
+100622
+* Bug fix: MFD::SelectDefaultFont now actually selects the font
+  corresponding to the supplied index.
+* Mars.cfg: MaxPatchResolution now set to 11 by default.
+* Plugin modules can now have a description that is displayed in the
+  Launchpad Modules tab. Descriptions must be defined as stringtable
+  resource entries (numerical ID 1000).
+* Background stars are now disabled if selected magnitude limits are
+  inconsistent (avoids potential division by zero CTD).
+
+100623
+* Mars.cfg: Modified Mars atmosphere and haze colours.
+* API: Added functions oapiCreateBrush and oapiReleaseBrush [issue #431]
+* Graphics API: oapi::Font, oapi::Pen and oapi::Brush constructors are
+  now protected to prevent them from being called directly.
+* API and samples: all references to opcDLLInit and opcDLLExit have been
+  replaced by InitModule and ExitModule, respectively.
+
+100624
+* Graphics API: Sketchpad::GetDC method is no longer defined as const
+  (will require re-compilation of all graphics clients).
+
+100625
+* Glass cockpit: digits are now supported in MFD buttons. [issue #444]
+
+100629
+* DG + ShuttleA: Custom HUD elements are now rendered (clbkRenderHUD)
+  in glass cockpit and 2D panel mode.
+
+100701
+* Bug fix: mouse sometimes remained hidden when cursor left render
+  window during right-click dragging. [issue #458]
+* API: oapiCreateFont: added a variant that allows specification of
+  an orientation angle. [issue #463]
+* Bug fix: PRPLEVEL -1.#IND00 entry in scenario files when max.
+  propellant capacity is 0.
+
+100703
+* F3 (vessel selection dialog) and Ctrl-F3 (switch to previous vessel)
+  are now available while the simulation is paused.
+* F3 and Ctrl-F3 are no longer hardcoded, but configurable in keymap.cfg.
+* Changed behaviour of keymap: Unlisted entries use default key binding.
+  To disable a key binding, mark the entry in keymap.cfg as "None".
+
+100706
+* New Mimas textures (level 7) based on a map by Steve Albers.
+
+100710
+* Implemented option for displaying background images mapped on celestial
+  sphere. Provided a selection of texture sets at different wavelengths.
+
+100719
+* Bug fix: initial bearing of great-circle segment for point-to-point
+  route on a sphere [issue #496]
+
+100720
+* Updated planet precession code and API functions according to modified
+  Doc/Technotes/precession.pdf. Return values of
+  oapiGetPlanetObliquityMatrix and oapiGetPlanetCurrentRotation are
+  affected. Side effects may be present in MFD readouts.
+
+100721
+* Lua: Added attachment management methods to vessel class interface.
+
+100723
+* Added option in Extra tab for selection of hardware/software timer.
+* Added saveguards for inconsistent returns from high-precision hardware
+  timer. This may have an effect on problems reported in issue #449.
+
+100730
+* Planet configuration files: Added option AtmAttenuationAlt (altitude
+  [m] up to which a planet atmosphere attenuates light cast from the sun
+  on a spacecraft). This makes the attenuation altitude independent of the
+  atmosphere altitude limit. Fixes the bug of early dimming for spacecraft
+  crossing Earth's terminator.
+
+100812
+* Added localised light source support (API and script interface)
+
+100815
+* Bug fix: error in vessel rotation model (left-handed version of Euler's
+  equation)
+
+100819
+* Bug fix: frame rate was limited to 1000 fps.
+
+100821
+* Max simultaneously active light sources limited to 8 (DX7 limitation)
+  to avoid visual artefacts [issue #527]
+
+100829
+* Cleaned up Orbiter.cfg parser. By default, only non-default cfg values
+  are now written to Orbiter.cfg. Obsolete option "PlanetHipatchAperture"
+  removed.
+* Updated Doc\OrbiterConfig.pdf
+* Graphics API: GraphicsClient::GetConfigParam: removed support for
+  arguments CFGPRM_SURFACEPATCHAP (obsolete) and CFGPRM_SURFACESPECULAR
+  (duplicate)
+* Render engine: max number of simultaneous light sources now limited to
+  whatever the graphics mode supports.
+
+100903
+* Changed the call sequence for Module::clbkSimulationEnd further down
+  the shutdown sequence to avoid deletion of interpreter instances while
+  still being accessed [issue #426]
+
+100905
+* Bug fix: ScriptMFD module: switching between different script MFD
+  modes was not possible.
+* Bug fix: Celestial background textures were not deallocated at
+  simulation shutdown.
+* Bug fix: transx: pen/brush allocation/deallocation fix [issue #564]
+
+100922
+* ShuttleA: started on redesign of 2D panels in new mesh-based framework
+* ShuttleA: Implemented ADI ball for main 2D panel
+
+101016
+* ShuttleA: mostly finished ADI instrument. Rest of panels still needs
+  work.
+* Added Scenarios\Tutorials\ADI training scenario.
+* New feature: highlighting 2D panel elements by script (preliminary)
+
+110316
+* Bug fix: MFD displays in VC blank when viewed through HUD [issue #736]
+
+110603
+* Distant objects and planets are now rendered as billboard "disc"
+  textures rather than directly drawing pixels (which could cause severe
+  performance drops)
+
+110605
+* Added new API functions: oapiGetGroundspeed, oapiGetGroundspeedVector,
+  oapiGetShipGroundspeedVector
+* Initial support for nonzero wind velocities added. Currently wind
+  distributions are static (only altitude-dependent) with added random
+  temporal perturbations.
+
+110707
+* Bug fix: nose wheel steering applied to wrong vessel after focus
+  change [issue #803]
+
+110817
+* Bug fix: Comment in SURFBASE section of planet config files created
+  error message in log file [issue #818]
+* Bug fix: Map MFD would not display vessel ground track if displayed
+  planet was not the closest planet to the vessel [issue #802]
+* New main menu and info box implementation. Both can now be shown,
+  hidden, or shown only if mouse is at top of window. Right-click on menu
+  for configuration options. Additional "render statistics" info box.
+* "I" and "F" keys no longer consumed by orbiter core. The "ToggleInfo"
+  and "ToggleFPS" entries in keymap.cfg are deprecated.
+
+110821
+* Z-coordinates for glass cockpit mesh are now reset to 0. [D3D9Client
+  development post #147]
+
+=== BETA UPLOADED ===
+
+110822
+* Bug fixes main menu config dialog: Spurious selection of "Show option"
+  fixed, and multiple instances of dialog inhibited.
+
+110824
+* Added oapi::GraphicsClient::clbkBeginBltGroup and clbkEndBltGroup
+* Added oapiBeginBltGroup and oapiEndBltGroup
+* Blt group mechanism supported by main menu
+
+111027
+* Modified scaling for glass cockpit HUD and MFD elements (now relative
+  to viewport height) to improve display for extreme widescreen formats
+  [issue #724].
+* Added configuration parameter "CompactGlasspit" to orbiter.cfg for
+  setting glasspit layout in widescreen formats.
+* Orbiter now disables font smoothing while running.
+
+111028
+* Orbiter now supports font smoothing control in
+  Extra|Debug|Performance settings. Font smoothing is disabled by
+  default.
+* Updated Orbiter icon (supports larger sizes and transparency)
+* Bug fix: wind effects can now be disabled in orbiter_ng [issue #847]
+
+111029
+* Changes to font smoothing option now take effect directly rather than
+  at the next program start.
+
+111030
+* Bug fix: Retro engine indicator at 100% was reset incorrectly in glass
+  cockpit view after switching vessels [issue #822]
+* Scenario Delta-glider|Cape Canaveral: reduced DG fuel load to 20% and
+  shifted it off the pad (to prevent auto-refuel) to allow VTO
+  [issue #719]
+
+111101
+* Bug fix: fixed memory allocation bug for Orbit HUD mode that caused
+  CTD at FOV settings > 90 deg. [issue #604]
+
+111102
+* Orbiter now sets the keyboard locale according to the active Windows
+  setting. This should allow entering language-specific characters
+  into inline input boxes, provided the corresponding keyboard layout
+  is selected [issue #307]
+* Orbiter now returns exit code 0 on normal termination.
+* Bug fix: Surface HUD speed and altitude readouts now display "----"
+  for values > 1e15. Should fix CTD for very large distances
+  [issue #510]
+* Feature: Orbit HUD now shows orbital velocity and radius readouts in
+  VC view, making it equivalent to glass cockpit view.
+
+111104
+* Added option to force MFD display sizes to pow2 for glass cockpit
+  and 2D panel view. By default, orbiter tries to auto-detect according
+  to graphics capabilities, but can be overwritten in Extra |
+  Instruments and Panels | MFD parameter configuration. Might fix MFD
+  display corruption [issue #401]
+* GraphicsClient::clbkGetRenderParam now supports the RP_REQUIRETEXPOW2
+  identifier to return texture pow2 requirement.
+* Scenario files: RPOS, RVEL, AROT, VROT values stored with higher
+  accuracy [issue #861]
+
+111105
+* Bug fix: mouse wheel in XR VC caused CTD [issue #862]
+* Bug fix: Map MFD: CTD after selecting a surface base if ref planet
+  was not vessel's proxy planet.
+
+111106 [REQUIRES GRAPHICS CLIENT RECOMPILATION]
+* Bug fix: MFD mode listings had wrong vertical alignment when pow2
+  display scaling was active [issue #401]
+* Inline graphics: no longer disables AERO windows manager
+  [issues 673, 352]
+* Graphics client: added member function clbkSplashLoadMsg to allow
+  splash screen status displays for external clients.
+* D3D7Client now displays loading status on splash screen
+
+111107
+* Bug fix: oapiGetObjectType no longer crashes when called with an
+  invalid object handle [issue #637]
+
+111108
+* Bug fix: VESSEL::GetThrusterMax no longer returns negative values
+  at high external atmospheric pressures [issue #659]
+
+120524
+* Bug fix: shipedit utility now saves texture file names and group
+  label names [issue #10]
+
+121023
+* Bug fix: CTD when pressing "Options" button in Map dialog.
+* Bug fix: LuaInline.cpp: attempt to delete Module instance (g_IList)
+  after it was already freed by Orbiter.
+
+121024
+* Bug fix: CTD on changing time in Scenario Editor
+* Bug fix: GetTouchdownPoints
+* API: Added functions: VESSEL::GetTouchdownPoint,
+  VESSEL::GetTouchdownPointCount
+
+121025
+* Bug fix: Sketchpad-drawn elements of 2D panel HUD were not displayed
+* Bug fix: oapiGetObjectType() was missing OBJTP_SURFBASE objects
+
+121026
+* Reverted callback order: VESSEL::clbkPostCreation is now called
+  before VESSEL::clbkLoadPanel to restore 100830 convention
+
+121101
+* Vessel accelerations are now updated in idle (landed) mode.
+  VESSEL::GetForceVector() should now return correct values while
+  landed.
+* Tangential surface friction forces are now scaled down linearly
+  for vessel speeds < 1m/s to avoid oscillating discontinuous forces.
+
+121102
+* Bug fix: wind vector after simulation restart not correctly
+  initialised
+
+121103
+* Bug fix: Atlantis: launch stack was dropping off the pad
+  when scenario was saved with Shuttle in active mode
+* Bug fix: Landed vessels are no longer activated if they set their
+  touchdown points in clbkSetClassCaps
+
+121115
+* Atlantis: Added Ascent autopilot class
+* DG: Integrated AAP bug fixes suggested by DarkWanderer [issue #1007]
+
+121122
+* Bug fix: mouse disappearing when dialog is opened during right-drag
+  [issue #1011]
+* Dialog utility classes for general use placed in
+  Orbitersdk\samples\Common\Dialog
+* Atlantis: Ascent launch autopilot implemented (currently up to MECO)
+
+121129
+* Launchpad: Scenario descriptions now support html/chm page display.
+  Scenario "Help" tags are used where available, otherwise use the
+  Description section. Html tags in the description are now supported.
+
+121201
+* Mercury: Replaced texture with one based on a 2012 Messenger mosaic.
+  Default resolution in Textures is now L7. L8 and higher versions
+  will be available as well.
+* Re-enabled text box display of launchpad scenario description as an
+  option, if html browser causes problems (Linux/WINE). Currently
+  requires manual editing of Orbiter.cfg (HtmlScnDesc = FALSE)
+* Bug fix: Long lines in scenario descriptions were missing were
+  missing their beginning.
+* oapi::Sketchpad: Added GetOrigin method.
+  ####### REQUIRES RE-COMPILATION OF GRAPHICS CLIENTS ##########
+
+121203
+* Added Launchpad Extra|Debug options|Launchpad options dialog to
+  switch html/text display for scenario descriptions and screen
+  capture on exit. Scenario descriptions default to text-only on
+  Linux/WINE.
+* "Info" button in Scenario tab has been re-activated for text-only
+  mode.
+
+121208
+* Screen captures are now saved in JPEG format.
+
+121209
+* Launchpad: Scenario, modules and extras lists and descriptions
+  now separated by a movable divider.
+
+121213
+* Moved calling positions for clbkPanelMouseEvent and
+  clbkPanelRedrawEvent to after vessel state update is complete to
+  avoid race conditions.
+* Added a flow diagram of the Orbiter update loop to Orbitersdk
+  doxygen documentation (under construction).
+* Bug fix: GetTotalPropellantFlowrate returned incorrect values
+  when called from VESSEL2::clbkPreStep
+
+121214
+* Methods added to oapi::GraphicsClient: clbkSaveSurfaceToImage,
+  WriteImageDataToFile, GetRenderWindow.
+  clbkSaveSurfaceToImage must be implemented by clients to enable
+  screen capturing.
+  ####### REQUIRES RE-COMPILATION OF GRAPHICS CLIENTS ##########
+
+121215
+* Updated screen capture dialog (Ctrl-PrtScn). Now allows selection
+  of file format and image quality (for jpg).
+* Scenario files now support BEGIN_HYPERDESC/END_HYPERDESC blocks
+  for html-formatted descriptions. Rudimentary text->html and
+  html->text conversion implemented to display ASCII text in 
+  browser window and vice versa.
+* Vessel callback order: VESSEL2::clbkLoadGenericCockpit is no
+  longer called at every session start, even if the cockpit view
+  starts up with a panel or VC (see callback order chart in API
+  Reference manual)
+
+121218
+* Launchpad: scenario list now updates on changes in scenario
+  directory [issue #963]
+* API: added function oapiGetMeshFlags
+
+121221
+* GraphicsClient::GetBaseStructures now sets bit 0 of the UsrFlag
+  for each exported mesh group according to whether the group
+  should render a ground shadow (0) or not (1).
+* Extra | Debug | Performance options: added option to enforce
+  cleartype on exit even if it wasn't on at program start (recover
+  cleartype after Orbiter crash) [issue #918]
+* Base config files: MESH object type: Added token OWNSHADOW (use
+  shadow flag (FLAG bit 0) to select ground shadows for individual
+  mesh groups
+
+121223
+* Redesigned vessel selection dialog (F3)

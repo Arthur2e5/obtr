@@ -1,0 +1,5 @@
+BEGIN_HYPERDESC
+<h1>New visuals</h1>
+
+<p>This folder presents various visual improvements introduced in the Orbiter 2010 release.</p>
+END_HYPERDESC

@@ -1,0 +1,7 @@
+BEGIN_HYPERDESC
+<h1>Orbiter Demos</h1>
+
+<p>This group of scenarios illustrates the capability of Orbiter to interactively demonstrate simulator and addon features, or general physical effects, via mission scripts and annotations.</p>
+
+<p>These scenarios are not playbacks, but live simulations that interact with a Lua mission script. The script can monitor the simulation state and provide situation-sensitive feedback. This feature can be use to provide interactive tutorials and flight trainers.</p>
+END_HYPERDESC

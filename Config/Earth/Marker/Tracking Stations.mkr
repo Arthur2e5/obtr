@@ -1,0 +1,23 @@
+; Various Tracking Stations
+
+BEGIN_HEADER
+InitialState on
+ColourIdx 2
+ShapeIdx 2
+END_HEADER
+
+BEGIN_DATA
+
++167.717 +8.717         : Kwajalein
+-157.1 +1.9             : Christmas Island
+-140 -9.5               : Nuku Hiva
+-91.1 -0.72             : Galapagos
+-51.9 +4.9              : Cayenne
+-35.13 -5.47            : Natal
+-0.17 +5.6              : Accra
++40.19 -3               : Malindi
++76.66 +11.38           : Ootacamund
++103.83 +1.33           : Singapore
++134.5 +7.33            : Koror
++72.4166 -7.33          : Diego Garcia
+-14.31 -7.91            : Ascension Island

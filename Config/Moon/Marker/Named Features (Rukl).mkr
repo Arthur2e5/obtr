@@ -1,0 +1,1335 @@
+; Named features on the lunar surface.
+;
+; This list is a complete manual adaption of the Lunar Atlas by Antonin Rükl,
+; partly edited to enhance the useability in Orbiter (separating labels etc.).
+; The "Rükl" is an observer's atlas, and as such only covers the visible lunar
+; nearside including the libration zones. For further labels, see the USGS
+; and lunar farside label lists. All three lists together make up for a full
+; list of all so-far named primary features on the lunar surface under the
+; currently used nomenclature.
+
+BEGIN_HEADER
+InitialState on
+ColourIdx 1
+Size 0.6
+DistanceFactor 0.6
+END_HEADER
+
+BEGIN_DATA
+
+; Rükl chart 1
+-77 +60.4               : Cleostratus
+-84.6 +49.6             : Galvani
+-86.3 +51.1             : Langley
+-62.7 +53.4             : Markov
+-64.1 +57               : Oenopides
+-88 +54.1               : Régnault
+-78.5 +51.4             : Repsold
+-80 +51                 : Rimae Repsold
+-88.1 +52.5             : Stokes
+-84.9 +54               : Volta
+-81.4 +57.6             : Xenophanes
+
+; Rükl chart 2
+-51.3 +66.9             : Anaximander
+-56.8 +59.5             : Babbage
+-34.3 +48.7             : Bianchini
+-87.4 +63.7             : Boole
+-35.8 +52.3             : Bouguer
+-50.9 +69.4             : Carpenter
+-90.6 +67.5             : Cremona
+-73.3 +70.2             : Desargues
+-39.7 +50.4             : Foucault
+-43.4 +52.6             : Harpalus
+-40.8 +58.7             : Horrebow
+-41.2 +62.1             : J.Herschel
+-28.2 +53.4             : la Condamine
+-27.3 +49.6             : Maupertuis
+-62.8 +63.5             : Pythagoras
+-45.9 +59               : Robinson
+-50.8 +57.7             : South
+
+; Rükl chart 3
+-44.5 +72.5             : Anaximenes
+-86.5 +74.8             : Brianchon
+-18.9 +63.4             : Fontenelle
+-22 +51                 : Rimae Maupertuis
+-26.6 +78.3             : Mouchez
+-70.1 +74.3             : Pascal
+-32.4 +72.1             : Philolaus
+-9.3 +51.6              : Plato
+-54.1 +75.8             : Poncelet
+-79.6 +82.7             : Sylvester
+
+; Rükl chart 4
++3 +49                  : Vallis Alpes
+-10.1 +73.4             : Anaxagoras
++5 +58.7                : Archytas
++5 +53                  : Rima Archytas
++7.7 +71.3              : Barrow
+-10.5 +65.1             : Birmingham
++9.8 +85.3              : Byrd
++9.2 +79.5              : Challis
+-4.6 +67.5              : Epigenes
++2 +83.3                : Gioja
+-2.9 +73                : Goldschmidt
+-87.3 +86.4             : Hermite
++10.1 +80.8             : Main
++19.2 +73.8             : Meton
++33 +88.6               : Peary
+-2 +51                  : Montes Alpes
++7.3 +56                : Protagoras
++14.1 +77.7             : Scoresby
+-0.5 +62.8              : Timaeus
++5.8 +49.3              : Trouvelot
++3.7 +65.3              : W.Bond
+
+; Rükl chart 5
++17.4 +50.2             : Aristoteles
++35.9 +66.8             : Arnold
++37.5 +74.6             : Baillaud
++17.3 +63.2             : C.Mayer
++35 +62.3               : Democritus
++39.6 +80.1             : de Sitter
++31.3 +76.4             : Euctemon
++22.3 +55.9             : Galle
++26.1 +63.1             : Kane
++20.2 +49.7             : Mitchell
++28.9 +66.4             : Moigno
++95.3 +81.3             : Nansen
++25.1 +68.3             : Neison
++66.3 +74.2             : Petermann
++29.5 +68.1             : Peters
++16.9 +59.2             : Sheepshanks
++24 +58                 : Rima Sheepshanks
+
+; Rükl chart 6
++30.4 +49.7             : Baily
++70.8 +72               : Cusanus
++53 +59.1               : de la Rue
++34.6 +59.1             : Gärtner
++85.2 +64.7             : Hayn
++43.6 +51.2             : Keldysh
++45.6 +65.1             : Schwabe
++54.3 +61.9             : Strabo
++61.8 +50.3             : Thales
+
+; Rükl chart 7
++90 +61.5               : Belkovich
++56.5 +53.6             : Endymion
++80 +57                 : MARE HUMBOLDTIANUM
+
+; Rükl chart 8
+-87.7 +32.9             : Aston
+-85.3 +41.4             : Bunsen
+-85.3 +46.1             : Dechen
+-80 +44.5               : Gerard
+-71.7 +43.5             : Harding
+-56.6 +30.7             : Humason
+-81.2 +38.2             : Lavoisier
+-67.7 +31.8             : Lichtenberg
+-62 +35.4               : Naumann
+-51.8 +31.8             : Nielsen
+-41 +58                 : Mons Rümker
+-60 +32                 : Dorsum Scilla
+-81.9 +32.7             : Ulugh Beigh
+-57 +30                 : Dorsa Whiston
+
+; Rükl chart 9
+-39 +31                 : Dorsum Bucher
+-34.6 +29.9             : Delisle
+-33 +31                 : Rima Delisle
+-39.7 +32.9             : Gruithuisen
+-40.5 +36.6             : Mons Gruithuisen Gamma
+-39.5 +36               : Mons Gruithuisen Delta
+-46 +44                 : Louville
+-43.4 +41.6             : Mairan
+-47 +38                 : Rima Mairan
+-46.9 +30.6             : Wollaston
+
+; Rükl chart 10
+-24.1 +33.7             : Carlini
+-31.2 +34.5             : C.Herschel
+-28 +31                 : Dorsum Heim
+-31.9 +32.4             : Heis
+-23.1 +40.4             : Helicon
+-34 +41                 : Promontorium Heraclides
+-32 +45                 : Sinus Iridum
+-37 +47                 : Montes Jura
+-26 +46                 : Promontorium Laplace
+-20.9 +30.4             : McDonald
+-40.2 +45.7             : Sharp
+-24 +29                 : Dorsum Zirkel
+
+; Rükl chart 11
+-14 +30                 : Dorsum Grabau
+-14.8 +31.3             : Landsteiner
+-20.6 +40.3             : le Verrier
+-9 +46                  : Mons Pico
+-20 +48                 : Montes Recti
+-13 +48                 : Montes Teneriffe
+
+; Rükl chart 12
++2 +42                  : Promontorium Agassiz
++1 +45                  : Mons Blanc
++1 +43                  : Promontorium Deville
++1.2 +33.9              : Aristillus
++1.5 +30.7              : Autolycus
++4.6 +40.2              : Cassini
+-5.6 +39.2              : Kirch
+-1 +32                  : Sinus Lunicus
+-3.2 +41.9              : Piazzi Smyth
+-1 +41                  : Mons Piton
+-5 +35                  : Montes Spitzbergen
++6 +37                  : Theaetetus
++6 +33                  : Rimae Theaetetus
+
+; Rükl chart 13
++30.5 +40.3             : Alexander
++10.7 +38.9             : Calippus
++13 +37                 : Rima Calippus
++8 +39                  : Montes Caucasus
++10.6 +48.7             : Egede
++16.3 +44.3             : Eudoxus
++13.1 +42.7             : Lamèch
+
+; Rükl chart 14
++28.2 +45               : Bürg
++26 +45                 : Rimae Bürg
++31.7 +29.8             : Chacornac
++31.1 +35.3             : Daniell
++26 +37                 : Rimae Daniell
++32.9 +40.3             : Grove
++39.1 +46.7             : Hercules
++24.1 +33.2             : Luther
++30.5 +42.6             : Mason
++27 +45                 : Lacus Mortis
++28.2 +42.2             : Plana
++29.9 +31.8             : Posidonius
++37.2 +42               : Williams
+
+; Rükl chart 15
++44.4 +46.7             : Atlas
++50.9 +36.6             : Berzelius
++62.1 +44               : Carrington
++45.8 +40.8             : Cepheus
++51.2 +44.9             : Chevallier
++47.7 +38.8             : Franklin
++36.2 +32.4             : G.Bond
++35 +33                 : Rima G.Bond
++37 +33.7               : Hall
++54.9 +41.2             : Hooke
++38.8 +30.3             : Kirchhoff
++39.6 +37.1             : Maury
++66.2 +46.6             : Mercurius
++47.2 +43.1             : Oersted
++52.8 +42.6             : Shuckburgh
++57 +46                 : Lacus Temporis
+
+; Rükl chart 16
++86.5 +37.7             : Beals
++60.7 +35               : Bernoulli
++69.9 +33.5             : Berosus
++89.2 +45.8             : Boss
++56.5 +31.1             : Burckhardt
++79.1 +35.9             : Gauss
++56.7 +34.5             : Geminus
++73.6 +31.3             : Hahn
++59.9 +39.2             : Messala
++87.2 +39.5             : Riemann
++60.7 +42.4             : Schumacher
++65 +43                 : Lacus Spei
++72.9 +45.2             : Zeno
+
+; Rükl chart 17
+-83.2 +19.1             : Balboa
+-89.8 +24.5             : Bartels
+-69.1 +26.5             : Briggs
+-84.3 +17.1             : Dalton
+-71.8 +21.5             : Eddington
+-88.5 +16.6             : Einstein
+-72.6 +16.5             : Krafft
+-71 +15                 : Catena Krafft
+-75.4 +26.5             : Russell
+-66.6 +21               : Seleucus
+-76.6 +23               : Struve
+-88.1 +28               : Voskresenskiy
+
+; Rükl chart 18
+-54 +29                 : Montes Agricola
+-47.7 +23.7             : Aristarchus
+-47 +28                 : Rimae Aristarchus
+-57 +27                 : Dorsa Burnet
+-52.3 +25.8             : Freud
+-60 +27.8               : Golgi
+-49.7 +23.2             : Herodotus
+-53 +27                 : Mons Herodotus
+-49 +17                 : Rima Marius
+-52 +29                 : Dorsum Niggli
+-55.1 +27               : Raman
+-58.8 +23.4             : Schiaparelli
+-51 +26                 : Vallis Schröteri
+-47.5 +27.9             : Toscanelli
+-47 +27                 : Rupes Toscanelli
+-47.8 +25.9             : Väisälä
+-58.8 +26.6             : Zinner
+
+; Rükl chart 19
+-41.6 +29.9             : Angström
+-36 +26                 : Dorsum Arduino
+-40 +28                 : Dorsa Argand
+-36.6 +27.6             : Artsimovich
+-37.3 +14.9             : Bessarion
+-36.9 +20.9             : Brayley
+-36 +23                 : Rima Brayley
+-36 +29                 : Mons Delisle
+-34.3 +27.6             : Diophantus
+-33 +29                 : Rima Diophantus
+-37 +28.2               : Fedorov
+-41 +27                 : Montes Harbinger
+-43.3 +26.9             : Ivan
+-31.9 +20.7             : Jehan
+-45.6 +29               : Krieger
+-34.2 +28.5             : Louise
+-31.3 +20.1             : Natasha
+-44.1 +25.5             : Prinz
+-43 +27                 : Rimae Prinz
+-45 +28.9               : Rocco
+-45.1 +28.7             : Ruth
+-29.1 +15.6             : T.Mayer
+-45.6 +28.7             : Van Biesbroeck
+-43.7 +26.3             : Vera
+-43.4 +22.4             : Mons Vinogradov
+
+; Rükl chart 20
+-25.4 +25               : Artemis
+-25 +15                 : Montes Carpatus
+-29.4 +29.8             : Caventou
+-21.7 +17.6             : Draper
+-29.2 +23.3             : Euler
+-25 +28                 : Mons La Hire
+-21 +25.8               : Lambert
+-20.6 +20.5             : Pytheas
+-19 +27                 : Dorsa Stille
+-25.3 +24.9             : Verne
+; -24 +29                : Dorsum Zirkel
+
+; Rükl chart 21
+-6.4 +28                : Bancroft
+-9.1 +27.1              : Beer
+-11.3 +14.5             : Eratosthenes
+-9.4 +27.4              : Feuillée
+-15.3 +24.8             : Heinrich
+-17 +28                 : Dorsum Higazy
+-7.8 +24.2              : Macmillan
+-11 +23.8               : Pupin
+-16.5 +29.7             : Sampson
+-13.1 +26.7             : Timocharis
+-13 +29                 : Catena Timocharis
+-8.7 +20.3              : Wallace
+-7 +17                  : Mons Wolff
+
+; Rükl chart 22
+-4 +19                  : Mons Ampère
+-1 +19                  : Montes Apenninus
++4.5 +23.6              : Aratus
+-4 +29.7                : Archimedes
+-5 +26                  : Montes Archimedes
+-4 +27                  : Rimae Archimedes
++2.3 +24.7              : Bêla
++1 +22                  : Mons Bradley
+-2 +22                  : Rima Bradley
++2 +21.6                : Conon
++2 +19                  : Rima Conon
++5 +19                  : Lacus Felicitatis
++2 +17.8                : Sinus Fidei
++5 +29                  : Promontorium Fresnel
++4 +28                  : Rimae Fresnel
++5 +21.9                : Galen
++5 +27                  : Mons Hadley
++4 +26                  : Mons Hadley Delta
++3 +25                  : Rima Hadley
+-4.5 +20.2              : Huxley
+-3 +20                  : Mons Huygens
+-2 +15.4                : Marco Polo
++0 +27                  : Palus Putredinis
++4.8 +27.7              : Santos-Dumont
+-1.2 +27.9              : Spurr
++4.7 +17                : Yangel'
+
+; Rükl chart 23
++16.4 +26.6             : Banting
++15.5 +19.6             : Bobillier
++9.1 +17.6              : Bowen
++12 +21                 : Dorsum Buckland
++14.7 +15.7             : Daubrée
++9 +17                  : Lacus Doloris
++9 +24                  : Dorsum Gast
++13 +17                 : Lacus Gaudii
++12 +18                 : Montes Haemus
++14 +15                 : Lacus Hiemalis
++12.5 +23.8             : Hornsby
++6.6 +25                : Joy
++11.3 +24.5             : Krishna
++12 +14                 : Lacus Lenitatis
++11.8 +27.7             : Linné
++9.1 +14.5              : Manilius
++16 +16.3               : Menelaus
++7 +19                  : Lacus Odii
++11 +25                 : Dorsum Owen
++11.6 +19.6             : Sulpicius Gallus
++10 +21                 : Rimae Sulpicius Gallus
++12 +24                 : Dorsum von Cotta
+
+; Rükl chart 24
++27.7 +19.9             : Abetti
++29 +24                 : Dorsa Aldrovandi
++22 +17                 : Promontorium Archerusia
++29 +19                 : Mons Argaeus
++17.2 +15.1             : Auwers
++20 +26                 : Dorsum Azara
++17.9 +21.8             : Bessel
++26.4 +22.3             : Borel
++23.6 +17.9             : Bracket
++26.4 +17.2             : Dawes
++20.6 +21.1             : Deseilligny
++21.3 +23.6             : Finsch
++22 +19                 : Dorsa Lister
++29 +22                 : Catena Littrow
++17 +17                 : Rimae Menelaus
++23 +18                 : Dorsum Nicol
++23.7 +15.4             : Plinius
++24 +17                 : Rimae Plinius
++21 +24.7               : Sarabhai
++25 +25                 : Dorsa Smirnov
++19.2 +16.6             : Tacquet
++25.3 +25.6             : Very
+
+; Rükl chart 25
++38 +19                 : Sinus Amoris
++29.2 +16.3             : Beketov
++44 +23                 : Lacus Bonitatis
++34.7 +23.3             : Brewster
++40.4 +19.6             : Carmichael
++32 +29                 : Rimae Chacornac
++30 +20                 : Ching-te
++29.8 +21.7             : Clerke
++42.1 +21.5             : Esclangon
++29.2 +18.7             : Fabbroni
++35.5 +22.6             : Franck
++40.2 +16.6             : Franz
++33.8 +17.7             : Gardner
++40.8 +20.9             : Hill
++29 +15                 : Rima Jansen
++30.6 +26.6             : le Monnier
++31.4 +21.5             : Littrow
++34.9 +19.4             : Maraldi
++35 +20                 : Mons Maraldi
++43.8 +29.9             : Newcomb
++36.4 +25.4             : Römer
++35 +27                 : Rimae Römer
++36 +26                 : Montes Taurus
++39 +17.5               : Theophrastus
++31.3 +17.6             : Vitruvius
++31 +19                 : Mons Vitruvius
+
+; Rükl chart 26
++55.5 +27.7             : Cleomedes
++56.6 +14.6             : Curtis
++51.7 +29.5             : Debes
++60.2 +27.1             : Delmotte
++58.3 +17.3             : Eckert
++46.5 +18.4             : Fredholm
++46 +21.3               : Macrobius
++52 +19                 : Dorsum Oppel
++53.5 +18.3             : Peirce
++54.7 +14.6             : Picard
++46.8 +16.1             : Proclus
++53.4 +19.3             : Swift
++48.2 +21.4             : Tisserand
++52.8 +28.4             : Tralles
++51.7 +14.6             : Yerkes
+
+; Rükl chart 27
++71.8 +15.9             : Alhazen
++67 +22                 : MARE ANGUIS
++81.4 +19.9             : Cannon
++59 +17                 : MARE CRISIUM
++64.8 +24               : Eimmart
++89 +14.8               : Goddard
++64 +14                 : Dorsa Harker
++86.9 +22.1             : Hubble
++89.3 +26.3             : Liapunov
++88 +12                 : MARE MARGINIS
++79 +24.1               : Plutarch
++89.2 +29               : Rayleigh
++80.2 +26.6             : Seneca
++65 +19                 : Dorsa Tetyaev
++87.4 +27.9             : Urey
+
+; Rükl chart 28
+-86.4 +12.8             : Bohr
+-72.4 +13.2             : Cardanus
+-66.8 +5.1              : Cavalerius
+-62.7 +10.5             : Galilaei
+-59 +13                 : Rima Galilaei
+-76.5 +2.9              : Hedin
+-67.3 +2.2              : Hevelius
+-66 +2                  : Rimae Hevelius
+-75.9 +7.4              : Olbers
+-64 +7                  : Planitia Descensus
+-59 +8                  : Reiner Gamma
+-83.8 +13.9             : Vasco da Gama
+
+; Rükl chart 29
+-40.6 +4.9              : Maestlin
+-40 +2                  : Rimae Maestlin
+-50.8 +11.9             : Marius
+-54.9 +7                : Reiner
+-47.6 +4.4              : Suess
+-47 +6                  : Rima Suess
+
+; Rükl chart 30
+-36.6 +4.6              : Encke
+-28 +6.5                : Hortensius
+-22 +7                  : MARE INSULARUM
+-38 +8.1                : Kepler
+-32.5 +3.2              : Kunowsky
+-30.2 +10               : Milichius
+-33 +8                  : Rima Milichius
+
+; Rükl chart 31
+; -25 +15                : Montes Carpatus
+-20 +9.7                : Copernicus
+-20.1 +6.3              : Fauth
+-20.8 +13.9             : Gay-Lussac
+-22 +13                 : Rima Gay-Lussac
+-22.8 +3.3              : Reinhold
+
+; Rükl chart 32
+-8 +12                  : Sinus Aestuum
+-15.2 +1                : Gambart
+-7 +2.6                 : Schröter
+-6 +1                   : Rima Schröter
+-7.5 +0.1               : Sömmering
+-13.7 +10.5             : Stadius
+
+; Rükl chart 33
++1.5 +1.3               : Blagg
+-2.4 +6.7               : Bode
+-4 +10                  : Rima Bode
++0.4 +1.1               : Bruce
++1.1 +4                 : Chladni
+-0.1 +5.1               : Murchison
+-1.6 +5.5               : Pallas
++4.9 +0                 : Rhaeticus
++3.6 +4.2               : Triesnecker
++5 +5                   : Rimae Triesnecker
++1.4 +7.8               : Ukert
++3 +13                  : MARE VAPORUM
+
+; Rükl chart 34
++10.5 +4.1              : Agrippa
++13 +7                  : Rima Ariadaeus
++11.1 +9.75             : Boscovich
++15.1 +4                : Cayley
++14.7 +2.3              : d'Arrest
++7.2 +2.9               : Dembowski
++14.9 +3.3              : de Morgan
++10.2 +1.8              : Godin
++6.3 +7.8               : Hyginus
++15.4 +9                : Julius Caesar
++12.5 +6.2              : Silberschlag
++11.9 +3.9              : Tempel
++13.7 +4.2              : Whewell
+
+; Rükl chart 35
++20.2 +14.3             : Al-Bakri
++22.1 +1.4              : Aldrin
++21.4 +6.2              : Arago
++17.3 +4.6              : Ariadaeus
++25 +1.4                : Armstrong
++26.7 +10.7             : Carrel
++23.7 +1.3              : Collins
++17.3 +2.8              : Dionysius
++18 +12                 : Sinus Honoris
++23.2 +5                : Lamont
++20.1 +10.5             : Maclear
++20 +13                 : Rimae Maclear
++20.1 +4.6              : Manners
++19.2 +2                : Ritter
++18 +3                  : Rimae Ritter
++21.7 +11.7             : Ross
++20.1 +1.4              : Sabine
++18.8 +1                : Schmidt
++17.6 +8.7              : Sosigenes
++19 +7                  : Rimae Sosigenes
+
+; Rükl chart 36
++35.1 +6.2              : Aryabhata
++31 +15                 : Dorsa Barlow
++31.1 +12.6             : Cajal
++38.6 +9.6              : Cauchy
++39 +10                 : Rima Cauchy
++37 +9                  : Rupes Cauchy
++35.7 +14.6             : Mons Esam
++28.7 +13.5             : Jansen
+; +29 +15                : Rima Jansen
++36.7 +14.3             : Lucian
++40.6 +13.6             : Lyell
++30.1 +2.2              : Maskelyne
++36.9 +3.4              : Menzel
++31.6 +8.8              : Sinas
++32.3 +4.9              : Wallach
+
+; Rükl chart 37
++54.8 +5.6              : Abbot
++49.5 +1.9              : Anville
++49.9 +7.3              : Asada
++45.9 +6.2              : Cameron
++47 +1                  : Dorsa Cato
++51 +1                  : Dorsum Cayeux
++43 +11                 : Sinus Concordiae
++46 +14.2               : Crile
++49 +1                  : Dorsum Cushman
++45 +9.1                : da Vinci
++49.5 +13.2             : Glaisher
++52.7 +13.2             : Greaves
++43.2 +7.4              : Lawrence
++52.7 +12.4             : Lick
++43.5 +2.4              : Secchi
++43 +3                  : Montes Secchi
++44 +1                  : Rimae Secchi
++53.6 +2.4              : Smithson
++46.5 +5.6              : Taruntius
++53.6 +9.6              : Tebbutt
++46.3 +8.9              : Watts
++40.2 +5.6              : Zähringer
+
+; Rükl chart 38
++66 +14                 : Promontorium Agarum
++57 +3.3                : Ameghino
++61.1 +4.5              : Apollonius
++64.1 +10.3             : Auzout
++80.7 +1.1              : Back
++80.1 +5.2              : Banachiewicz
++72.3 +5.6              : Boethius
++56.2 +5.3              : Bombelli
++59.3 +4.2              : Cartan
++60.4 +1.9              : Condon
++69.6 +12.1             : Condorcet
++59.6 +5.7              : Daly
++70 +4.4                : Dubiago
++61.7 +13.1             : Fahrenheit
++63.4 +7.3              : Firmicus
++72.5 +14               : Hansen
++89.5 +8.5              : Jansky
++78.1 +0.3              : Jenkins
++80.2 +5.3              : Knox-Shaw
++65.7 +9.4              : Krogh
++73.5 +2.6              : Liouville
+; +88 +12                : MARE MARGINIS
++84.5 +8.8              : Neper
++75.9 +0.2              : Nobili
++86.9 +2.6              : Peek
++62 +8                  : Lacus Perseverantiae
++63.5 +2.3              : Petit
++66.9 +0.7              : Pomortsev
++71.9 +2.8              : Respighi
++79 +13.2               : Sabatier
++81 +2.8                : Schubert
++56.9 +9.4              : Shapley
++87 +2                  : MARE SMYTHII
++65 +1                  : MARE SPUMANS
++67 +2.2                : Stewart
++58 +1                  : Sinus Successus
++85.8 +4.9              : Tacchini
++58 +11                 : Dorsum Termier
++83.3 +13.4             : Theiler
++63.3 +3.4              : Townley
++69 +7                  : MARE UNDARUM
++63 +12                 : Mons Usov
++64.3 +9.4              : van Albada
++83.7 +9.8              : Virchow
++75.8 +9                : Wildt
+
+; Rükl chart 39
+-69 -15                 : Lacus Aestatis
+-82 -14                 : Lacus Autumni
+-80 -20                 : Montes Cordillera
+-61.1 -4.8              : Damoiseau
+-68.6 -5.2              : Grimaldi
+-64 -9                  : Rimae Grimaldi
+-80.5 -6.1              : Hartwig
+-57.3 -0.9              : Hermann
+-84.1 -14.3             : L'allemand
+-67.2 -0.5              : Lohrmann
+-74.3 -3                : Riccioli
+-74 -2                  : Rimae Riccioli
+-72.8 -12.7             : Rocca
+-83.3 -5.9              : Schlüter
+-60.4 -12.5             : Sirsalis
+-60 -14                 : Rimae Sirsalis
+
+; Rükl chart 40
+-50.1 -13.8             : Billy
+-44.3 -4.5              : Flamsteed
+-52 -11.5               : Hansteen
+-50 -12                 : Mons Hansteen
+-53 -12                 : Rima Hansteen
+-42.4 -10.6             : Letronne
+-42 -10                 : Dorsa Rubey
+-44.4 -10.7             : Winthrop
+
+; Rükl chart 41
+-29.5 -7.4              : Euclides
+-38 -11                 : Dorsa Ewing
+-33.9 -13.3             : Herigonius
+-37 -13                 : Rima Herigonius
+-30.4 -11.8             : Norman
+-28 -7                  : Montes Riphaeus
+-37.8 -9.4              : Scheele
+-38.1 -7.5              : Wichmann
+
+; Rükl chart 42
+-17.4 -8.3              : Bonpland
+-23 -10                 : MARE COGNITUM
+-23.5 -14.5             : Darney
+-25.7 -9.4              : Eppinger
+-17 -6                  : Fra Mauro
+-18 -10                 : Dorsum Guettard
+-22.7 -9.8              : Kuiper
+-26.6 -0.3              : Lansberg
+-20 -12                 : Mons Moro
+-18 -13                 : Rimae Opelt
+-17 -8                  : Rimae Parry
+
+; Rükl chart 43
+-8.1 -11.8              : Davy
+-7 -11                  : Catena Davy
+-14.1 -11.5             : Guericke
+-11.5 -11.5             : Kundt
+-8.6 -4.4               : Lalande
+-5.9 -0.7               : Mösting
+-5.211 -3.212           : Mösting A basepoint
+-7.2 -9.4               : Palisa
+-15.8 -7.9              : Parry
+-16 -9.5                : Tolansky
+-13.2 -1.4              : Turner
+
+; Rükl chart 44
++4.1 -11.2              : Albategnius
+-2.8 -13.4              : Alphonsus
+-0.8 -8.5               : Ammonius
+-3.7 -3.4               : Flammarion
+-5 -2                   : Rima Flammarion
++0.3 -5.3               : Gyldén
+-2.1 -5.7               : Herschel
++4.8 -5.5               : Hipparchus
++2.6 -12                : Klein
++2.1 -7.6               : Müller
+-0.5 -1.5               : Oppolzer
++2 -1                   : Rima Oppolzer
+-1.8 -9.2               : Ptolemaeus
++0.7 -2.4               : Réaumur
++3 -3                   : Rima Réaumur
++3 -2.2                 : Seeliger
+-1.8 -4.3               : Spörer
+
+; Rükl chart 45
++13.9 -13.8             : Abulfeda
++12.4 -10.4             : Andêl
++7.3 -13.9              : Burnham
++15.7 -11.7             : Descartes
++14.4 -10.4             : Dollond
++5.7 -8                 : Halley
++7.4 -7.9               : Hind
++5.9 -4                 : Horrocks
++10.1 -1.3              : Lade
++13 -7                  : Lindsay
++7 -2.9                 : Pickering
++8.5 -11.1              : Ritchey
++8.8 -4.2               : Saunder
++15.8 -2.3              : Theon Junior
++15.4 -0.8              : Theon Senior
+
+; Rükl chart 46
++19 -5.4                : Alfraganus
++25 -6                  : Sinus Asperitatis
++24 -13.2               : Cyrillus
++17.5 -1.9              : Delambre
++22.6 -4.3              : Hypatia
++23 -1                  : Rimae Hypatia
++21.7 -11.7             : Ibn Rushd
++20.1 -10.6             : Kant
++24.2 -0.6              : Moltke
++22 -10                 : Mons Penck
++16.7 -5.3              : Taylor
++26.4 -11.4             : Theophilus
++18.9 -8                : Zöllner
+
+; Rükl chart 47
++34.9 -7.6              : Capella
++35 -7                  : Vallis Capella
++32.7 -0.4              : Censorinus
++33.6 -11.9             : Daguerre
++37.8 -10.9             : Gaudibert
++38 -5                  : Rimae Gutenberg
++33.5 -8                : Isidorus
++37.4 -3.2              : Leakey
++29.8 -11               : Mädler
++28.5 -4.6              : Torricelli
+
+; Rükl chart 48
++55.8 -10.4             : Al-Marrakushi
++46.8 -5.3              : Amontons
++50.8 -13.5             : Crozier
++53 -3                  : Dorsa Geikie
++45 -10                 : Goclenius
++43 -8                  : Rimae Goclenius
++41.2 -8.6              : Gutenberg
++50.4 -6.9              : Ibn Battuta
++52.9 -5.4              : Lindbergh
++41.8 -3.9              : Lubbock
++44.1 -11.9             : Magelhaens
++53 -7                  : Dorsa Mawson
++47.6 -1.9              : Messier
++45 -1                  : Rima Messier
++41 -14                 : Montes Pyrenaeus
+
+; Rükl chart 49
++60.1 -5.6              : Acosta
++57 -1                  : Dorsa Andrusov
++79.7 -12.7             : Ansgarius
++57.7 -5.8              : Atwood
++81.4 -1.4              : Avery
++67.2 -10.7             : Barkla
++56.3 -5.8              : Bilharz
++80.4 -9.2              : Black
++66.8 -6                : Born
++80.9 -2.2              : Carrillo
++82.9 -9.6              : Dale
++84.1 -10.1             : Elmer
++76.5 -2.6              : Geissler
++76 -3.2                : Gilbert
++84.1 -1.7              : Haldane
++64 -2.2                : Hargreaves
++87.2 -9.4              : Houtermans
++70.6 -10.8             : Kapteyn
++79.1 -7                : Kästner
++84 -6.4                : Kiess
++84.6 -9                : Kreiken
++60.9 -8.9              : Langrenus
++76.3 -10.7             : la Pérouse
++60.2 -13.7             : Lohse
++68 -1.9                : Maclaurin
++64.6 -2.8              : Morley
++57.8 -4.6              : Naonobu
++71.5 -3.9              : Rankine
++64.9 -8.3              : Somerville
++78.3 -1.9              : Van Vleck
++71.8 -7.8              : von Behring
++60 -0.9                : Webb
++77.2 -1.3              : Weierstrass
++85.5 -6.1              : Widmanstätten
+
+; Rükl chart 50
+-65.3 -24.7             : Byrgius
+; -80 -20                : Montes Cordillera
+-66.8 -16.7             : Crüger
+-69.1 -19.8             : Darwin
+-67 -20                 : Rimae Darwin
+-78.3 -22.6             : Eichstadt
+-89.55 -17.35           : Kopff
+-79.6 -29.9             : Krasnov
+-69.8 -22.9             : Lamarck
+-85.1 -26.2             : Nicholson
+-95 -20                 : MARE ORIENTALE
+-86.6 -27.5             : Pettit
+-83 -20                 : Montes Rook
+-62 -17                 : Rima Sirsalis
+-87 -13                 : Lacus Veris
+
+; Rükl chart 51 
+-48 -15                 : Rima Billy
+-53.7 -24.5             : Cavendish
+-50.7 -25.9             : de Gasparis
+-50 -25                 : Rimae de Gasparis
+-60.2 -19.7             : de Vico
+-56.6 -16.1             : Fontana
+-56.8 -24               : Henry
+-58.9 -23.5             : Henry Frères
+-48.2 -24.3             : Liebig
+-46 -25                 : Rupes Liebig
+-49.2 -21.5             : Mersenius
+-45 -20                 : Rimae Mersenius
+-47.7 -28.6             : Palmieri
+-47 -28                 : Rimae Palmieri
+-56.3 -29.2             : Vieta
+-52.3 -17.2             : Zupus
+-53 -15                 : Rimae Zupus
+
+; Rükl chart 52
+-30.9 -19.8             : Agatharchides
+-41.4 -28.5             : Doppelmayer
+-45 -26                 : Rimae Doppelmayer
+-39.9 -17.5             : Gassendi
+-30.2 -24.8             : Hippalus
+-29 -25                 : Rimae Hippalus
+-39 -24                 : MARE HUMORUM
+-33 -27                 : Promontorium Kelvin
+-33 -28                 : Rupes Kelvin
+-32.8 -22.7             : Loewy
+-39 -27.8               : Puiseux
+
+; Rükl chart 53
+-28 -20                 : Rima Agatharchides
+-22.2 -20.7             : Bullialdus
+-27.8 -28               : Campanus
+-27 -32                 : Palus Epidemiarum
+-17.2 -19.2             : Gould
+-22.5 -26.3             : Kies
+-24.6 -24.1             : König
+-23.8 -17.8             : Lubiniezky
+-26.1 -29.3             : Mercator
+-23 -30                 : Rupes Mercator
+-17.5 -16.3             : Opelt
+
+; Rükl chart 54
+-8.5 -22.4              : Birt
+-9 -21                  : Rima Birt
+-16.3 -29.4             : Hesiodus
+-7.9 -15.5              : Lassell
+-10.3 -25.9             : Lippershey
+-12.5 -21.9             : Nicollet
+-15 -20                 : MARE NUBIUM
+-13.5 -29.8             : Pitatus
+-7 -22                  : Rupes Recta
+-8 -19                  : Promontorium Taenarium
+-16.6 -22.7             : Wolf
+
+; Rükl chart 55
+-4.5 -16                : Alpetragius
+-1.9 -18.2              : Arzachel
++2.5 -25.4              : Blanchinus
++2.5 -22.2              : Delaunay
++5.2 -20.7              : Donati
++3.9 -21.4              : Faye
++5.9 -26.2              : Krusenstern
++1.1 -23.8              : la Caille
++3.3 -14.5              : Parrot
+-1.9 -25.5              : Purbach
+-1.0 -28.4              : Regiomontanus
+-4 -22                  : Thebit
++3.3 -28                : Werner
+
+; Rükl chart 56
++11.9 -21               : Abenezra
++17 -17                 : Catena Abulfeda
++5.7 -18.1              : Airy
++15.2 -16.8             : Almanon
++7.9 -26.9              : Apianus
++5.8 -16.5              : Argelander
++12.7 -22.1             : Azophi
++13.9 -19.4             : Geber
++8.4 -23.5              : Playfair
++14.4 -28.4             : Pontanus
++16.7 -23.7             : Sacrobosco
++5.9 -15.1              : Vogel
+
+; Rükl chart 57
++23 -24                 : Rupes Altai
++23.6 -18               : Catharina
++19.8 -22.6             : Fermat
++25.6 -22.4             : Polybius
++21.4 -25.3             : Pons
++19 -16.2               : Tacitus
++19.6 -29.4             : Wilkins
+
+; Rükl chart 58
++28.8 -18               : Beaumont
++40 -16.2               : Bohnenberger
++33 -21.2               : Fracastorius
++35 -15                 : MARE NECTARIS
++32.2 -29.7             : Piccolomini
++35 -17.9               : Rosse
++37 -27.5               : Weinek
+
+; Rükl chart 59
++51.1 -22.6             : Biot
++46.6 -25.1             : Borda
++45.8 -15.1             : Colombo
++48.9 -17.5             : Cook
++62.5 -29.4             : Hase
++50.3 -15.3             : McClure
++47.6 -19.2             : Monge
++64.5 -28               : Palitzsch
++65 -25                 : Vallis Palitzsch
++60.4 -25.3             : Petavius
++44 -20.9               : Santbech
++55.7 -29.3             : Snellius
++56.8 -23.9             : Wrottesley
+
+; Rükl chart 60
++70.6 -20.1             : Balmer
++79.4 -16.5             : Behaim
++84.3 -18.4             : Gibbs
++79.6 -21.8             : Hecataeus
++62.5 -19.1             : Holden
++80.9 -27.1             : Humboldt
++85 -22                 : Catena Humboldt
++64.5 -14.7             : Lamé
++70.2 -28.9             : Legendre
++76 -26.6               : Phillips
++89.7 -19.5             : Schorr
++61.8 -16.3             : Vendelinus
+
+; Rükl chart 61
+-81.8 -44.8             : Baade
+-76 -46                 : Vallis Baade
+-83 -39                 : Vallis Bouvard
+-87.3 -45.7             : Catalán
+-53 -30.3               : Fourier
+-88.6 -42.4             : Graff
+-73 -44                 : Vallis Inghirami
+-59 -37.9               : Lacroix
+-72 -33.2               : Lagrange
+-67.9 -36.2             : Piazzi
+-85.2 -32.9             : Shaler
+-86.6 -31.6             : Wright
+
+; Rükl chart 62
+-43.8 -36.9             : Clausius
+-49 -40.9               : Drebbel
+-43 -36                 : Lacus Excellentiae
+-68.8 -47.5             : Inghirami
+-40.7 -30.7             : Lee
+-56 -40                 : Lehmann
+-33.6 -33.3             : Lepaute
+-54.6 -44.4             : Schickard
+-37.5 -30.4             : Vitello
+
+; Rükl chart 63
+-26.7 -34.1             : Capuanus
+-21.1 -33.3             : Cichus
+-31.6 -30.1             : Dunthorne
+-29.8 -35.3             : Elger
+-30.2 -40.9             : Epimenides
+-25 -39.2               : Haidinger
+-33.5 -41.3             : Hainzel
+-21 -30                 : Rima Hesiodus
+-22.5 -44.6             : Lagalla
+-29.3 -31.1             : Marth
+-35 -43.7               : Mee
+-31.8 -32.9             : Ramsden
+-31 -33                 : Rimae Ramsden
+-28 -39                 : Lacus Timoris
+-19.5 -31.8             : Weiss
+
+; Rükl chart 64
+-8.4 -35.9              : Ball
+-17.9 -46.4             : Brown
+-12.6 -33.8             : Gauricus
+-17.7 -39.5             : Heinsius
+-7.8 -32.4              : Hell
+-20.6 -45.8             : Montanari
+ -7.4 -43.6             : Pictet
+-9.3 -39.1              : Sasserides
+-10.5 -46.5             : Street
+-11.2 -43.3             : Tycho
+-20.8 -43.1             : Wilhelm
+-15.9 -33.9             : Wurzelbauer
+
+; Rükl chart 65
++5.2 -30.6              : Aliacensis
+-5.2 -32.5              : Deslandres
++4.9 -38.1              : Fernelius
+-1.4 -41.1              : Huggins
+-4.2 -35.8              : Lexell
++6.7 -47.1              : Licetus
++0.8 -39.3              : Miller
++0.2 -41                : Nasireddin
++3.8 -34.8              : Nonius
+-4 -40.3                : Orontius
+-5.1 -46.4              : Saussure
++6 -41.1                : Stöfler
++0.7 -33                : Walter
+
+; Rükl chart 66
++16.8 -44.9             : Barocius
++18.3 -48.2             : Breislak
++17.7 -38.8             : Buch
++20 -38                 : Büsching
++13.9 -47.7             : Clairaut
++8.7 -42.4              : Faraday
++13.3 -34.2             : Gemma Frisius
++14.1 -32.7             : Goodacre
++6.5 -36.5              : Kaiser
++14 -41.8               : Maurolycus
++10.6 -30.4             : Poisson
+
+; Rükl chart 67
++20.1 -34.1             : Celsius
++31.5 -46.7             : Dove
++24.9 -32.3             : Lindenau
++36.7 -46.2             : Lockyer
++25.9 -42.4             : Nicolai
++23.6 -34.7             : Rabbi Levi
++26.5 -36.9             : Riccius
++27.7 -30.8             : Rothmann
++24.7 -46.3             : Spallanzani
++32 -34.4               : Stiborius
++31.4 -38.2             : Wöhler
++22.1 -32               : Zagut
+
+; Rükl chart 68
++39 -39.3               : Brenner
++42 -42.9               : Fabricius
++41.5 -44.9             : Janssen
++54.2 -45.4             : Mallet
++43.3 -40.3             : Metius
++39.9 -31.3             : Neander
++67.7 -46.5             : Peirescius
++60.3 -47.7             : Reimarus
++47.2 -37.1             : Rheita
++51 -42                 : Vallis Rheita
++63.4 -45.4             : Vega
++50.9 -41.5             : Young
+
+; Rükl chart 69
++85.8 -34.6             : Abel
++68.2 -31.9             : Adams
++86.4 -29.6             : Barnard
++59.1 -39.5             : Fraunhofer
++60.4 -36.3             : Furnerius
++88.6 -40.4             : Gum
++84.7 -42.8             : Hamilton
++66 -33                 : Rima Hase
++76.5 -39.4             : Marinus
++75.9 -43.7             : Oken
++48 -30.3               : Reichenbach
++54.2 -32.5             : Stevinus
+
+; Rükl chart 70
+-56.2 -50.5             : Nasmyth
+-45.7 -48.8             : Nöggerath
+-57.3 -52.9             : Phocylides
+-86.4 -60.3             : Pilâtre
+-73.7 -58.7             : Pingré
+-60.2 -49.6             : Wargentin
+-78.8 -54.5             : Yakovkin
+
+; Rükl chart 71
+-69.4 -66.8             : Bailly
+-35 -51.6               : Bayer
+-44.8 -63.4             : Bettinus
+-88.4 -65.5             : Hausen
+-45.3 -67.1             : Kircher
+-33.7 -56.4             : Rost
+-40 -51.8               : Schiller
+-48.3 -58.9             : Segner
+-38.8 -58.2             : Weigel
+-50.3 -61.4             : Zucchius
+
+; Rükl chart 72
+-21.5 -63.6             : Blancanus
+-30.5 -72.6             : Casatus
+-14.4 -58.4             : Clavius
+-86.8 -79.7             : Drygalski
+-26 -69.7               : Klaproth
+-76.5 -74.4             : le Gentil
+-21.7 -49.5             : Longomontanus
+-10.1 -56.1             : Porter
+-12.1 -60.9             : Rutherford
+-27.8 -60.5             : Scheiner
+-42.4 -69.2             : Wilson
+
+; Rükl chart 73
++82.8 -84.5             : Amundsen
+-35.5 -84.9             : Cabeus
++4.4 -67.2              : Curtius
+-6.1 - 66.2             : Cysatus
+-2.8 -55                : Deluc
+-10 -66.9               : Gruemberger
++6.2 -49.2              : Heraclitus
++6.2 -54.5              : Lilius
+-6.2 -50                : Maginus
++12.9 -84.9             : Malapert
+-5.5 -70.6              : Moretus
+-16.9 -76.7             : Newton
++11.5 -64.6             : Pentland
+-7.3 -74.6              : Short
++15.2 -73               : Simpelius
++5.3 -60.9              : Zach
+
+; Rükl chart 74
++25.4 -55.1             : Asclepi
++19.1 -51               : Baco
++43.2 -72.9             : Boguslawsky
++9.9 -50.3              : Cuvier
++59 -78.2               : Demonax
++22.3 -49.2             : Ideler
++11.4 -56.7             : Jacobi
++15.1 -60.8             : Kinau
++26.8 -67.7             : Manzinus
++30.1 -63.6             : Mutus
++24.9 -76.7             : Schomberger
++45.3 -81.9             : Scott
++22 -56.4               : Tannerus
+
+; Rükl chart 75
++51.3 -54.9             : Biela
++54.7 -70.4             : Boussingault
++75.9 -63.9             : Gill
++46.6 -59.8             : Hagecius
++90.8 -74.2             : Hale
++64.1 -68.1             : Helmholtz
++33 -54.6               : Hommel
++39.1 -58.5             : Nearch
++70.7 -71.1             : Neumayer
++30.9 -50.4             : Pitiscus
++43.1 -55.4             : Rosenberger
++38.8 -53.3             : Vlacq
++90.2 -69.1             : Wexler
+
+; Rükl chart 76
++91 -46                 : MARE AUSTRALE
++68.5 -49.1             : Brisbane
++71.2 -56.3             : Hanno
++84.1 -50.2             : Lyot
++88 -61.4               : Petrov
++66 -58.7               : Pontécoulant
++46.5 -48.6             : Steinheil
++48.6 -49.5             : Watt
+
+; Rükl libration chart I
+-99.6 +55.6             : Cannizzaro
+-100.7 +50.4            : Chapman
+-107.5 +55.1            : Ellison
+-109.7 +80.3            : Froehlich
+-98.8 +70.4             : Lindblad
+-106.4 +82.3            : Lovelace
+-92.9 +47.1             : McLaughlin
+-116.3 +75.2            : Merrill
+-119.1 +72.7            : Niépce
+-113.5 +66.6            : Nöther
+-102.1 +58              : Omar Khayyam
+-94.8 +63               : Paneth
+-99.3 +57.5             : Poczobutt
+-159.1 +85.8            : Rozhdestvenskij
+-103.5 +47              : Rynin
+-96.8 +60.3             : Smoluchowski
+-104.7 +59.7            : Zsigmondy
+
+; Rükl libration chart II
++105 +56                : Compton
++103.3 +64.2            : Dugan
+; +95.3 +81.3            : Nansen
++176.2 +82.3            : Plaskett
++119.6 +70.6            : Schwarzschild
++104.1 + 76             : Shi Shen
+
+; Rükl libration chart III
++92.5 +17.9             : Al-Biruni
++93.9 +4.2              : Babcock
++96.9 +10               : Dreyer
++98.9 +21.2             : Dziewulski
++99.1 +25               : Edison
++98.5 +5.7              : Erro
++101.2 +43              : Fabry
++98.2 +0.5              : Fox
++97.4 +14.3             : Ginzel
++99.8 +39.9             : Harkhebi
++91.1 +14.1             : Ibn Yunus
++92.7 +25.6             : Joliot
++98 +27.3               : Lomonosov
++98.6 +30               : Maxwell
++92.1 +2.1              : McAdie
++91 +4.6                : Nunn
++99.7 +17.2             : Popov
++100.3 +31.1            : Richardson
++93.3 +43.6             : Vashakidze
++93.9 +33.9             : Vestine
++94.2 +3.9              : Zasyadko
+
+; Rükl libration chart IV
++90.9 -9.9              : Brunner
++91.8 -23               : Curie
++98 -31.4               : Donner
++99.7 -36.5             : Gernsback
++97 -9.7                : Hanskiy
++87.6 -7.6              : Helmert
++93.7 -6                : Hirayama
++90.4 -4.7              : Hume
++95.9 -42.1             : Jenner
++87.6 -6.7              : Kao
++100.8 -42.8            : Lamb
++96.1 -27.6             : Lauritsen
++89 -5.1                : Lebesgue
++97.4 -7.7              : Ludwig
++94.9 -1.6              : Purkynê
++92.2 -15.1             : Ritz
++86.7 -2.5              : Runge
++96 -18                 : Sklodowska
++89 -3                  : Slocum
++89.7 -5.5              : Swasey
++85.3 -2.5              : Talbot
++100.7 -26.8            : Titius
++88.2 -5.6              : Tucker
++87.3 -4                : Warner
++98.1 -1.4              : Wyld
+
+; Rükl libration chart V
++101.3 -49              : Anuchin
++95.7 -58.9             : Chamberlin
++110.3 -79.6            : Ganswindt
++110.9 -81.5            : Idelson
++91.4 -55.8             : Jeans
++103.7 -53.8            : Kugler
++97.2 -61.1             : Moulton
++108.4 -57.3            : Priestley
++106.5 -74.5            : Rittenhouse
++133.7 -75.6            : Schrödinger
++105 -67                : Vallis Schrödinger
++103.2 -66.1            : Sikorsky
++165 -84.5              : Wiechert
+
+; Rükl libration chart VI
+-95.3 -49.7             : Andersson
+-91.3 -55.6             : Arrhenius
+-94.4 -58.5             : Blanchard
+-90.7 -74.9             : Boltzmann
+-101.3 -52.7            : Chadwick
+-99.1 -55.3             : de Roy
+-107.9 -69.1            : Doerfel
+-105.1 -44.9            : Fényi
+-93.9 -47.7             : Guthnick
+-109.9 -48.8            : Mendel
+-110.4 -62.7            : Petzval
+-96.3 -46.5             : Rydberg
+-134.8 -75.2            : Zeeman
+
+; Rükl libration chart VII
+-92.4 -4.8              : Couder
+-91.8 -38.5             : Drude
+-93.8 -33.7             : Focas
+-101.4 -21.3            : Fryxell
+-95.3 -39.6             : Heyrovský
+-94.1 -17.9             : Hohmann
+-97.5 -17.8             : Il'in
+-98.8 -2.3              : Kramarov
+-93.8 -14.6             : Maunder
+-92.5 -27.1             : Shuleykin
+
+; Rükl libration chart VIII
+-97.2 +39.7             : Avicenna
+-96.4 +21.8             : Bell
+-102.9 +42.5            : Bragg
+-96.7 +28               : Laue
+-96.9 +34.3             : Lorentz
+-96.1 +13.6             : Mees
+-90.1 +20.9             : Moseley
+-94.5 +35.4             : Nernst
+-91.4 +33               : Röntgen
+-98.1 +44.8             : Schönfeld
+-91.6 +10.8             : Sundman

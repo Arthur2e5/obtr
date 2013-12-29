@@ -1,0 +1,32 @@
+BEGIN_HEADER
+InitialState on
+ColourIdx 5
+END_HEADER
+
+BEGIN_DATA
++334.60	+46.70	:	Acidalia Mensa
++140.40	-2.90	:	Aeolis Mensae
++212.50	-2.00	:	Amazonis Mensa
++252.00	+11.70	:	Ascraeus Mensa
++97.70	-30.00	:	Ausonia Mensa
++355.00	-86.80	:	Australe Mensa
++287.40	-5.10	:	Baetis Mensa
++286.40	-6.20	:	Candor Mensa
++312.60	-13.80	:	Capri Mensa
++283.70	-5.70	:	Ceti Mensa
++347.00	+33.70	:	Cydonia Mensae
++22.60	+43.60	:	Deuteronilus Mensae
++317.80	-10.90	:	Eos Mensa
++147.30	+36.20	:	[Galaxias Mensae]
++311.20	-7.10	:	Ganges Mensa
++283.20	-1.10	:	Hebes Mensa			
++285.40	+25.40	:	Labeatis Mensa			
++297.40	+24.00	:	Lunae Mensa			
++119.10	+8.70	:	Nepenthes Mensae			
++308.00	+31.00	:	Nilokeras Mensae			
++67.90	+34.70	:	Nilosyrtis Mensae			
++287.90	+22.30	:	Nilus Mensae			
++49.40	+43.90	:	Protonilus Mensae			
++291.90	+24.50	:	Sacra Mensa			
++288.30	+27.80	:	Tempe Mensa			
++172.10	-11.40	:	Zephyria Mensae			

@@ -1,0 +1,24 @@
+BEGIN_HEADER
+InitialState on
+ColourIdx 4
+END_HEADER
+
+BEGIN_DATA
++150.40	+18.80	:	Albor Tholus
++175.70	-17.70	:	Apollinaris Tholus
++37.00	-58.70	:	[Australis Tholus]
++262.60	+24.00	:	Ceraunius Tholus
++319.00	-54.70	:	[Charitum Tholus]
++274.70	+35.90	:	E. Mareotis Tholus
++150.20	+32.10	:	Hecates Tholus
++345.00	+71.80	:	[Iaxartes Tholus]
++265.00	+36.00	:	Issedon Tholus
++242.50	+18.20	:	Jovis Tholus
++2.00	+72.80	:	[Kison Tholus]
++273.70	+36.40	:	N. Mareotis Tholus
++352.00	+69.80	:	[Ortygia Tholus]
++198.00	+73.80	:	Scandia Tholi
++269.20	+13.40	:	Tharsis Tholus
++262.30	+26.10	:	Uranius Tholus
++271.90	+35.50	:	W. Mareotis Tholus
++172.80	-19.80	:	Zephyria Tholus

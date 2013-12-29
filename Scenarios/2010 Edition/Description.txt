@@ -1,0 +1,5 @@
+BEGIN_HYPERDESC
+<h1>Orbiter 2010 Edition</h1>
+<p>A collection of scenarios showcasing some of the new features
+of the latest Orbiter release.</p>
+END_HYPERDESC

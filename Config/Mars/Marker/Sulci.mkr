@@ -1,0 +1,19 @@
+BEGIN_HEADER
+InitialState on
+ColourIdx 4
+END_HEADER
+
+BEGIN_DATA
++214.60	-2.80	:	Amazonis Sulci			
++177.40	-11.40	:	Apollinaris Sulci			
++231.10	-6.00	:	Arsia Sulci			
++251.20	+12.00	:	Ascraeus Sulci			
++135.00	-84.90	:	Australe Sulci			
++231.30	+25.40	:	Cyane Sulci			
++232.20	+9.90	:	Gigas Sulci			
++218.90	+24.40	:	Lycus Sulci			
++199.90	-4.90	:	Medusae Sulci			
++184.70	-6.70	:	Memnonia Sulci			
++243.50	+4.00	:	Pavonis Sulci			
++285.30	+22.20	:	Sacra Sulci			
++234.50	+18.70	:	Sulci Gordii			

@@ -1,0 +1,24 @@
+BEGIN_HEADER
+InitialState on
+ColourIdx 4
+END_HEADER
+
+BEGIN_DATA
++115.00	+15.80	:	Amenthes Cavi			
++95.50	-29.70	:	[Anseris Cavus]			
++319.70	-48.50	:	Argyre Cavi			
++96.40	-31.90	:	Ausonia Cavus			
++172.50	-3.60	:	Avernus Cavi			
++339.50	+84.40	:	Boreum Cavus			
++283.20	-78.50	:	Cavi Angusti			
++300.20	-79.00	:	Cavi Frigor?s			
++30.00	-67.30	:	[Cavi Novi]			
++308.50	-10.10	:	Ganges Cavus			
++309.70	+79.90	:	Hyperborei Cavi			
++313.90	-52.70	:	Octantis Cavi			
++304.90	-9.90	:	Ophir Cavus			
++95.20	-29.60	:	Peraea Cavus			
++209.70	+77.20	:	Scandia Cavi			
++353.80	-72.90	:	Sisyphi Cavi
++360.00	+84.60	:	Tenuis Cavus
++155.50	-74.30	:	[Ultimi Cavi]

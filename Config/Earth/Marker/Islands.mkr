@@ -1,0 +1,71 @@
+; Miscellaneous Islands
+
+BEGIN_HEADER
+InitialState on
+ColourIdx 1
+Size 0.9
+END_HEADER
+
+BEGIN_DATA
+
++158.95 -54.5           : Macquarie Islands
+-169.52 +16.75          : Johnston Island
+-64.73 +32.31           : Bermuda
+-16.98 +32.74           : Madeira
+-28.02 +38.64           : Azores
+-5.71 -15.97            : St.Helena
+-109.35 -27.13          : Easter Island
+-78.84 -33.67           : Robinson Crusoe Island
+-80.74 -33.75           : Alexander Selkirk Island
++57.62 -20.26           : Mauritius
++55.51 -21.11           : Réunion
++127.8 +26.4            : Okinawa
++178.58 -17.27          : Fiji
+-172.25 -13.63          : Samoa
+-175.17 -21.14          : Tonga
+-169.88 -19.02          : Niue
+-177.93 -29.38          : Kermadec Islands
++166.85 -0.5            : Nauru
++166.65 +19.22          : Wake
+-177.29 +28.24          : Midway Islands
++144.78 +13.41          : Guam
++145.7 +15.12           : Saipan
++166.87 -15.27          : Espirito Santo
++168.07 -29.03          : Norfolk Island
+-158.89 -19.31          : Cook Islands
++178.92 -8.47           : Tuvalu
+-139.73 -9.17           : Marquesas Islands
+-128.53 -24.26          : Pitcairn
+-176.51 -43.97          : Chatham Islands
++96.8 -12.23            : Cocos Islands
++54.13 +12.51           : Sokotra
+-8.27 +71.03            : Jan Mayen
+-6.88 +62.05            : Faeroer
+-1.2 +60.37             : Shetland Islands
+-12.28 -37.09           : Tristan da Cunha
+-9.94 -40.32            : Gough Island
++3.38 -54.42            : Bouvet Island
+-26.47 -58.08           : South Sandwich Islands
+-36.77 -54.26           : South Georgia Island
+-45.41 -60.62           : South Orkney Islands
+-54.75 -61.14           : South Shetland Islands
++37.73 -46.89           : Prince Edward Islands
++51.59 -46.38           : Crozet Islands
++69.47 -49.34           : Kerguelen Islands
++73.61 -53.11           : Heard Island
++72.54 -53.02           : MacDonald Island
++77.53 -37.83           : St.Paul
++166.06 -50.8           : Auckland Islands
+-144.44 -27.59          : Rapa
+-81.35 +19.32           : Cayman Islands
+-74.47 +24.03           : San Salvador
+-110.96 +18.78          : Socorro
+-114.69 +18.36          : Clarion
+-118.26 +28.99          : Guadaloupe
+-79.93 -26.3            : San Ambrosio
++163.16 -66.64          : Balleny Islands
++105.6 -10.48           : Christmas Island
+-87.08 +5.55            : Cocos Island
+-23.06 +16.01           : Cape Verde
+-149.33 -17.66          : Tahiti
+-151.75 -16.5           : Bora Bora

@@ -1,0 +1,34 @@
+BEGIN_HEADER
+InitialState on
+ColourIdx 2
+END_HEADER
+
+BEGIN_DATA
++105.70	+3.20	:	Amenthes Planum			
++281.00	-57.70	:	Aonia Planum			
++292.00	-69.80	:	Argentea Planum			
++279.20	+40.40	:	Ascuris Planum			
++310.80	-10.40	:	Aurorae Planum			
++254.00	-42.70	:	[Bathys Planum]			
++295.10	-34.20	:	Bosporos Planum			
++232.00	-21.80	:	Daedalia Planum			
++295.00	-34.20	:	[Erythraeum Planum]			
++110.00	-22.30	:	Hesperia Planum			
++253.50	-43.20	:	Icaria Planum			
++182.00	-4.00	:	Lucus Planum			
++294.00	+10.40	:	Lunae Planum			
++65.00	-64.80	:	Malea Planum			
++357.50	+0.20	:	Meridiani Planum			
++302.50	-8.70	:	Ophir Planum			
++257.00	-75.80	:	Parva Planum			
++276.50	-79.70	:	Planum Angustum			
++160.00	-83.90	:	Planum Australe			
++15.00	+88.00	:	Planum Boreum			
++140.00	-59.70	:	Planum Chronium			
++90.00	-78.90	:	Promethei Planum			
++272.00	-13.40	:	Sinai Planum			
++5.00	-69.80	:	Sisyphi Planum			
++273.50	-25.20	:	Solis Planum			
++256.10	-13.10	:	Syria Planum			
++69.50	+8.40	:	Syrtis Major Planum			
++295.70	-24.50	:	Thaumasia Planum			
