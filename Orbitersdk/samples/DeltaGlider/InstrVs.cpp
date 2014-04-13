@@ -136,8 +136,10 @@ bool InstrVS::Redraw2D (SURFHANDLE surf)
 	// VS readout
 	if (fabs(vspd) < 1e3)
 		sprintf (cbuf, fabs(vspd) < 10.0 ? "%+0.1f" : "%+0.0f", vspd*10.0);
-	else
+	else if (fabs(vspd) < 1e6)
 		sprintf (cbuf, "%+3.0fk", vspd > 0.0 ? floor(vspd*0.01) : ceil(vspd*0.01));
+	else
+		strcpy (cbuf, "----");
 
 	static double numx = 1871.0, numy = texh-423.5, numw = 10.0, numh = 19.0;
 	static double tu_num[4] = {numx/texw,(numx+numw)/texw,numx/texw,(numx+numw)/texw};

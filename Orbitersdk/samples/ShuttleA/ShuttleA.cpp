@@ -1312,6 +1312,12 @@ void ShuttleA::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 		}
 	}
 
+	TOUCHDOWNVTX tdv[ntdvtx];
+	memcpy(tdv, tdvtx, ntdvtx*sizeof(TOUCHDOWNVTX));
+	for (int i = 0; i < ntdvtx; i++)
+		tdv[i].pos.y += gear_proc*0.555;
+	SetTouchdownPoints (tdv, ntdvtx);
+
 	adiball->SetLayout (adi_layout);
 }
 
@@ -1401,12 +1407,6 @@ void ShuttleA::clbkPostCreation ()
 	SetAnimation (anim_lock, lock_proc);
 	SetAnimation (anim_dock, dock_proc);
 	SetAnimation (anim_gear, gear_proc);
-
-	TOUCHDOWNVTX tdv[ntdvtx];
-	memcpy(tdv, tdvtx, ntdvtx*sizeof(TOUCHDOWNVTX));
-	for (i = 0; i < ntdvtx; i++)
-		tdv[i].pos.y += gear_proc*0.555;
-	SetTouchdownPoints (tdv, ntdvtx);
 
 	SetEmptyMass (EMPTY_MASS + payload_mass);
 }

@@ -214,6 +214,14 @@ typedef union {
 } VECTOR3;
 
 /**
+ * \brief 4-element vector
+ */
+typedef union {
+	double data[4];                ///< array data interface
+	struct { double x, y, z, w; }; ///< named data interface
+} VECTOR4;
+
+/**
  * \brief 3x3-element matrix
  */
 typedef union {
@@ -1938,7 +1946,13 @@ const UINT ALLDOCKS = (UINT)-1;
 #define OBJPRM_PLANET_HASCLOUDS          0x0009
 #define OBJPRM_PLANET_CLOUDALT           0x000A
 #define OBJPRM_PLANET_CLOUDROTATION      0x000B
+
+/**
+ * \brief Depth of cloud shadows
+ *   (parameter type: float)
+ */
 #define OBJPRM_PLANET_CLOUDSHADOWCOL     0x000C
+
 #define OBJPRM_PLANET_CLOUDMICROTEX      0x000D
 #define OBJPRM_PLANET_CLOUDMICROALTMIN   0x000E
 #define OBJPRM_PLANET_CLOUDMICROALTMAX   0x000F
@@ -1952,6 +1966,37 @@ const UINT ALLDOCKS = (UINT)-1;
  *   (Parameter type: double)
  */
 #define OBJPRM_PLANET_ATTENUATIONALT     0x0013
+
+/**
+ * \brief Planet tile engine version (1 or 2)
+ *   (Parameter type: int)
+ */
+#define OBJPRM_PLANET_TILEENGINE         0x0014
+
+/**
+ * \brief Planet cloud tile engine version (1 or 2)
+ *   (Parameter type: int)
+ */
+#define OBJPRM_PLANET_CLOUDTILEENGINE    0x0015
+
+/**
+ * \brief Atmospheric tint colour. This colour is mixed into
+ *   the surface textures when seen through an atmospheric layer.
+ *   (Parameter type: VECTOR3)
+ */
+#define OBJPRM_PLANET_ATMTINTCOLOUR      0x0016
+
+/**
+ * \brief Max. resolution level for cloud layer rendering
+ *   (Parameter type: int)
+ */
+#define OBJPRM_PLANET_CLOUDMAXLEVEL      0x0017
+
+/**
+ * \brief Enhance cloud brightness?
+ *   (Parameter type: bool)
+ */
+#define OBJPRM_PLANET_CLOUDOVERSATURATE  0x0018
 //@}
 
 typedef int (*KeyFunc)(const char *keybuf);
@@ -6727,6 +6772,73 @@ inline MATRIX3 mul (const MATRIX3 &A, const MATRIX3 &B)
 		A.m11*B.m11 + A.m12*B.m21 + A.m13*B.m31, A.m11*B.m12 + A.m12*B.m22 + A.m13*B.m32, A.m11*B.m13 + A.m12*B.m23 + A.m13*B.m33,
 		A.m21*B.m11 + A.m22*B.m21 + A.m23*B.m31, A.m21*B.m12 + A.m22*B.m22 + A.m23*B.m32, A.m21*B.m13 + A.m22*B.m23 + A.m23*B.m33,
 		A.m31*B.m11 + A.m32*B.m21 + A.m33*B.m31, A.m31*B.m12 + A.m32*B.m22 + A.m33*B.m32, A.m31*B.m13 + A.m32*B.m23 + A.m33*B.m33
+	};
+	return mat;
+}
+
+
+inline VECTOR4 _V(double x, double y, double z, double w)
+{
+	VECTOR4 vec = {x,y,z,w}; return vec;
+}
+
+inline VECTOR4 _V(const VECTOR3 &v)
+{
+	VECTOR4 vec = {v.x, v.y, v.z, 1.0};
+	return vec;
+}
+
+inline VECTOR4 mul (const MATRIX4 &A, const VECTOR4 &b)
+{
+	return _V (
+		A.m11*b.x + A.m12*b.y + A.m13*b.z + A.m14*b.w,
+		A.m21*b.x + A.m22*b.y + A.m23*b.z + A.m24*b.w,
+		A.m31*b.x + A.m23*b.y + A.m33*b.z + A.m34*b.w,
+		A.m41*b.x + A.m42*b.y + A.m43*b.z + A.m44*b.w);
+}
+
+inline VECTOR4 mul (const VECTOR4 &b, const MATRIX4 &A)
+{
+	return _V (
+		b.x*A.m11 + b.y*A.m21 + b.z*A.m31 + b.w*A.m41,
+		b.x*A.m12 + b.y*A.m22 + b.z*A.m32 + b.w*A.m42,
+		b.x*A.m13 + b.y*A.m23 + b.z*A.m33 + b.w*A.m43,
+		b.x*A.m14 + b.y*A.m24 + b.z*A.m34 + b.w*A.m44);
+}
+
+inline MATRIX4 _M(double m11, double m12, double m13, double m14,
+				  double m21, double m22, double m23, double m24,
+				  double m31, double m32, double m33, double m34,
+				  double m41, double m42, double m43, double m44)
+{
+	MATRIX4 mat = {m11,m12,m13,m14,  m21,m22,m23,m24,  m31,m32,m33,m34, m41,m42,m43,m44};
+	return mat;
+}
+
+/**
+ * \ingroup vec
+ * \brief Returns the identity matrix
+ */
+inline MATRIX4 identity4 ()
+{
+	static MATRIX4 mat = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+	return mat;
+}
+
+/**
+ * \ingroup vec
+ * \brief Matrix-matrix multiplication for 4-matrices
+ * \param[in] A First matrix operand
+ * \param[in] B Second matrix operand
+ * \return Result of <b>AB</b>
+ */
+inline MATRIX4 mul (const MATRIX4 &A, const MATRIX4 &B)
+{
+	MATRIX4 mat = {
+		A.m11*B.m11 + A.m12*B.m21 + A.m13*B.m31 + A.m14*B.m41, A.m11*B.m12 + A.m12*B.m22 + A.m13*B.m32 + A.m14*B.m42, A.m11*B.m13 + A.m12*B.m23 + A.m13*B.m33 + A.m14*B.m43, A.m11*B.m14 + A.m12*B.m24 + A.m13*B.m34 + A.m14*B.m44,
+		A.m21*B.m11 + A.m22*B.m21 + A.m23*B.m31 + A.m24*B.m41, A.m21*B.m12 + A.m22*B.m22 + A.m23*B.m32 + A.m24*B.m42, A.m21*B.m13 + A.m22*B.m23 + A.m23*B.m33 + A.m24*B.m43, A.m21*B.m14 + A.m22*B.m24 + A.m23*B.m34 + A.m24*B.m44,
+		A.m31*B.m11 + A.m32*B.m21 + A.m33*B.m31 + A.m34*B.m41, A.m31*B.m12 + A.m32*B.m22 + A.m33*B.m32 + A.m34*B.m42, A.m31*B.m13 + A.m32*B.m23 + A.m33*B.m33 + A.m34*B.m43, A.m31*B.m14 + A.m32*B.m24 + A.m33*B.m34 + A.m34*B.m44,
+		A.m41*B.m11 + A.m42*B.m21 + A.m43*B.m31 + A.m44*B.m41, A.m41*B.m12 + A.m42*B.m22 + A.m43*B.m32 + A.m44*B.m42, A.m41*B.m13 + A.m42*B.m23 + A.m43*B.m33 + A.m44*B.m43, A.m41*B.m14 + A.m42*B.m24 + A.m43*B.m34 + A.m44*B.m44
 	};
 	return mat;
 }

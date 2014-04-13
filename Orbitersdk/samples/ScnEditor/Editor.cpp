@@ -1989,6 +1989,7 @@ void EditorTab_Statevec::Apply ()
 		oapiGetGlobalVel (hRef, &refvel);     vel += refvel;
 		oapiGetGlobalPos (vs.rbody, &refpos); pos -= refpos;
 		oapiGetGlobalVel (vs.rbody, &refvel); vel -= refvel;
+#ifdef UNDEF
 		// sanity check
 		double rad = length(pos);
 		double rad0 = oapiGetSize (vs.rbody) + vessel->GetCOG_elev();
@@ -1999,7 +2000,7 @@ void EditorTab_Statevec::Apply ()
 			Pol2Crt (pos, vel);
 			needrefresh = true;
 		}
-
+#endif
 		veccpy (vs.rpos, pos);
 		veccpy (vs.rvel, vel);
 		vs.status = 0; // enforce freeflight mode

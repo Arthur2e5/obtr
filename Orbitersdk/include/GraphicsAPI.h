@@ -21,7 +21,7 @@ typedef void *HDC;
 /// Used by GraphicsClient::GetConfigParam()
 /// @{
 
-/// Max. level of detail for rendering planetary surfaces (1-10)
+/// Max. level of detail for rendering planetary surfaces
 /// \par Parameter type:
 ///   DWORD
 #define CFGPRM_SURFACEMAXLEVEL 0x0001
@@ -139,6 +139,28 @@ typedef void *HDC;
  *   int
  */
 #define CFGPRM_MAXLIGHT 0x0016
+
+/**
+ * Planet tile resolution bias
+ * \par Parameter type:
+ *   double
+ */
+#define CFGPRM_RESOLUTIONBIAS 0x0017
+
+/**
+ * Render meshes as wireframe models?
+ * \par Parameter type:
+ *   bool
+ */
+#define CFGPRM_WIREFRAME 0x0018
+
+/**
+ * Mesh interpolation method for planetary surfaces
+ * (0=none, 1=linear, 2=cubic)
+ * \par Parameter type:
+ *   int
+ */
+#define CFGPRM_ELEVATIONMODE 0x0019
 /// @}
 
 /**

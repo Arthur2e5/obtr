@@ -1758,14 +1758,17 @@ bool Atlantis::clbkLoadVC (int id)
 		{0,0,0},            // hudcnt (to be filled)
 		0.176558            // size
 	};
-	static EXTMFDSPEC mfds = { // common MFD specs
-		{0,0,0,0},          // pos
-		mesh_vc,            // nmesh
-		0,                  // ngroup (to be filled)
-		MFD_SHOWMODELABELS, // flag
-		5, 0,               // nbt1, nbt2
-		256/6, 256/7        // bt_yofs, bt_ydist
+	static VCMFDSPEC mfds = {
+		mesh_vc, 0
 	};
+//	static EXTMFDSPEC mfds = { // common MFD specs
+//		{0,0,0,0},          // pos
+//		mesh_vc,            // nmesh
+//		0,                  // ngroup (to be filled)
+//		MFD_SHOWMODELABELS, // flag
+//		5, 0,               // nbt1, nbt2
+//		256/6, 256/7        // bt_yofs, bt_ydist
+//	};
 	static const int mfdgrp[10] = {
 		GRP_CDR1_VC,GRP_CDR2_VC,GRP_PLT1_VC,GRP_PLT2_VC,
 		GRP_MFD1_VC, GRP_MFD2_VC, GRP_MFD3_VC, GRP_MFD4_VC, GRP_MFD5_VC,
@@ -1834,7 +1837,7 @@ bool Atlantis::clbkLoadVC (int id)
 		// register all MFD displays
 		for (int i = 0; i < 10; i++) {
 			mfds.ngroup = mfdgrp[i];
-			oapiRegisterMFD (MFD_LEFT+i, &mfds);
+			oapiVCRegisterMFD (MFD_LEFT+i, &mfds);
 		}
 		// update panel R13L
 		plop->UpdateVC();

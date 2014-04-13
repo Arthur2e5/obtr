@@ -1,6 +1,7 @@
-BEGIN_DESC
-Introduction to Orbiter 2010.
-END_DESC
+BEGIN_HYPERDESC
+<h1>Introduction to Orbiter 2010.</h1>
+<p>A tour of the features of Orbiter Release 2010.</p>
+END_HYPERDESC
 
 BEGIN_ENVIRONMENT
   System Sol

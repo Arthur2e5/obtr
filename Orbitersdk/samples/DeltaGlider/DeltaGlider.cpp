@@ -1865,8 +1865,8 @@ bool DeltaGlider::RedrawPanel_RotAcceleration (SURFHANDLE surf, int which)
 	if (a >= 0.0) idx  = 8-idx;
 	else          idx += 8;
 
-	if (idx == rotidx[1][which-AID_VPITCH]) return false;
-	rotidx[1][which-AID_VPITCH] = idx;
+	if (idx == rotidx[1][which-AID_APITCH]) return false;
+	rotidx[1][which-AID_APITCH] = idx;
 	switch (which) {
 		case AID_APITCH: oapiBlt (surf, srf[4], 0, 0, idx*40, 0, 40, 49); break;
 		case AID_ABANK:  oapiBlt (surf, srf[5], 0, 0, idx*50, 0, 50, 40); break;
@@ -1892,8 +1892,8 @@ bool DeltaGlider::RedrawPanel_RotMoment (SURFHANDLE surf, int which)
 	if (m >= 0.0) idx  = 8-idx;
 	else          idx += 8;
 
-	if (idx == rotidx[2][which-AID_VPITCH]) return false;
-	rotidx[2][which-AID_VPITCH] = idx;
+	if (idx == rotidx[2][which-AID_MPITCH]) return false;
+	rotidx[2][which-AID_MPITCH] = idx;
 	switch (which) {
 		case AID_MPITCH: oapiBlt (surf, srf[4], 0, 0, idx*40, 0, 40, 49); break;
 		case AID_MBANK:  oapiBlt (surf, srf[5], 0, 0, idx*50, 0, 50, 40); break;
@@ -2658,6 +2658,7 @@ void DeltaGlider::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 		SetPropellantMaxMass (ph_main, max_rocketfuel);
 		SetPropellantMaxMass (ph_scram, max_scramfuel);
 	}
+	SetGearParameters (gear_proc);
 }
 
 // --------------------------------------------------------------
@@ -2741,7 +2742,6 @@ void DeltaGlider::clbkSaveState (FILEHANDLE scn)
 void DeltaGlider::clbkPostCreation ()
 {
 	EnableRetroThrusters (rcover_status == DOOR_OPEN);
-	SetGearParameters (gear_proc);
 	SetEmptyMass ();
 
 	// update animation states

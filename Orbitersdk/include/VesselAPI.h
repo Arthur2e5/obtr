@@ -1179,6 +1179,21 @@ public:
 	double GetYaw () const;
 
 	/**
+	 * \brief Returns the elevation of the surface at the vessel's current
+	 *   longitude/latitude above the reference radius.
+	 * \return surface elevation [m]
+	 * 
+	 */
+	double GetSurfaceElevation () const;
+
+	/**
+	 * \brief Returns the normal (in local horizon frame) of the surface below the
+	 *   vessel's current position
+	 * \return surface normal in local horizon frame
+	 */
+	VECTOR3 GetSurfaceNormal () const;
+
+	/**
 	 * \brief Returns vessel's current equatorial position with respect to the
 	 *   closest planet or moon.
 	 * \param [out] longitude longitude coordinate [rad]
