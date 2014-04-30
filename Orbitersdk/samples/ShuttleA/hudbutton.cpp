@@ -1,7 +1,7 @@
 // ==============================================================
 //                 ORBITER MODULE: ShuttleA
 //                  Part of the ORBITER SDK
-//          Copyright (C) 2001-2010 Martin Schweiger
+//          Copyright (C) 2001-2014 Martin Schweiger
 //                   All rights reserved
 //
 // hudbutton.cpp

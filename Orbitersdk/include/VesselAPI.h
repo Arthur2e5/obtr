@@ -1,6 +1,6 @@
 // ======================================================================
 //                     ORBITER SOFTWARE DEVELOPMENT KIT
-//                  Copyright (C) 2001-2010 Martin Schweiger
+//                  Copyright (C) 2001-2014 Martin Schweiger
 //                           All rights reserved
 // VesselAPI.h
 // - VESSEL class interface

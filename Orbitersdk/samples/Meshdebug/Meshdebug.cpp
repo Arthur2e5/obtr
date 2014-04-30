@@ -1,7 +1,7 @@
 // ==============================================================
 //                 ORBITER MODULE: Meshdebug
 //                  Part of the ORBITER SDK
-//          Copyright (C) 2005-2010 Martin Schweiger
+//          Copyright (C) 2005-2014 Martin Schweiger
 //                   All rights reserved
 //
 // Meshdebug.cpp

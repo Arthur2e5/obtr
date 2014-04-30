@@ -1,7 +1,7 @@
 // ==============================================================
 //           ORBITER MODULE: LaunchpadParamTemplate
 //                  Part of the ORBITER SDK
-//          Copyright (C) 2006-2010 Martin Schweiger
+//          Copyright (C) 2006-2014 Martin Schweiger
 //                   All rights reserved
 //
 // LParam.cpp

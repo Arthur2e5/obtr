@@ -1,7 +1,7 @@
 // ==============================================================
 //                  ORBITER MODULE: Rcontrol
 //                  Part of the ORBITER SDK
-//           Copyright (C) 2003-2010 Martin Schweiger
+//           Copyright (C) 2003-2014 Martin Schweiger
 //                   All rights reserved
 //
 // Rcontrol.cpp

@@ -1,7 +1,7 @@
 // ==============================================================
 //                 ORBITER MODULE: ScriptMFD
 //                  Part of the ORBITER SDK
-//            Copyright (C) 2010 Martin Schweiger
+//          Copyright (C) 2010-2014 Martin Schweiger
 //                   All rights reserved
 //
 // ScriptMFD.h
