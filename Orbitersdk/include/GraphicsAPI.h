@@ -161,6 +161,14 @@ typedef void *HDC;
  *   int
  */
 #define CFGPRM_ELEVATIONMODE 0x0019
+
+/**
+ * Size of texture surface used for rendering panel MFDs and VC HUD
+ * (multiple of 2, usually 256 or 512)
+ * \par Parameter type:
+ *   int
+ */
+#define CFGPRM_PANELMFDHUDSIZE 0x001A
 /// @}
 
 /**

@@ -1134,17 +1134,43 @@ public:
 	const OBJHANDLE GetSurfaceRef () const;
 
 	/**
-	 * \brief Returns the altitude above the surface of the surface reference
-	 *   body.
-	 * \return Altitude [m]
+	 * \brief Returns the altitude above the mean radius of the current surface
+	 *   reference body.
+	 * \return Altitude above mean radius [m]
+	 * \note For altitude above ground, use \ref GetAltitude(AltitudeMode,int*)
 	 * \note Currently all celestial bodies are assumed to be spheres. This
 	 *   method therefore returns the distance to the centre of the reference
 	 *   body minus the reference body radius.
 	 * \note The reference body is the planet or moon whose surface is closest
 	 *   to the current vessel position (i.e. the body with minimal altitude).
-	 * \sa GetSurfaceRef
+	 * \sa GetAltitude(AltitudeMode,int*), GetSurfaceRef
 	 */
 	double GetAltitude () const;
+
+	/**
+	 * \brief Altitude mode used by \ref GetAltitude(AltitudeMode,int*).
+	 */
+	enum AltitudeMode {
+		ALTMODE_MEANRAD,  ///< altitude over mean radius
+		ALTMODE_GROUND    ///< altitude over ground
+	};
+
+	/**
+	 * \brief Returns the vessel altitude.
+	 * \param [in] mode altitude mode (altitude over ground/over mean radius)
+	 * \param [out] reslvl pointer to variable receiving the resolution level
+	 *   at which ground altitude was calculated.
+	 * \return Altitude [m]
+	 * \note For mode==ALTMODE_MEANRAD, this method is equivalent to \ref GetAltitude().
+	 * \note If reslvl is set, on return the int variable it points to will be
+	 *   filled with the planet surface resolution level at which the altitude
+	 *   was calculated. At higher altitudes, Orbiter may use a lower resolution
+	 *   setting.
+	 * \note For resolution over mean radius, the resolution level has no
+	 *   meaning, and always returns 0.
+	 * \sa GetAltitude()
+	 */
+	double GetAltitude (AltitudeMode mode, int *reslvl=0);
 
 	/**
 	 * \brief Returns the current pitch angle with respect to the local horizon.
