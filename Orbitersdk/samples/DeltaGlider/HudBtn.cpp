@@ -11,19 +11,8 @@
 #define STRICT 1
 #include "HudBtn.h"
 #include "DeltaGlider.h"
-
-// constants for texture coordinates
-static const float texw = (float)PANEL2D_TEXW; // texture width
-static const float texh = (float)PANEL2D_TEXH; // texture height
-static const float tx_x0 = 1143.5f;     // left edge of texture block
-static const float tx_y0 = texh-604.5f; // top edge of texture block
-static const float tx_dx = 15.0f;       // texture block width
-static const float tx_dy =  4.0f;       // texture block height
-// constants for panel coordinates
-static const float bb_x0 = 46.5f;       // left edge of HUD mode 1 indicator
-static const float bb_x1 = bb_x0+29.0f; // left edge of HUD mode 2 indicator
-static const float bb_x2 = bb_x1+29.0f; // left edge of HUD mode 3 indicator
-static const float bb_y0 = 19.5f;       // top edge of button block
+#include "meshres_p0.h"
+#include "meshres_vc.h"
 
 // ==============================================================
 
@@ -31,45 +20,22 @@ HUDButton::HUDButton (VESSEL3 *v): PanelElement (v)
 {
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
-void HUDButton::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
+void HUDButton::Reset2D (MESHHANDLE hMesh)
 {
-	static const DWORD NVTX = 4*3;
-	static const DWORD NIDX = 6*3;
-	static const NTVERTEX VTX[NVTX] = {
-		// Orbit mode indicator
-		{bb_x0,      bb_y0,      0,  0,0,0,  tx_x0/texw,        tx_y0/texh},
-		{bb_x0+tx_dx,bb_y0,      0,  0,0,0,  (tx_x0+tx_dx)/texw,tx_y0/texh},
-		{bb_x0,      bb_y0+tx_dy,0,  0,0,0,  tx_x0/texw,        (tx_y0+tx_dy)/texh},
-		{bb_x0+tx_dx,bb_y0+tx_dy,0,  0,0,0,  (tx_x0+tx_dx)/texw,(tx_y0+tx_dy)/texh},
-		// Surface mode indicator
-		{bb_x1,      bb_y0,      0,  0,0,0,  tx_x0/texw,        tx_y0/texh},
-		{bb_x1+tx_dx,bb_y0,      0,  0,0,0,  (tx_x0+tx_dx)/texw,tx_y0/texh},
-		{bb_x1,      bb_y0+tx_dy,0,  0,0,0,  tx_x0/texw,        (tx_y0+tx_dy)/texh},
-		{bb_x1+tx_dx,bb_y0+tx_dy,0,  0,0,0,  (tx_x0+tx_dx)/texw,(tx_y0+tx_dy)/texh},
-		// Docking mode indicator
-		{bb_x2,      bb_y0,      0,  0,0,0,  tx_x0/texw,        tx_y0/texh},
-		{bb_x2+tx_dx,bb_y0,      0,  0,0,0,  (tx_x0+tx_dx)/texw,tx_y0/texh},
-		{bb_x2,      bb_y0+tx_dy,0,  0,0,0,  tx_x0/texw,        (tx_y0+tx_dy)/texh},
-		{bb_x2+tx_dx,bb_y0+tx_dy,0,  0,0,0,  (tx_x0+tx_dx)/texw,(tx_y0+tx_dy)/texh}
-	};
-	static const WORD IDX[NIDX] = {
-		// Orbit mode indicator
-		0,1,2, 3,2,1,
-		// Surface mode indicator
-		4,5,6, 7,6,5,
-		// Docking mode indicator
-		8,9,10, 11,10,9
-	};
-
-	AddGeometry (hMesh, grpidx, VTX, NVTX, IDX, NIDX);
+	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
+	vtxofs = 8;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool HUDButton::Redraw2D (SURFHANDLE surf)
 {
+	// constants for texture coordinates
+	static const float tx_dy =  4.0f;       // texture block height
+	static const float bb_y0 = 19.5f;       // top edge of button block
+
 	float y, y0 = bb_y0, y1 = bb_y0+tx_dy;
 	int i, j, mode = oapiGetHUDMode();
 	for (i = 0; i < 3; i++) {
@@ -80,38 +46,129 @@ bool HUDButton::Redraw2D (SURFHANDLE surf)
 	return false;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool HUDButton::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 {
 	if (!hMesh) return false;
-	NTVERTEX vtx[12];
+	DeltaGlider *dg = (DeltaGlider*)vessel;
+	if (dg->GetHUDMode() < 0)
+		dg->SetHUDMode(oapiGetHUDMode());
+
+	static const int nbutton = 3;
+	static const int nvtx_per_button = 16;
+	static const int nvtx = nbutton * nvtx_per_button;
+	int i, j;
+	NTVERTEX vtx[nvtx];
 	GROUPEDITSPEC ges;
-	ges.flags = GRPEDIT_VTXTEXU;
+	ges.flags = GRPEDIT_VTXCRDZ | GRPEDIT_VTXTEXV;
 	ges.Vtx = vtx;
-	ges.nVtx = 12;
+	ges.nVtx = nvtx;
 	ges.vIdx = NULL;
-
-	for (int i = 0; i < 3; i++) {
-		bool hilight = (oapiGetHUDMode() == 3-i);
-		vtx[i*4  ].tu = vtx[i*4+1].tu = (hilight ? 0.1543f : 0.0762f);
-		vtx[i*4+2].tu = vtx[i*4+3].tu = (hilight ? 0.0801f : 0.0020f);
+	static float z0_base[nvtx_per_button] = {
+		7.2630f,7.2630f,7.2630f,7.2630f,7.2630f,7.2630f,7.2680f,7.2680f,
+		7.2630f,7.2630f,7.2680f,7.2680f,7.2630f,7.2630f,7.2680f,7.2680f
+	};
+	static float z0_shift = 0.004f;
+	static float v0_base[nvtx_per_button] = {
+		0.2002f,0.2002f,0.1602f,0.1602f,0.1602f,0.1602f,0.1602f,0.1602f,
+		0.2002f,0.1602f,0.2002f,0.1602f,0.2002f,0.1602f,0.2002f,0.1602f
+	};
+	static float v0_shift = (float)(41.0/1024.0);
+	static const int mode[4] = {HUD_ORBIT,HUD_SURFACE,HUD_DOCKING,HUD_NONE};
+	for (i = 0; i < nbutton; i++) {
+		int vofs = i*nvtx_per_button;
+		bool hilight = (dg->GetHUDMode() == mode[i]);
+		for (j = 0; j < nvtx_per_button; j++) {
+			vtx[vofs+j].z = z0_base[j] + (hilight ? z0_shift : 0);
+			vtx[vofs+j].tv = v0_base[j] + (hilight && i<3 ? v0_shift : 0);
+		}
 	}
-	oapiEditMeshGroup (hMesh, MESHGRP_VC_HUDMODE, &ges);
-
-	//for (int i = 0; i < 3; i++) {
-	//	bool hilight = (oapiGetHUDMode() == 3-i);
-	//	_grp->Vtx[i*4  ].tu = _grp->Vtx[i*4+1].tu = (hilight ? 0.1543f : 0.0762f);
-	//	_grp->Vtx[i*4+2].tu = _grp->Vtx[i*4+3].tu = (hilight ? 0.0801f : 0.0020f);
-	//}
-	//vessel->MeshModified (mesh, gidx, 0);
+	oapiEditMeshGroup (hMesh, GRP_HUD_BUTTONS_VC, &ges);
 	return false;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool HUDButton::ProcessMouse2D (int event, int mx, int my)
 {
-	if (mx%29 < 20) oapiSetHUDMode (HUD_NONE+(mx/29));
+	DeltaGlider *dg = (DeltaGlider*)vessel;
+	if (mx%29 < 20) {
+		int mode = HUD_NONE+(mx/29);
+		if (mode == HUD_NONE)
+			dg->ModHUDBrightness(my < 8);
+		else if (event & PANEL_MOUSE_LBDOWN)
+			dg->SetHUDMode (mode);
+	}
 	return false;
+}
+
+// --------------------------------------------------------------
+
+bool HUDButton::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	DeltaGlider *dg = (DeltaGlider*)vessel;
+	static const int mode[3] = {HUD_ORBIT,HUD_SURFACE,HUD_DOCKING};
+	int btn = max(0, min (2, (int)(p.x*3.0)));
+	dg->SetHUDMode (mode[btn]);
+	return true;
+}
+
+// ==============================================================
+// ==============================================================
+
+HUDBrightnessDial::HUDBrightnessDial (VESSEL3 *v): PanelElement (v)
+{
+}
+
+// --------------------------------------------------------------
+
+bool HUDBrightnessDial::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	DeltaGlider *dg = (DeltaGlider*)vessel;
+	dg->ModHUDBrightness (p.x > 0.5);
+	return true;
+}
+
+// ==============================================================
+// ==============================================================
+
+HUDColourButton::HUDColourButton (VESSEL3 *v): PanelElement (v)
+{
+	pending_action = 0;
+}
+
+bool HUDColourButton::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
+{
+	if (pending_action) {
+		static const int nvtx_per_button = 16;
+		static const double depth = 0.004;
+		static int meshgrp = GRP_HUD_BUTTONS_VC;
+		NTVERTEX dvtx[nvtx_per_button];
+		WORD vofs[nvtx_per_button];
+		float dz = (float)(pending_action == 1 ? depth : -depth);
+		static int vofs0 = nvtx_per_button*3;
+		for (int i = 0; i < nvtx_per_button; i++) {
+			dvtx[i].z = dz;
+			vofs[i] = vofs0 + i;
+		}
+		GROUPEDITSPEC ges = {GRPEDIT_VTXCRDADDZ, 0, dvtx, nvtx_per_button, vofs};
+		oapiEditMeshGroup (hMesh, meshgrp, &ges);
+
+		pending_action = 0;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
+bool HUDColourButton::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	if (event & PANEL_MOUSE_LBDOWN) {
+		oapiToggleHUDColour ();
+		pending_action = 1;
+	} else {
+		pending_action = 2;
+	}
+	return true;
 }

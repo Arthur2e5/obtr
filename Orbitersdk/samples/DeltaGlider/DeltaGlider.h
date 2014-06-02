@@ -92,6 +92,8 @@ const double HATCH_OPERATING_SPEED = 0.15;
 const double RCOVER_OPERATING_SPEED = 0.3;
 // Retro cover opening/closing speed
 
+const double HUD_OPERATING_SPEED = 0.15;
+
 // ========= Main engine parameters ============
 
 const double MAIN_PGIMBAL_RANGE = tan (1.0*RAD);
@@ -183,6 +185,9 @@ public:
 	void DrawHUD (int mode, const HUDPAINTSPEC *hps, HDC hDC);
 	void DrawNeedle (HDC hDC, int x, int w, double rad, double angle, double *pangle = 0, double speed = PI);
 	void UpdateStatusIndicators();
+	int GetHUDMode () const;
+	void SetHUDMode (int mode);
+	void ModHUDBrightness (bool increase);
 	void SetPassengerVisuals ();
 	void SetDamageVisuals ();
 	void SetPanelScale (PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
@@ -196,23 +201,20 @@ public:
 	bool RedrawPanel_RotMoment (SURFHANDLE surf, int which);
 	bool RedrawPanel_ScramTempDisp (SURFHANDLE surf);
 	bool RedrawPanel_WBrake (SURFHANDLE surf, int which);
-	void RedrawPanel_MFDButton (SURFHANDLE surf, int mfd, int side);
 	bool RedrawPanel_MainFlow (SURFHANDLE surf);
 	bool RedrawPanel_RetroFlow (SURFHANDLE surf);
 	bool RedrawPanel_HoverFlow (SURFHANDLE surf);
 	bool RedrawPanel_ScramFlow (SURFHANDLE surf);
 	bool RedrawPanel_MainTSFC (SURFHANDLE surf);
 	bool RedrawPanel_ScramTSFC (SURFHANDLE surf);
-	bool RedrawPanel_MainProp (SURFHANDLE surf);
-	bool RedrawPanel_MainPropMass (SURFHANDLE surf);
+	//bool RedrawPanel_MainProp (SURFHANDLE surf);
+	//bool RedrawPanel_MainPropMass (SURFHANDLE surf);
 	bool RedrawPanel_RCSProp (SURFHANDLE surf);
 	bool RedrawPanel_RCSPropMass (SURFHANDLE surf);
 	bool RedrawPanel_ScramProp (SURFHANDLE surf);
 	bool RedrawPanel_ScramPropMass (SURFHANDLE surf);
 	bool RedrawPanel_GimbalScramDisp (SURFHANDLE surf);
 	bool RedrawPanel_HoverBalanceDisp (SURFHANDLE surf);
-	bool RedrawPanel_GearIndicator (SURFHANDLE surf);
-	bool RedrawPanel_NoseconeIndicator (SURFHANDLE surf);
 	void RedrawVC_ThMain ();
 	void RedrawVC_ThHover ();
 	void RedrawVC_ThScram ();
@@ -257,7 +259,7 @@ public:
 	void clbkRenderHUD (int mode, const HUDPAINTSPEC *hps, SURFHANDLE hTex);
 	void clbkRCSMode (int mode);
 	void clbkADCtrlMode (DWORD mode);
-	void clbkHUDMode (int mode);
+	//void clbkHUDMode (int mode);
 	void clbkMFDMode (int mfd, int mode);
 	void clbkNavMode (int mode, bool active);
 	int  clbkConsumeDirectKey (char *kstate);
@@ -286,18 +288,22 @@ public:
 	double lwingstatus, rwingstatus;
 	int hatchfail;
 	bool aileronfail[4];
+	int airbrake_tgt;
 
 	enum DoorStatus { DOOR_CLOSED, DOOR_OPEN, DOOR_CLOSING, DOOR_OPENING }
-		nose_status, ladder_status, gear_status, rcover_status, olock_status, ilock_status, hatch_status, radiator_status, brake_status;
+		nose_status, noselever_status, ladder_status, gear_status, gearlever_status, rcover_status, olock_status, ilock_status,
+		hatch_status, radiator_status, brake_status, hud_status, undock_status, airbrakelever_status;
 	void ActivateLandingGear (DoorStatus action);
 	void ActivateRCover (DoorStatus action);
 	void ActivateDockingPort (DoorStatus action);
+	void ActivateUndocking (DoorStatus action);
 	void ActivateLadder (DoorStatus action);
 	void ActivateOuterAirlock (DoorStatus action);
 	void ActivateInnerAirlock (DoorStatus action);
 	void ActivateHatch (DoorStatus action);
-	void ActivateAirbrake (DoorStatus action);
+	void ActivateAirbrake (DoorStatus action, bool half_step = false);
 	void ActivateRadiator (DoorStatus action);
+	void ActivateHud (DoorStatus action);
 	void RevertLandingGear ();
 	void RevertDockingPort ();
 	void RevertLadder ();
@@ -306,11 +312,17 @@ public:
 	void RevertHatch ();
 	void RevertAirbrake ();
 	void RevertRadiator ();
+	void RevertHud ();
+	void SetSwitch (int sw, int pos);
+	void SetCockpitLight (bool on, bool white);
 	void SetGearParameters (double state);
-	double nose_proc, ladder_proc, gear_proc, rcover_proc, olock_proc, ilock_proc, hatch_proc, radiator_proc, brake_proc;     // logical status
+	double nose_proc, noselever_proc, ladder_proc, gear_proc, gearlever_proc, rcover_proc, olock_proc, ilock_proc,
+		hatch_proc, radiator_proc, brake_proc, hud_proc, undock_proc, airbrakelever_proc;     // logical status
 	UINT anim_gear;         // handle for landing gear animation
 	UINT anim_rcover;       // handle for retro cover animation
 	UINT anim_nose;         // handle for nose cone animation
+	UINT anim_noselever;    // handle for nose cone lever animation
+	UINT anim_undocklever;  // handle for undock lever animation
 	UINT anim_ladder;       // handle for front escape ladder animation
 	UINT anim_olock;        // handle for outer airlock animation
 	UINT anim_ilock;        // handle for inner airlock animation
@@ -322,16 +334,19 @@ public:
 	UINT anim_laileron;     // handle for left aileron animation
 	UINT anim_raileron;     // handle for right aileron animation
 	UINT anim_brake;        // handle for airbrake animation
+	UINT anim_vc_hudbdial;      // VC HUD brightness dial
+	UINT anim_vc_trimwheel;     // VC elevator trim wheel
+	UINT anim_vc_hud;           // VC HUD folding away
+	UINT anim_switch[2];        // VC switch animations
 	UINT anim_mainthrottle[2];  // VC main/retro throttle levers (left and right)
 	UINT anim_hoverthrottle;    // VC hover throttle
 	UINT anim_scramthrottle[2]; // VC scram throttle levers (left and right)
 	UINT anim_gearlever;        // VC gear lever
-	UINT anim_nconelever;       // VC nose cone lever
+	UINT anim_airbrakelever;    // VC airbrake lever
 	UINT anim_pmaingimbal[2];   // VC main engine pitch gimbal switch (left and right engine)
 	UINT anim_ymaingimbal[2];   // VC main engine yaw gimbal switch (left and right engine)
 	UINT anim_scramgimbal[2];   // VC scram engine pitch gimbal switch (left and right engine)
 	UINT anim_hbalance;         // VC hover balance switch
-	UINT anim_hudintens;        // VC HUD intensity switch
 	UINT anim_rcsdial;          // VC RCS dial animation
 	UINT anim_afdial;           // VC AF dial animation
 	UINT anim_olockswitch;      // VC outer airlock switch animation
@@ -344,9 +359,10 @@ public:
 	SURFHANDLE srf[nsurf];          // handles for panel bitmaps
 	SURFHANDLE insignia_tex;        // vessel-specific fuselage markings
 	SURFHANDLE contrail_tex;        // contrail particle texture
-	static SURFHANDLE panel2dtex;   // texture for 2D instrument panel
+	SURFHANDLE vctex, intex;
 	MESHHANDLE exmesh_tpl;          // vessel mesh: global template
 	MESHHANDLE vcmesh_tpl;          // VC mesh: global template
+	MESHHANDLE panelmesh0;          // 2D main panel
 	DEVMESHHANDLE exmesh;           // vessel mesh: instance
 	DEVMESHHANDLE vcmesh;           // VC mesh: instance
 	THGROUP_HANDLE thg_main;
@@ -405,6 +421,8 @@ private:
 	double hatch_vent_t;
 	bool dockreleasedown;
 	SpotLight *docking_light;
+	PointLight *cockpit_light;
+	int last_hudmode;
 
 	UINT engsliderpos[5];    // throttle settings for main,hover,scram engines
 	double scram_intensity[2];
@@ -452,19 +470,6 @@ typedef struct {
 	HBRUSH brush[4];
 	HPEN pen[2];
 } GDIParams;
-
-// Some mesh groups referenced in the code
-#define MESHGRP_VC_HUDMODE          0
-#define MESHGRP_VC_HBALANCECNT     18
-#define MESHGRP_VC_SCRAMGIMBALCNT  19
-#define MESHGRP_VC_PGIMBALCNT      20
-#define MESHGRP_VC_YGIMBALCNT      21
-#define MESHGRP_VC_NAVMODE         59
-#define MESHGRP_VC_LMFDDISP       109
-#define MESHGRP_VC_RMFDDISP       110
-#define MESHGRP_VC_STATUSIND      118
-#define MESHGRP_VC_HORIZON        120
-#define MESHGRP_VC_HUDDISP        136
 
 // Panel area identifiers:
 // Panel 0
@@ -550,24 +555,10 @@ typedef struct {
 
 // Virtual cockpit-specific area identifiers:
 #define AID_MFD1_PWR          1024
-#define AID_MFD1_SEL          1025
-#define AID_MFD1_MNU          1026
 #define AID_MFD2_PWR          1027
-#define AID_MFD2_SEL          1028
-#define AID_MFD2_MNU          1029
-#define AID_HUDBUTTON1        1030
-#define AID_HUDBUTTON2        1031
-#define AID_HUDBUTTON3        1032
-#define AID_HUDBUTTON4        1033
 #define AID_HUDCOLOUR         1034
-#define AID_HUDINCINTENS      1035
-#define AID_HUDDECINTENS      1036
-#define AID_NAVBUTTON1        1037
-#define AID_NAVBUTTON2        1038
-#define AID_NAVBUTTON3        1039
-#define AID_NAVBUTTON4        1040
-#define AID_NAVBUTTON5        1041
-#define AID_NAVBUTTON6        1042
+#define AID_HUDBRIGHT         1035
+#define AID_BUTTONROW1        1036
 #define AID_RADIATOREX        1043
 #define AID_RADIATORIN        1044
 #define AID_HATCHOPEN         1045
@@ -580,9 +571,5 @@ typedef struct {
 #define AID_ILOCKCLOSE        1052
 #define AID_OLOCKOPEN         1053
 #define AID_OLOCKCLOSE        1054
-#define AID_NCONEOPEN         1055
-#define AID_NCONECLOSE        1056
-#define AID_GEARDOWN          1057
-#define AID_GEARUP            1058
 
 #endif // !__DELTAGLIDER_H

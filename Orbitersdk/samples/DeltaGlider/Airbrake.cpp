@@ -11,6 +11,7 @@
 #define STRICT 1
 #include "Airbrake.h"
 #include "DeltaGlider.h"
+#include "meshres_p0.h"
 
 // ==============================================================
 
@@ -29,11 +30,11 @@ static const float bb_dy =    7.0f;
 
 Airbrake::Airbrake (VESSEL3 *v): PanelElement (v)
 {
-	Reset2D();
+//	Reset2D();
 }
 
 // ==============================================================
-
+#ifdef UNDEF
 void Airbrake::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 {
 	static const DWORD NVTX = 4;
@@ -50,12 +51,22 @@ void Airbrake::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 
 	AddGeometry (hMesh, grpidx, VTX, NVTX, IDX, NIDX);
 }
+#endif
+// ==============================================================
+
+void Airbrake::Reset2D (MESHHANDLE hMesh)
+{
+	state = -1;
+	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
+	vtxofs = 64;
+}
 
 // ==============================================================
 
-void Airbrake::Reset2D ()
+void Airbrake::ResetVC (DEVMESHHANDLE hMesh)
 {
-	state = 0;
+	DeltaGlider *dg = (DeltaGlider*)vessel;
+	dg->SetAnimation (dg->anim_airbrakelever, dg->airbrakelever_proc);
 }
 
 // ==============================================================
@@ -64,16 +75,14 @@ bool Airbrake::Redraw2D (SURFHANDLE surf)
 {
 	DeltaGlider* dg = (DeltaGlider*)vessel;
 	DeltaGlider::DoorStatus ds = dg->brake_status;
-	int newstate = (ds == DeltaGlider::DOOR_CLOSED || ds == DeltaGlider::DOOR_CLOSING ? 0 : 1);
+	int newstate = dg->airbrake_tgt; //(ds == DeltaGlider::DOOR_CLOSED || ds == DeltaGlider::DOOR_CLOSING ? 0 : 1);
 	if (newstate != state) {
 		state = newstate;
 		static const float yp[4] = {bb_y0, bb_y0, bb_y0+bb_dy, bb_y0+bb_dy};
-		float yshift = state*48.0f;
-		int i;
-		for (i = 0; i < 4; i++)
+		float yshift = state*24.0f;
+		for (int i = 0; i < 4; i++)
 			grp->Vtx[vtxofs+i].y = yp[i]+yshift;
 	}
-	
 	return false;
 }
 
@@ -81,6 +90,18 @@ bool Airbrake::Redraw2D (SURFHANDLE surf)
 
 bool Airbrake::ProcessMouse2D (int event, int mx, int my)
 {
+	DeltaGlider *dg = (DeltaGlider*)vessel;
+	dg->ActivateAirbrake (my > 30 ? DeltaGlider::DOOR_CLOSING : DeltaGlider::DOOR_OPENING);
 	((DeltaGlider*)vessel)->RevertAirbrake();
 	return false;
 }
+
+// ==============================================================
+
+bool Airbrake::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	DeltaGlider *dg = (DeltaGlider*)vessel;
+	dg->ActivateAirbrake (p.y > 0.5 ? DeltaGlider::DOOR_CLOSING : DeltaGlider::DOOR_OPENING);
+	return false;
+}
+

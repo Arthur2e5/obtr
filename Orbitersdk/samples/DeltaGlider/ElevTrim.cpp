@@ -11,6 +11,8 @@
 #define STRICT 1
 #include "ElevTrim.h"
 #include "DeltaGlider.h"
+#include "meshres_p0.h"
+#include "meshres_vc.h"
 
 // ==============================================================
 
@@ -29,34 +31,22 @@ static const float bb_dy =    7.0f;
 
 ElevatorTrim::ElevatorTrim (VESSEL3 *v): PanelElement (v)
 {
-	Reset2D();
-	elevtrimpos = (UINT)-1;
 }
 
 // ==============================================================
 
-void ElevatorTrim::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
+void ElevatorTrim::Reset2D (MESHHANDLE hMesh)
 {
-	static const DWORD NVTX = 4;
-	static const DWORD NIDX = 6;
-	static const NTVERTEX VTX[NVTX] = {
-		{bb_x0,      bb_y0,      0,  0,0,0,  tx_x0/texw,         tx_y0/texh},
-		{bb_x0+bb_dx,bb_y0,      0,  0,0,0,  (tx_x0+bb_dx)/texw, tx_y0/texh},
-		{bb_x0,      bb_y0+bb_dy,0,  0,0,0,  tx_x0/texw,         (tx_y0+bb_dy)/texh},
-		{bb_x0+bb_dx,bb_y0+bb_dy,0,  0,0,0,  (tx_x0+bb_dx)/texw, (tx_y0+bb_dy)/texh}
-	};
-	static const WORD IDX[NIDX] = {
-		0,1,2, 3,2,1
-	};
-
-	AddGeometry (hMesh, grpidx, VTX, NVTX, IDX, NIDX);
+	trimpos2D = 0.0;
+	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
+	vtxofs = 60;
 }
 
 // ==============================================================
 
-void ElevatorTrim::Reset2D ()
+void ElevatorTrim::ResetVC (DEVMESHHANDLE hMesh)
 {
-	trim = 0.0;
+	trimposVC = 0.0;
 }
 
 // ==============================================================
@@ -64,13 +54,12 @@ void ElevatorTrim::Reset2D ()
 bool ElevatorTrim::Redraw2D (SURFHANDLE surf)
 {
 	double level = vessel->GetControlSurfaceLevel (AIRCTRL_ELEVATORTRIM);
-	if (level != trim) {
+	if (level != trimpos2D) {
 		static const float yp[4] = {bb_y0, bb_y0, bb_y0+bb_dy, bb_y0+bb_dy};
 		float yshift = (float)(level*24.0);
-		int i;
-		for (i = 0; i < 4; i++)
+		for (int i = 0; i < 4; i++)
 			grp->Vtx[vtxofs+i].y = yp[i]+yshift;
-		trim = level;
+		trimpos2D = level;
 	}
 	return false;
 }
@@ -79,15 +68,37 @@ bool ElevatorTrim::Redraw2D (SURFHANDLE surf)
 
 bool ElevatorTrim::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 {
+	if (!hMesh) return false;
+
 	double level = vessel->GetControlSurfaceLevel (AIRCTRL_ELEVATORTRIM);
-	UINT pos = (UINT)((1.0+level)*23.0);
-	if (pos != elevtrimpos) {
-		int w = (oapiCockpitMode() == COCKPIT_VIRTUAL ? 2:15);
-		oapiColourFill (surf, 0);
-		oapiColourFill (surf, oapiGetColour (210,210,210), 1, pos, w, 6);
-		elevtrimpos = pos;
-		return true;
-	} else return false;
+	if (level != trimposVC) {
+		const DWORD nvtx = 3;
+		WORD vidx[3] = {4,5,6};
+		NTVERTEX vtx[nvtx];
+		GROUPEDITSPEC ges;
+		ges.flags = GRPEDIT_VTXCRDY|GRPEDIT_VTXCRDZ;
+		ges.nVtx = nvtx;
+		ges.Vtx = vtx;
+		ges.vIdx = vidx;
+
+		static double y0[nvtx] = {0.9183, 0.9208, 0.9232};
+		static double z0[nvtx] = {7.1390, 7.1408, 7.1425};
+		static double range = 0.032;
+		static double tilt = 0.6222;
+		static double dy = -range*cos(tilt), dz = -range*sin(tilt);
+		for (DWORD i = 0; i < nvtx; i++) {
+			vtx[i].y = y0[i] + level*dy;
+			vtx[i].z = z0[i] + level*dz;
+		}
+		oapiEditMeshGroup (hMesh, GRP_LIT_SURFACES_VC, &ges);
+
+		DeltaGlider *dg = (DeltaGlider*)vessel;
+		double v;
+		vessel->SetAnimation (dg->anim_vc_trimwheel, modf((1-level)*20, &v));
+
+		trimposVC = level;
+	}
+	return false;
 }
 
 // ==============================================================
@@ -99,4 +110,23 @@ bool ElevatorTrim::ProcessMouse2D (int event, int mx, int my)
 	tgtlvl = max (-1.0, min (1.0, tgtlvl));
 	vessel->SetControlSurfaceLevel (AIRCTRL_ELEVATORTRIM, tgtlvl);
 	return true;
+}
+
+// ==============================================================
+
+bool ElevatorTrim::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	//DeltaGlider *dg = (DeltaGlider*)vessel;
+
+	double dtrim = oapiGetSimStep() * (p.y < 0.5 ? 0.2:-0.2);
+	double trim0 = vessel->GetControlSurfaceLevel (AIRCTRL_ELEVATORTRIM);
+	double trim1 = max(-1.0, min(1.0, trim0+dtrim));
+
+	if (trim0 != trim1) {
+		vessel->SetControlSurfaceLevel (AIRCTRL_ELEVATORTRIM, trim1);
+		//double v;
+		//vessel->SetAnimation (dg->anim_vc_trimwheel, modf((1-trim1)*20, &v));
+		return true;
+	}
+	return false;
 }

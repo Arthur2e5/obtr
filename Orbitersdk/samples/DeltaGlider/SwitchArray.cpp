@@ -69,6 +69,8 @@ void SwitchArray::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 
 bool SwitchArray::Redraw2D (SURFHANDLE surf)
 {
+	return false; // for now
+
 	DeltaGlider *dg = (DeltaGlider*)vessel;
 
 	int i, j, state, vofs;
@@ -114,5 +116,17 @@ bool SwitchArray::ProcessMouse2D (int event, int mx, int my)
 			case 7: dg->ActivateLadder (state == 0 ? DeltaGlider::DOOR_CLOSING : DeltaGlider::DOOR_OPENING); return true;
 		}
 	}
+	return false;
+}
+
+// ==============================================================
+
+bool SwitchArray::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	DeltaGlider *dg = (DeltaGlider*)vessel;
+	int sw = max(0, min (1, (int)(p.x*2.0)));
+	int pos = max(0, min (1, (int)(p.y*2.0)));
+
+	dg->SetSwitch (sw, pos);
 	return false;
 }

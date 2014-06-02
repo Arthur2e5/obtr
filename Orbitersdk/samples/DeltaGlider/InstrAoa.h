@@ -16,6 +16,7 @@
 class InstrAOA: public PanelElement {
 public:
 	InstrAOA (VESSEL3 *v);
+	void Reset2D (MESHHANDLE hMesh);
 
 	void AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx);
 

@@ -16,11 +16,13 @@
 class InstrVS: public PanelElement {
 public:
 	InstrVS (VESSEL3 *v);
+	void Reset2D (MESHHANDLE hMesh);
 	void AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx);
 	bool Redraw2D (SURFHANDLE surf);
 
 private:
 	int pvmin;
+	SURFHANDLE sf;
 };
 
 #endif // !__INSTRVS_H

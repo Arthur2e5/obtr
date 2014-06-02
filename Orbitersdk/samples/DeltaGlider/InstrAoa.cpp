@@ -11,6 +11,7 @@
 #define STRICT 1
 #include "InstrAoa.h"
 #include "DeltaGlider.h"
+#include "meshres_p0.h"
 
 // ==============================================================
 
@@ -21,11 +22,19 @@ InstrAOA::InstrAOA (VESSEL3 *v): PanelElement (v)
 
 // ==============================================================
 
+void InstrAOA::Reset2D (MESHHANDLE hMesh)
+{
+	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_BELOW_P0);
+	vtxofs = 120;
+}
+
+// ==============================================================
+
 void InstrAOA::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 {
-	const DWORD texw = PANEL2D_TEXW, texh = PANEL2D_TEXH;
+	const DWORD texw = INSTR3D_TEXW, texh = INSTR3D_TEXH;
 	const DWORD scaleh = 512;
-	const float horzx = 1808.5f, horzw = 41.0f;
+	const float horzx = (float)texw-239.5f, horzw = 41.0f;
 	const float horzy = (float)(texh-765);
 	const float xcnt = 593.0f, ycnt = 311.0f;
 	const DWORD NVTX = 40;
@@ -41,23 +50,23 @@ void InstrAOA::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 		{xcnt-22.0f, ycnt+59,0,  0,0,0,  horzx/(float)texw,        (float)(horzy+scaleh)/(float)texh},
 		{xcnt+22.0f, ycnt+59,0,  0,0,0,  (horzx+horzw)/(float)texw,(float)(horzy+scaleh)/(float)texh},
 		// Wing load background
-		{xcnt+29.0f,ycnt-60.5f,0, 0,0,0, 1861.0f/texw,(texh-303.5f)/texh},
-		{xcnt+34.0f,ycnt-60.5f,0, 0,0,0, 1861.0f/texw,(texh-303.5f)/texh},
-		{xcnt+29.0f,ycnt- 9.5f,0, 0,0,0, 1861.0f/texw,(texh-252.5f)/texh},
-		{xcnt+34.0f,ycnt- 9.5f,0, 0,0,0, 1861.0f/texw,(texh-252.5f)/texh},
-		{xcnt+29.0f,ycnt+ 9.5f,0, 0,0,0, 1863.0f/texw,(texh-252.5f)/texh},
-		{xcnt+34.0f,ycnt+ 9.5f,0, 0,0,0, 1863.0f/texw,(texh-252.5f)/texh},
-		{xcnt+29.0f,ycnt+60.5f,0, 0,0,0, 1863.0f/texw,(texh-303.5f)/texh},
-		{xcnt+34.0f,ycnt+60.5f,0, 0,0,0, 1863.0f/texw,(texh-303.5f)/texh},
+		{xcnt+29.0f,ycnt-60.5f,0, 0,0,0, (texw-187.0f)/texw,(texh-303.5f)/texh},
+		{xcnt+34.0f,ycnt-60.5f,0, 0,0,0, (texw-187.0f)/texw,(texh-303.5f)/texh},
+		{xcnt+29.0f,ycnt- 9.5f,0, 0,0,0, (texw-187.0f)/texw,(texh-252.5f)/texh},
+		{xcnt+34.0f,ycnt- 9.5f,0, 0,0,0, (texw-187.0f)/texw,(texh-252.5f)/texh},
+		{xcnt+29.0f,ycnt+ 9.5f,0, 0,0,0, (texw-185.0f)/texw,(texh-252.5f)/texh},
+		{xcnt+34.0f,ycnt+ 9.5f,0, 0,0,0, (texw-185.0f)/texw,(texh-252.5f)/texh},
+		{xcnt+29.0f,ycnt+60.5f,0, 0,0,0, (texw-185.0f)/texw,(texh-303.5f)/texh},
+		{xcnt+34.0f,ycnt+60.5f,0, 0,0,0, (texw-185.0f)/texw,(texh-303.5f)/texh},
 		// Wing load masks
-		{xcnt+29.0f,ycnt-60.5f,0, 0,0,0,  1862.0f/texw,(texh-305.0f)/texh},
-		{xcnt+34.0f,ycnt-60.5f,0, 0,0,0,  1862.0f/texw,(texh-305.0f)/texh},
-		{xcnt+29.0f,ycnt      ,0, 0,0,0,  1862.0f/texw,(texh-305.0f)/texh},
-		{xcnt+34.0f,ycnt      ,0, 0,0,0,  1862.0f/texw,(texh-305.0f)/texh},
-		{xcnt+29.0f,ycnt      ,0, 0,0,0,  1862.0f/texw,(texh-305.0f)/texh},
-		{xcnt+34.0f,ycnt      ,0, 0,0,0,  1862.0f/texw,(texh-305.0f)/texh},
-		{xcnt+29.0f,ycnt+60.5f,0, 0,0,0,  1862.0f/texw,(texh-305.0f)/texh},
-		{xcnt+34.0f,ycnt+60.5f,0, 0,0,0,  1862.0f/texw,(texh-305.0f)/texh},
+		{xcnt+29.0f,ycnt-60.5f,0, 0,0,0,  (texw-186.0f)/texw,(texh-305.0f)/texh},
+		{xcnt+34.0f,ycnt-60.5f,0, 0,0,0,  (texw-186.0f)/texw,(texh-305.0f)/texh},
+		{xcnt+29.0f,ycnt      ,0, 0,0,0,  (texw-186.0f)/texw,(texh-305.0f)/texh},
+		{xcnt+34.0f,ycnt      ,0, 0,0,0,  (texw-186.0f)/texw,(texh-305.0f)/texh},
+		{xcnt+29.0f,ycnt      ,0, 0,0,0,  (texw-186.0f)/texw,(texh-305.0f)/texh},
+		{xcnt+34.0f,ycnt      ,0, 0,0,0,  (texw-186.0f)/texw,(texh-305.0f)/texh},
+		{xcnt+29.0f,ycnt+60.5f,0, 0,0,0,  (texw-186.0f)/texw,(texh-305.0f)/texh},
+		{xcnt+34.0f,ycnt+60.5f,0, 0,0,0,  (texw-186.0f)/texw,(texh-305.0f)/texh},
 		// AOA readout
 		{xcnt+ 6.0f,ycnt-7.0f,0,  0,0,0,  0, 0},
 		{xcnt+13.0f,ycnt-7.0f,0,  0,0,0,  0, 0},
@@ -122,7 +131,7 @@ bool InstrAOA::Redraw2D (SURFHANDLE surf)
 		float tv0, tv1, vy0, vy1;
 		bool rescale0 = false, rescale1 = false;
 
-		static double texw = PANEL2D_TEXW, texh = PANEL2D_TEXH;
+		static double texw = INSTR3D_TEXW, texh = INSTR3D_TEXH;
 		static double scaley = texh-765.0, scaleh = 512.0;
 		static double viewh = 50.0;
 		static double scalecnt = 0.5*scaleh+scaley+1.0;
@@ -168,7 +177,7 @@ bool InstrAOA::Redraw2D (SURFHANDLE surf)
 		grp->Vtx[4+vtxofs].tv = grp->Vtx[5+vtxofs].tv = tv1;
 
 		// AOA readout
-		static double numx = 1808.0+63.0, numy = texh-423.5, numw = 10.0, numh = 19.0;
+		static double numx = texw-177.0, numy = texh-423.5, numw = 10.0, numh = 19.0;
 		static double tu_num[4] = {numx/texw,(numx+numw)/texw,numx/texw,(numx+numw)/texw};
 		static double tv_num[4] = {numy/texh,numy/texh,(numy+numh)/texh,(numy+numh)/texh};
 		int vofs = 24+vtxofs;

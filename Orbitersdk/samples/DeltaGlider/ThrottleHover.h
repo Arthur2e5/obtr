@@ -18,13 +18,11 @@ class DeltaGlider;
 class ThrottleHover: public PanelElement {
 public:
 	ThrottleHover (VESSEL3 *v);
-	void AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx);
-	void Reset2D ();
+	void Reset2D (MESHHANDLE hMesh);
 	bool Redraw2D (SURFHANDLE surf);
 	bool ProcessMouse2D (int event, int mx, int my);
 
 private:
-	DeltaGlider *dg;
 	float ppos;
 };
 

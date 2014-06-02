@@ -16,10 +16,12 @@
 class Airbrake: public PanelElement {
 public:
 	Airbrake (VESSEL3 *v);
-	void AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx);
-	void Reset2D ();
+	//void AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx);
+	void Reset2D (MESHHANDLE hMesh);
+	void ResetVC (DEVMESHHANDLE hMesh);
 	bool Redraw2D (SURFHANDLE surf);
 	bool ProcessMouse2D (int event, int mx, int my);
+	bool ProcessMouseVC (int event, VECTOR3 &p);
 
 private:
 	int state;

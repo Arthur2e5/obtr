@@ -335,27 +335,41 @@ typedef struct {
  * \sa GROUPEDITSPEC, oapiEditMeshGroup
  */
 //@{
-#define GRPEDIT_SETUSERFLAG 0x0001 ///< replace the group's UsrFlag entry with the value in the GROUPEDITSPEC structure.
-#define GRPEDIT_ADDUSERFLAG 0x0002 ///< Add the UsrFlag value to the group's UsrFlag entry
-#define GRPEDIT_DELUSERFLAG 0x0004 ///< Remove the UsrFlag value from the group's UsrFlag entry
-#define GRPEDIT_VTXCRDX     0x0008 ///< Replace vertex x-coordinates
-#define GRPEDIT_VTXCRDY     0x0010 ///< Replace vertex y-coordinates
-#define GRPEDIT_VTXCRDZ     0x0020 ///< Replace vertex z-coordinates
+#define GRPEDIT_SETUSERFLAG 0x00001 ///< replace the group's UsrFlag entry with the value in the GROUPEDITSPEC structure.
+#define GRPEDIT_ADDUSERFLAG 0x00002 ///< Add the UsrFlag value to the group's UsrFlag entry
+#define GRPEDIT_DELUSERFLAG 0x00004 ///< Remove the UsrFlag value from the group's UsrFlag entry
+#define GRPEDIT_VTXCRDX     0x00008 ///< Replace vertex x-coordinates
+#define GRPEDIT_VTXCRDY     0x00010 ///< Replace vertex y-coordinates
+#define GRPEDIT_VTXCRDZ     0x00020 ///< Replace vertex z-coordinates
 #define GRPEDIT_VTXCRD      (GRPEDIT_VTXCRDX | GRPEDIT_VTXCRDY | GRPEDIT_VTXCRDZ) ///< Replace vertex coordinates
-#define GRPEDIT_VTXNMLX     0x0040 ///< Replace vertex x-normals
-#define GRPEDIT_VTXNMLY     0x0080 ///< Replace vertex y-normals
-#define GRPEDIT_VTXNMLZ     0x0100 ///< Replace vertex z-normals
+#define GRPEDIT_VTXNMLX     0x00040 ///< Replace vertex x-normals
+#define GRPEDIT_VTXNMLY     0x00080 ///< Replace vertex y-normals
+#define GRPEDIT_VTXNMLZ     0x00100 ///< Replace vertex z-normals
 #define GRPEDIT_VTXNML      (GRPEDIT_VTXNMLX | GRPEDIT_VTXNMLY | GRPEDIT_VTXNMLZ) ///< Replace vertex normals
-#define GRPEDIT_VTXTEXU     0x0200 ///< Replace vertex u-texture coordinates
-#define GRPEDIT_VTXTEXV     0x0400 ///< Replace vertex v-texture coordinates
+#define GRPEDIT_VTXTEXU     0x00200 ///< Replace vertex texture u-coordinates
+#define GRPEDIT_VTXTEXV     0x00400 ///< Replace vertex texture v-coordinates
 #define GRPEDIT_VTXTEX      (GRPEDIT_VTXTEXU | GRPEDIT_VTXTEXV) ///< Replace vertex texture coordinates
 #define GRPEDIT_VTX         (GRPEDIT_VTXCRD | GRPEDIT_VTXNML | GRPEDIT_VTXTEX) ///< Replace vertices
+
+#define GRPEDIT_VTXCRDADDX  0x00800 ///< Add to vertex x-coordinates
+#define GRPEDIT_VTXCRDADDY  0x01000 ///< Add to vertex y-coordinates
+#define GRPEDIT_VTXCRDADDZ  0x02000 ///< Add to vertex z-coordinates
+#define GRPEDIT_VTXCRDADD   (GRPEDIT_VTXCRDADDX | GRPEDIT_VTXCRDADDY | GRPEDIT_VTXCRDADDZ) ///< Add to vertex coordinates
+#define GRPEDIT_VTXNMLADDX  0x04000 ///< Add to vertex x-normals
+#define GRPEDIT_VTXNMLADDY  0x08000 ///< Add to vertex y-normals
+#define GRPEDIT_VTXNMLADDZ  0x10000 ///< Add to vertex z-normals
+#define GRPEDIT_VTXNMLADD   (GRPEDIT_VTXNMLADDX | GRPEDIT_VTXNMLADDY | GRPEDIT_VTXNMLADDZ) ///< Add to vertex normals
+#define GRPEDIT_VTXTEXADDU  0x20000 ///< Add to vertex texture u-coordinates
+#define GRPEDIT_VTXTEXADDV  0x40000 ///< Add to vertex texture v-coordinates
+#define GRPEDIT_VTXTEXADD   (GRPEDIT_VTXTEXADDU | GRPEDIT_VTXTEXADDV) ///< Add to vertex texture coordinates
+#define GRPEDIT_VTXADD      (GRPEDIT_VTXCRDADD | GRPEDIT_VTXNMLADD | GRPEDIT_VTXTEXADD)
+#define GRPEDIT_VTXMOD      (GRPEDIT_VTX | GRPEDIT_VTXADD)
 //@}
 
 /**
  * \ingroup structures
  * \brief Structure used by \ref oapiEditMeshGroup to define the
- *   group elements to be replaced.
+ *   group elements to be replaced or modified.
  * \note Only the group elements specified in the \e flags entry will
  *   be replaced or modified. The elements that are to remain unchanged
  *   can be left undefined in the GROUPEDITSPEC structure. For example,
@@ -377,6 +391,22 @@ typedef struct {
 	DWORD nVtx;    ///< Number of vertices to be replaced
 	WORD *vIdx;    ///< Index list for vertices to be replaced
 } GROUPEDITSPEC;
+
+/**
+ * \ingroup structures
+ * \brief Structure used by \ref oapiGetMeshGroup containing data
+ *    buffers to be filled with vertex and index data.
+ */
+typedef struct {
+	NTVERTEX *Vtx;  ///< Vertex buffer
+	DWORD nVtx;     ///< Number of vertices to return
+	WORD *VtxPerm;  ///< Vertex permutation index list
+	WORD *Idx;      ///< Triangle index buffer
+	DWORD nIdx;     ///< Number of indices to return
+	WORD *IdxPerm;  ///< Triangle permutation index list
+	DWORD MtrlIdx;  ///< Material index
+	DWORD TexIdx;   ///< Texture index
+} GROUPREQUESTSPEC;
 
 /**
  * \ingroup structures
@@ -575,6 +605,10 @@ public:
 		LT_NONE, LT_POINT, LT_SPOT, LT_DIRECTIONAL
 	};
 
+	enum VISIBILITY {
+		VIS_EXTERNAL=1, VIS_COCKPIT=2, VIS_ALWAYS=3
+	};
+
 	/**
 	 * \brief Create a light source with default parameters.
 	 * \note Creates a light source with white spectrum for diffuse, specular
@@ -601,6 +635,18 @@ public:
 	 * \brief Returns the light source type.
 	 */
 	TYPE GetType() const { return ltype; }
+
+	/**
+	 * \brief Returns the light visibility mode
+	 * \return visibility mode
+	 */
+	VISIBILITY GetVisibility() const { return visibility; }
+
+	/**
+	 * \brief Set the light visibility mode
+	 * \param vis visibility mode
+	 */
+	void SetVisibility (VISIBILITY vis) { visibility = vis; }
 
 	const COLOUR4 &GetDiffuseColour() const { return col_diff; }
 	const COLOUR4 &GetSpecularColour() const { return col_spec; }
@@ -734,6 +780,12 @@ public:
 	 */
 	const VECTOR3 *GetDirectionRef () const;
 
+	/**
+	 * \brief Returns the handle of the object the light source is attached to.
+	 * \return Object handle, or NULL if not attached
+	 */
+	const OBJHANDLE GetObjectHandle () const { return hRef; }
+
 	void SetIntensity (double in);
 	double GetIntensity () const;
 	void SetIntensityRef (double *pin);
@@ -744,6 +796,7 @@ protected:
 	OBJHANDLE Detach ();
 
 	TYPE ltype;
+	VISIBILITY visibility;
 	OBJHANDLE hRef;
 	bool active;
 	COLOUR4 col_diff;
@@ -1885,7 +1938,7 @@ typedef union {
 //@{ =========================================================================
 #define MESHVIS_NEVER          0x00  ///< Mesh is never visible
 #define MESHVIS_EXTERNAL       0x01  ///< Mesh is visible in external views
-#define MESHVIS_COCKPIT        0x02  ///< Mesh is visible in internal (cockpit) views
+#define MESHVIS_COCKPIT        0x02  ///< Mesh is visible in all internal (cockpit) views
 #define MESHVIS_ALWAYS         (MESHVIS_EXTERNAL|MESHVIS_COCKPIT) ///< Mesh is always visible
 #define MESHVIS_VC             0x04  ///< Mesh is only visible in virtual cockpit internal views
 #define MESHVIS_EXTPASS        0x10  ///< Visibility modifier: render mesh during external pass, even for internal views
@@ -4210,16 +4263,53 @@ OAPIFUNC DWORD oapiMeshGroupCount (MESHHANDLE hMesh);
 	*/
 OAPIFUNC MESHGROUP *oapiMeshGroup (MESHHANDLE hMesh, DWORD idx);
 OAPIFUNC MESHGROUP *oapiMeshGroup (DEVMESHHANDLE hMesh, DWORD idx);
-
 OAPIFUNC MESHGROUPEX *oapiMeshGroupEx (MESHHANDLE hMesh, DWORD idx);
+
 OAPIFUNC DWORD      oapiAddMeshGroup (MESHHANDLE hMesh, MESHGROUP *grp);
 OAPIFUNC bool       oapiAddMeshGroupBlock (MESHHANDLE hMesh, DWORD grpidx,
 										   const NTVERTEX *vtx, DWORD nvtx, const WORD *idx, DWORD nidx);
 
 /**
+ * \brief Retrieve mesh group data.
+ * \param [in] hMesh mesh handle
+ * \param [in] grpidx mesh group index (>= 0)
+ * \param [in,out] grs data buffers and buffer sizes
+ * \return Error code:
+ *    * 0: success
+ *    * -1: no graphics client attached
+ *    * -2: graphics client hasn't implemented this function
+ *    * 1: grpidx is out of bounds
+ *    * 2: some indices in VtxPerm or IdxPerm were out of bounds (but data are still returned for the rest)
+ * \note The vertex buffer (grs.Vtx), index buffer (grs.Idx) and vertex permutation buffer
+ *    (grs.VtxPerm) must be allocated by the caller to sufficient size, or set to NULL to
+ *    indicate that they are not required.
+ * \note If vertex data should be returned, nVtx should be set to the maximum number of
+ *    vertices to return, and Vtx must be allocated to at least this size. If the group
+ *    contains fewer vertices, the Vtx buffer is only partially filled, and nVtx is set to
+ *    the actual number of returned vertices. If the group contains more vertices, and
+ *    VtxPerm is NULL, only the first nVtx vertics are returned.
+ * \note If an arbitrary subset of vertices should be returned, assign the VtxPerm buffer
+ *    to at least size nVtx, and fill it with the indices of the vertices you want returned.
+ *    The order of vertices returned in Vtx will correspond to VtxPerm. If VtxPerm 
+ *    contains any indices outside the valid range, the corresponding entries in Vtx will
+ *    be filled with {0} vertices, and the function will return 2.
+ * \note If no vertex data are requested, set Vtx to NULL and/or nVtx to 0.
+ * \note Similar for triangle index data: If index data should be returned, set nIdx > 0
+ *    and allocate Idx to at least size nIdx.
+ * \note If you want indices returned from the beginning, set IdxPerm to NULL. Otherwise,
+ *    allocate IdxPerm and fill it with the requested triangle indices.
+ * \note The MtrlIdx and TexIdx entries are always returned.
+ * \note oapiGetMeshGroup can be an expensive operation. It involves data copying, and
+ *    Graphics clients may have to retrieve data from video memory. Avoid continuous
+ *    oapiGetMeshGroup/oapiEditMesh cycles and instead keep the data stored in your own
+ *    buffers once retrieved.
+ */
+OAPIFUNC int oapiGetMeshGroup (DEVMESHHANDLE hMesh, DWORD grpidx, GROUPREQUESTSPEC *grs);
+
+/**
  * \brief Modify mesh group data.
  * \param hMesh mesh handle
- * \param grpidx mesh group index
+ * \param grpidx mesh group index (>= 0)
  * \param ges replacement/modification data for the group
  * \return 0 on success, or error code
  * \note This function allows to modify a mesh group, by replacing vertex data,
@@ -4481,11 +4571,24 @@ OAPIFUNC int oapiGetHUDMode (HUDPARAM *prm);
 OAPIFUNC void oapiToggleHUDColour ();
 
 	/**
+	 * \brief Return the current HUD brightness setting
+	 * \return Brightness value (0..1)
+	 */
+OAPIFUNC double oapiGetHUDIntensity ();
+
+	/**
+	* \brief Set the HUD brightness
+	* \param val brightness setting (0..1)
+	* \sa oapiGetHUDIntensity, oapiIncHUDIntensity, oapiDecHUDIntensity
+	*/
+OAPIFUNC void oapiSetHUDIntensity (double val);
+
+	/**
 	* \brief Increase the brightness of the HUD display.
 	* \note Calling this function will increase the intensity (in virtual cockpit modes) or
 	*  brightness (in other modes) of the HUD display up to a maximum value.
 	* \note This function should be called repeatedly (e.g. while the user presses a key).
-	* \sa oapiToggleHUDColour
+	* \sa oapiSetHUDIntensity, oapiDecHUDIntensity
 	*/
 OAPIFUNC void oapiIncHUDIntensity ();
 
@@ -4494,6 +4597,7 @@ OAPIFUNC void oapiIncHUDIntensity ();
 	* \note Calling this function will decrease the intensity (in virtual cockpit modes) or
 	*  brightness (in other modes) of the HUD display down to a minimum value.
 	* \note This function should be called repeatedly (e.g. while the user presses a key).
+	* \sa oapiSetHUDIntensity, oapiIncHUDIntensity
 	*/
 OAPIFUNC void oapiDecHUDIntensity ();
 

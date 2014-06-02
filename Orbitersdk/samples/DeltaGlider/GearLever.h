@@ -18,9 +18,10 @@
 class GearLever: public PanelElement {
 public:
 	GearLever (VESSEL3 *v);
-	void AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx);
+	//void AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx);
 	bool Redraw2D (SURFHANDLE surf);
 	bool ProcessMouse2D (int event, int mx, int my);
+	bool ProcessMouseVC (int event, VECTOR3 &p);
 };
 
 // ==============================================================
@@ -28,11 +29,14 @@ public:
 class GearIndicator: public PanelElement {
 public:
 	GearIndicator (VESSEL3 *v);
+	void ResetVC (DEVMESHHANDLE hMesh);
 	void AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx);
 	bool Redraw2D (SURFHANDLE surf);
+	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
 
 private:
 	double tofs;
+	bool light;
 };
 
 #endif // !__GEARLEVER_H

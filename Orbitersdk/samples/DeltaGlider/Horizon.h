@@ -21,7 +21,17 @@ public:
 	InstrAtt (VESSEL3 *v);
 	~InstrAtt ();
 
-	void AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx);
+	/**
+	 * \brief Set up parameters for 2D mesh vertex access
+	 * \param hMesh mesh handle for 2D main panel
+	 */
+	void Reset2D (MESHHANDLE hMesh);
+
+	/**
+	 * \brief Set up parameters for VC mesh vertex access
+	 * \param hMesh mesh handle for VC mesh
+	 */
+	void ResetVC (DEVMESHHANDLE hMesh);
 
 	/**
 	 * \brief Update instrument display (2D panel)
@@ -31,21 +41,22 @@ public:
 	bool Redraw2D (SURFHANDLE surf);
 
 	/**
-	 * \brief Return the base configuration for the horizon
-	 *   mesh group.
-	 */
-	NTVERTEX *MeshDataVC ();
-
-	void TransformVtxVC (NTVERTEX *vtx, DWORD nvtx);
-	void TransformNmlVC (NTVERTEX *vtx, DWORD nvtx);
-
-	/**
 	 * \brief Update instrument display (virtual cockpit)
 	 * \param hMesh VC mesh handle
 	 * \param surf texture used by the instrument
 	 * \return \e true to indicate that the texture was modified
 	 */
 	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
+
+protected:
+	/**
+	 * \brief Common redraw function for VC and 2D panel
+	 * \param Vtx vertex buffer to edit
+	 */
+	void Redraw (NTVERTEX *Vtx);
+
+private:
+	GROUPREQUESTSPEC vc_grp; ///< Buffered VC vertex data
 };
 
 // ==============================================================

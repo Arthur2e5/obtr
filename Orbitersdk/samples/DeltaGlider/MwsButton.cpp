@@ -9,6 +9,7 @@
 // ==============================================================
 
 #include "MwsButton.h"
+#include "meshres_vc.h"
 
 // constants for texture coordinates
 static const float texw = (float)PANEL2D_TEXW; // texture width
@@ -104,7 +105,7 @@ bool MWSButton::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 		float xofs = 0.2246f + (light ? 0.12891f : 0.0f);
 		vtx[0].tu = vtx[1].tu = xofs;
 		vtx[2].tu = vtx[3].tu = xofs + 0.125f;
-		oapiEditMeshGroup (hMesh, MESHGRP_VC_STATUSIND, &ges);
+		oapiEditMeshGroup (hMesh, GRP_STATUS_INDICATOR_VC, &ges);
 		islit = light;
 	}
 	return false;

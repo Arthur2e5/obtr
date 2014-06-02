@@ -11,65 +11,36 @@
 #define STRICT 1
 #include "ThrottleHover.h"
 #include "DeltaGlider.h"
-
-// ==============================================================
-
-// constants for texture coordinates
-static const float texw = (float)PANEL2D_TEXW; // texture width
-static const float texh = (float)PANEL2D_TEXH; // texture height
-static const float tx_x0 = 1135.0;
-static const float tx_y0 = texh-599.0f;
-static const float tx_dx = 24.0f;
-static const float tx_dy = 18.0f;
-// constants for panel coordinates
-static const float bb_x0 = 108.5f;
-static const float bb_dx =  50.0f;
-static const float bb_y0 = 358.5f;
-
+#include "meshres_p0.h"
 
 // ==============================================================
 
 ThrottleHover::ThrottleHover (VESSEL3 *v): PanelElement (v)
-{
-	dg = (DeltaGlider*)v;
-	Reset2D();
-}
-
-// ==============================================================
-
-void ThrottleHover::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
-{
-	static const DWORD NVTX = 4;
-	static const DWORD NIDX = 6;
-	static const NTVERTEX VTX[NVTX] = {
-		// hover slider
-		{bb_x0,      bb_y0,      0,  0,0,0,  tx_x0/texw,        tx_y0/texh},
-		{bb_x0+bb_dx,bb_y0,      0,  0,0,0,  (tx_x0+tx_dx)/texw,tx_y0/texh},
-		{bb_x0,      bb_y0+tx_dy,0,  0,0,0,  tx_x0/texw,        (tx_y0+tx_dy)/texh},
-		{bb_x0+bb_dx,bb_y0+tx_dy,0,  0,0,0,  (tx_x0+tx_dx)/texw,(tx_y0+tx_dy)/texh}
-	};
-	static const WORD IDX[NIDX] = {
-		0,1,2, 3,2,1
-	};
-
-	AddGeometry (hMesh, grpidx, VTX, NVTX, IDX, NIDX);
-}
-
-// ==============================================================
-
-void ThrottleHover::Reset2D ()
 {
 	ppos = 0.0f;
 }
 
 // ==============================================================
 
+void ThrottleHover::Reset2D (MESHHANDLE hMesh)
+{
+	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
+	vtxofs = 56;
+}
+
+// ==============================================================
+
 bool ThrottleHover::Redraw2D (SURFHANDLE surf)
 {
+	// constants for texture coordinates
+	static const float tx_dy = 18.0f;
+	static const float bb_y0 = 358.5f;
+
 	int j;
 	float pos;
 	static const float sy[4] = {bb_y0,bb_y0,bb_y0+tx_dy,bb_y0+tx_dy};
 
+	DeltaGlider *dg = (DeltaGlider*)vessel;
 	double level = dg->GetThrusterLevel (dg->th_hover[0]);
 	pos = (float)(-level*116.0);
 	if (pos != ppos) {
@@ -83,6 +54,7 @@ bool ThrottleHover::Redraw2D (SURFHANDLE surf)
 
 bool ThrottleHover::ProcessMouse2D (int event, int mx, int my)
 {
+	DeltaGlider *dg = (DeltaGlider*)vessel;
 	my = max (0, min (116, my-9));
 	dg->SetThrusterGroupLevel (dg->thg_hover, 1.0-my/116.0);
 	return true;

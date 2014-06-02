@@ -29,6 +29,14 @@ void PanelElement::Reset2D ()
 {
 }
 
+void PanelElement::Reset2D (MESHHANDLE hMesh)
+{
+}
+
+void PanelElement::ResetVC (DEVMESHHANDLE hMesh)
+{
+}
+
 bool PanelElement::Redraw2D (SURFHANDLE surf)
 {
 	return false;

@@ -119,6 +119,8 @@ void AAP::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 
 bool AAP::Redraw2D (SURFHANDLE surf)
 {
+	return false; // for now
+
 	char *c, cbuf[16];
 	int i, j, vofs;
 	float xofs, yofs;

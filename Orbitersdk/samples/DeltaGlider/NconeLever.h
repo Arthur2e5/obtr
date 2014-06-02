@@ -15,24 +15,27 @@
 
 // ==============================================================
 
-class NoseconeLever: public DGPanelElement {
+class NoseconeLever: public PanelElement {
 public:
-	NoseconeLever (DeltaGlider *v);
+	NoseconeLever (VESSEL3 *v);
 	void AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx);
 	bool Redraw2D (SURFHANDLE surf);
 	bool ProcessMouse2D (int event, int mx, int my);
+	bool ProcessMouseVC (int event, VECTOR3 &p);
 };
 
 // ==============================================================
 
-class NoseconeIndicator: public DGPanelElement {
+class NoseconeIndicator: public PanelElement {
 public:
-	NoseconeIndicator (DeltaGlider *v);
+	NoseconeIndicator (VESSEL3 *v);
 	void AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx);
 	bool Redraw2D (SURFHANDLE surf);
+	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
 
 private:
 	double tofs;
+	bool light;
 };
 
 #endif // !__NCONELEVER_H

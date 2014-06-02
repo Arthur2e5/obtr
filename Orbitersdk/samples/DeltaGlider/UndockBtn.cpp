@@ -60,6 +60,8 @@ void UndockButton::Reset2D ()
 
 bool UndockButton::Redraw2D (SURFHANDLE surf)
 {
+	return 0; // for now
+
 	float y = (btndown ? bb_y0+tx_dy : bb_y0);
 	float tv = (btndown ? tx_y0+tx_dy : tx_y0)/texh;
 	grp->Vtx[vtxofs+2].y = grp->Vtx[vtxofs+3].y = y;
@@ -71,7 +73,16 @@ bool UndockButton::Redraw2D (SURFHANDLE surf)
 
 bool UndockButton::ProcessMouse2D (int event, int mx, int my)
 {
-	if (event == PANEL_MOUSE_LBDOWN) vessel->Undock (0);
+	if (event & PANEL_MOUSE_LBDOWN) vessel->Undock (0);
 	btndown = (event == PANEL_MOUSE_LBDOWN);
 	return true;
+}
+
+// ==============================================================
+
+bool UndockButton::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	DeltaGlider *dg = (DeltaGlider*)vessel;
+	dg->ActivateUndocking (event & PANEL_MOUSE_LBDOWN ? DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
+	return false;
 }

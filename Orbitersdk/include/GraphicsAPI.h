@@ -535,18 +535,29 @@ public:
 	virtual MESHHANDLE clbkGetMesh (VISHANDLE vis, UINT idx) { return NULL; }
 
 	/**
+	 * \brief Mesh group data retrieval interface for device-specific meshes.
+	 * \param hMesh device mesh handle
+	 * \param grpidx mesh group index (>= 0)
+	 * \param grs data buffers and buffer size information. See \ref oapiGetMeshGroup
+	 *    for details.
+	 * \return Should return 0 on success, or error flags > 0.
+	 * \default None, returns -2.
+	 */
+	virtual int clbkGetMeshGroup (DEVMESHHANDLE hMesh, DWORD grpidx, GROUPREQUESTSPEC *grs) { return -2; }
+
+	/**
 	 * \brief Mesh group editing interface for device-specific meshes.
 	 * \param hMesh device mesh handle
 	 * \param grpidx mesh group index (>= 0)
 	 * \param ges mesh group modification specs
 	 * \return Should return 0 on success, or error flags > 0.
-	 * \default None, returns -1.
+	 * \default None, returns -2.
 	 * \note Clients should implement this method to allow the modification
 	 *   of individual groups in a device-specific mesh. Modifications may
 	 *   include vertex values, index lists, texture and material indices,
 	 *   and user flags.
 	 */
-	virtual int clbkEditMeshGroup (DEVMESHHANDLE hMesh, DWORD grpidx, GROUPEDITSPEC *ges) { return -1; }
+	virtual int clbkEditMeshGroup (DEVMESHHANDLE hMesh, DWORD grpidx, GROUPEDITSPEC *ges) { return -2; }
 	//@}
 
 	// ==================================================================
@@ -851,17 +862,35 @@ public:
 	 * \param hSurf array of texture handles for the panel surface
 	 * \param hMesh billboard mesh handle
 	 * \param T transformation matrix for panel mesh vertices (2D)
-	 * \param transparent If true, panel should be rendered transparent
+	 * \param additive If true, panel should be rendered additive (transparent)
 	 * \default None.
 	 * \note The texture index of each group in the mesh is interpreted as index into the
 	 *   hSurf array. Special indices are TEXIDX_MFD0 and above, which specify the
 	 *   surfaces representing the MFD displays. These are obtained separately and
 	 *   don't need to be present in the hSurf list.
-	 * \note The \e transparent flag is used when rendering the default "glass
+	 * \note The \e additive flag is used when rendering the default "glass
 	 *   cockpit" if the user requested. "transparent MFDs". The renderer can
 	 *   then use e.g. additive blending for rendering the panel.
 	 */
-	virtual void clbkRender2DPanel (SURFHANDLE *hSurf, MESHHANDLE hMesh, MATRIX3 *T, bool transparent = false);
+	virtual void clbkRender2DPanel (SURFHANDLE *hSurf, MESHHANDLE hMesh, MATRIX3 *T, bool additive = false);
+
+	/**
+	 * \brief Render an instrument panel in cockpit view as a 2D billboard.
+	 * \param hSurf array of texture handles for the panel surface
+	 * \param hMesh billboard mesh handle
+	 * \param T transformation matrix for panel mesh vertices (2D)
+	 * \param alpha opacity value, between 0 (transparent) and 1 (opaque)
+	 * \param additive If true, panel should be rendered additive (transparent)
+	 * \default None.
+	 * \note The texture index of each group in the mesh is interpreted as index into the
+	 *   hSurf array. Special indices are TEXIDX_MFD0 and above, which specify the
+	 *   surfaces representing the MFD displays. These are obtained separately and
+	 *   don't need to be present in the hSurf list.
+	 * \note The \e additive flag is used when rendering the default "glass
+	 *   cockpit" if the user requested. "transparent MFDs". The renderer can
+	 *   then use e.g. additive blending for rendering the panel.
+	 */
+	virtual void clbkRender2DPanel (SURFHANDLE *hSurf, MESHHANDLE hMesh, MATRIX3 *T, float alpha, bool additive = false);
 
 	// ==================================================================
 	/// \name Surface-related methods

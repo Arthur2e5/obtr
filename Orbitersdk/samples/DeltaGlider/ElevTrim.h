@@ -16,15 +16,15 @@
 class ElevatorTrim: public PanelElement {
 public:
 	ElevatorTrim (VESSEL3 *v);
-	void AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx);
-	void Reset2D ();
+	void Reset2D (MESHHANDLE hMesh);
+	void ResetVC (DEVMESHHANDLE hMesh);
 	bool Redraw2D (SURFHANDLE surf);
 	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
 	bool ProcessMouse2D (int event, int mx, int my);
+	bool ProcessMouseVC (int event, VECTOR3 &p);
 
 private:
-	double trim;
-	UINT elevtrimpos;
+	double trimpos2D, trimposVC;
 };
 
 #endif // !__ELEVTRIM_H

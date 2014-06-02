@@ -22,6 +22,7 @@ public:
 	void Reset2D ();
 	bool Redraw2D (SURFHANDLE surf);
 	bool ProcessMouse2D (int event, int mx, int my);
+	bool ProcessMouseVC (int event, VECTOR3 &p);
 
 private:
 	int btnstate[8]; // 0=up, 1=down

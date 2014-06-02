@@ -11,6 +11,7 @@
 #define STRICT 1
 #include "InstrVs.h"
 #include "DeltaGlider.h"
+#include "meshres_p0.h"
 
 // ==============================================================
 
@@ -21,10 +22,19 @@ InstrVS::InstrVS (VESSEL3 *v): PanelElement (v)
 
 // ==============================================================
 
+void InstrVS::Reset2D (MESHHANDLE hMesh)
+{
+	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_BELOW_P0);
+	sf = oapiGetTextureHandle (hMesh, grp->TexIdx+1);
+	vtxofs = 160;
+}
+
+// ==============================================================
+
 void InstrVS::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 {
-	const DWORD texw = PANEL2D_TEXW, texh = PANEL2D_TEXH;
-	const float tapex0 = 1850.5f, tapew = 41.0f;
+	const DWORD texw = INSTR3D_TEXW, texh = INSTR3D_TEXH;
+	const float tapex0 = (float)texw-197.5f, tapew = 41.0f;
 	const float tapey0 = (float)(texh-764), tapeh = 512.0f;
 	const float xcnt = 682.0f, ycnt = 311.0f;
 
@@ -67,7 +77,16 @@ void InstrVS::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 		20,21,22, 23,22,21,
 	};
 
-	AddGeometry (hMesh, grpidx, VTX, NVTX, IDX, NIDX);
+#ifdef UNDEF
+	// DEBUG
+	std::ofstream ofs("tmp.dat");
+	for (int j = 0; j < NVTX; j++) {
+			ofs << VTX[j].x << ' ' << VTX[j].y << ' ' << 0 << ' ';
+			ofs << VTX[j].nx << ' ' << VTX[j].ny << ' '  << -1 << ' ';
+			ofs << VTX[j].tu << ' ' << VTX[j].tv << std::endl;
+	}
+#endif
+	//AddGeometry (hMesh, grpidx, VTX, NVTX, IDX, NIDX);
 }
 
 // ==============================================================
@@ -81,7 +100,7 @@ bool InstrVS::Redraw2D (SURFHANDLE surf)
 	else
 		vspd = 0.0;
 
-	static double texw = PANEL2D_TEXW, texh = PANEL2D_TEXH;
+	static double texw = INSTR3D_TEXW, texh = INSTR3D_TEXH;
 	static double scalecnt = texh-764.0+152.0;
 	static int scaleunit = 15;
 	static double viewh = 50.0;
@@ -102,7 +121,7 @@ bool InstrVS::Redraw2D (SURFHANDLE surf)
 	grp->Vtx[2+vtxofs].tv = grp->Vtx[3+vtxofs].tv = (float)(y1/texh);
 
 	// copy labels onto scale
-	const int labelx = 1863;
+	const int labelx = texw-185;
 	int i, j, n, vmin, vmax, iy, len, xsrc, ysrc;
 	vmin = (int)floor(vspd)-3;
 	if (vmin != pvmin) {
@@ -121,14 +140,14 @@ bool InstrVS::Redraw2D (SURFHANDLE surf)
 			for (j = 0, c = cbuf; j < 4; c++, j++) {
 				if (j < len) {
 					n = *c-'0';
-					xsrc = 1864;
+					xsrc = texw-184;
 					ysrc = (int)texh-428+n*8;
 				} else {
-					xsrc = 1864;
+					xsrc = texw-184;
 					ysrc = (int)texh-348;
 				}
 				if (i < 0) ysrc += 88;
-				oapiBlt (surf, surf, labelx+j*6, iy, xsrc, ysrc, 6, 8);
+				oapiBlt (sf, sf, labelx+j*6, iy, xsrc, ysrc, 6, 8);
 			}
 		}
 	}
@@ -141,7 +160,7 @@ bool InstrVS::Redraw2D (SURFHANDLE surf)
 	else
 		strcpy (cbuf, "----");
 
-	static double numx = 1871.0, numy = texh-423.5, numw = 10.0, numh = 19.0;
+	static double numx = texw-177.0, numy = texh-423.5, numw = 10.0, numh = 19.0;
 	static double tu_num[4] = {numx/texw,(numx+numw)/texw,numx/texw,(numx+numw)/texw};
 	static double tv_num[4] = {numy/texh,numy/texh,(numy+numh)/texh,(numy+numh)/texh};
 	int vofs = 4+vtxofs;

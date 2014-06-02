@@ -11,6 +11,7 @@
 #define STRICT 1
 #include "GearLever.h"
 #include "DeltaGlider.h"
+#include "meshres_vc.h"
 
 // constants for texture coordinates
 static const float texw = (float)PANEL2D_TEXW; // texture width
@@ -30,7 +31,7 @@ GearLever::GearLever (VESSEL3 *v): PanelElement (v)
 }
 
 // ==============================================================
-
+#ifdef UNDEF
 void GearLever::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 {
 	static const DWORD NVTX = 4;
@@ -46,11 +47,13 @@ void GearLever::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 	};
 	AddGeometry (hMesh, grpidx, VTX, NVTX, IDX, NIDX);
 }
-
+#endif
 // ==============================================================
 
 bool GearLever::Redraw2D (SURFHANDLE surf)
 {
+	return false; // for now
+
 	DeltaGlider *dg = (DeltaGlider*)vessel;
 	DeltaGlider::DoorStatus action = dg->gear_status;
 	bool leverdown = (action == DeltaGlider::DOOR_OPENING || action == DeltaGlider::DOOR_OPEN);
@@ -74,11 +77,21 @@ bool GearLever::ProcessMouse2D (int event, int mx, int my)
 }
 
 // ==============================================================
+
+bool GearLever::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	DeltaGlider *dg = (DeltaGlider*)vessel;
+	dg->ActivateLandingGear (p.y > 0.5 ? DeltaGlider::DOOR_CLOSING : DeltaGlider::DOOR_OPENING);
+	return false;
+}
+
+// ==============================================================
 // ==============================================================
 
 GearIndicator::GearIndicator (VESSEL3 *v): PanelElement (v)
 {
 	tofs = (double)rand()/(double)RAND_MAX;
+	light = true;
 }
 
 // ==============================================================
@@ -111,8 +124,16 @@ void GearIndicator::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 
 // ==============================================================
 
+void GearIndicator::ResetVC (DEVMESHHANDLE hMesh)
+{
+}
+
+// ==============================================================
+
 bool GearIndicator::Redraw2D (SURFHANDLE surf)
 {
+	return false; // for now
+
 	int i, j, xofs;
 	double d;
 	DeltaGlider::DoorStatus action = ((DeltaGlider*)vessel)->gear_status;
@@ -127,3 +148,37 @@ bool GearIndicator::Redraw2D (SURFHANDLE surf)
 	}
 	return false;
 }
+
+// ==============================================================
+
+bool GearIndicator::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
+{
+	if (!hMesh) return false;
+
+	DeltaGlider::DoorStatus action = ((DeltaGlider*)vessel)->gear_status;
+	bool showlights;
+	double d;
+	switch (action) {
+		case DeltaGlider::DOOR_CLOSED: showlights = false; break;
+		case DeltaGlider::DOOR_OPEN:   showlights = true; break;
+		default: showlights = (modf (oapiGetSimTime()+tofs, &d) < 0.5); break;
+	}
+	if (showlights != light) {
+		GROUPEDITSPEC ges;
+		static WORD vtxofs = 7;
+		static const DWORD nvtx = 2;
+		static WORD vidx[nvtx] = {vtxofs,vtxofs+1};
+		static float v[2] = {0.2427f,0.3042f};
+		NTVERTEX vtx[nvtx];
+		for (DWORD i = 0; i < nvtx; i++)
+			vtx[i].tv = v[(showlights ? 1:0)];
+		ges.flags = GRPEDIT_VTXTEXV;
+		ges.Vtx = vtx;
+		ges.vIdx = vidx;
+		ges.nVtx = nvtx;
+		oapiEditMeshGroup (hMesh, GRP_LIT_SURFACES_VC, &ges);
+		light = showlights;
+	}
+	return false;
+}
+

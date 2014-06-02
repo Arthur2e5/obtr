@@ -3927,8 +3927,17 @@ public:
 	 *   appropriate transformations to advance the animation to that state. It is
 	 *   the responsibility of the code developer to call SetAnimation in such a way
 	 *   as to provide a smooth movement of the animated parts.
+	 * \sa GetAnimation
 	 */
 	bool SetAnimation (UINT anim, double state) const;
+
+	/**
+	 * \brief Return the current state of an animation
+	 * \param anim animation identifier
+	 * \return animation state (0 ... 1)
+	 * \sa SetAnimation
+	 */
+	double GetAnimation (UINT anim) const;
 
 	/**
 	 * \brief Returns a pointer to the array of animations defined by the vessel

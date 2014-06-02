@@ -60,6 +60,8 @@ void PMainGimbalDisp::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 
 bool PMainGimbalDisp::Redraw2D (SURFHANDLE surf)
 {
+	return false; // for now
+
 	int i, j, lvl;
 	for (i = 0; i < 2; i++) {
 		lvl = ((DeltaGlider*)vessel)->mpgimbalidx[i]-35;
@@ -113,6 +115,7 @@ void PMainGimbalCtrl::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 
 bool PMainGimbalCtrl::Redraw2D (SURFHANDLE surf)
 {
+	return false; // for now
 	int i, j, state;
 	for (i = 0; i < 2; i++) {
 		state = ((DeltaGlider*)vessel)->mpswitch[i];
@@ -202,6 +205,8 @@ void PMainGimbalCntr::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 
 bool PMainGimbalCntr::Redraw2D (SURFHANDLE surf)
 {
+	return false; // for now
+
 	int j, mode = ((DeltaGlider*)vessel)->mpmode;
 	for (j = 0; j < 4; j++)
 		grp->Vtx[vtxofs+j].tu = (1029+(j%2)*10+mode*12)/texw;
@@ -259,6 +264,8 @@ void YMainGimbalDisp::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 
 bool YMainGimbalDisp::Redraw2D (SURFHANDLE surf)
 {
+	return false; // for now
+
 	int i, j, lvl;
 	for (i = 0; i < 2; i++) {
 		lvl = ((DeltaGlider*)vessel)->mygimbalidx[i]-35;
@@ -313,6 +320,7 @@ void YMainGimbalCtrl::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 
 bool YMainGimbalCtrl::Redraw2D (SURFHANDLE surf)
 {
+	return false; // for now
 	int i, j, state;
 	for (i = 0; i < 2; i++) {
 		static int map[3] = {0,2,1};
@@ -414,6 +422,8 @@ void YMainGimbalMode::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 
 bool YMainGimbalMode::Redraw2D (SURFHANDLE surf)
 {
+	return false; // for now
+
 	DeltaGlider *dg = (DeltaGlider*)vessel;
 	int i, j, ofs;
 	for (i = 0; i < 3; i++) {
@@ -484,6 +494,8 @@ void HoverBalanceDisp::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 
 bool HoverBalanceDisp::Redraw2D (SURFHANDLE surf)
 {
+	return false; // for now
+
 	int j, lvl = ((DeltaGlider*)vessel)->hbalanceidx - 28;
 	for (j = 0; j < 4; j++)
 		grp->Vtx[vtxofs+j].y = 327.5f-3.0f+(j/2)*6.0f + lvl;
@@ -519,6 +531,8 @@ void HoverBalanceCtrl::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 
 bool HoverBalanceCtrl::Redraw2D (SURFHANDLE surf)
 {
+	return false; // for now
+
 	int j, state = ((DeltaGlider*)vessel)->hbswitch;
 	for (j = 0; j < 4; j++)
 		grp->Vtx[vtxofs+j].tu = (1054+state*16+(j%2)*14)/texw;
@@ -571,6 +585,8 @@ void HoverBalanceCntr::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 
 bool HoverBalanceCntr::Redraw2D (SURFHANDLE surf)
 {
+	return false; // for now
+
 	int j, mode = ((DeltaGlider*)vessel)->hbmode;
 	for (j = 0; j < 4; j++)
 		grp->Vtx[vtxofs+j].tu = (1029+(j%2)*10+mode*12)/texw;
@@ -619,6 +635,8 @@ void ScramGimbalDisp::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 
 bool ScramGimbalDisp::Redraw2D (SURFHANDLE surf)
 {
+	return false; // for now
+
 	int i, j, lvl;
 	for (i = 0; i < 2; i++) {
 		lvl = dg->scgimbalidx[i]-35;
@@ -671,6 +689,7 @@ void ScramGimbalCtrl::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 
 bool ScramGimbalCtrl::Redraw2D (SURFHANDLE surf)
 {
+	return false; // for now
 	int i, j, state;
 	for (i = 0; i < 2; i++) {
 		state = dg->sgswitch[i];
@@ -759,6 +778,8 @@ void ScramGimbalCntr::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 
 bool ScramGimbalCntr::Redraw2D (SURFHANDLE surf)
 {
+	return 0; // for now
+
 	int j, mode = dg->spmode;
 	for (j = 0; j < 4; j++)
 		grp->Vtx[vtxofs+j].tu = (1029+(j%2)*10+mode*12)/texw;

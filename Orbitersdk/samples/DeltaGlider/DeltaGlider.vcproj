@@ -631,6 +631,54 @@
 				</File>
 			</Filter>
 		</Filter>
+		<Filter
+			Name="Mesh Files"
+			>
+			<File
+				RelativePath="..\..\..\Meshes\DG\deltaglider_vc.msh"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="echo $(InputPath) _VC meshres_vc.h | $(SDKDir)\utils\meshc.exe&#x0D;&#x0A;"
+						Outputs="meshres_vc.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="echo $(InputPath) _VC meshres_vc.h | $(SDKDir)\utils\meshc.exe&#x0D;&#x0A;"
+						Outputs="meshres_vc.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\..\Meshes\DG\dg_2dpanel0.msh"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="echo $(InputPath) _P0 meshres_p0.h | $(SDKDir)\utils\meshc.exe"
+						Outputs="meshres_p0.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="echo $(InputPath) _P0 meshres_p0.h | $(SDKDir)\utils\meshc.exe"
+						Outputs="meshres_p0.h"
+					/>
+				</FileConfiguration>
+			</File>
+		</Filter>
 		<File
 			RelativePath=".\Bitmaps\MFDButton.bmp"
 			>

@@ -11,22 +11,14 @@
 #define STRICT 1
 #include "FuelMfd.h"
 #include "DeltaGlider.h"
+#include "meshres_p0.h"
+#include "meshres_vc.h"
 
 // ==============================================================
 
 // constants for texture coordinates
-static const float texw = (float)PANEL2D_TEXW/*INSTR3_TEXW*/;
-static const float texh = (float)PANEL2D_TEXH/*INSTR3_TEXH*/;
-static const float horzx = texw-580.0f;
-static const float horzy = texh-188.0f;
-static const float tx_x0 = horzx+  0.5f;
-static const float tx_dx = 267.0f;
-static const float tx_y0 = horzy+ 20.5f;
-static const float tx_dy = 167.0f;
-static const float greenx = (horzx+267.0f)/texw;
-static const float greeny = (horzy+  1.0f)/texh;
-// constants for panel coordinates
-static const float fd_x0 = 187.5f;
+static const float texw = (float)INSTR3D_TEXW;
+static const float texh = (float)INSTR3D_TEXH;
 static const float fd_y0 = 395.5f;
 static const float fuelh =  86.0f;
 static const float fuelw =  28.0f;
@@ -38,121 +30,104 @@ FuelMFD::FuelMFD (VESSEL3 *v): PanelElement (v)
 {
 	int i, j;
 	isScram = false;
+	doSetupVC = doSetup2D = true;
 	for (i = 0; i < 9; i++)
 		for (j = 0; j < 5; j++) sout[i][j] = 0;
+	memset (&vc_grp, 0, sizeof(GROUPREQUESTSPEC));
 }
 
 // ==============================================================
 
-void FuelMFD::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
+FuelMFD::~FuelMFD ()
 {
+	if (vc_grp.Vtx) delete []vc_grp.Vtx;
+}
+
+// ==============================================================
+
+void FuelMFD::Reset_noscram (NTVERTEX *Vtx)
+{
+	int i;
+	const float panelw = 267.0f, panelh = 167.0f, shiftx = 46.0f, titleh = 14.0f;
+	float dx = shiftx/panelw*(Vtx[6].x-Vtx[0].x);
+	float dy = titleh/panelh*(Vtx[1].y-Vtx[0].y);
+	float dz = titleh/panelh*(Vtx[1].z-Vtx[0].z);
+	Vtx[16].x = Vtx[18].x = Vtx[0].x;
+	Vtx[17].x = Vtx[19].x = Vtx[6].x;
+	Vtx[16].y = Vtx[17].y = Vtx[1].y - dy;
+	Vtx[18].y = Vtx[19].y = Vtx[1].y;
+	Vtx[16].z = Vtx[17].z = Vtx[1].z - dz;
+	Vtx[18].z = Vtx[19].z = Vtx[1].z;
+	Vtx[16].tu = Vtx[18].tu = Vtx[0].tu;
+	Vtx[17].tu = Vtx[19].tu = Vtx[6].tu;
+	Vtx[16].tv = Vtx[17].tv = Vtx[1].tv + titleh/texh;
+	Vtx[18].tv = Vtx[19].tv = Vtx[1].tv;
+	Vtx[2].x = Vtx[3].x = Vtx[0].x + dx;
+	Vtx[4].x = Vtx[5].x = Vtx[6].x - dx;
+	Vtx[6].tu = Vtx[7].tu = Vtx[4].tu;
+	for (i = 1; i <= 7; i+=2) {
+		Vtx[i].y -= dy;
+		Vtx[i].z -= dz;
+		Vtx[i].tv += titleh/texh;
+	}
+	for (i = 8; i < 16; i++)
+		Vtx[i].x += dx;
+}
+
+// ==============================================================
+
+void FuelMFD::Reset2D (MESHHANDLE hMesh)
+{
+	grp = oapiMeshGroup (hMesh, GRP_FUEL_DISP_P0);
+	vtxofs = 0;
+
+	DeltaGlider *dg = (DeltaGlider*)vessel;
+	isScram = dg->ScramVersion();
+	if (doSetup2D) {
+		NTVERTEX *Vtx = grp->Vtx+vtxofs;
+		crd_2D[0] = Vtx[8].y;   crd_2D[1] = Vtx[10].y;
+		crd_2D[2] = Vtx[8].z;   crd_2D[3] = Vtx[10].z;
+		if (!isScram) Reset_noscram (Vtx);
+		doSetup2D = false;
+	}
+}
+
+// ==============================================================
+
+void FuelMFD::ResetVC (DEVMESHHANDLE hMesh)
+{
+	// NEED TO DO VERTEX TRANSFORMATIONS HERE!
+
 	DeltaGlider *dg = (DeltaGlider*)vessel;
 	isScram = dg->ScramVersion();
 
-	if (isScram) AddMeshData_scram (hMesh, grpidx);
-	else         AddMeshData_noscram (hMesh, grpidx);
-
-	Tsample = oapiGetSimTime();
-	Mmain = dg->GetPropellantMass (dg->ph_main);
-	Mrcs  = dg->GetPropellantMass (dg->ph_rcs);
-	if (isScram)
-		Mscram = dg->GetPropellantMass (dg->ph_scram);
+	vc_grp.nVtx = 20;
+	if (!vc_grp.Vtx) vc_grp.Vtx = new NTVERTEX[vc_grp.nVtx];
+	if (oapiGetMeshGroup (hMesh, GRP_PROPELLANT_STATUS_VC, &vc_grp) != 0) { // problems
+		delete []vc_grp.Vtx;
+		vc_grp.Vtx = 0;
+	} else if (doSetupVC) {
+		NTVERTEX *Vtx = vc_grp.Vtx;
+		crd_VC[0] = Vtx[8].y;   crd_VC[1] = Vtx[10].y;
+		crd_VC[2] = Vtx[8].z;   crd_VC[3] = Vtx[10].z;
+		if (!isScram) {
+			Reset_noscram (Vtx);
+			GROUPEDITSPEC ges = {GRPEDIT_VTXCRD|GRPEDIT_VTXTEX, 0, Vtx, vc_grp.nVtx, 0};
+			oapiEditMeshGroup (hMesh, GRP_PROPELLANT_STATUS_VC, &ges);
+		}
+		doSetupVC = false;
+	}
 }
 
 // ==============================================================
 
-void FuelMFD::AddMeshData_noscram (MESHHANDLE hMesh, DWORD grpidx)
-{
-	float dx = 46.0f;
-	float main_x0 = fd_x0+dx+5.5f;
-	static const DWORD NVTX = 16;
-	static const DWORD NIDX = 24;
-	static const NTVERTEX VTX[NVTX] = {
-		// propellant title
-		{fd_x0,         fd_y0,      0,  0,0,0,  tx_x0/texw,        tx_y0/texh},
-		{fd_x0+tx_dx,   fd_y0,      0,  0,0,0,  (tx_x0+tx_dx)/texw,tx_y0/texh},
-		{fd_x0,         fd_y0+14,   0,  0,0,0,  tx_x0/texw,        (tx_y0+14)/texh},
-		{fd_x0+tx_dx,   fd_y0+14,   0,  0,0,0,  (tx_x0+tx_dx)/texw,(tx_y0+14)/texh},
-		// propellant status display
-		{fd_x0+dx,      fd_y0+14,   0,  0,0,0,  tx_x0/texw,             (tx_y0+14)/texh},
-		{fd_x0+tx_dx-dx,fd_y0+14,   0,  0,0,0,  (tx_x0+tx_dx-2*dx)/texw,(tx_y0+14)/texh},
-		{fd_x0+dx,      fd_y0+tx_dy,0,  0,0,0,  tx_x0/texw,             (tx_y0+tx_dy)/texh},
-		{fd_x0+tx_dx-dx,fd_y0+tx_dy,0,  0,0,0,  (tx_x0+tx_dx-2*dx)/texw,(tx_y0+tx_dy)/texh},
-		// main level
-		{main_x0,      fuely,0,  0,0,0,  greenx, greeny},
-		{main_x0+fuelw,fuely,0,  0,0,0,  greenx, greeny},
-		{main_x0,      fuely,0,  0,0,0,  greenx, greeny},
-		{main_x0+fuelw,fuely,0,  0,0,0,  greenx, greeny},
-		// rcs level
-		{main_x0+92,      fuely,0,  0,0,0,  greenx, greeny},
-		{main_x0+92+fuelw,fuely,0,  0,0,0,  greenx, greeny},
-		{main_x0+92,      fuely,0,  0,0,0,  greenx, greeny},
-		{main_x0+92+fuelw,fuely,0,  0,0,0,  greenx, greeny}
-	};
-	static const WORD IDX[NIDX] = {
-		0,1,2, 3,2,1,
-		4,5,6, 7,6,5,
-		8,9,10, 11,10,9,
-		12,13,14, 15,14,13
-	};
-
-	AddGeometry (hMesh, grpidx, VTX, NVTX, IDX, NIDX);
-}
-
-// ==============================================================
-
-void FuelMFD::AddMeshData_scram (MESHHANDLE hMesh, DWORD grpidx)
-{
-	float main_x0 = fd_x0+5.5f;
-	static const DWORD NVTX = 20;
-	static const DWORD NIDX = 30;
-	static const NTVERTEX VTX[NVTX] = {
-		// propellant title
-		{fd_x0,         fd_y0,      0,  0,0,0,  tx_x0/texw,        tx_y0/texh},
-		{fd_x0+tx_dx,   fd_y0,      0,  0,0,0,  (tx_x0+tx_dx)/texw,tx_y0/texh},
-		{fd_x0,         fd_y0+14,   0,  0,0,0,  tx_x0/texw,        (tx_y0+14)/texh},
-		{fd_x0+tx_dx,   fd_y0+14,   0,  0,0,0,  (tx_x0+tx_dx)/texw,(tx_y0+14)/texh},
-		// propellant status display
-		{fd_x0,      fd_y0+14,   0,  0,0,0,  tx_x0/texw,     (tx_y0+14)/texh},
-		{fd_x0+tx_dx,fd_y0+14,   0,  0,0,0,  (tx_x0+tx_dx)/texw,(tx_y0+14)/texh},
-		{fd_x0,      fd_y0+tx_dy,0,  0,0,0,  tx_x0/texw,     (tx_y0+tx_dy)/texh},
-		{fd_x0+tx_dx,fd_y0+tx_dy,0,  0,0,0,  (tx_x0+tx_dx)/texw,(tx_y0+tx_dy)/texh},
-		// main level
-		{main_x0,      fuely,0,  0,0,0,  greenx, greeny},
-		{main_x0+fuelw,fuely,0,  0,0,0,  greenx, greeny},
-		{main_x0,      fuely,0,  0,0,0,  greenx, greeny},
-		{main_x0+fuelw,fuely,0,  0,0,0,  greenx, greeny},
-		// rcs level
-		{main_x0+92,      fuely,0,  0,0,0,  greenx, greeny},
-		{main_x0+92+fuelw,fuely,0,  0,0,0,  greenx, greeny},
-		{main_x0+92,      fuely,0,  0,0,0,  greenx, greeny},
-		{main_x0+92+fuelw,fuely,0,  0,0,0,  greenx, greeny},
-		// scram level
-		{main_x0+184,      fuely,0,  0,0,0,  greenx, greeny},
-		{main_x0+184+fuelw,fuely,0,  0,0,0,  greenx, greeny},
-		{main_x0+184,      fuely,0,  0,0,0,  greenx, greeny},
-		{main_x0+184+fuelw,fuely,0,  0,0,0,  greenx, greeny}
-	};
-	static const WORD IDX[NIDX] = {
-		0,1,2, 3,2,1,
-		4,5,6, 7,6,5,
-		8,9,10, 11,10,9,
-		12,13,14, 15,14,13,
-		16,17,18, 19,18,17
-	};
-
-	AddGeometry (hMesh, grpidx, VTX, NVTX, IDX, NIDX);
-}
-
-// ==============================================================
-
-bool FuelMFD::Redraw2D (SURFHANDLE surf)
+void FuelMFD::Redraw (NTVERTEX *Vtx, SURFHANDLE surf, float crd[4])
 {
 	DeltaGlider *dg = (DeltaGlider*)vessel;
 
-	static const int xofs = (int)horzx, yofs = (int)horzy;
+	static const int xofs = INSTR3D_TEXW-424, yofs = 0;
 	double m, m0, lvl, dv, isp;
-	float y1;
+	float y, z;
 	int vofs;
 	char cbuf[16];
 	double T = oapiGetSimTime();
@@ -164,9 +139,12 @@ bool FuelMFD::Redraw2D (SURFHANDLE surf)
 	lvl = m / max (1.0, dg->max_rocketfuel);
 	isp = dg->GetThrusterIsp (dg->th_main[0]);
 	dv = isp * log(m0/(m0-m));
-	y1 = (float)(fuely - lvl * fuelh);
-	vofs = vtxofs+8;
-	grp->Vtx[vofs].y = grp->Vtx[vofs+1].y = y1;
+	//y1 = (float)(fuely - lvl * fuelh);
+	y = crd[0] + lvl*(crd[1]-crd[0]);
+	z = crd[2] + lvl*(crd[3]-crd[2]);
+	vofs = 8;
+	Vtx[vofs+2].y = Vtx[vofs+3].y = y;
+	Vtx[vofs+2].z = Vtx[vofs+3].z = z;
 	sprintf (cbuf, "% 6d", (int)(m+0.5));
 	BltString (cbuf+1, sout[0], 5, xofs+42, yofs+78, surf);
 	sprintf (cbuf, "% 6d", (int)(dv+0.5));
@@ -182,9 +160,12 @@ bool FuelMFD::Redraw2D (SURFHANDLE surf)
 	lvl = m / RCS_FUEL_CAPACITY;
 	isp = ISP;
 	dv = isp * log(m0/(m0-m));
-	y1 = (float)(fuely - lvl * fuelh);
-	vofs = vtxofs+12;
-	grp->Vtx[vofs].y = grp->Vtx[vofs+1].y = y1;
+	//y1 = (float)(fuely - lvl * fuelh);
+	y = crd[0] + lvl*(crd[1]-crd[0]);
+	z = crd[2] + lvl*(crd[3]-crd[2]);
+	vofs = 12;
+	Vtx[vofs+2].y = Vtx[vofs+3].y = y;
+	Vtx[vofs+2].z = Vtx[vofs+3].z = z;
 	sprintf (cbuf, "% 6d", (int)(m+0.5));
 	BltString (cbuf+1, sout[1], 5, xofs+134, yofs+78, surf);
 	sprintf (cbuf, "% 6d", (int)(dv+0.5));
@@ -201,9 +182,12 @@ bool FuelMFD::Redraw2D (SURFHANDLE surf)
 		lvl = m / max (1.0, dg->max_scramfuel);
 		isp = dg->GetThrusterIsp (dg->th_scram[0]);
 		dv = isp * log(m0/(m0-m));
-		y1 = (float)(fuely - lvl * fuelh);
-		vofs = vtxofs+16;
-		grp->Vtx[vofs].y = grp->Vtx[vofs+1].y = y1;
+		//y1 = (float)(fuely - lvl * fuelh);
+		y = crd[0] + lvl*(crd[1]-crd[0]);
+		z = crd[2] + lvl*(crd[3]-crd[2]);
+		vofs = 16;
+		Vtx[vofs+2].y = Vtx[vofs+3].y = y;
+		Vtx[vofs+2].z = Vtx[vofs+3].z = z;
 		sprintf (cbuf, "% 6d", (int)(m+0.5));
 		BltString (cbuf+1, sout[2], 5, xofs+226, yofs+78, surf);
 		sprintf (cbuf, "% 6d", (int)(dv+0.5));
@@ -214,22 +198,42 @@ bool FuelMFD::Redraw2D (SURFHANDLE surf)
 			Mscram = m;
 		}
 	}
-
 	Tsample = T;
+}
+
+// ==============================================================
+
+bool FuelMFD::Redraw2D (SURFHANDLE surf)
+{
+	Redraw (grp->Vtx+vtxofs, surf, crd_2D);
 	return false;
 }
 
+// ==============================================================
+
+bool FuelMFD::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
+{
+	if (hMesh && surf) {
+		Redraw (vc_grp.Vtx, surf, crd_VC);
+		GROUPEDITSPEC ges = {GRPEDIT_VTXCRDY|GRPEDIT_VTXCRDZ, 0, vc_grp.Vtx, vc_grp.nVtx, 0};
+		oapiEditMeshGroup (hMesh, GRP_PROPELLANT_STATUS_VC, &ges);
+	}
+	return false;
+}
+
+// ==============================================================
+
 void FuelMFD::BltString (char *str, char *pstr, int maxlen, int x, int y, SURFHANDLE surf)
 {
-	int i, xsrc, xofs = (int)horzx+131, ysrc = (int)horzy+1;
+	int i, xsrc, xofs = INSTR3D_TEXW-293, ysrc = 1;
 	char *c = str;
 	for (i = 0; i < maxlen && *c; i++, c++) {
 		if (*c != pstr[i]) {
 			if (*c >= '0' && *c <= '9') {
-				xsrc = xofs+(*c-'0')*7;
+				xsrc = xofs+(*c-'0')*8;
 			} else switch(*c) {
-				case '.': xsrc = xofs+70; break;
-				default:  xsrc = xofs+77; break;
+				case '.': xsrc = xofs+80; break;
+				default:  xsrc = xofs+88; break;
 			}
 			oapiBlt (surf, surf, x, y, xsrc, ysrc, 7, 9);
 			pstr[i] = *c;
