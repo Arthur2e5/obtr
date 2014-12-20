@@ -18,7 +18,6 @@
 class NavButton: public PanelElement {
 public:
 	NavButton (VESSEL3 *v);
-	//void AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx);
 	void Reset2D (MESHHANDLE hMesh);
 	bool Redraw2D (SURFHANDLE surf);
 	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);

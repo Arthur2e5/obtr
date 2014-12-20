@@ -1296,6 +1296,19 @@ public:
 	virtual void clbkReleaseSurfaceDC (SURFHANDLE surf, HDC hDC) {}
 	// @}
 
+	/**
+	 * \brief Retrieve a grid of elevation data corresponding to the nodes of
+	 *   a surface patch
+	 * \param emgr elevation manager handle (retrieve with oapiElevationManager)
+	 * \param [in] ilat patch latitude index
+	 * \param [in] ilng patch longitude index
+	 * \param [in] lvl patch resolution level
+	 * \param [out] elev pointer to array receiving elevation grid data
+	 * \param [out] emean pointer to variable receiving mean elevation data
+	 */
+	bool ElevationGrid (ELEVHANDLE emgr, int ilat, int ilng, int lvl,
+		int pilat, int pilng, int plvl, INT16 *pelev, INT16 *elev, double *emean) const;
+
 protected:
 	/** \brief Launchpad video tab indicator
 	 *
@@ -1502,6 +1515,32 @@ protected:
 		const char *fname, ImageFileFormat fmt=IMAGE_JPG, float quality=0.7f);
 
 	/**
+	 * \brief Read an image from a memory buffer
+	 * \param pBuf pointer to memory buffer
+	 * \param nBuf size of memory buffer
+	 * \param w width of image after scaling (0 to keep original width)
+	 * \param h height of image after scaling (0 to keep original height)
+	 * \note This function automatically recognises different image formats
+	 *   in the memory buffer (bmp, jpg, png, tif)
+	 * \note This function can be used to read in an image from a resource
+	 *   stored in the executable file (see Windows API functions
+	 *   LoadResource, LockResource, SizeofResource)
+	 * \sa ReadImageFromFile, WriteImageDataToFile
+	 */
+	HBITMAP ReadImageFromMemory (BYTE *pBuf, DWORD nBuf, UINT w, UINT h);
+
+	/**
+	 * \brief Read an image from a file into a bitmap
+	 * \param fname file name
+	 * \param fmt image format
+	 * \param w width of image after scaling (0 to keep original width)
+	 * \param h height of image after scaling (0 to keep original height)
+	 * \note This function can read different image formats (bmp, jpg, png, tif)
+	 * \sa ReadImageFromMemory, WriteImageDataToFile
+	 */
+	HBITMAP ReadImageFromFile (const char *fname, UINT w=0, UINT h=0);
+
+	/**
 	 * \brief Returns the graphics module instance handle
 	 */
 	inline HINSTANCE ModuleInstance () const { return hModule; }
@@ -1598,6 +1637,7 @@ public:
 
 protected:
 	SURFHANDLE surfBltTgt;  ///< target surface for a blitting group (-1=none, NULL=main window render surface)
+	oapi::Font *splashFont; // font for splash screen displays
 
 private:
 	/**

@@ -74,7 +74,6 @@ public:
 
 private:
 	int curbtn;       ///< currently pressed button
-	bool ispushed[2]; ///< button currently down?
 };
 
 #endif // !__MFDBUTTON_H

@@ -162,7 +162,7 @@ bool InstrAtt::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 		static const double ycnt = 1.189;     // y-position of display centre (x is assumed 0)
 		static const double zcnt = 7.285;     // z-position of display centre
 		static const double cosa = cos(tilt), sina = sin(tilt);
-		static const float scale = rad/108.0;
+		static const float scale = (float)(rad/108.0);
 		double y, z;
 		for (int i = 0; i < 12; i++) {
 			// scale and rotate for bank
@@ -170,8 +170,8 @@ bool InstrAtt::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 			y = Vtx[i].y*scale;
 			z = (i < 8 ? -0.0005f : z = -0.001f);
 			// tilt to panel inclination
-			Vtx[i].y = ycnt + y*cosa - z*sina;
-			Vtx[i].z = zcnt + y*sina + z*cosa;
+			Vtx[i].y = (float)(ycnt + y*cosa - z*sina);
+			Vtx[i].z = (float)(zcnt + y*sina + z*cosa);
 		}
 
 		// write back to mesh group

@@ -32,6 +32,7 @@ void ConsoleInterpreter::term_strout (const char *str, bool iserr)
 			console->AddLine (s, iserr ? 2:1);
 			s = strtok (NULL, "\n");
 		}
+		delete []cbuf;
 	} else console->AddLine (str, iserr ? 2:1);
 }
 

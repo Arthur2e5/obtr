@@ -259,7 +259,7 @@ public:
 	void clbkRenderHUD (int mode, const HUDPAINTSPEC *hps, SURFHANDLE hTex);
 	void clbkRCSMode (int mode);
 	void clbkADCtrlMode (DWORD mode);
-	//void clbkHUDMode (int mode);
+	void clbkHUDMode (int mode);
 	void clbkMFDMode (int mfd, int mode);
 	void clbkNavMode (int mode, bool active);
 	int  clbkConsumeDirectKey (char *kstate);

@@ -78,7 +78,7 @@ void InstrHSI::Redraw (NTVERTEX *Vtx)
 	DWORD tp;
 	double yaw = vessel->GetYaw();   if (yaw < 0.0) yaw += PI2;
 	double siny = sin(yaw), cosy = cos(yaw);
-	double dev = 0.0, brg, slope, c, sinc, cosc;
+	double dev = 0.0, brg = 0.0, slope, c, sinc, cosc;
 
 	static double texw = INSTR3D_TEXW, texh = INSTR3D_TEXH;
 
@@ -252,8 +252,8 @@ bool InstrHSI::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 				y = Vtx[i].y*scale;
 				z = (i < 8 ? 0.0 : i < 20 ? -0.0005 : -0.001);
 				// tilt to panel inclination
-				Vtx[i].y = ycnt + y*cosa - z*sina;
-				Vtx[i].z = zcnt + y*sina + z*cosa;
+				Vtx[i].y = (float)(ycnt + y*cosa - z*sina);
+				Vtx[i].z = (float)(zcnt + y*sina + z*cosa);
 			}
 		}
 

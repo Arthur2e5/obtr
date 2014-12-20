@@ -140,8 +140,8 @@ void FuelMFD::Redraw (NTVERTEX *Vtx, SURFHANDLE surf, float crd[4])
 	isp = dg->GetThrusterIsp (dg->th_main[0]);
 	dv = isp * log(m0/(m0-m));
 	//y1 = (float)(fuely - lvl * fuelh);
-	y = crd[0] + lvl*(crd[1]-crd[0]);
-	z = crd[2] + lvl*(crd[3]-crd[2]);
+	y = crd[0] + (float)lvl*(crd[1]-crd[0]);
+	z = crd[2] + (float)lvl*(crd[3]-crd[2]);
 	vofs = 8;
 	Vtx[vofs+2].y = Vtx[vofs+3].y = y;
 	Vtx[vofs+2].z = Vtx[vofs+3].z = z;
@@ -161,8 +161,8 @@ void FuelMFD::Redraw (NTVERTEX *Vtx, SURFHANDLE surf, float crd[4])
 	isp = ISP;
 	dv = isp * log(m0/(m0-m));
 	//y1 = (float)(fuely - lvl * fuelh);
-	y = crd[0] + lvl*(crd[1]-crd[0]);
-	z = crd[2] + lvl*(crd[3]-crd[2]);
+	y = crd[0] + (float)lvl*(crd[1]-crd[0]);
+	z = crd[2] + (float)lvl*(crd[3]-crd[2]);
 	vofs = 12;
 	Vtx[vofs+2].y = Vtx[vofs+3].y = y;
 	Vtx[vofs+2].z = Vtx[vofs+3].z = z;
@@ -183,8 +183,8 @@ void FuelMFD::Redraw (NTVERTEX *Vtx, SURFHANDLE surf, float crd[4])
 		isp = dg->GetThrusterIsp (dg->th_scram[0]);
 		dv = isp * log(m0/(m0-m));
 		//y1 = (float)(fuely - lvl * fuelh);
-		y = crd[0] + lvl*(crd[1]-crd[0]);
-		z = crd[2] + lvl*(crd[3]-crd[2]);
+		y = crd[0] + (float)lvl*(crd[1]-crd[0]);
+		z = crd[2] + (float)lvl*(crd[3]-crd[2]);
 		vofs = 16;
 		Vtx[vofs+2].y = Vtx[vofs+3].y = y;
 		Vtx[vofs+2].z = Vtx[vofs+3].z = z;

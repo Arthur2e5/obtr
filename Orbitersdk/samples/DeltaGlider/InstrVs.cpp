@@ -121,7 +121,7 @@ bool InstrVS::Redraw2D (SURFHANDLE surf)
 	grp->Vtx[2+vtxofs].tv = grp->Vtx[3+vtxofs].tv = (float)(y1/texh);
 
 	// copy labels onto scale
-	const int labelx = texw-185;
+	const int labelx = (int)texw-185;
 	int i, j, n, vmin, vmax, iy, len, xsrc, ysrc;
 	vmin = (int)floor(vspd)-3;
 	if (vmin != pvmin) {
@@ -140,10 +140,10 @@ bool InstrVS::Redraw2D (SURFHANDLE surf)
 			for (j = 0, c = cbuf; j < 4; c++, j++) {
 				if (j < len) {
 					n = *c-'0';
-					xsrc = texw-184;
+					xsrc = (int)texw-184;
 					ysrc = (int)texh-428+n*8;
 				} else {
-					xsrc = texw-184;
+					xsrc = (int)texw-184;
 					ysrc = (int)texh-348;
 				}
 				if (i < 0) ysrc += 88;

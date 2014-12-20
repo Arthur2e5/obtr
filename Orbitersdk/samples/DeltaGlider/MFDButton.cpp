@@ -77,7 +77,8 @@ MFDButtonGroup::MFDButtonGroup (VESSEL3 *v, DWORD _mfdid, DWORD _nbtn)
 : PanelElement (v), mfdid(_mfdid), nbtn(_nbtn)
 {
 	ispushed = new bool[nbtn];
-	for (int i = 0; i < nbtn; i++) ispushed[i] = false;
+	for (DWORD i = 0; i < nbtn; i++)
+		ispushed[i] = false;
 	pending_action = 0;
 }
 
@@ -295,7 +296,6 @@ bool MFDButtonCol::ProcessMouseVC (int event, VECTOR3 &p)
 MFDButtonRow::MFDButtonRow (VESSEL3 *v, DWORD _mfdid)
 : MFDButtonGroup (v, _mfdid, 2)
 {
-	for (int i = 0; i < 2; i++) ispushed[i] = false;
 }
 
 // ==============================================================

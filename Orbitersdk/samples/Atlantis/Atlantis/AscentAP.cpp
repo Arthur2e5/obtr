@@ -411,7 +411,7 @@ void AscentAPDlgTabGimbal::Update (double simt)
 {
 	const double range = 10.5*RAD;
 	double pitch, yaw;
-	int i, x, y;
+	int i;
 	int DlgId[5] = {IDC_SSME_L, IDC_SSME_R, IDC_SSME_U, IDC_SRB_L, IDC_SRB_R};
 	for (i = 0; i < 5; i++) {
 		HWND hCtrl = GetDlgItem (TabHandle(), DlgId[i]);
@@ -542,9 +542,9 @@ void AscentAPDlgTabThrust::Update (double simt)
 	if (ap->Active() && simt >= updt) {
 		double lvl;
 		lvl = ap->GetVessel()->GetThrusterGroupLevel(THGROUP_MAIN);
-		ssmegraph->AppendDataPoint (lvl);
+		ssmegraph->AppendDataPoint ((float)lvl);
 		lvl = ap->GetVessel()->GetSRBThrustLevel(0);
-		srbgraph->AppendDataPoint (lvl);
+		srbgraph->AppendDataPoint ((float)lvl);
 		RefreshGraph (ssmegraph, IDC_SSMETHRUST);
 		RefreshGraph (srbgraph, IDC_SRBTHRUST);
 		updt += dupdt;
@@ -615,8 +615,8 @@ AscentAPDlgTabAltitude::~AscentAPDlgTabAltitude ()
 void AscentAPDlgTabAltitude::Update (double simt)
 {
 	if (ap->Active() && simt >= updt) {
-		double alt;
-		alt = ap->GetVessel()->GetAltitude()*1e-3;
+		float alt;
+		alt = (float)(ap->GetVessel()->GetAltitude()*1e-3);
 		altgraph->AppendDataPoint (alt);
 		RefreshGraph (altgraph, IDC_ALTITUDE);
 		updt += dupdt;

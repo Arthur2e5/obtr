@@ -637,7 +637,7 @@ void Atlantis::DefineAnimations (void)
 
 	// ***** 9. SSME pitch gimbal animations
 	double init_gimbal = -10*RAD;
-	double max_gimbal = -0.2*PI;
+	float max_gimbal = (float)(-0.2*PI);
 	anim_ssme = CreateAnimation (init_gimbal/max_gimbal);
 
 	static UINT SSMEL_Grp = GRP_SSMEL;

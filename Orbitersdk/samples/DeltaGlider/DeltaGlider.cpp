@@ -32,6 +32,7 @@
 #include "ThrottleScram.h"
 #include "GimbalCtrl.h"
 #include "SwitchArray.h"
+#include "RCoverSwitch.h"
 #include "AirlockSwitch.h"
 #include "Wheelbrake.h"
 #include "MwsButton.h"
@@ -277,7 +278,7 @@ void DeltaGlider::CreatePanelElements ()
 {
 	int i, j;
 
-	ninstr_main = 38;
+	ninstr_main = 39;
 	instr_scram0 = ninstr_main;
 	ninstr_main += (ScramVersion() ? 4 : 0);
 
@@ -324,6 +325,7 @@ void DeltaGlider::CreatePanelElements ()
 	}
 	instr[36] = new HUDBrightnessDial (this);
 	instr[37] = new HUDColourButton (this);
+	instr[38] = new RCoverSwitch (this);
 
 	aap = new AAP (this);   aap->AttachHSI ((InstrHSI*)instr[1]);
 
@@ -342,8 +344,6 @@ void DeltaGlider::CreatePanelElements ()
 // --------------------------------------------------------------
 void DeltaGlider::DefineAnimations ()
 {
-	int i;
-
 	// ***** Landing gear animation *****
 	static UINT NWheelStrutGrp[2] = {GRP_NWheelStrut1,GRP_NWheelStrut2};
 	static MGROUP_ROTATE NWheelStrut (0, NWheelStrutGrp, 2,
@@ -754,11 +754,12 @@ void DeltaGlider::DefineAnimations ()
 	anim_ilockswitch = CreateAnimation (1);
 	AddAnimationComponent (anim_ilockswitch, 0, 1, &ILockSwitch);
 
-	static UINT RetroSwitchGrp = GRP_RETRO_SWITCH_VC;
-	static MGROUP_ROTATE RetroSwitch (1, &RetroSwitchGrp, 1,
-		_V(0.2508,1.0505,7.2694), _V(-0.7590,-0.231,0.6087), (float)(31*RAD));
-	anim_retroswitch = CreateAnimation (1);
-	AddAnimationComponent (anim_retroswitch, 0, 1, &RetroSwitch);
+	// Retro engine cover switch
+	static UINT RetroSwitchGrp = GRP_RETRO_COVER_SWITCH_VC;
+	static MGROUP_ROTATE RetroSwitchTransform (1, &RetroSwitchGrp, 1,
+		_V(0,1.0065,7.2035), _V(-1,0,0), (float)(50*RAD));
+	anim_retroswitch = CreateAnimation (0.5);
+	AddAnimationComponent (anim_retroswitch, 0, 1, &RetroSwitchTransform);
 
 	static UINT LadderSwitchGrp = GRP_LADDER_SWITCH_VC;
 	static MGROUP_ROTATE LadderSwitch (1, &LadderSwitchGrp, 1,
@@ -2277,10 +2278,12 @@ int DeltaGlider::GetHUDMode () const {
 
 void DeltaGlider::SetHUDMode (int mode)
 {
-	last_hudmode = mode;
-	if (oapiCockpitMode() != COCKPIT_VIRTUAL || hud_status == DOOR_CLOSED)
-		oapiSetHUDMode (mode);
-	oapiTriggerRedrawArea (0, 0, AID_HUDMODE);
+	if (mode != HUD_NONE) {
+		last_hudmode = mode;
+		if (oapiCockpitMode() != COCKPIT_VIRTUAL || hud_status == DOOR_CLOSED)
+			oapiSetHUDMode (mode);
+		oapiTriggerRedrawArea (0, 0, AID_HUDMODE);
+	}
 }
 
 void DeltaGlider::ModHUDBrightness (bool increase)
@@ -2354,8 +2357,6 @@ void DeltaGlider::DrawNeedle (HDC hDC, int x, int y, double rad, double angle, d
 
 void DeltaGlider::InitVCMesh()
 {
-	int i;
-
 	if (vcmesh) {
 		// hide pilot head in VCPILOT position
 		GROUPEDITSPEC ges;
@@ -2364,11 +2365,9 @@ void DeltaGlider::InitVCMesh()
 		oapiEditMeshGroup (vcmesh, GRP_PILOT_HEAD_VC, &ges);
 		oapiEditMeshGroup (vcmesh, GRP_PILOT_VISOR_VC, &ges);
 
-		for (i = 0; i < ninstr; i++) instr[i]->ResetVC (vcmesh);
+		for (DWORD i = 0; i < ninstr; i++) instr[i]->ResetVC (vcmesh);
 	}
-	last_hudmode = -1;
-	oapiTriggerRedrawArea (0, 0, AID_HUDMODE);
-	for (i = 0; i < 2; i++)
+	for (int i = 0; i < 2; i++)
 		SetSwitch (i, 0);
 }
 
@@ -3047,10 +3046,11 @@ void DeltaGlider::clbkADCtrlMode (DWORD mode)
 // --------------------------------------------------------------
 // Respond to HUD mode change
 // --------------------------------------------------------------
-//void DeltaGlider::clbkHUDMode (int mode)
-//{
+void DeltaGlider::clbkHUDMode (int mode)
+{
+	SetHUDMode (mode);
 	//oapiTriggerRedrawArea (0, 0, AID_HUDMODE);
-//}
+}
 
 // --------------------------------------------------------------
 // Respond to navmode change
@@ -3563,7 +3563,6 @@ bool DeltaGlider::clbkLoadVC (int id)
 	SURFHANDLE tex3 = oapiGetTextureHandle (vcmesh_tpl, 14);
 	intex = oapiGetTextureHandle (vcmesh_tpl, 19);
 	vctex = oapiGetTextureHandle (vcmesh_tpl, 20);
-	int i;
 
 	ReleaseSurfaces();
 	InitVC (id);
@@ -3722,10 +3721,13 @@ bool DeltaGlider::clbkLoadVC (int id)
 		oapiVCRegisterArea (AID_ILOCKCLOSE, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Spherical (AID_ILOCKCLOSE, _V(0.2824,1.1151,7.2611),0.01);
 
-		oapiVCRegisterArea (AID_RCOVEROPEN, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Spherical (AID_RCOVEROPEN, _V(0.2508,1.0420,7.2694),0.01);
-		oapiVCRegisterArea (AID_RCOVERCLOSE, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Spherical (AID_RCOVERCLOSE, _V(0.2508,1.0590,7.2694),0.01);
+		// Retro engine door switch
+		oapiVCRegisterArea (AID_RETRODOORSWITCH, PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_RETRODOORSWITCH, _V(0.2971,0.9839,7.1836), _V(0.3371,0.9839,7.1836), _V(0.2971,1.0327,7.2185), _V(0.3371,1.0327,7.2185));
+		//oapiVCRegisterArea (AID_RCOVEROPEN, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
+		//oapiVCSetAreaClickmode_Spherical (AID_RCOVEROPEN, _V(0.2508,1.0420,7.2694),0.01);
+		//oapiVCRegisterArea (AID_RCOVERCLOSE, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
+		//oapiVCSetAreaClickmode_Spherical (AID_RCOVERCLOSE, _V(0.2508,1.0590,7.2694),0.01);
 
 		oapiVCRegisterArea (AID_RADIATOREX, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Spherical (AID_RADIATOREX, _V(0.2582,0.9448,7.22),0.01);
@@ -3823,9 +3825,8 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 		return true;
 	case AID_BUTTONROW1:
 		return instr[27]->ProcessMouseVC (event, p);
-		//if (p.y < 0.5) cockpit_light->Activate(true);
-		//else           cockpit_light->Activate(false);
-		//return true;
+	case AID_RETRODOORSWITCH:
+		return instr[38]->ProcessMouseVC (event, p);
 	case AID_ENGINEMAIN:
 		if (event & PANEL_MOUSE_LBDOWN) { // record which slider to operate
 			if      (p.x < 0.3) ctrl = 0; // left engine
@@ -3916,12 +3917,12 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 	case AID_ILOCKCLOSE:
 		ActivateInnerAirlock (DOOR_CLOSING);
 		return true;
-	case AID_RCOVEROPEN:
-		ActivateRCover (DOOR_OPENING);
-		return true;
-	case AID_RCOVERCLOSE:
-		ActivateRCover (DOOR_CLOSING);
-		return true;
+	//case AID_RCOVEROPEN:
+	//	ActivateRCover (DOOR_OPENING);
+	//	return true;
+	//case AID_RCOVERCLOSE:
+	//	ActivateRCover (DOOR_CLOSING);
+	//	return true;
 	case AID_RADIATOREX:
 		ActivateRadiator (DOOR_OPENING);
 		return true;

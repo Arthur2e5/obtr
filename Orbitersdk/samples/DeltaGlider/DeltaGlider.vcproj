@@ -574,6 +574,14 @@
 					>
 				</File>
 				<File
+					RelativePath=".\RCoverSwitch.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\RCoverSwitch.h"
+					>
+				</File>
+				<File
 					RelativePath=".\RcsDial.cpp"
 					>
 				</File>
@@ -664,7 +672,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="echo $(InputPath) _P0 meshres_p0.h | $(SDKDir)\utils\meshc.exe"
+						CommandLine="echo $(InputPath) _P0 meshres_p0.h | $(SDKDir)\utils\meshc.exe&#x0D;&#x0A;"
 						Outputs="meshres_p0.h"
 					/>
 				</FileConfiguration>
@@ -673,7 +681,7 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						CommandLine="echo $(InputPath) _P0 meshres_p0.h | $(SDKDir)\utils\meshc.exe"
+						CommandLine="echo $(InputPath) _P0 meshres_p0.h | $(SDKDir)\utils\meshc.exe&#x0D;&#x0A;"
 						Outputs="meshres_p0.h"
 					/>
 				</FileConfiguration>

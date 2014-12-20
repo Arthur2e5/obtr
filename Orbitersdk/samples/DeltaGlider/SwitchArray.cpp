@@ -1,7 +1,7 @@
 // ==============================================================
 //                ORBITER MODULE: DeltaGlider
 //                  Part of the ORBITER SDK
-//          Copyright (C) 2001-2009 Martin Schweiger
+//          Copyright (C) 2001-2014 Martin Schweiger
 //                   All rights reserved
 //
 // SwitchArray.cpp

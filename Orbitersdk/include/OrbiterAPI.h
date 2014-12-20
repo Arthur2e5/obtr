@@ -183,6 +183,9 @@ typedef void *LAUNCHPADITEM_HANDLE;
 
 /// \brief Handle for onscreen annotation objects
 typedef void *NOTEHANDLE;
+
+/// \brief Handle for elevation query managers
+typedef void *ELEVHANDLE;
 //@}
 
 typedef enum { FILE_IN, FILE_OUT, FILE_APP } FileAccessMode;
@@ -3739,6 +3742,18 @@ OAPIFUNC DWORD oapiGetPlanetJCoeffCount (OBJHANDLE hPlanet);
 OAPIFUNC double oapiGetPlanetJCoeff (OBJHANDLE hPlanet, DWORD n);
 //@}
 
+
+// =============================================================================================
+/// \defgroup ElevationSupport Elevation data-related functions
+// =============================================================================================
+//@{
+/**
+ * \brief Returns a handle for elevation queries for a specified planet
+ * \param hPlanet planet object handle
+ * \return elevation query handle (or 0 if planet doesn't support elevation data)
+ */
+OAPIFUNC ELEVHANDLE oapiElevationManager (OBJHANDLE hPlanet);
+//@}
 
 // =============================================================================================
 /// \defgroup BaseInterface Surface base interface

@@ -19,6 +19,7 @@ class HUDButton: public PanelElement {
 public:
 	HUDButton (VESSEL3 *v);
 	void Reset2D (MESHHANDLE hMesh);
+	void ResetVC (DEVMESHHANDLE hMesh);
 	bool Redraw2D (SURFHANDLE surf);
 	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
 	bool ProcessMouse2D (int event, int mx, int my);

@@ -87,8 +87,8 @@ bool ElevatorTrim::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 		static double tilt = 0.6222;
 		static double dy = -range*cos(tilt), dz = -range*sin(tilt);
 		for (DWORD i = 0; i < nvtx; i++) {
-			vtx[i].y = y0[i] + level*dy;
-			vtx[i].z = z0[i] + level*dz;
+			vtx[i].y = (float)(y0[i] + level*dy);
+			vtx[i].z = (float)(z0[i] + level*dz);
 		}
 		oapiEditMeshGroup (hMesh, GRP_LIT_SURFACES_VC, &ges);
 

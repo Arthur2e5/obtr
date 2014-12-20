@@ -30,6 +30,12 @@ void HUDButton::Reset2D (MESHHANDLE hMesh)
 
 // --------------------------------------------------------------
 
+void HUDButton::ResetVC (DEVMESHHANDLE hMesh)
+{
+}
+
+// --------------------------------------------------------------
+
 bool HUDButton::Redraw2D (SURFHANDLE surf)
 {
 	// constants for texture coordinates
@@ -52,8 +58,6 @@ bool HUDButton::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 {
 	if (!hMesh) return false;
 	DeltaGlider *dg = (DeltaGlider*)vessel;
-	if (dg->GetHUDMode() < 0)
-		dg->SetHUDMode(oapiGetHUDMode());
 
 	static const int nbutton = 3;
 	static const int nvtx_per_button = 16;

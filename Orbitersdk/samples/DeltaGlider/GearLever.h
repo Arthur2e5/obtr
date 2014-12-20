@@ -18,7 +18,6 @@
 class GearLever: public PanelElement {
 public:
 	GearLever (VESSEL3 *v);
-	//void AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx);
 	bool Redraw2D (SURFHANDLE surf);
 	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);

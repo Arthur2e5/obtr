@@ -96,7 +96,7 @@ bool MWSButton::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 
 	if (light != islit) {
 		NTVERTEX vtx[4];
-		static WORD vidx[4] = {32,33,34,35};
+		static WORD vidx[4] = {0,1,2,3};
 		GROUPEDITSPEC ges;
 		ges.flags = GRPEDIT_VTXTEXU;
 		ges.nVtx = 4;
@@ -105,7 +105,7 @@ bool MWSButton::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 		float xofs = 0.2246f + (light ? 0.12891f : 0.0f);
 		vtx[0].tu = vtx[1].tu = xofs;
 		vtx[2].tu = vtx[3].tu = xofs + 0.125f;
-		oapiEditMeshGroup (hMesh, GRP_STATUS_INDICATOR_VC, &ges);
+		oapiEditMeshGroup (hMesh, GRP_MWS_VC, &ges);
 		islit = light;
 	}
 	return false;
