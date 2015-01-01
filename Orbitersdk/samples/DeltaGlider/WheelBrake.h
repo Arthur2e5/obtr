@@ -20,7 +20,7 @@
 class WheelBrakeLever: public PanelElement {
 public:
 	WheelBrakeLever (VESSEL3 *v);
-	void AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx);
+	void Reset2D (MESHHANDLE hMesh);
 	bool Redraw2D (SURFHANDLE surf);
 	bool ProcessMouse2D (int event, int mx, int my);
 

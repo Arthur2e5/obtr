@@ -2708,6 +2708,7 @@ void DeltaGlider::clbkSetClassCaps (FILEHANDLE cfg)
 	SetMeshVisibilityMode (AddMesh (exmesh_tpl = oapiLoadMeshGlobal (ScramVersion() ? "DG\\deltaglider" : "DG\\deltaglider_ns")), MESHVIS_EXTERNAL);
 	SetMeshVisibilityMode (AddMesh (vcmesh_tpl = oapiLoadMeshGlobal ("DG\\deltaglider_vc")), MESHVIS_VC);
 	panelmesh0 = oapiLoadMeshGlobal ("DG\\dg_2dpanel0");
+	panelmesh1 = NULL; // we create this one inline when needed
 
 	// **************** vessel-specific insignia ****************
 
@@ -3066,7 +3067,6 @@ void DeltaGlider::clbkNavMode (int mode, bool active)
 
 void DeltaGlider::clbkPostStep (double simt, double simdt, double mjd)
 {
-
 	// calculate max scramjet thrust
 	if (scramjet) ScramjetThrust ();
 
@@ -3482,8 +3482,7 @@ void DeltaGlider::DefinePanelOverhead (PANELHANDLE hPanel)
 	MESHGROUP grp;
 	memset (&grp, 0, sizeof(MESHGROUP));
 	ReleaseSurfaces();
-	hPanelMesh = panelmesh0; // replace with panelmesh1;
-	SURFHANDLE panel2dtex = oapiGetTextureHandle(hPanelMesh,0);
+	SURFHANDLE panel2dtex = oapiGetTextureHandle(panelmesh0,1);
 
 	const DWORD NVTX = 8, NIDX = 12;
 	const DWORD texw = PANEL2D_TEXW, texh = PANEL2D_TEXH;
@@ -3505,18 +3504,19 @@ void DeltaGlider::DefinePanelOverhead (PANELHANDLE hPanel)
 	};
 
 	// Create the mesh for defining the panel geometry
-	if (hPanelMesh) oapiDeleteMesh (hPanelMesh);
-	hPanelMesh = oapiCreateMesh (0, 0);
-	for (i = 0; i < 2; i++)
-		oapiAddMeshGroup (hPanelMesh, &grp);
+	if (!panelmesh1) {
+		panelmesh1 = oapiCreateMesh (0, 0);
+		for (i = 0; i < 2; i++)
+			oapiAddMeshGroup (panelmesh1, &grp);
 
-	// Define overhead panel background
-	oapiAddMeshGroupBlock (hPanelMesh, 0, VTX, NVTX, IDX, NIDX);
+		// Define overhead panel background
+		oapiAddMeshGroupBlock (panelmesh1, 0, VTX, NVTX, IDX, NIDX);
 
-	// Define panel elements on top of background
-	for (i = 0; i < ninstr_ovhd; i++)
-		instr[instr_ovhd0+i]->AddMeshData2D (hPanelMesh, 1);
-
+		// Define panel elements on top of background
+		for (i = 0; i < ninstr_ovhd; i++)
+			instr[instr_ovhd0+i]->AddMeshData2D (panelmesh1, 1);
+	}
+	hPanelMesh = panelmesh1;
 	SetPanelBackground (hPanel, &panel2dtex, 1, hPanelMesh, panelw, panelh, 0,
 		PANEL_ATTACH_TOP | PANEL_MOVEOUT_TOP);
 

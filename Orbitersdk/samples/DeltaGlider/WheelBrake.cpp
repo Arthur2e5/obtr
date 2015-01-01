@@ -10,19 +10,7 @@
 
 #define STRICT 1
 #include "WheelBrake.h"
-
-// constants for texture coordinates
-static const float texw = (float)PANEL2D_TEXW; // texture width
-static const float texh = (float)PANEL2D_TEXH; // texture height
-static const float tx_x0 = 0.0f;
-static const float tx_x1 = 25.0f;
-static const float tx_y0 = texh-650.0f;
-static const float tx_dx = 25.0f;
-static const float tx_dy = 77.0f;
-// constants for panel coordinates
-static const float bb_x0 = 1221.0f;
-static const float bb_x1 = 1248.0f;
-static const float bb_y0 =  493.0f;
+#include "meshres_p0.h"
 
 // ==============================================================
 
@@ -35,30 +23,19 @@ WheelBrakeLever::WheelBrakeLever (VESSEL3 *v): PanelElement (v)
 
 // ==============================================================
 
-void WheelBrakeLever::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
+void WheelBrakeLever::Reset2D (MESHHANDLE hMesh)
 {
-	static const DWORD NVTX = 8;
-	static const DWORD NIDX = 12;
-	static const NTVERTEX VTX[NVTX] = {
-		{bb_x0,       bb_y0,       0,  0,0,0,  tx_x0/texw,         tx_y0/texh},
-		{bb_x0+tx_dx, bb_y0,       0,  0,0,0,  (tx_x0+tx_dx)/texw, tx_y0/texh},
-		{bb_x0,       bb_y0+tx_dy, 0,  0,0,0,  tx_x0/texw,         tx_y0/texh},
-		{bb_x0+tx_dx, bb_y0+tx_dy, 0,  0,0,0,  (tx_x0+tx_dx)/texw, tx_y0/texh},
-		{bb_x1,       bb_y0,       0,  0,0,0,  tx_x1/texw,         tx_y0/texh},
-		{bb_x1+tx_dx, bb_y0,       0,  0,0,0,  (tx_x1+tx_dx)/texw, tx_y0/texh},
-		{bb_x1,       bb_y0+tx_dy, 0,  0,0,0,  tx_x1/texw,         tx_y0/texh},
-		{bb_x1+tx_dx, bb_y0+tx_dy, 0,  0,0,0,  (tx_x1+tx_dx)/texw, tx_y0/texh}
-	};
-	static const WORD IDX[NIDX] = {
-		0,1,2, 3,2,1, 4,5,6, 7,6,5
-	};
-	AddGeometry (hMesh, grpidx, VTX, NVTX, IDX, NIDX);
+	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
+	vtxofs = 104;
 }
 
 // ==============================================================
 
 bool WheelBrakeLever::Redraw2D (SURFHANDLE surf)
 {
+	static const float texh = (float)PANEL2D_TEXH; // texture height
+	static const float tx_y0 = texh-650.0f;
+	static const float tx_dy = 77.0f;
 	int i, j;
 	for (i = 0; i < 2; i++) {
 		double lvl = vessel->GetWheelbrakeLevel (i+1);

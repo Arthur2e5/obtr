@@ -11,18 +11,13 @@
 #define STRICT 1
 #include "SwitchArray.h"
 #include "DeltaGlider.h"
+#include "meshres_p0.h"
 
 // constants for texture coordinates
 static const float texw = (float)PANEL2D_TEXW; // texture width
-static const float texh = (float)PANEL2D_TEXH; // texture height
 static const float tx_dx = 25.0f;
-static const float tx_dy = 38.0f;
 static const float tx_x1 = 964.0f;
 static const float tx_x0 = tx_x1+tx_dx;
-static const float tx_y0 = texh-611.0f;
-static const float bb_x0 = 856.0f;      // left edge of left-most button
-static const float bb_y0 = 415.0f;      // top edge of button row
-static const float bb_dx = 32.0f;       // button spacing
 
 const DWORD nbutton = 8;
 
@@ -34,14 +29,16 @@ SwitchArray::SwitchArray (VESSEL3 *v): PanelElement (v)
 
 // ==============================================================
 
-void SwitchArray::Reset2D ()
+void SwitchArray::Reset2D (MESHHANDLE hMesh)
 {
 	DWORD i;
 	for (i = 0; i < nbutton; i++) btnstate[i] = 0;
+	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
+	vtxofs = 112;
 }
 
 // ==============================================================
-
+#ifdef UNDEF
 void SwitchArray::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 {
 	const DWORD NVTX = 4*nbutton;
@@ -64,13 +61,11 @@ void SwitchArray::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
 	}
 	AddGeometry(hMesh, grpidx, VTX, NVTX, IDX, NIDX);
 }
-
+#endif
 // ==============================================================
 
 bool SwitchArray::Redraw2D (SURFHANDLE surf)
 {
-	return false; // for now
-
 	DeltaGlider *dg = (DeltaGlider*)vessel;
 
 	int i, j, state, vofs;

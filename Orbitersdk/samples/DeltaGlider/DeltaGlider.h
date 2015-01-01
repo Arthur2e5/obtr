@@ -363,6 +363,7 @@ public:
 	MESHHANDLE exmesh_tpl;          // vessel mesh: global template
 	MESHHANDLE vcmesh_tpl;          // VC mesh: global template
 	MESHHANDLE panelmesh0;          // 2D main panel
+	MESHHANDLE panelmesh1;          // 2D overhead panel
 	DEVMESHHANDLE exmesh;           // vessel mesh: instance
 	DEVMESHHANDLE vcmesh;           // VC mesh: instance
 	THGROUP_HANDLE thg_main;
