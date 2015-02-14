@@ -357,6 +357,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\dg_vc_anim.h"
+				>
+			</File>
+			<File
 				RelativePath="DGLua.cpp"
 				>
 				<FileConfiguration
@@ -377,6 +381,14 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\PressureCtrl.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PressureCtrl.h"
+				>
 			</File>
 			<File
 				RelativePath="Ramjet.cpp"
@@ -444,6 +456,22 @@
 					>
 				</File>
 				<File
+					RelativePath=".\CockpitLight.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\CockpitLight.h"
+					>
+				</File>
+				<File
+					RelativePath=".\DGSwitches.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\DGSwitches.h"
+					>
+				</File>
+				<File
 					RelativePath=".\ElevTrim.cpp"
 					>
 				</File>
@@ -502,6 +530,14 @@
 					>
 				</File>
 				<File
+					RelativePath=".\HoverCtrl.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\HoverCtrl.h"
+					>
+				</File>
+				<File
 					RelativePath=".\HudBtn.cpp"
 					>
 				</File>
@@ -547,6 +583,14 @@
 				</File>
 				<File
 					RelativePath=".\MFDButton.h"
+					>
+				</File>
+				<File
+					RelativePath=".\MomentInd.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\MomentInd.h"
 					>
 				</File>
 				<File

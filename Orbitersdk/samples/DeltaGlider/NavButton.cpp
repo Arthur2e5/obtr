@@ -69,9 +69,13 @@ bool NavButton::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE)
 	ges.nVtx = nvtx;
 	ges.vIdx = NULL;
 	static float z0_base[nvtx_per_button] = {
-		7.2650f,7.2650f,7.2650f,7.2650f,7.2650f,7.2650f,7.2700f,7.2700f,
-		7.2650f,7.2650f,7.2700f,7.2700f,7.2650f,7.2650f,7.2700f,7.2700f
+		7.2630f,7.2630f,7.2630f,7.2630f,7.2630f,7.2630f,7.2680f,7.2680f,
+		7.2630f,7.2630f,7.2680f,7.2680f,7.2630f,7.2630f,7.2680f,7.2680f
 	};
+	//static float z0_base[nvtx_per_button] = {
+	//	7.2650f,7.2650f,7.2650f,7.2650f,7.2650f,7.2650f,7.2700f,7.2700f,
+	//	7.2650f,7.2650f,7.2700f,7.2700f,7.2650f,7.2650f,7.2700f,7.2700f
+	//};
 	static float z0_shift = 0.004f;
 	static float u0_base[nvtx_per_button] = {
 		0.3594f,0.3984f,0.3594f,0.3984f,0.3594f,0.3984f,0.3594f,0.3984f,

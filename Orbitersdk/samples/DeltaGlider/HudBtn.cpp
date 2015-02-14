@@ -79,7 +79,7 @@ bool HUDButton::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 		0.2002f,0.1602f,0.2002f,0.1602f,0.2002f,0.1602f,0.2002f,0.1602f
 	};
 	static float v0_shift = (float)(41.0/1024.0);
-	static const int mode[4] = {HUD_ORBIT,HUD_SURFACE,HUD_DOCKING,HUD_NONE};
+	static const int mode[3] = {HUD_ORBIT,HUD_SURFACE,HUD_DOCKING};
 	for (i = 0; i < nbutton; i++) {
 		int vofs = i*nvtx_per_button;
 		bool hilight = (dg->GetHUDMode() == mode[i]);
@@ -145,13 +145,13 @@ HUDColourButton::HUDColourButton (VESSEL3 *v): PanelElement (v)
 bool HUDColourButton::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 {
 	if (pending_action) {
-		static const int nvtx_per_button = 16;
+		static const int nvtx_per_button = 20;
 		static const double depth = 0.004;
-		static int meshgrp = GRP_HUD_BUTTONS_VC;
+		static int meshgrp = GRP_BUTTON2_VC;
 		NTVERTEX dvtx[nvtx_per_button];
 		WORD vofs[nvtx_per_button];
 		float dz = (float)(pending_action == 1 ? depth : -depth);
-		static int vofs0 = nvtx_per_button*3;
+		static int vofs0 = 0;
 		for (int i = 0; i < nvtx_per_button; i++) {
 			dvtx[i].z = dz;
 			vofs[i] = vofs0 + i;
@@ -175,4 +175,26 @@ bool HUDColourButton::ProcessMouseVC (int event, VECTOR3 &p)
 		pending_action = 2;
 	}
 	return true;
+}
+
+// ==============================================================
+// ==============================================================
+
+HUDUpDownSwitch::HUDUpDownSwitch (VESSEL3 *v): DGSwitch1(v, DGSwitch1::SPRING)
+{
+}
+
+// --------------------------------------------------------------
+
+bool HUDUpDownSwitch::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	if (DGSwitch1::ProcessMouseVC (event, p)) {
+		DGSwitch1::State state = GetState();
+		switch (state) {
+			case DGSwitch1::UP: ((DeltaGlider*)vessel)->ActivateHud (DeltaGlider::DOOR_OPENING); break;
+			case DGSwitch1::DOWN: ((DeltaGlider*)vessel)->ActivateHud (DeltaGlider::DOOR_CLOSING); break;
+		}
+		return true;
+	}
+	return false;
 }

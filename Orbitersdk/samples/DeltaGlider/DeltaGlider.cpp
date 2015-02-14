@@ -1,7 +1,7 @@
 // ==============================================================
 //                ORBITER MODULE: DeltaGlider
 //                  Part of the ORBITER SDK
-//          Copyright (C) 2001-2008 Martin Schweiger
+//          Copyright (C) 2001-2015 Martin Schweiger
 //                   All rights reserved
 //
 // DeltaGlider.cpp
@@ -31,18 +31,24 @@
 #include "ThrottleHover.h"
 #include "ThrottleScram.h"
 #include "GimbalCtrl.h"
+#include "HoverCtrl.h"
 #include "SwitchArray.h"
 #include "RCoverSwitch.h"
 #include "AirlockSwitch.h"
 #include "Wheelbrake.h"
 #include "MwsButton.h"
+#include "MomentInd.h"
+#include "CockpitLight.h"
 #include "ScnEditorAPI.h"
+#include "PressureCtrl.h"
 #include "DlgCtrl.h"
+#include "dg_vc_anim.h"
 #include "meshres.h"
 #include "meshres_vc.h"
 #include "meshres_p0.h"
 #include <stdio.h>
 #include <math.h>
+#include <time.h>
 
 // ==============================================================
 // Global parameters
@@ -59,36 +65,36 @@ static HELPCONTEXT g_hc = {
 
 static const DWORD ntdvtx_geardown = 13;
 static TOUCHDOWNVTX tdvtx_geardown[ntdvtx_geardown] = {
-	{_V( 0   ,-2.57,10   ), 1e6, 1e5, 0.5, 0.05},
-	{_V(-3.5 ,-2.57,-1   ), 1e6, 1e5, 0.5, 0.05},
-	{_V( 3.5 ,-2.57,-1   ), 1e6, 1e5, 0.5, 0.05},
-	{_V(-8.5 ,-0.3 ,-7.05), 1e7, 1e6, 0.5},
-	{_V( 8.5 ,-0.3 ,-7.05), 1e7, 1e6, 0.5},
-	{_V(-8.5 ,-0.4 ,-3   ), 1e7, 1e6, 0.5},
-	{_V( 8.5 ,-0.4 ,-3   ), 1e7, 1e6, 0.5},
-	{_V(-8.85, 2.3 ,-5.05), 1e7, 1e6, 0.5},
-	{_V( 8.85, 2.3 ,-5.05), 1e7, 1e6, 0.5},
-	{_V(-8.85, 2.3 ,-7.05), 1e7, 1e6, 0.5},
-	{_V( 8.85, 2.3 ,-7.05), 1e7, 1e6, 0.5},
-	{_V( 0   , 2   , 6.2 ), 1e7, 1e6, 0.5},
-	{_V( 0   ,-0.6 ,10.65), 1e7, 1e6, 0.5}
+	{_V( 0   ,-2.57,10   ), 1e6, 1e5, 0.8, 0.1},
+	{_V(-3.5 ,-2.57,-1   ), 1e6, 1e5, 0.8, 0.1},
+	{_V( 3.5 ,-2.57,-1   ), 1e6, 1e5, 0.8, 0.1},
+	{_V(-8.5 ,-0.3 ,-7.05), 1e7, 1e6, 0.8},
+	{_V( 8.5 ,-0.3 ,-7.05), 1e7, 1e6, 0.8},
+	{_V(-8.5 ,-0.4 ,-3   ), 1e7, 1e6, 0.8},
+	{_V( 8.5 ,-0.4 ,-3   ), 1e7, 1e6, 0.8},
+	{_V(-8.85, 2.3 ,-5.05), 1e7, 1e6, 0.8},
+	{_V( 8.85, 2.3 ,-5.05), 1e7, 1e6, 0.8},
+	{_V(-8.85, 2.3 ,-7.05), 1e7, 1e6, 0.8},
+	{_V( 8.85, 2.3 ,-7.05), 1e7, 1e6, 0.8},
+	{_V( 0   , 2   , 6.2 ), 1e7, 1e6, 0.8},
+	{_V( 0   ,-0.6 ,10.65), 1e7, 1e6, 0.8}
 };
 
 static const DWORD ntdvtx_gearup = 13;
 static TOUCHDOWNVTX tdvtx_gearup[ntdvtx_gearup] = {
-	{_V( 0   ,-1.5 ,9),     1e6, 1e5, 0.5, 0.5},
-	{_V(-6   ,-0.8 ,-5),    1e6, 1e5, 0.5, 0.5},
-	{_V( 3   ,-1.2 ,-5),    1e6, 1e5, 0.5, 0.5},
-	{_V(-8.5 ,-0.3 ,-7.05), 1e7, 1e6, 0.5},
-	{_V( 8.5 ,-0.3 ,-7.05), 1e7, 1e6, 0.5},
-	{_V(-8.5 ,-0.4 ,-3   ), 1e7, 1e6, 0.5},
-	{_V( 8.5 ,-0.4 ,-3   ), 1e7, 1e6, 0.5},
-	{_V(-8.85, 2.3 ,-5.05), 1e7, 1e6, 0.5},
-	{_V( 8.85, 2.3 ,-5.05), 1e7, 1e6, 0.5},
-	{_V(-8.85, 2.3 ,-7.05), 1e7, 1e6, 0.5},
-	{_V( 8.85, 2.3 ,-7.05), 1e7, 1e6, 0.5},
-	{_V( 0   , 2   , 6.2 ), 1e7, 1e6, 0.5},
-	{_V( 0   ,-0.6 ,10.65), 1e7, 1e6, 0.5}
+	{_V( 0   ,-1.5 ,9),     1e6, 1e5, 0.8, 0.8},
+	{_V(-6   ,-0.8 ,-5),    1e6, 1e5, 0.8, 0.8},
+	{_V( 3   ,-1.2 ,-5),    1e6, 1e5, 0.8, 0.8},
+	{_V(-8.5 ,-0.3 ,-7.05), 1e7, 1e6, 0.8},
+	{_V( 8.5 ,-0.3 ,-7.05), 1e7, 1e6, 0.8},
+	{_V(-8.5 ,-0.4 ,-3   ), 1e7, 1e6, 0.8},
+	{_V( 8.5 ,-0.4 ,-3   ), 1e7, 1e6, 0.8},
+	{_V(-8.85, 2.3 ,-5.05), 1e7, 1e6, 0.8},
+	{_V( 8.85, 2.3 ,-5.05), 1e7, 1e6, 0.8},
+	{_V(-8.85, 2.3 ,-7.05), 1e7, 1e6, 0.8},
+	{_V( 8.85, 2.3 ,-7.05), 1e7, 1e6, 0.8},
+	{_V( 0   , 2   , 6.2 ), 1e7, 1e6, 0.8},
+	{_V( 0   ,-0.6 ,10.65), 1e7, 1e6, 0.8}
 };
 
 // ==============================================================
@@ -152,6 +158,7 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	int i, j;
 
 	modelidx = (fmodel ? 1 : 0);
+	pctrl = new PressureControl (this);
 	aoa_ind = PI;
 	slip_ind = PI*0.5;
 	load_ind = PI;
@@ -197,6 +204,18 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	th_main_level     = 0.0;
 	last_hudmode      = HUD_NONE;
 	cockpit_light     = NULL;
+	docking_light     = NULL;
+	instr_light_on    = false;
+	flood_light_mode  = 0;
+	landdock_light_mode = 0;
+	strobe_light_on   = false;
+	nav_light_on      = false;
+	instr_brightness  = 0.5;
+	flood_brightness  = 0.7;
+	main_gimbal_mode  = 0;
+	hover_mode        = 0;
+	for (i = 0; i < 2; i++)
+		panelcol[i]   = 0;
 	skinpath[0] = '\0';
 	for (i = 0; i < 3; i++)
 		skin[i] = 0;
@@ -207,17 +226,21 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 		scram_intensity[i] = 0.0;
 	}
 	for (i = 0; i < 2; i++) {
-		scgimbalidx[i] = mpgimbalidx[i] = mygimbalidx[i] = 35;
+		mpgimbal[i] = mpgimbal_cmd[i] = 0.0;
+		mygimbal[i] = mygimbal_cmd[i] = 0.0;
 		scflowidx[i] = 0;
 		mainflowidx[i] = retroflowidx[i] = -1;
 		scTSFCidx[i] = -1;
 		mainpropidx[i] = rcspropidx[i] = scrampropidx[i] = -1;
-		mpswitch[i] = myswitch[i] = sgswitch[i] = 0;
+		mpswitch[i] = myswitch[i] = 0;
 	}
+	phover = phover_cmd = 0.0;
+	rhover = rhover_cmd = 0.0;
+	hpswitch = hrswitch = 0;
 	for (i = 0; i < 3; i++)
 		for (j = 0; j < 3; j++) rotidx[i][j] = 0;
 
-	mpmode = mymode = spmode = hbmode = hbswitch = 0;
+	mpmode = mymode = hbmode = hbswitch = 0;
 	mainpropmass = rcspropmass = scrampropmass = -1;
 	mainTSFCidx = hoverflowidx = -1;
 	hbalanceidx = 28;
@@ -278,12 +301,12 @@ void DeltaGlider::CreatePanelElements ()
 {
 	int i, j;
 
-	ninstr_main = 39;
+	ninstr_main = 50;
 	instr_scram0 = ninstr_main;
-	ninstr_main += (ScramVersion() ? 4 : 0);
+	ninstr_main += (ScramVersion() ? 1 : 0);
 
 	instr_ovhd0 = ninstr_main;
-	ninstr_ovhd = 1;
+	ninstr_ovhd = 10;
 
 	ninstr = ninstr_main + ninstr_ovhd;
 
@@ -303,40 +326,53 @@ void DeltaGlider::CreatePanelElements ()
 	instr[12] = new UndockButton (this);
 	instr[13] = new HUDButton (this);
 	instr[14] = new GearLever (this);
-	instr[15] = new PMainGimbalDisp (this);
-	instr[16] = new PMainGimbalCtrl (this);
-	instr[17] = new PMainGimbalCntr (this);
-	instr[18] = new YMainGimbalDisp (this);
-	instr[19] = new YMainGimbalCtrl (this);
-	instr[20] = new YMainGimbalMode (this);
-	instr[21] = new HoverBalanceDisp (this);
-	instr[22] = new HoverBalanceCtrl (this);
-	instr[23] = new HoverBalanceCntr (this);
-	instr[24] = new GearIndicator (this);
-	instr[25] = new NoseconeLever (this);
-	instr[26] = new NoseconeIndicator (this);
-	instr[27] = new SwitchArray (this);
-	instr[28] = new WheelBrakeLever (this);
-	instr[29] = new MWSButton (this);
+	instr[15] = new MainGimbalDial (this);
+	instr[16] = new MainGimbalDisp (this);
+	instr[17] = new PMainGimbalCtrl (this);
+	instr[18] = new YMainGimbalCtrl (this);
+	instr[19] = new HoverCtrlDial (this);
+	instr[20] = new HoverDisp (this);
+	instr[21] = new PHoverCtrl (this);
+	instr[22] = new RHoverCtrl (this);
+	instr[23] = new NoseconeLever (this);
+	instr[24] = new NoseconeIndicator (this);
+	instr[25] = new SwitchArray (this);
+	instr[26] = new WheelBrakeLever (this);
+	instr[27] = new MWSButton (this);
 	for (i = MFD_LEFT; i <= MFD_RIGHT; i++) {
-		instr[30+i*3] = new MFDButtonRow (this, i);
+		instr[28+i*3] = new MFDButtonRow (this, i);
 		for (j = 0; j < 2; j++)
-			instr[31+i*3+j] = new MFDButtonCol (this, i, j);
+			instr[29+i*3+j] = new MFDButtonCol (this, i, j);
 	}
-	instr[36] = new HUDBrightnessDial (this);
-	instr[37] = new HUDColourButton (this);
-	instr[38] = new RCoverSwitch (this);
+	instr[34] = new HUDBrightnessDial (this);
+	instr[35] = new HUDColourButton (this);
+	instr[36] = new RCoverSwitch (this);
+	instr[37] = new GearIndicator (this);
+	instr[38] = new InstrLightSwitch (this);
+	instr[39] = new InstrLightBrightnessDial (this);
+	instr[40] = new FloodLightSwitch (this);
+	instr[41] = new FloodLightBrightnessDial (this);
+	instr[42] = new AngRateIndicator (this, g_Param.surf);
+	instr[43] = new HUDUpDownSwitch (this);
+	instr[44] = new LandDockLightSwitch (this);
+	instr[45] = new StrobeLightSwitch (this);
+	instr[46] = new NavLightSwitch (this);
+	instr[47] = new HatchSwitch (this);
+	instr[48] = new ILockSwitch (this);
+	instr[49] = new OLockSwitch (this);
 
 	aap = new AAP (this);   aap->AttachHSI ((InstrHSI*)instr[1]);
 
 	if (ScramVersion()) {
 		instr[instr_scram0+0] = new ThrottleScram (this);
-		instr[instr_scram0+1] = new ScramGimbalDisp (this);
-		instr[instr_scram0+2] = new ScramGimbalCtrl (this);
-		instr[instr_scram0+3] = new ScramGimbalCntr (this);
 	}
 
 	instr[instr_ovhd0+0] = new AirlockSwitch (this);
+	for (i = 0; i < 3; i++) {
+		instr[instr_ovhd0+1+i] = new AngularVelocityIndicator (this, i);
+		instr[instr_ovhd0+4+i] = new AngularAccelerationIndicator (this, i);
+		instr[instr_ovhd0+7+i] = new AngularMomentIndicator (this, i);
+	}
 }
 
 // --------------------------------------------------------------
@@ -588,14 +624,14 @@ void DeltaGlider::DefineAnimations ()
 	// HUD brightness dial
 	static UINT HudBDialGrp = GRP_HUD_BRIGHTNESS_VC;
 	static MGROUP_ROTATE HudBDialTransform (1, &HudBDialGrp, 1,
-		_V(-0.0104,1.2749,7.2680), _V(0,0,-1), (float)(280*RAD));
+		VC_HUD_BRIGHTNESS_ref, VC_HUD_BRIGHTNESS_axis, (float)(-280*RAD));
 	anim_vc_hudbdial = CreateAnimation (0.5);
 	AddAnimationComponent (anim_vc_hudbdial, 0, 1, &HudBDialTransform);
 
 	// Elevator trim wheel
 	static UINT TrimWheelGrp = GRP_ETRIM_WHEEL_VC;
 	static MGROUP_ROTATE TrimWheelTransform (1, &TrimWheelGrp, 1,
-		_V(0,0.8943,7.1777), _V(1,0,0), (float)(PI*0.06));
+		etrim_wheel_ref, etrim_wheel_axis, (float)(PI*0.06));
 	anim_vc_trimwheel = CreateAnimation (0.5);
 	AddAnimationComponent (anim_vc_trimwheel, 0, 1, &TrimWheelTransform);
 
@@ -648,116 +684,77 @@ void DeltaGlider::DefineAnimations ()
 	// Gear lever
 	static UINT GearLeverGrp = GRP_GEAR_LEVER_VC;
 	static MGROUP_ROTATE GearLeverTransform (1, &GearLeverGrp, 1,
-		_V(0,0.9160,7.1989), _V(-1,0,0), (float)(70*RAD));
+		vc_gearlever_ref, vc_gearlever_axis, (float)(-70*RAD));
 	anim_gearlever = CreateAnimation (0.5);
 	AddAnimationComponent (anim_gearlever, 0, 1, &GearLeverTransform);
 
 	// Airbrake lever
 	static UINT AirbrakeLeverGrp = GRP_AIRBRAKE_LEVER_VC;
 	static MGROUP_ROTATE AirbrakeLeverTransform (1, &AirbrakeLeverGrp, 1,
-		_V(0,0.9473,7.2582), _V(-1,0,0), (float)(40*RAD));
+		vc_abrakelever_ref, vc_abrakelever_axis, (float)(-40*RAD));
 	anim_airbrakelever = CreateAnimation(0.8);
 	AddAnimationComponent (anim_airbrakelever, 0, 1, &AirbrakeLeverTransform);
 
 	// Nosecone lever
 	static UINT NoseconeLeverGrp = GRP_NOSECONE_LEVER_VC;
 	static MGROUP_ROTATE NoseconeLeverTransform (1, &NoseconeLeverGrp, 1,
-		_V(0,0.9160,7.1989), _V(-1,0,0), (float)(70*RAD));
+		vc_nconelever_ref, vc_nconelever_axis, (float)(-70*RAD));
 	anim_noselever = CreateAnimation (0.5);
 	AddAnimationComponent (anim_noselever, 0, 1, &NoseconeLeverTransform);
 
 	// Undock lever
 	static UINT UndockLeverGrp = GRP_UNDOCK_LEVER_VC;
 	static MGROUP_ROTATE UndockLeverTransform (1, &UndockLeverGrp, 1,
-		_V(0,0.8846,7.1302), _V(-1,0,0), (float)(90*RAD));
+		vc_undocklever_ref, vc_undocklever_axis, (float)(-90*RAD));
 	anim_undocklever = CreateAnimation (0);
 	AddAnimationComponent (anim_undocklever, 0, 1, &UndockLeverTransform);
 
-	// Switch 1: cockpit lights on/off
-	static UINT Switch1Grp = GRP_SWITCH1_VC;
-	static MGROUP_ROTATE Switch1Transform (1, &Switch1Grp, 1,
-		_V(0,0.8490,6.9863), _V(1,0,0), (float)(50*RAD));
-	anim_switch[0] = CreateAnimation (0.5);
-	AddAnimationComponent (anim_switch[0], 0, 1, &Switch1Transform);
+	// Instrument illumination brightness dial
+	static UINT InstrBDialGrp = GRP_INSTR_BRIGHTNESS_VC;
+	static MGROUP_ROTATE InstrBDialTransform (1, &InstrBDialGrp, 1,
+		VC_INSTR_BRIGHTNESS_ref, VC_INSTR_BRIGHTNESS_axis, (float)(-280*RAD));
+	anim_instrbdial = CreateAnimation (0.5);
+	AddAnimationComponent (anim_instrbdial, 0, 1, &InstrBDialTransform);
 
-	// Switch 2: cockpit lights red/white
-	static UINT Switch2Grp = GRP_SWITCH2_VC;
-	static MGROUP_ROTATE Switch2Transform (1, &Switch2Grp, 1,
-		_V(0,0.8490,6.9863), _V(1,0,0), (float)(50*RAD));
-	anim_switch[1] = CreateAnimation (0.5);
-	AddAnimationComponent (anim_switch[1], 0, 1, &Switch2Transform);
+	// Floodlight brightness dial
+	static UINT FloodBDialGrp = GRP_FLOOD_BRIGHTNESS_VC;
+	static MGROUP_ROTATE FloodBDialTransform (1, &FloodBDialGrp, 1,
+		VC_FLOOD_BRIGHTNESS_ref, VC_FLOOD_BRIGHTNESS_axis, (float)(-280*RAD));
+	anim_floodbdial = CreateAnimation (0.5);
+	AddAnimationComponent (anim_floodbdial, 0, 1, &FloodBDialTransform);
 
-	static UINT ScramGimbalLGrp = GRP_SCRAMGIMBAL_L_VC;
-	static MGROUP_ROTATE ScramGimbalL (1, &ScramGimbalLGrp, 1,
-		_V(-0.2620,1.0515,7.2433), _V(0.9439,-0.0828,0.3197), (float)(31*RAD));
-	anim_scramgimbal[0] = CreateAnimation (0.5);
-	AddAnimationComponent (anim_scramgimbal[0], 0, 1, &ScramGimbalL);
-
-	static UINT ScramGimbalRGrp = GRP_SCRAMGIMBAL_R_VC;
-	static MGROUP_ROTATE ScramGimbalR (1, &ScramGimbalRGrp, 1,
-		_V(-0.2501,1.0504,7.2474), _V(0.9439,-0.0828,0.3197), (float)(31*RAD));
-	anim_scramgimbal[1] = CreateAnimation (0.5);
-	AddAnimationComponent (anim_scramgimbal[1], 0, 1, &ScramGimbalR);
-
-	static UINT PMainGimbalLGrp = GRP_MAIN_PITCHGIMBAL_L_VC;
-	static MGROUP_ROTATE PMainGimbalL (1, &PMainGimbalLGrp, 1,
-		_V(-0.3682,1.0986,7.1452), _V(0.7139,-0.1231,0.6893), (float)(31*RAD));
-	anim_pmaingimbal[0] = CreateAnimation (0.5);
-	AddAnimationComponent (anim_pmaingimbal[0], 0, 1, &PMainGimbalL);
-
-	static UINT PMainGimbalRGrp = GRP_MAIN_PITCHGIMBAL_R_VC;
-	static MGROUP_ROTATE PMainGimbalR (1, &PMainGimbalRGrp, 1,
-		_V(-0.3587,1.0970,7.1543), _V(0.7139,-0.1231,0.6893), (float)(31*RAD));
-	anim_pmaingimbal[1] = CreateAnimation (0.5);
-	AddAnimationComponent (anim_pmaingimbal[1], 0, 1, &PMainGimbalR);
-
-	static UINT YMainGimbalLGrp = GRP_MAIN_YAWGIMBAL_L_VC;
-	static MGROUP_ROTATE YMainGimbalL (1, &YMainGimbalLGrp, 1,
-		_V(-0.3638,1.0479,7.1364), _V(-0.0423,0.9733,0.2257), (float)(31*RAD));
-	anim_ymaingimbal[0] = CreateAnimation (0.5);
-	AddAnimationComponent (anim_ymaingimbal[0], 0, 1, &YMainGimbalL);
-
-	static UINT YMainGimbalRGrp = GRP_MAIN_YAWGIMBAL_R_VC;
-	static MGROUP_ROTATE YMainGimbalR (1, &YMainGimbalRGrp, 1,
-		_V(-0.3633,1.0355,7.1336), _V(-0.0423,0.9733,0.2257), (float)(31*RAD));
-	anim_ymaingimbal[1] = CreateAnimation (0.5);
-	AddAnimationComponent (anim_ymaingimbal[1], 0, 1, &YMainGimbalR);
-
-	static UINT HBalanceGrp = GRP_HBALANCE_VC;
-	static MGROUP_ROTATE HBalance (1, &HBalanceGrp, 1,
-		_V(-0.2561,1.1232,7.2678), _V(0.9439,-0.0828,0.3197), (float)(31*RAD));
-	anim_hbalance = CreateAnimation (0.5);
-	AddAnimationComponent (anim_hbalance, 0, 1, &HBalance);
-
-	static UINT RCSDialGrp = GRP_RCS_MODE_VC;
+	// RCS control dial
+	static UINT RCSDialGrp = GRP_RCS_DIAL_VC;
 	static MGROUP_ROTATE RCSDial (1, &RCSDialGrp, 1,
-		_V(0.0649,1.2803,7.2680), _V(0,0,-1), (float)(100*RAD));
+		VC_RCS_DIAL_ref, VC_RCS_DIAL_axis, (float)(-100*RAD));
 	anim_rcsdial = CreateAnimation (0.5);
 	AddAnimationComponent (anim_rcsdial, 0, 1, &RCSDial);
 
 	// Airfoil control dial
-	static UINT AFDialGrp = GRP_AF_CTRL_VC;
+	static UINT AFDialGrp = GRP_AF_DIAL_VC;
 	static MGROUP_ROTATE AFDial (1, &AFDialGrp, 1,
-		_V(-0.3173,1.0955,7.2431), _V(0,0.3420,-0.9397), (float)(100*RAD));
+		VC_AF_DIAL_ref, VC_AF_DIAL_axis, (float)(-100*RAD));
 	anim_afdial = CreateAnimation (0.5);
 	AddAnimationComponent (anim_afdial, 0, 1, &AFDial);
 
-	static UINT OLockSwitchGrp = GRP_OLOCK_SWITCH_VC;
-	static MGROUP_ROTATE OLockSwitch (1, &OLockSwitchGrp, 1,
-		_V(0.2506,1.0969,7.2866), _V(-0.7590,-0.231,0.6087), (float)(31*RAD));
-	anim_olockswitch = CreateAnimation (1);
-	AddAnimationComponent (anim_olockswitch, 0, 1, &OLockSwitch);
+	// Gimbal control dial
+	static UINT GimbalDialGrp = GRP_GIMBAL_CTRL_VC;
+	static MGROUP_ROTATE GimbalDial (1, &GimbalDialGrp, 1,
+		vc_gimdial_ref, vc_gimdial_axis, (float)(100*RAD));
+	anim_gimbaldial = CreateAnimation (0.5);
+	AddAnimationComponent (anim_gimbaldial, 0, 1, &GimbalDial);
 
-	static UINT ILockSwitchGrp = GRP_ILOCK_SWITCH_VC;
-	static MGROUP_ROTATE ILockSwitch (1, &ILockSwitchGrp, 1,
-		_V(0.2824,1.1066,7.2611), _V(-0.7590,-0.231,0.6087), (float)(31*RAD));
-	anim_ilockswitch = CreateAnimation (1);
-	AddAnimationComponent (anim_ilockswitch, 0, 1, &ILockSwitch);
+	// Hover control dial
+	static UINT HoverDialGrp = GRP_HOVER_CTRL_VC;
+	static MGROUP_ROTATE HoverDial (1, &HoverDialGrp, 1,
+		vc_hvrdial_ref, vc_hrvdial_axis, (float)(100*RAD));
+	anim_hoverdial = CreateAnimation (0.5);
+	AddAnimationComponent (anim_hoverdial, 0, 1, &HoverDial);
 
 	// Retro engine cover switch
 	static UINT RetroSwitchGrp = GRP_RETRO_COVER_SWITCH_VC;
 	static MGROUP_ROTATE RetroSwitchTransform (1, &RetroSwitchGrp, 1,
-		_V(0,1.0065,7.2035), _V(-1,0,0), (float)(50*RAD));
+		vc_rcoverswitch_ref, vc_rcoverswitch_axis, (float)(-50*RAD));
 	anim_retroswitch = CreateAnimation (0.5);
 	AddAnimationComponent (anim_retroswitch, 0, 1, &RetroSwitchTransform);
 
@@ -766,12 +763,6 @@ void DeltaGlider::DefineAnimations ()
 		_V(0.2889,1.0622,7.2388), _V(-0.7590,-0.231,0.6087), (float)(31*RAD));
 	anim_ladderswitch = CreateAnimation (1);
 	AddAnimationComponent (anim_ladderswitch, 0, 1, &LadderSwitch);
-
-	static UINT HatchSwitchGrp = GRP_HATCH_SWITCH_VC;
-	static MGROUP_ROTATE HatchSwitch (1, &HatchSwitchGrp, 1,
-		_V(0.2511,1.0006,7.2507), _V(-0.7590,-0.231,0.6087), (float)(31*RAD));
-	anim_hatchswitch = CreateAnimation (1);
-	AddAnimationComponent (anim_hatchswitch, 0, 1, &HatchSwitch);
 
 	static UINT RadiatorSwitchGrp = GRP_RADIATOR_SWITCH_VC;
 	static MGROUP_ROTATE RadiatorSwitch (1, &RadiatorSwitchGrp, 1,
@@ -789,6 +780,22 @@ void DeltaGlider::ApplySkin ()
 	if (skin[0]) oapiSetTexture (exmesh, 2, skin[0]);
 	if (skin[1]) oapiSetTexture (exmesh, 3, skin[1]);
 	oapiSetTexture (exmesh, 5, insignia_tex);
+
+	static const MATERIAL panelmat[5] = {
+		{{0.5,0.6,0.6,1},{0.5,0.6,0.6,1},{0.2,0.2,0.2,1},{0.15,0.15,0.15,1},10}, // default
+		{{0.6,0.55,0.45,1},{0.6,0.55,0.45,1},{0.1,0.1,0.1,1},{0.15,0.15,0.15,1},5}, // brown
+		{{0.2,0.2,0.15,1},{0.5,0.5,0.5,1},{0.6,0.6,0.6,1},{0.15,0.15,0.15,1},20}, // shiny anthrazit
+		{{0.75,0.75,0.65,1},{0.75,0.75,0.65,1},{0.3,0.3,0.3,1},{0.15,0.15,0.15,1},20}, // shiny anthrazit
+		{{0.5,0.1,0.1,1},{0.5,0.1,0.1,1},{0.2,0.2,0.2,1},{0.15,0.15,0.15,1},10} // DG-red
+	};
+	if (panelcol[0] > 0 && panelcol[0] <= 4)
+		oapiSetMaterial (vcmesh, 14, panelmat+panelcol[0]);
+
+	//time_t lt; time(&lt); struct tm *st = localtime(&lt);
+	//if (vcmesh && st->tm_mon==3 && st->tm_mday==1) {
+	//	SURFHANDLE t = oapiLoadTexture ("generic\\noisep.dds");
+	//	if (t) oapiSetTexture (vcmesh, 17, t);
+	//}
 }
 
 // --------------------------------------------------------------
@@ -1199,7 +1206,6 @@ void DeltaGlider::ActivateHatch (DoorStatus action)
 		UpdateStatusIndicators();
 	}
 	oapiTriggerPanelRedrawArea (0, AID_SWITCHARRAY);
-	SetAnimation (anim_hatchswitch, close ? 0:1);
 	UpdateCtrlDialog (this);
 	RecordEvent ("HATCH", close ? "CLOSE" : "OPEN");
 }
@@ -1243,7 +1249,6 @@ void DeltaGlider::ActivateOuterAirlock (DoorStatus action)
 		UpdateStatusIndicators();
 	}
 	oapiTriggerPanelRedrawArea (1, AID_AIRLOCKSWITCH);
-	SetAnimation (anim_olockswitch, close ? 0:1);
 	UpdateCtrlDialog (this);
 	RecordEvent ("OLOCK", close ? "CLOSE" : "OPEN");
 }
@@ -1264,7 +1269,6 @@ void DeltaGlider::ActivateInnerAirlock (DoorStatus action)
 		UpdateStatusIndicators();
 	}
 	oapiTriggerPanelRedrawArea (1, AID_AIRLOCKSWITCH);
-	SetAnimation (anim_ilockswitch, close ? 0:1);
 	UpdateCtrlDialog (this);
 	RecordEvent ("ILOCK", close ? "CLOSE" : "OPEN");
 }
@@ -1318,51 +1322,112 @@ void DeltaGlider::RevertHud (void)
 		DOOR_OPENING : DOOR_CLOSING);
 }
 
-void DeltaGlider::SetCockpitLight (bool on, bool white)
+void DeltaGlider::SetInstrLight (bool on, bool force)
 {
-	const COLOUR4 zero = {0,0,0,0};
-	const COLOUR4 wcol = {1.0f,1.0f,1.0f,0.0f};
-	const COLOUR4 rcol = {0.6f,0.05f,0.0f,0.0f};
-	const COLOUR4 &tgt = (white ? wcol : rcol);
+	if (on == instr_light_on && !force) return; // nothing to do
+	instr_light_on = on;
 
-	if (on) {
-		if (cockpit_light) {
-			const COLOUR4 col = cockpit_light->GetDiffuseColour();
-			if (col.b != tgt.b) {
-				DelLightEmitter (cockpit_light);
-				cockpit_light = NULL;
-			}
+	if (vcmesh) {
+		static MATERIAL norm = {{1,1,1,1},{0.8,0.8,0.8,1},{0.1,0.1,0.1,0},{0.15,0.15,0.15,1},5};
+		static MATERIAL label_glow[3] = {
+			{{0,0,0,0},{0,0,0,0},{0,0,0,0},{0.15,1,0.15,1},0},
+		    {{0,0,0,0},{0,0,0,0},{0,0,0,0},{1,0.7,0.15,1},0},
+			{{0,0,0,0},{0,0,0,0},{0,0,0,0},{0.6,0.6,1.0,1},0}};
+		static MATERIAL btn_glow = {{1,1,1,1},{1,1,1,1},{0.1,0.1,0.1,1},{0.6,0.6,0.6,1},5};
+		oapiSetMaterial (vcmesh, 0, on ? &btn_glow : &norm);
+		int idx = max(0, min(2, panelcol[1]));
+		MATERIAL mat;
+		if (on) {
+			float scale = (float)(0.2 + instr_brightness*0.8);
+			memcpy(&mat, label_glow+panelcol[1], sizeof(MATERIAL));
+			mat.emissive.r *= scale;
+			mat.emissive.g *= scale;
+			mat.emissive.b *= scale;
 		}
-		if (!cockpit_light) {
-			cockpit_light = (PointLight*)AddPointLight(_V(0,1.65,6.68), 3, 0, 0, 3, tgt, tgt, zero);
-			cockpit_light->SetVisibility (LightEmitter::VIS_COCKPIT);
-			cockpit_light->Activate(true);
-		}
-	} else {
-		if (cockpit_light) {
-			DelLightEmitter (cockpit_light);
-			cockpit_light = NULL;
-		}
+		oapiSetMaterial (vcmesh, 11, on ? &mat : &norm);
+		GROUPEDITSPEC ges = {on ? GRPEDIT_ADDUSERFLAG : GRPEDIT_DELUSERFLAG, 0x18, 0,0,0};
+		oapiEditMeshGroup (vcmesh, GRP_LIT_LABELS_VC, &ges);
+		oapiEditMeshGroup (vcmesh, GRP_GLOWLABELS_VC, &ges); // obsolete
 	}
 }
 
-void DeltaGlider::SetSwitch (int sw, int pos)
+
+void DeltaGlider::SetFloodLight (int mode)
 {
-	switch (sw) {
-	case 0: 
-		if (pos == 0) {
-			SetCockpitLight (false, false);
-		} else {
-			bool white = (GetAnimation (anim_switch[1]) > 0.5);
-			SetCockpitLight (true, white);
+	static const COLOUR4 zero = {0.0f,0.0f,0.0f,0.0f};
+	static const COLOUR4 wcol = {1.0f,1.0f,1.0f,0.0f};
+	static const COLOUR4 rcol = {0.6f,0.05f,0.0f,0.0f};
+
+	COLOUR4 col;
+
+	flood_light_mode = mode;
+	if (mode) {
+		col = (mode == 1 ? wcol : rcol);
+		if (!cockpit_light) {
+			cockpit_light = (PointLight*)AddPointLight(_V(0,1.65,6.68), 3, 0, 0, 3, col, col, zero);
+			cockpit_light->SetVisibility (LightEmitter::VIS_COCKPIT);
+			cockpit_light->Activate(true);
 		}
-		break;
-	case 1:
-		if (GetAnimation (anim_switch[0]) > 0.5)
-			SetCockpitLight (true, pos > 0);
-		break;
+		double intens = (float)(0.2 + flood_brightness*0.8);
+		cockpit_light->SetIntensity (intens);
+	} else {
+		DelLightEmitter (cockpit_light);
+		cockpit_light = NULL;
 	}
-	SetAnimation (anim_switch[sw], pos);
+}
+
+void DeltaGlider::SetLandDockLight (int mode)
+{
+	landdock_light_mode = mode;
+	if (docking_light) {
+		DelLightEmitter (docking_light);
+		docking_light = NULL;
+	}
+	if (mode) {
+		COLOUR4 col_a = {0,0,0,0};
+		COLOUR4 col_white = {1,1,1,0};
+		if (mode == 1) {
+			docking_light = (SpotLight*)AddSpotLight(_V(0.3,0.3,8.5), _V(0,0,1), 150, 1e-3, 0, 1e-3, RAD*30, RAD*60, col_white, col_white, col_a);
+		} else {
+			double tilt = -10.0*RAD;
+			docking_light = (SpotLight*)AddSpotLight(_V(0.1,-0.3,7.5), _V(0,sin(tilt),cos(tilt)), 5000, 1e-3, 1e-5, 2e-7, RAD*25, RAD*40, col_white, col_white, col_a);
+		}
+		docking_light->SetVisibility (LightEmitter::VIS_EXTERNAL);
+	}
+}
+
+void DeltaGlider::SetStrobeLight (bool on)
+{
+	strobe_light_on = on;
+	for (int i = 3; i <=6; i++) beacon[i].active = on;
+	oapiTriggerPanelRedrawArea (0, AID_SWITCHARRAY);
+	UpdateCtrlDialog (this);
+}
+
+void DeltaGlider::SetNavLight (bool on)
+{
+	nav_light_on = on;
+	for (int i = 0; i <= 2; i++) beacon[i].active = on;
+	oapiTriggerPanelRedrawArea (0, AID_SWITCHARRAY);
+	UpdateCtrlDialog (this);
+}
+
+void DeltaGlider::ModInstrBrightness (bool up)
+{
+	double dt = oapiGetSimStep();
+	double db = dt * (up ? 0.3 : -0.3);
+	instr_brightness = max(0.0, min (1.0, instr_brightness + db));
+	SetAnimation (anim_instrbdial, instr_brightness);
+	if (instr_light_on) SetInstrLight (true, true);
+}
+
+void DeltaGlider::ModFloodBrightness (bool up)
+{
+	double dt = oapiGetSimStep();
+	double db = dt * (up ? 0.3 : -0.3);
+	flood_brightness = max(0.0, min (1.0, flood_brightness + db));
+	SetAnimation (anim_floodbdial, flood_brightness);
+	if (flood_light_mode) SetFloodLight (flood_light_mode);
 }
 
 void DeltaGlider::ActivateRadiator (DoorStatus action)
@@ -1386,34 +1451,34 @@ void DeltaGlider::RevertRadiator (void)
 		DOOR_OPENING : DOOR_CLOSING);
 }
 
-void DeltaGlider::SetNavlight (bool on)
-{
-	beacon[0].active = beacon[1].active = beacon[2].active = on;
-	oapiTriggerPanelRedrawArea (0, AID_SWITCHARRAY);
-	UpdateCtrlDialog (this);
-}
+//void DeltaGlider::SetNavlight (bool on)
+//{
+//	beacon[0].active = beacon[1].active = beacon[2].active = on;
+//	oapiTriggerPanelRedrawArea (0, AID_SWITCHARRAY);
+//	UpdateCtrlDialog (this);
+//}
 
-void DeltaGlider::SetBeacon (bool on)
-{
-	beacon[3].active = beacon[4].active = on;
-	oapiTriggerPanelRedrawArea (0, AID_SWITCHARRAY);
-	UpdateCtrlDialog (this);
-}
+//void DeltaGlider::SetBeacon (bool on)
+//{
+//	beacon[3].active = beacon[4].active = on;
+//	oapiTriggerPanelRedrawArea (0, AID_SWITCHARRAY);
+//	UpdateCtrlDialog (this);
+//}
 
-void DeltaGlider::SetStrobe (bool on)
-{
-	beacon[5].active = beacon[6].active = on;
-	oapiTriggerPanelRedrawArea (0, AID_SWITCHARRAY);
-	UpdateCtrlDialog (this);
-}
+//void DeltaGlider::SetStrobe (bool on)
+//{
+//	beacon[5].active = beacon[6].active = on;
+//	oapiTriggerPanelRedrawArea (0, AID_SWITCHARRAY);
+//	UpdateCtrlDialog (this);
+//}
 
-void DeltaGlider::SetDockingLight (bool on)
-{
-	beacon[7].active = on;
-	docking_light->Activate (on);
-	oapiTriggerPanelRedrawArea (0, AID_SWITCHARRAY);
-	UpdateCtrlDialog (this);
-}
+//void DeltaGlider::SetDockingLight (bool on)
+//{
+//	beacon[7].active = on;
+//	docking_light->Activate (on);
+//	oapiTriggerPanelRedrawArea (0, AID_SWITCHARRAY);
+//	UpdateCtrlDialog (this);
+//}
 
 bool DeltaGlider::DecAttMode ()
 {
@@ -1478,219 +1543,242 @@ void DeltaGlider::EnableRetroThrusters (bool state)
 		SetThrusterResource (th_retro[i], state ? ph_main : NULL);
 }
 
-bool DeltaGlider::ShiftHoverBalance (int mode)
+void DeltaGlider::SetMainPGimbal (int which, double lvl)
 {
-	hbswitch = mode;
-	double t0 = GetThrusterMax0 (th_hover[0]);
-	double t1 = GetThrusterMax0 (th_hover[1]);
-	double dt = t0-t1;
-	if (mode) {
-		double shift = oapiGetSimStep() * HOVER_BALANCE_SPEED * (mode == 1 ? 1.0:-1.0);
-		dt = max (min (dt+shift, MAX_HOVER_IMBALANCE), -MAX_HOVER_IMBALANCE);
-		SetThrusterMax0 (th_hover[0], MAX_HOVER_THRUST[modelidx] + dt*0.5);
-		SetThrusterMax0 (th_hover[1], MAX_HOVER_THRUST[modelidx] - dt*0.5);
+	VECTOR3 dir;
+	GetThrusterDir (th_main[which], dir);
+	dir /= dir.z;
+	mpgimbal[which] = dir.y = MAIN_PGIMBAL_RANGE*lvl;
+	SetThrusterDir (th_main[which], unit(dir));
+}
+
+void DeltaGlider::SetMainYGimbal (int which, double lvl)
+{
+	VECTOR3 dir;
+	GetThrusterDir (th_main[which], dir);
+	dir /= dir.z;
+	mygimbal[which] = dir.x = MAIN_YGIMBAL_RANGE*lvl;
+	SetThrusterDir (th_main[which], unit(dir));
+}
+
+void DeltaGlider::AutoMainGimbal ()
+{
+	int i;
+	double lvl, mlvl, plvl[2];
+
+	// Pitch gimbal
+	// a) pitch command
+	lvl = GetManualControlLevel(THGROUP_ATT_PITCHDOWN, MANCTRL_ROTMODE);
+	if (!lvl) lvl = -GetManualControlLevel(THGROUP_ATT_PITCHUP, MANCTRL_ROTMODE);
+	plvl[0] = plvl[1] = lvl;
+
+	// b) roll command
+	lvl = GetManualControlLevel(THGROUP_ATT_BANKRIGHT, MANCTRL_ROTMODE);
+	if (!lvl) lvl = -GetManualControlLevel(THGROUP_ATT_BANKLEFT, MANCTRL_ROTMODE);
+	plvl[0] += lvl;
+	plvl[1] -= lvl;
+
+	// scale to range and apply
+	mlvl = max(fabs(plvl[0]), fabs(plvl[1]));
+	if (mlvl > 1.0) 
+		for (i = 0; i < 2; i++) plvl[i] /= mlvl;
+	for (i = 0; i < 2; i++)
+		mpgimbal_cmd[i] = plvl[i]*MAIN_PGIMBAL_RANGE;
+
+	// Yaw gimbal
+	// a) compensate for main thrust differences
+	double t0 = GetThrusterLevel (th_main[0]);
+	double t1 = GetThrusterLevel (th_main[1]);
+	double tt = t0+t1;
+	mlvl = (tt ? (t0-t1)/tt : 0.0);
+	
+	// b) yaw command
+	lvl = GetManualControlLevel(THGROUP_ATT_YAWLEFT, MANCTRL_ROTMODE);
+	if (!lvl) lvl = -GetManualControlLevel(THGROUP_ATT_YAWRIGHT, MANCTRL_ROTMODE);
+	mlvl += lvl;
+
+	// scale to range and apply
+	mlvl = min (1.0, max (-1.0, mlvl));
+	for (i = 0; i < 2; i++)
+		mygimbal_cmd[i] = mlvl*MAIN_YGIMBAL_RANGE;
+}
+
+void DeltaGlider::TrackMainGimbal ()
+{
+	VECTOR3 dir;
+	bool update = false;
+	int i;
+	double dphi = oapiGetSimStep()*MAIN_GIMBAL_SPEED;
+	for (i = 0; i < 2; i++) {
+		if (mpgimbal[i] != mpgimbal_cmd[i]) {
+			update = true;
+			if (mpgimbal[i] < mpgimbal_cmd[i])
+				mpgimbal[i] = min (mpgimbal[i]+dphi, mpgimbal_cmd[i]);
+			else
+				mpgimbal[i] = max (mpgimbal[i]-dphi, mpgimbal_cmd[i]);
+		}
+		if (mygimbal[i] != mygimbal_cmd[i]) {
+			update = true;
+			if (mygimbal[i] < mygimbal_cmd[i])
+				mygimbal[i] = min (mygimbal[i]+dphi, mygimbal_cmd[i]);
+			else
+				mygimbal[i] = max (mygimbal[i]-dphi, mygimbal_cmd[i]);
+		}
 	}
-	int idx = (int)(28.4999*(1.0-dt/MAX_HOVER_IMBALANCE));
-	if (idx != hbalanceidx) {
-		hbalanceidx = idx;
-		return true;
-	} else
-		return false;
+	if (update) {
+		for (i = 0; i < 2; i++) {
+			GetThrusterDir (th_main[i], dir);
+			dir /= dir.z;
+			dir.y = mpgimbal[i];
+			dir.x = mygimbal[i];
+			SetThrusterDir (th_main[i], unit(dir));
+		}
+		oapiTriggerRedrawArea (0, 0, AID_MAINGIMBALDISP);
+	}
 }
 
 bool DeltaGlider::IncMainPGimbal (int which, int mode)
 {
-	VECTOR3 dir;
-	int i, idx;
-	bool redraw = false;
-	double dy = oapiGetSimStep() * MAIN_PGIMBAL_SPEED * (mode == 1 ? -1.0:1.0);
-
-	for (i = 0; i < 2; i++) {
+	const double cmd_speed = 0.5;
+	double dcmd = oapiGetSimStep() * cmd_speed * MAIN_PGIMBAL_RANGE * (mode == 1 ? -1.0:1.0);
+	for (int i = 0; i < 2; i++) {
 		if (mode && which & (1 << i)) {
-			GetThrusterDir (th_main[i], dir);
-			dir /= dir.z;
-			dir.y = min (MAIN_PGIMBAL_RANGE, max (-MAIN_PGIMBAL_RANGE, dir.y+dy));
-			SetThrusterDir (th_main[i], unit(dir));
-			idx = (int)(35.4999*(dir.y/MAIN_PGIMBAL_RANGE+1.0));
-			if (idx != mpgimbalidx[i]) {
-				mpgimbalidx[i] = idx;
-				redraw = true;
-			}
-			mpswitch[i] = mode;
+			if (main_gimbal_mode == 2)
+				mpgimbal_cmd[i] = min (MAIN_PGIMBAL_RANGE, max (-MAIN_PGIMBAL_RANGE, mpgimbal_cmd[i]+dcmd));
+			mpswitch[i] = 3-mode;
 		} else
 			mpswitch[i] = 0;
 	}
-	return redraw;
-}
-
-void DeltaGlider::AdjustMainPGimbal (int &mode)
-{
-	VECTOR3 dir;
-	int i, idx;
-	double dy = oapiGetSimStep() * MAIN_PGIMBAL_SPEED;
-	bool keep_going = false;
-
-	if (mode == 1) {
-		for (i = 0; i < 2; i++) {
-			GetThrusterDir (th_main[i], dir);
-			dir /= dir.z;
-			if (dir.y >= 0.0) dir.y = max(0.0, dir.y - dy);
-			else              dir.y = min(0.0, dir.y + dy);
-			SetThrusterDir (th_main[i], unit(dir));
-			idx = (int)(35.5*(dir.y/MAIN_PGIMBAL_RANGE+1.0));
-			if (idx != mpgimbalidx[i]) {
-				mpgimbalidx[i] = idx;
-				oapiTriggerRedrawArea (0, 0, AID_PGIMBALMAINDISP);
-			}
-			if (dir.y) keep_going = true;
-		}
-		if (!keep_going) {
-			mode = 0;
-			oapiTriggerRedrawArea (0, 0, AID_PGIMBALMAINMODE);
-		}
-	}
+	return true;
 }
 
 bool DeltaGlider::IncMainYGimbal (int which, int mode)
 {
-	VECTOR3 dir;
-	int i, idx;
-	bool redraw = false;
-	double dx = oapiGetSimStep() * MAIN_YGIMBAL_SPEED * (mode == 1 ? 1.0:-1.0);
-
-	for (i = 0; i < 2; i++) {
+	const double cmd_speed = 0.5;
+	double dcmd = oapiGetSimStep() * cmd_speed * MAIN_YGIMBAL_RANGE * (mode == 1 ? 1.0:-1.0);
+	for (int i = 0; i < 2; i++) {
 		if (mode && which & (1 << i)) {
-			GetThrusterDir (th_main[i], dir);
-			dir /= dir.z;
-			dir.x = min (MAIN_YGIMBAL_RANGE, max (-MAIN_YGIMBAL_RANGE, dir.x+dx));
-			SetThrusterDir (th_main[i], unit(dir));
-			idx = (int)(35.4999*(1.0-dir.x/MAIN_YGIMBAL_RANGE));
-			if (idx != mygimbalidx[i]) {
-				mygimbalidx[i] = idx;
-				redraw = true;
-			}
-			myswitch[i] = mode;
+			if (main_gimbal_mode == 2)
+				mygimbal_cmd[i] = min (MAIN_YGIMBAL_RANGE, max (-MAIN_YGIMBAL_RANGE, mygimbal_cmd[i]+dcmd));
+			myswitch[i] = 3-mode;
 		} else
 			myswitch[i] = 0;
 	}
-	return redraw;
+	return true;
 }
 
-void DeltaGlider::AdjustMainYGimbal (int &mode)
+bool DeltaGlider::IncPHover (int which, int mode)
 {
-	VECTOR3 dir;
-	int i, idx;
-	double tgtx[2], dx = oapiGetSimStep() * MAIN_YGIMBAL_SPEED;
-	bool keep_going = false;
-
-	switch (mode) {
-	case 1:   // center
-		tgtx[0] = tgtx[1] = 0.0;
-		break;
-	case 2:   // divergent
-		tgtx[1] = -(tgtx[0] = MAIN_YGIMBAL_RANGE);
-		break;
-	case 3: { // auto adjust
-		double t0 = GetThrusterLevel (th_main[0]);
-		double t1 = GetThrusterLevel (th_main[1]);
-		double tt = t0+t1;
-		tgtx[0] = tgtx[1] = (tt ? MAIN_YGIMBAL_RANGE*(t0-t1)/tt : 0.0);
-		} break;
-	}
-
-	for (i = 0; i < 2; i++) {
-		GetThrusterDir (th_main[i], dir);
-		dir /= dir.z;
-		if (dir.x >= tgtx[i]) dir.x = max(tgtx[i], dir.x - dx);
-		else                  dir.x = min(tgtx[i], dir.x + dx);
-		if (dir.x != tgtx[i] || mode == 3) keep_going = true;
-		SetThrusterDir (th_main[i], unit(dir));
-		idx = (int)(35.4999*(1.0-dir.x/MAIN_YGIMBAL_RANGE));
-		if (idx != mygimbalidx[i]) {
-			mygimbalidx[i] = idx;
-			oapiTriggerRedrawArea (0, 0, AID_YGIMBALMAINDISP);
-		}
-	}
-	if (!keep_going) {
-		mode = 0;
-		oapiTriggerRedrawArea (0, 0, AID_YGIMBALMAINMODE);
-	}
+	const double cmd_speed = 0.5;
+	double dcmd = oapiGetSimStep() * cmd_speed * PHOVER_RANGE * (mode == 1 ? 1.0:-1.0);
+	if (mode && which) {
+		if (hover_mode == 2)
+			phover_cmd = min (PHOVER_RANGE, max (-PHOVER_RANGE, phover_cmd+dcmd));
+		hpswitch = 3-mode;
+	} else
+		hpswitch = 0;
+	return true;
 }
 
-bool DeltaGlider::IncScramGimbal (int which, int mode)
+bool DeltaGlider::IncRHover (int which, int mode)
 {
-	VECTOR3 dir;
-	int i, idx;
-	bool redraw = false;
-	double phi, dphi = oapiGetSimStep() * SCRAM_GIMBAL_SPEED * (mode == 1 ? -1.0:1.0);
+	const double cmd_speed = 0.5;
+	double dcmd = oapiGetSimStep() * cmd_speed * RHOVER_RANGE * (mode == 1 ? 1.0:-1.0);
+	if (mode && which) {
+		if (hover_mode == 2)
+			rhover_cmd = min (RHOVER_RANGE, max (-RHOVER_RANGE, rhover_cmd+dcmd));
+		hrswitch = 3-mode;
+	} else
+		hrswitch = 0;
+	return true;
+}
 
-	for (i = 0; i < 2; i++) {
-		if (mode && which & (1 << i)) {
-			GetThrusterDir (th_scram[i], dir);
-			phi = atan2 (dir.y, dir.z);
-			phi = min (SCRAM_DEFAULT_DIR+SCRAM_GIMBAL_RANGE, max (SCRAM_DEFAULT_DIR-SCRAM_GIMBAL_RANGE, phi+dphi));
-			SetThrusterDir (th_scram[i], _V(0, sin(phi), cos(phi)));
-			idx = (int)(35.5*(phi-SCRAM_DEFAULT_DIR+SCRAM_GIMBAL_RANGE)/SCRAM_GIMBAL_RANGE);
-			if (idx != scgimbalidx[i]) {
-				scgimbalidx[i] = idx;
-				redraw = true;
+void DeltaGlider::AutoHoverAtt ()
+{
+	double lvl;
+
+	// Pitch command
+	lvl = -GetManualControlLevel(THGROUP_ATT_PITCHDOWN, MANCTRL_ROTMODE);
+	if (!lvl) lvl = GetManualControlLevel(THGROUP_ATT_PITCHUP, MANCTRL_ROTMODE);
+	phover_cmd = lvl*PHOVER_RANGE;
+
+	// Roll command
+	lvl = -GetManualControlLevel(THGROUP_ATT_BANKRIGHT, MANCTRL_ROTMODE);
+	if (!lvl) lvl = GetManualControlLevel(THGROUP_ATT_BANKLEFT, MANCTRL_ROTMODE);
+	rhover_cmd = lvl*RHOVER_RANGE;
+}
+
+void DeltaGlider::TrackHoverAtt ()
+{
+	if (hover_mode) {
+		phover = GetPitch();
+		rhover = GetBank();
+		const double fb_scale = 3.0/4.55; // scaling between front and back hovers (distance from CG)
+		double Lf = GetThrusterLevel(th_hover[0]);
+		double Ll = GetThrusterLevel(th_hover[1]);
+		double Lr = GetThrusterLevel(th_hover[2]);
+		double Lb = (Ll+Lr)*0.5;
+		double Lm = (Lf+Lb)*0.5;
+		double Tf = Lf;
+		double Tb = Lb*fb_scale;
+		double Tm = (Tf+Tb)*0.5;
+		if (fabs(phover) <= MAX_AUTO_HOVER_ATT && fabs(rhover) <= MAX_AUTO_HOVER_ATT) { // within control range
+			const double p_alpha = 0.2;
+			const double p_beta = 0.6;
+			const double r_alpha = 0.2;
+			const double r_beta = 0.6;
+			double dp = phover - phover_cmd;
+			double dr = rhover - rhover_cmd;
+			VECTOR3 avel;
+			GetAngularVel(avel);
+			double dpv =  avel.x;
+			double drv = -avel.z;
+			double balance_fb = -p_alpha*dp - p_beta*dpv;
+			double balance_lr = -r_alpha*dr - r_beta*drv;
+			if (Lf || Lb) {
+				// front/back balance
+				double Lf_cmd = Lm+balance_fb;
+				double Lb_cmd = Lm-balance_fb;
+				double D = (Lf_cmd-Lf + (Lb_cmd-Lb)*fb_scale)/(1.0+fb_scale);
+				Lf_cmd -= D;
+				Lb_cmd -= D;
+
+				double Lmin = min (Lf_cmd, Lb_cmd);
+				double Lmax = max (Lf_cmd, Lb_cmd);
+				if (Lmin < 0.0) {
+					if (Lf_cmd < 0.0) Lf_cmd = 0.0, Lb_cmd += Lmin/fb_scale;
+					else              Lb_cmd = 0.0, Lf_cmd += Lmin*fb_scale;
+				}
+				if (Lmax > 1.0) {
+					if (Lf_cmd > 1.0) Lf_cmd = 1.0, Lb_cmd += (Lmax-1.0)/fb_scale;
+					else              Lb_cmd = 1.0, Lf_cmd += (Lmax-1.0)*fb_scale;
+				}
+				// left/right balance
+				double Ll_cmd = Lb_cmd-balance_lr;
+				double Lr_cmd = Lb_cmd+balance_lr;
+				Lmin = min (Ll_cmd, Lr_cmd);
+				Lmax = max (Ll_cmd, Lr_cmd);
+				if (Lmin < 0.0) {
+					if (Ll_cmd < 0.0) Ll_cmd = 0.0, Lr_cmd += Lmin;
+					else              Lr_cmd = 0.0, Ll_cmd += Lmin;
+				}
+				if (Lmax > 1.0) {
+					if (Ll_cmd > 1.0) Ll_cmd = 1.0, Lr_cmd += Lmax-1.0;
+					else              Lr_cmd = 1.0, Ll_cmd += Lmax-1.0;
+				}
+				SetThrusterLevel (th_hover[0], Lf_cmd);
+				SetThrusterLevel (th_hover[1], Ll_cmd);
+				SetThrusterLevel (th_hover[2], Lr_cmd);
 			}
-			sgswitch[i] = mode;
-		} else
-			sgswitch[i] = 0;
+		} else {
+			double L_cmd = 2.0*Tm / (1.0 + fb_scale);
+			for (int i = 0; i < 3; i++)
+				SetThrusterLevel (th_hover[i], L_cmd);
+		}
+	} else {
+		phover = rhover = phover_cmd = rhover_cmd = 0.0;
 	}
-	return redraw;
-}
-
-void DeltaGlider::AdjustScramGimbal (int &mode)
-{
-	VECTOR3 dir;
-	int i, idx;
-	double phi, dphi = oapiGetSimStep() * SCRAM_GIMBAL_SPEED;
-	bool keep_going = false;
-
-	if (mode == 1) {
-		for (i = 0; i < 2; i++) {
-			GetThrusterDir (th_scram[i], dir);
-			phi = atan2 (dir.y, dir.z);
-			if (phi >= SCRAM_DEFAULT_DIR) phi = max(SCRAM_DEFAULT_DIR, phi - dphi);
-			else                          phi = min(SCRAM_DEFAULT_DIR, phi + dphi);
-			SetThrusterDir (th_scram[i], _V(0, sin(phi), cos(phi)));
-			idx = (int)(35.5*(phi-SCRAM_DEFAULT_DIR+SCRAM_GIMBAL_RANGE)/SCRAM_GIMBAL_RANGE);
-			if (idx != scgimbalidx[i]) {
-				scgimbalidx[i] = idx;
-				oapiTriggerRedrawArea (0, 0, AID_GIMBALSCRAMDISP);
-			}
-			if (phi != SCRAM_DEFAULT_DIR) keep_going = true;
-		}
-		if (!keep_going) {
-			mode = 0;
-			oapiTriggerRedrawArea (0, 0, AID_GIMBALSCRAMMODE);
-		}
-	}
-}
-
-void DeltaGlider::AdjustHoverBalance (int &mode)
-{
-	if (mode == 1) {
-		double t0 = GetThrusterMax0 (th_hover[0]);
-		double t1 = GetThrusterMax0 (th_hover[1]);
-		double dt = t0-t1;
-		double shift = oapiGetSimStep() * HOVER_BALANCE_SPEED;
-		if (dt >= 0.0) dt = max (0.0, dt-shift);
-		else           dt = min (0.0, dt+shift);
-		SetThrusterMax0 (th_hover[0], MAX_HOVER_THRUST[modelidx] + dt*0.5);
-		SetThrusterMax0 (th_hover[1], MAX_HOVER_THRUST[modelidx] - dt*0.5);
-		int idx = (int)(28.4999*(1.0-dt/MAX_HOVER_IMBALANCE));
-		if (idx != hbalanceidx) {
-			hbalanceidx = idx;
-			oapiTriggerRedrawArea (0, 0, AID_HBALANCEDISP);
-		}
-		if (dt == 0.0) {
-			mode = 0;
-			oapiTriggerRedrawArea (0, 0, AID_HBALANCEMODE);
-		}
-	}
+	oapiTriggerRedrawArea (0, 0, AID_HBALANCEDISP);
 }
 
 bool DeltaGlider::GetBeaconState (int which)
@@ -1980,86 +2068,6 @@ bool DeltaGlider::RedrawPanel_ScramPropMass (SURFHANDLE surf)
 	} else return false;
 }
 
-bool DeltaGlider::RedrawPanel_RotVelocity (SURFHANDLE surf, int which)
-{
-	int idx;
-	double v, av;
-	VECTOR3 vrot;
-	GetAngularVel (vrot);
-	v  = (which == AID_VPITCH ? -vrot.x : which == AID_VBANK ? -vrot.z : vrot.y);
-	av = fabs(v*DEG);
-
-	if      (av <  1.0) idx = 0;
-	else if (av < 11.0) idx = 1 + (int)((av-1.0)*0.4);
-	else if (av < 45.0) idx = 5 + (int)((av-11.0)*3.0/34.0);
-	else                idx = 8;
-	if (v >= 0.0) idx  = 8-idx;
-	else          idx += 8;
-
-	if (idx == rotidx[0][which-AID_VPITCH]) return false;
-	rotidx[0][which-AID_VPITCH] = idx;
-	switch (which) {
-		case AID_VPITCH: oapiBlt (surf, srf[4], 0, 0, idx*40, 0, 40, 49); break;
-		case AID_VBANK:  oapiBlt (surf, srf[5], 0, 0, idx*50, 0, 50, 40); break;
-		case AID_VYAW:   oapiBlt (surf, srf[6], 0, 0, idx*50, 0, 50, 40); break;
-	}
-	return true;
-}
-
-bool DeltaGlider::RedrawPanel_RotAcceleration (SURFHANDLE surf, int which)
-{
-	int idx;
-	double a, aa;
-	VECTOR3 arot;
-	GetAngularAcc (arot);
-	a  = (which == AID_APITCH ? -arot.x : which == AID_ABANK ? -arot.z : arot.y);
-	a *= 2.0;
-	aa = fabs(a*DEG);
-
-	if      (aa <  1.0) idx = 0;
-	else if (aa < 11.0) idx = 1 + (int)((aa-1.0)*0.4);
-	else if (aa < 45.0) idx = 5 + (int)((aa-11.0)*3.0/34.0);
-	else                idx = 8;
-	if (a >= 0.0) idx  = 8-idx;
-	else          idx += 8;
-
-	if (idx == rotidx[1][which-AID_APITCH]) return false;
-	rotidx[1][which-AID_APITCH] = idx;
-	switch (which) {
-		case AID_APITCH: oapiBlt (surf, srf[4], 0, 0, idx*40, 0, 40, 49); break;
-		case AID_ABANK:  oapiBlt (surf, srf[5], 0, 0, idx*50, 0, 50, 40); break;
-		case AID_AYAW:   oapiBlt (surf, srf[6], 0, 0, idx*50, 0, 50, 40); break;
-	}
-	return true;
-}
-
-bool DeltaGlider::RedrawPanel_RotMoment (SURFHANDLE surf, int which)
-{
-	int idx;
-	double m, am;
-	VECTOR3 amom;
-	GetAngularMoment (amom);
-	m  = (which == AID_MPITCH ? -amom.x : which == AID_MBANK ? -amom.z : amom.y);
-	m *= 1e-3;
-	am = fabs(m);
-
-	if      (am <  1.0) idx = 0;
-	else if (am < 11.0) idx = 1 + (int)((am-1.0)*0.4);
-	else if (am < 45.0) idx = 5 + (int)((am-11.0)*3.0/34.0);
-	else                idx = 8;
-	if (m >= 0.0) idx  = 8-idx;
-	else          idx += 8;
-
-	if (idx == rotidx[2][which-AID_MPITCH]) return false;
-	rotidx[2][which-AID_MPITCH] = idx;
-	switch (which) {
-		case AID_MPITCH: oapiBlt (surf, srf[4], 0, 0, idx*40, 0, 40, 49); break;
-		case AID_MBANK:  oapiBlt (surf, srf[5], 0, 0, idx*50, 0, 50, 40); break;
-		case AID_MYAW:   oapiBlt (surf, srf[6], 0, 0, idx*50, 0, 50, 40); break;
-	}
-	return true;
-}
-
 bool DeltaGlider::RedrawPanel_ScramTempDisp (SURFHANDLE surf)
 {
 	double T, phi;
@@ -2082,18 +2090,6 @@ bool DeltaGlider::RedrawPanel_ScramTempDisp (SURFHANDLE surf)
 	SelectObject (hDC, GetStockObject (BLACK_PEN));
 	oapiReleaseDC (surf, hDC);
 	return true;
-}
-
-bool DeltaGlider::RedrawPanel_WBrake (SURFHANDLE surf, int which)
-{
-	double level = GetWheelbrakeLevel (which);
-	UINT pos = (UINT)(level*93.0);
-	if (pos != wbrake_pos[which-1]) {
-		oapiBlt (surf, srf[0], 0, pos, (which-1)*34, 0, 34, 86);
-		wbrake_pos[which-1] = pos;
-		return true;
-	}
-	return false;
 }
 
 bool DeltaGlider::RedrawPanel_IndicatorPair (SURFHANDLE surf, int *p, int range)
@@ -2183,13 +2179,6 @@ bool DeltaGlider::RedrawPanel_MainTSFC (SURFHANDLE surf)
 		oapiBlt (surf, srf[8], 0, 66-mainTSFCidx, 0, 0, 6, 7, SURF_PREDEF_CK);
 		return true;
 	} else return false;
-}
-
-bool DeltaGlider::RedrawPanel_GimbalScramDisp (SURFHANDLE surf)
-{
-	oapiBlt (surf, srf[8], 0, scgimbalidx[0], 0, 0, 6, 7, SURF_PREDEF_CK);
-	oapiBlt (surf, srf[8], 7, scgimbalidx[1], 6, 0, 6, 7, SURF_PREDEF_CK);
-	return true;
 }
 
 bool DeltaGlider::RedrawPanel_HoverBalanceDisp (SURFHANDLE surf)
@@ -2357,6 +2346,14 @@ void DeltaGlider::DrawNeedle (HDC hDC, int x, int y, double rad, double angle, d
 
 void DeltaGlider::InitVCMesh()
 {
+	SetInstrLight (instr_light_on, true);
+	SetFloodLight (flood_light_mode);
+	SetLandDockLight (landdock_light_mode);
+	SetStrobeLight (strobe_light_on);
+	SetNavLight (nav_light_on);
+	SetAnimation (anim_instrbdial, instr_brightness);
+	SetAnimation (anim_floodbdial, flood_brightness);
+
 	if (vcmesh) {
 		// hide pilot head in VCPILOT position
 		GROUPEDITSPEC ges;
@@ -2366,80 +2363,8 @@ void DeltaGlider::InitVCMesh()
 		oapiEditMeshGroup (vcmesh, GRP_PILOT_VISOR_VC, &ges);
 
 		for (DWORD i = 0; i < ninstr; i++) instr[i]->ResetVC (vcmesh);
+		pctrl->clbkResetVC (vcmesh);
 	}
-	for (int i = 0; i < 2; i++)
-		SetSwitch (i, 0);
-}
-
-static float tv0[8] = {0,0,0.0469f,0.0469f,0,0,0.0469f,0.0469f};
-
-void DeltaGlider::SetVC_PGimbalMode ()
-{
-	if (!vcmesh) return;
-	float ofs = (mpmode ? 0.0469f:0);
-	static NTVERTEX vtx[8];
-	GROUPEDITSPEC ges;
-	ges.flags = GRPEDIT_VTXTEXV;
-	ges.nVtx = 8;
-	ges.vIdx = NULL;
-	ges.Vtx = vtx;
-
-	for (int j = 0; j < 8; j++)
-		vtx[j].tv = tv0[j]+ofs;
-	oapiEditMeshGroup (vcmesh, GRP_MAIN_PITCHGIMBAL_CNT_VC, &ges);
-}
-
-void DeltaGlider::SetVC_YGimbalMode ()
-{
-	float ofs;
-	int i, j;
-	
-	if (!vcmesh) return;
-	static NTVERTEX vtx[8];
-	GROUPEDITSPEC ges;
-	ges.flags = GRPEDIT_VTXTEXV;
-	ges.nVtx = 8;
-	ges.vIdx = NULL;
-	ges.Vtx = vtx;
-
-	for (i = 0; i < 3; i++) {
-		ofs = (mymode == i+1 ? 0.0469f:0);
-		for (j = 0; j < 8; j++)
-			vtx[j].tv = tv0[j]+ofs;
-		oapiEditMeshGroup (vcmesh, GRP_MAIN_YAWGIMBAL_CNT_VC+i, &ges);
-	}
-}
-
-void DeltaGlider::SetVC_ScramGimbalMode ()
-{
-	if (!vcmesh) return;
-	float ofs = (spmode ? 0.0469f:0);
-	static NTVERTEX vtx[8];
-	GROUPEDITSPEC ges;
-	ges.flags = GRPEDIT_VTXTEXV;
-	ges.nVtx = 8;
-	ges.vIdx = NULL;
-	ges.Vtx = vtx;
-
-	for (int j = 0; j < 8; j++)
-		vtx[j].tv =tv0[j]+ofs;
-	oapiEditMeshGroup (vcmesh, GRP_SCRAM_GIMBAL_CNT_VC, &ges);
-}
-
-void DeltaGlider::SetVC_HoverBalanceMode ()
-{
-	if (!vcmesh) return;
-	float ofs = (hbmode ? 0.0469f:0);
-	static NTVERTEX vtx[8];
-	GROUPEDITSPEC ges;
-	ges.flags = GRPEDIT_VTXTEXV;
-	ges.nVtx = 8;
-	ges.vIdx = NULL;
-	ges.Vtx = vtx;
-
-	for (int j = 0; j < 8; j++)
-		vtx[j].tv = tv0[j]+ofs;
-	oapiEditMeshGroup (vcmesh, GRP_HBALANCE_CNT_VC, &ges);
 }
 
 // ==============================================================
@@ -2509,7 +2434,7 @@ void DeltaGlider::clbkSetClassCaps (FILEHANDLE cfg)
 	contrail_tex = oapiRegisterParticleTexture ("Contrail1a");
 
 	PARTICLESTREAMSPEC contrail = {
-		0, 8.0, 4, 150, 0.25, 3.0, 4, 3.0, PARTICLESTREAMSPEC::DIFFUSE,
+		0, 8.0, 4, 150, 0.25, 3.0, 4, 2.0, PARTICLESTREAMSPEC::DIFFUSE,
 		PARTICLESTREAMSPEC::LVL_PSQRT, 0, 2,
 		PARTICLESTREAMSPEC::ATM_PLOG, 1e-4, 1,
 		contrail_tex
@@ -2520,7 +2445,7 @@ void DeltaGlider::clbkSetClassCaps (FILEHANDLE cfg)
 		PARTICLESTREAMSPEC::ATM_PLOG, 1e-5, 0.1
 	};
 	PARTICLESTREAMSPEC exhaust_hover = {
-		0, 1.5, 20, 150, 0.1, 0.15, 9, 1.0, PARTICLESTREAMSPEC::EMISSIVE,
+		0, 1.5, 30, 150, 0.1, 0.1, 12, 1.0, PARTICLESTREAMSPEC::EMISSIVE,
 		PARTICLESTREAMSPEC::LVL_SQRT, 0, 1,
 		PARTICLESTREAMSPEC::ATM_PLOG, 1e-5, 0.1
 	};
@@ -2555,23 +2480,22 @@ void DeltaGlider::clbkSetClassCaps (FILEHANDLE cfg)
 	EXHAUSTSPEC es_retro[2] = {{th_retro[0], NULL, NULL, NULL, 3, 0.4, 0, 0.1, NULL}, {th_retro[1], NULL, NULL, NULL, 3, 0.4, 0, 0.1, NULL}};
 	for (i = 0; i < 2; i++) AddExhaust (es_retro+i);
 
-	// hover thrusters (simplified)
-	// The two aft hover engines are combined into a single "logical" thrusters,
-	// but exhaust is rendered separately for both
+	// hover thrusters
 	th_hover[0] = CreateThruster (_V(0,0,3), _V(0,1,0), MAX_HOVER_THRUST[modelidx], ph_main, ISP, ISP*ispscale);
-	th_hover[1] = CreateThruster (_V(0,0,-3), _V(0,1,0), MAX_HOVER_THRUST[modelidx], ph_main, ISP, ISP*ispscale);
-	thg_hover = CreateThrusterGroup (th_hover, 2, THGROUP_HOVER);
+	th_hover[1] = CreateThruster (_V(-3,0,-4.55), _V(0,1,0), 3.0/4.55*0.5*MAX_HOVER_THRUST[modelidx], ph_main, ISP, ISP*ispscale);
+	th_hover[2] = CreateThruster (_V( 3,0,-4.55), _V(0,1,0), 3.0/4.55*0.5*MAX_HOVER_THRUST[modelidx], ph_main, ISP, ISP*ispscale);
+	thg_hover = CreateThrusterGroup (th_hover, 3, THGROUP_HOVER);
 	VECTOR3 hoverp0 = {0,-1.5, 3}, hoverp1 = {-3,-1.3,-4.55}, hoverp2 = {3,-1.3,-4.55}, hoverd = {0,1,0};
 	EXHAUSTSPEC es_hover[3] = {
 		{th_hover[0], NULL, &hoverp0, &hoverd, 6, 0.5, 0, 0.1, NULL, EXHAUST_CONSTANTPOS|EXHAUST_CONSTANTDIR},
 		{th_hover[1], NULL, &hoverp1, &hoverd, 6, 0.5, 0, 0.1, NULL, EXHAUST_CONSTANTPOS|EXHAUST_CONSTANTDIR},
-		{th_hover[1], NULL, &hoverp2, &hoverd, 6, 0.5, 0, 0.1, NULL, EXHAUST_CONSTANTPOS|EXHAUST_CONSTANTDIR}
+		{th_hover[2], NULL, &hoverp2, &hoverd, 6, 0.5, 0, 0.1, NULL, EXHAUST_CONSTANTPOS|EXHAUST_CONSTANTDIR}
 	};
 	for (i = 0; i < 3; i++) AddExhaust (es_hover+i);
 	AddExhaustStream (th_hover[0], _V(0,-4,0), &contrail);
 	AddExhaustStream (th_hover[0], _V(0,-2,3), &exhaust_hover);
-	AddExhaustStream (th_hover[0], _V(-3,-2,-4.55), &exhaust_hover);
-	AddExhaustStream (th_hover[0], _V( 3,-2,-4.55), &exhaust_hover);
+	AddExhaustStream (th_hover[1], _V(-3,-2,-4.55), &exhaust_hover);
+	AddExhaustStream (th_hover[2], _V( 3,-2,-4.55), &exhaust_hover);
 
 	// set of attitude thrusters (idealised). The arrangement is such that no angular
 	// momentum is created in linear mode, and no linear momentum is created in rotational mode.
@@ -2697,18 +2621,21 @@ void DeltaGlider::clbkSetClassCaps (FILEHANDLE cfg)
 	}
 	if (scramjet) beacon[4].pos = &beaconpos_scram;
 
-	docking_light = (SpotLight*)AddSpotLight(_V(2.5,-0.5,6.5), _V(0,0,1), 150, 1e-3, 0, 1e-3, RAD*25, RAD*60, col_white, col_white, col_a);
-	docking_light->Activate(false);
+	//docking_light = (SpotLight*)AddSpotLight(_V(2.5,-0.5,6.5), _V(0,0,1), 150, 1e-3, 0, 1e-3, RAD*25, RAD*60, col_white, col_white, col_a);
+	//docking_light->Activate(false);
 
-	static const COLOUR4 col_cockpit_light = {0.6,0.05,0,0}; //{1,1,1,0};
-	cockpit_light = (PointLight*)AddPointLight(_V(0,1.65,6.68), 3, 0, 0, 3, col_cockpit_light, col_cockpit_light, col_a);
-	cockpit_light->SetVisibility (LightEmitter::VIS_COCKPIT);
-	cockpit_light->Activate(false);
+	//static const COLOUR4 col_cockpit_light = {0.6,0.05,0,0}; //{1,1,1,0};
+	//cockpit_light = (PointLight*)AddPointLight(_V(0,1.65,6.68), 3, 0, 0, 3, col_cockpit_light, col_cockpit_light, col_a);
+	//cockpit_light->SetVisibility (LightEmitter::VIS_COCKPIT);
+	//cockpit_light->Activate(false);
 
 	SetMeshVisibilityMode (AddMesh (exmesh_tpl = oapiLoadMeshGlobal (ScramVersion() ? "DG\\deltaglider" : "DG\\deltaglider_ns")), MESHVIS_EXTERNAL);
-	SetMeshVisibilityMode (AddMesh (vcmesh_tpl = oapiLoadMeshGlobal ("DG\\deltaglider_vc")), MESHVIS_VC);
+	//SetMeshVisibilityMode (AddMesh (vcmesh_tpl = oapiLoadMeshGlobal ("DG\\deltaglider_vc")), MESHVIS_VC);
 	panelmesh0 = oapiLoadMeshGlobal ("DG\\dg_2dpanel0");
 	panelmesh1 = NULL; // we create this one inline when needed
+
+	vcmesh_tpl = oapiLoadMeshGlobal ("DG\\deltaglider_vc");
+	SetMeshVisibilityMode (AddMesh (vcmesh_tpl), MESHVIS_VC);
 
 	// **************** vessel-specific insignia ****************
 
@@ -2771,6 +2698,10 @@ void DeltaGlider::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 			double trim;
 			sscanf (line+4, "%lf", &trim);
 			SetControlSurfaceLevel (AIRCTRL_ELEVATORTRIM, trim, true);
+		} else if (!_strnicmp (line, "MGIMBALMODE", 11)) {
+			sscanf (line+11, "%d", &main_gimbal_mode);
+		} else if (!_strnicmp (line, "HOVERMODE", 9)) {
+			sscanf (line+9, "%d", &hover_mode);
 		} else if (!_strnicmp (line, "TANKCONFIG", 10)) {
 			if (scramjet) sscanf (line+10, "%d", &tankconfig);
 		} else if (!_strnicmp (line, "PSNGR", 5)) {
@@ -2792,13 +2723,15 @@ void DeltaGlider::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 				oapiReleaseTexture (skin[2]);
 				skin[2] = NULL;
 			}
+		} else if (!_strnicmp (line, "PANELCOL", 8)) {
+			sscanf (line+8, "%d%d", panelcol+0, panelcol+1);
 		} else if (!_strnicmp (line, "LIGHTS", 6)) {
 			int lgt[4];
 			sscanf (line+6, "%d%d%d%d", lgt+0, lgt+1, lgt+2, lgt+3);
-			SetNavlight (lgt[0] != 0);
-			SetBeacon (lgt[1] != 0);
-			SetStrobe (lgt[2] != 0);
-			SetDockingLight (lgt[3] != 0);
+			SetNavLight (lgt[0] != 0);
+			//SetBeacon (lgt[1] != 0);
+			SetStrobeLight (lgt[2] != 0);
+			//SetDockingLight (lgt[3] != 0);
 		} else if (!_strnicmp (line, "AAP", 3)) {
 			aap->SetState (line);
         } else {
@@ -2873,6 +2806,14 @@ void DeltaGlider::clbkSaveState (FILEHANDLE scn)
 		sprintf (cbuf, "%d %0.4lf", hatch_status, hatch_proc);
 		oapiWriteScenario_string (scn, "HATCH", cbuf);
 	}
+	if (main_gimbal_mode) {
+		sprintf (cbuf, "%d", main_gimbal_mode);
+		oapiWriteScenario_string (scn, "MGIMBALMODE", cbuf);
+	}
+	if (hover_mode) {
+		sprintf (cbuf, "%d", hover_mode);
+		oapiWriteScenario_string (scn, "HOVERMODE", cbuf);
+	}
 	for (i = 0; i < 4; i++)
 		if (psngr[i]) {
 			sprintf (cbuf, "%d", i+1);
@@ -2883,6 +2824,10 @@ void DeltaGlider::clbkSaveState (FILEHANDLE scn)
 		}
 	if (skinpath[0])
 		oapiWriteScenario_string (scn, "SKIN", skinpath);
+	if (panelcol[0] || panelcol[1]) {
+		sprintf (cbuf, "%d %d", panelcol[0], panelcol[1]);
+		oapiWriteScenario_string (scn, "PANELCOL", cbuf);
+	}
 	for (i = 0; i < 8; i++)
 		if (beacon[i].active) {
 			sprintf (cbuf, "%d %d %d %d", beacon[0].active, beacon[3].active, beacon[5].active, beacon[7].active);
@@ -2921,11 +2866,8 @@ void DeltaGlider::clbkPostCreation ()
 	SetAnimation (anim_gearlever, gear_status & 1);
 	SetAnimation (anim_airbrakelever, airbrakelever_status & 1);
 	SetAnimation (anim_noselever, nose_status & 1);
-	SetAnimation (anim_olockswitch, olock_status & 1);
-	SetAnimation (anim_ilockswitch, ilock_status & 1);
 	SetAnimation (anim_retroswitch, rcover_status & 1);
 	SetAnimation (anim_radiatorswitch, radiator_status & 1);
-	SetAnimation (anim_hatchswitch, hatch_status & 1);
 	SetAnimation (anim_ladderswitch, ladder_status & 1);
 
 	if (insignia_tex)
@@ -2983,13 +2925,13 @@ void DeltaGlider::clbkVisualCreated (VISHANDLE vis, int refcount)
 		GROUPEDITSPEC ges;
 		ges.flags = GRPEDIT_ADDUSERFLAG;
 		ges.UsrFlag = 3;
-		static int vcscramidx[12] = {
-			GRP_SCRAM_GIMBAL_CNT_VC,GRP_SCRAMGIMBAL_L_VC,GRP_SCRAMGIMBAL_R_VC,
+		static int vcscramidx[11] = {
+			GRP_SCRAMGIMBAL_L_VC,GRP_SCRAMGIMBAL_R_VC,
 			GRP_SCRAM_GIMBAL_FRAME_VC,GRP_SCRAM_INDICATOR_LABEL_VC,GRP_SCRAM_STATUS_VC,
 			GRP_SCRAM_TEMP_VC,GRP_SCRAM_GIMBAL_INDICATOR_VC,
 			GRP_THROTTLE_SCRAM_L1_VC,GRP_THROTTLE_SCRAM_R1_VC,
 			GRP_THROTTLE_SCRAM_L2_VC,GRP_THROTTLE_SCRAM_R2_VC};
-		for (DWORD i = 0; i < 12; i++)
+		for (DWORD i = 0; i < 11; i++)
 			oapiEditMeshGroup (vcmesh, vcscramidx[i], &ges);
 	}
 
@@ -3072,11 +3014,13 @@ void DeltaGlider::clbkPostStep (double simt, double simdt, double mjd)
 
 	th_main_level = GetThrusterGroupLevel (THGROUP_MAIN);
 
-	// engine gimbal adjustments
-	if (mpmode) AdjustMainPGimbal (mpmode);
-	if (mymode) AdjustMainYGimbal (mymode);
-	if (spmode) AdjustScramGimbal (spmode);
-	if (hbmode) AdjustHoverBalance (hbmode);
+	// apply gimbals
+	if (main_gimbal_mode == 1)
+		AutoMainGimbal();
+	TrackMainGimbal();
+	if (hover_mode == 1)
+		AutoHoverAtt();
+	TrackHoverAtt();
 
 	// animate landing gear
 	if (gear_status >= DOOR_CLOSING) {
@@ -3359,6 +3303,8 @@ void DeltaGlider::clbkPostStep (double simt, double simdt, double mjd)
 			oapiTriggerRedrawArea (0, 0, AID_MWS);
 		}
 	}
+
+	pctrl->clbkPostStep (simt, simdt, mjd);
 }
 
 bool DeltaGlider::clbkLoadGenericCockpit ()
@@ -3421,14 +3367,14 @@ void DeltaGlider::DefinePanelMain (PANELHANDLE hPanel)
 	RegisterPanelMFDGeometry (hPanel, MFD_RIGHT, 0, GRP_RMFD_DISPLAY_P0);
 
 	xofs = 173; // left MFD
-	RegisterPanelArea (hPanel, AID_MFD1_BBUTTONS, _R( 51+xofs,359,321+xofs,377), PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_ONREPLAY, panel2dtex, instr[30]); // bottom button row
-	RegisterPanelArea (hPanel, AID_MFD1_LBUTTONS, _R(    xofs,100, 25+xofs,323), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY, panel2dtex, instr[31]); // left button column
-	RegisterPanelArea (hPanel, AID_MFD1_RBUTTONS, _R(348+xofs,100,373+xofs,323), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY, panel2dtex, instr[32]); // right button column
+	RegisterPanelArea (hPanel, AID_MFD1_BBUTTONS, _R( 51+xofs,359,321+xofs,377), PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_ONREPLAY, panel2dtex, instr[28]); // bottom button row
+	RegisterPanelArea (hPanel, AID_MFD1_LBUTTONS, _R(    xofs,100, 25+xofs,323), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY, panel2dtex, instr[29]); // left button column
+	RegisterPanelArea (hPanel, AID_MFD1_RBUTTONS, _R(348+xofs,100,373+xofs,323), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY, panel2dtex, instr[30]); // right button column
 
 	xofs = 736; // right MFD
-	RegisterPanelArea (hPanel, AID_MFD2_BBUTTONS, _R( 51+xofs,359,321+xofs,377), PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_ONREPLAY, panel2dtex, instr[33]); // bottom button row
-	RegisterPanelArea (hPanel, AID_MFD2_LBUTTONS, _R(    xofs,100, 25+xofs,323), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY, panel2dtex, instr[34]); // left button column
-	RegisterPanelArea (hPanel, AID_MFD2_RBUTTONS, _R(348+xofs,100,373+xofs,323), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY, panel2dtex, instr[35]); // right button column
+	RegisterPanelArea (hPanel, AID_MFD2_BBUTTONS, _R( 51+xofs,359,321+xofs,377), PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_ONREPLAY, panel2dtex, instr[31]); // bottom button row
+	RegisterPanelArea (hPanel, AID_MFD2_LBUTTONS, _R(    xofs,100, 25+xofs,323), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY, panel2dtex, instr[32]); // left button column
+	RegisterPanelArea (hPanel, AID_MFD2_RBUTTONS, _R(348+xofs,100,373+xofs,323), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY, panel2dtex, instr[33]); // right button column
 
 	RegisterPanelArea (hPanel, AID_HORIZON,      _R(0,0,0,0),           PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, 0, instr[0]);
 	RegisterPanelArea (hPanel, AID_HSIINSTR,     _R(0,0,0,0),           PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, 0, instr[1]);
@@ -3438,34 +3384,30 @@ void DeltaGlider::DefinePanelMain (PANELHANDLE hPanel)
 	RegisterPanelArea (hPanel, AID_NAVMODE,      _R(1121,119,1197,273), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN, 0, instr[5]);
 	RegisterPanelArea (hPanel, AID_ELEVATORTRIM, _R(1242,135,1262,195), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, instr[6]);
 	RegisterPanelArea (hPanel, AID_AIRBRAKE,     _R(1242,215,1262,275), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN, panel2dtex, instr[7]);
-	RegisterPanelArea (hPanel, AID_ENGINEMAIN,   _R(108,52,161,227),    PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, instr[8]);
-	RegisterPanelArea (hPanel, AID_ENGINEHOVER,  _R(108, 234,161,374),  PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBPRESSED, panel2dtex, instr[9]);
-	RegisterPanelArea (hPanel, AID_ATTITUDEMODE, _R(1136,69,1176,113),  PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, 0, instr[10]);
-	RegisterPanelArea (hPanel, AID_ADCTRLMODE,   _R(1217,69,1257,113),  PANEL_REDRAW_MOUSE,  PANEL_MOUSE_DOWN, panel2dtex, instr[11]);
+	RegisterPanelArea (hPanel, AID_ENGINEMAIN,   _R( 108, 52, 161,227), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, instr[8]);
+	RegisterPanelArea (hPanel, AID_ENGINEHOVER,  _R( 108,234, 161,374), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBPRESSED, panel2dtex, instr[9]);
+	RegisterPanelArea (hPanel, AID_ATTITUDEMODE, _R(1136, 69,1176,113), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, 0, instr[10]);
+	RegisterPanelArea (hPanel, AID_ADCTRLMODE,   _R(1217, 69,1257,113), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, panel2dtex, instr[11]);
 	RegisterPanelArea (hPanel, AID_DOCKRELEASE,  _R(1141,474,1172,504), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, instr[12]);
 	RegisterPanelArea (hPanel, AID_HUDMODE,      _R(  15, 18, 122, 33), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY, panel2dtex, instr[13]);
 	RegisterPanelArea (hPanel, AID_GEARLEVER,    _R(1230,286,1262,511), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN, panel2dtex, instr[14]);
-	RegisterPanelArea (hPanel, AID_PGIMBALMAINDISP, _R(0,0,0,0),        PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, instr[15]);
-	RegisterPanelArea (hPanel, AID_PGIMBALMAIN,  _R( 63,  83, 98,125),  PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, instr[16]);
-	RegisterPanelArea (hPanel, AID_PGIMBALMAINMODE, _R(57,139,69,151),  PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN, panel2dtex, instr[17]);
-	RegisterPanelArea (hPanel, AID_YGIMBALMAINDISP, _R(0,0,0,0),        PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, instr[18]);
-	RegisterPanelArea (hPanel, AID_YGIMBALMAIN,  _R( 56, 178, 98,213),  PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, instr[19]);
-	RegisterPanelArea (hPanel, AID_YGIMBALMAINMODE, _R(8,165,20, 211),  PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN, panel2dtex, instr[20]);
-	RegisterPanelArea (hPanel, AID_HBALANCEDISP, _R(0,0,0,0),           PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, instr[21]);
-	RegisterPanelArea (hPanel, AID_HOVERBALANCE, _R( 63, 304,79, 348),  PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, instr[22]);
-	RegisterPanelArea (hPanel, AID_HBALANCEMODE, _R( 57, 354, 69,366),  PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN, panel2dtex, instr[23]);
-	RegisterPanelArea (hPanel, AID_GEARINDICATOR, _R(0,0,0,0),          PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, instr[24]);
-	RegisterPanelArea (hPanel, AID_NOSECONELEVER, _R(1141,327,1180,421), PANEL_REDRAW_USER,  PANEL_MOUSE_LBDOWN, panel2dtex, instr[25]);
-	RegisterPanelArea (hPanel, AID_NOSECONEINDICATOR, _R(0,0,0,0),      PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, instr[26]);
-	RegisterPanelArea (hPanel, AID_SWITCHARRAY,  _R( 855,415,1106,453), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN, panel2dtex, instr[27]);
-	RegisterPanelArea (hPanel, AID_WBRAKE_BOTH,  _R(1221,494,1273,557), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP, panel2dtex, instr[28]);
-	RegisterPanelArea (hPanel, AID_MWS,          _R(1071,  6,1098, 32), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN, panel2dtex, instr[29]);
+	RegisterPanelArea (hPanel, AID_MAINGIMBALDIAL, _R(32, 69,  72,113), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, panel2dtex, instr[15]);
+	RegisterPanelArea (hPanel, AID_MAINGIMBALDISP, _R( 0,  0,   0,  0), PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, instr[16]);
+	RegisterPanelArea (hPanel, AID_PGIMBALMAIN,  _R(  61,190,  96,234), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, instr[17]);
+	RegisterPanelArea (hPanel, AID_YGIMBALMAIN,  _R(   9,194,  53,229), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, instr[18]);
+	RegisterPanelArea (hPanel, AID_HOVERDIAL,    _R(  32,280,  72,324), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, panel2dtex, instr[19]);
+	RegisterPanelArea (hPanel, AID_HBALANCEDISP, _R(   0,  0,   0,  0), PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, instr[20]);
+	RegisterPanelArea (hPanel, AID_PHOVER,       _R(  69, 402, 85,446), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, instr[21]);
+	RegisterPanelArea (hPanel, AID_RHOVER,       _R(   9, 415, 53,431), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, instr[22]);
+	RegisterPanelArea (hPanel, AID_GEARINDICATOR, _R(0,0,0,0),          PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, instr[37]);
+	RegisterPanelArea (hPanel, AID_NOSECONELEVER, _R(1141,327,1180,421), PANEL_REDRAW_USER,  PANEL_MOUSE_LBDOWN, panel2dtex, instr[23]);
+	RegisterPanelArea (hPanel, AID_NOSECONEINDICATOR, _R(0,0,0,0),      PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, instr[24]);
+	RegisterPanelArea (hPanel, AID_SWITCHARRAY,  _R( 855,415,1106,453), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN, panel2dtex, instr[25]);
+	RegisterPanelArea (hPanel, AID_WBRAKE_BOTH,  _R(1221,494,1273,557), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP, panel2dtex, instr[26]);
+	RegisterPanelArea (hPanel, AID_MWS,          _R(1071,  6,1098, 32), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN, panel2dtex, instr[27]);
 
 	if (ScramVersion()) {
 		RegisterPanelArea (hPanel, AID_ENGINESCRAM, _R(108,386,161,488), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, instr[instr_scram0+0]);
-		RegisterPanelArea (hPanel, AID_GIMBALSCRAMDISP, _R(0,0,0,0),     PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE, panel2dtex, instr[instr_scram0+1]);
-		RegisterPanelArea (hPanel, AID_GIMBALSCRAM, _R( 63,411, 98,455), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, instr[instr_scram0+2]);
-		RegisterPanelArea (hPanel, AID_GIMBALSCRAMMODE, _R(57,468,69,480), PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN, panel2dtex, instr[instr_scram0+3]);
 	} else {
 		MESHGROUP *grp = oapiMeshGroup (hPanelMesh, GRP_SCRAM_INSTRUMENTS_P0);
 		grp->UsrFlag = 3;
@@ -3492,10 +3434,10 @@ void DeltaGlider::DefinePanelOverhead (PANELHANDLE hPanel)
 	static NTVERTEX VTX[NVTX] = {
 		{         0,      0,0,  0,0,0,  0,                               (float)panely0/(float)texh},
 		{    panelw,      0,0,  0,0,0,  (float)panelw/(float)texw,       (float)panely0/(float)texh},
-		{         0,panelh2,0,  0,0,0,  0,                               (float)(panely0+panelh-panelh2)/(float)texh},
-		{    panelw,panelh2,0,  0,0,0,  (float)panelw/(float)texw,       (float)(panely0+panelh-panelh2)/(float)texh},
-		{       255,panelh2,0,  0,0,0,  255.0f/(float)texw,              (float)(panely0+panelh-panelh2)/(float)texh},
-		{panelw-255,panelh2,0,  0,0,0,  (float)(panelw-255)/(float)texw, (float)(panely0+panelh-panelh2)/(float)texh},
+		{         0,panelh2,0,  0,0,0,  0,                               (float)(panely0+panelh2)/(float)texh},
+		{    panelw,panelh2,0,  0,0,0,  (float)panelw/(float)texw,       (float)(panely0+panelh2)/(float)texh},
+		{       255,panelh2,0,  0,0,0,  255.0f/(float)texw,              (float)(panely0+panelh2)/(float)texh},
+		{panelw-255,panelh2,0,  0,0,0,  (float)(panelw-255)/(float)texw, (float)(panely0+panelh2)/(float)texh},
 		{       425, panelh,0,  0,0,0,  425.0f/(float)texw,              (float)(panely0+panelh)/(float)texh},
 		{panelw-425, panelh,0,  0,0,0,  (float)(panelw-425)/(float)texw, (float)(panely0+panelh)/(float)texh}
 	};
@@ -3521,7 +3463,15 @@ void DeltaGlider::DefinePanelOverhead (PANELHANDLE hPanel)
 		PANEL_ATTACH_TOP | PANEL_MOVEOUT_TOP);
 
 	RegisterPanelArea (hPanel, AID_AIRLOCKSWITCH, _R(240,30,390,68), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN, panel2dtex, instr[instr_ovhd0+0]);
-
+	RegisterPanelArea (hPanel, AID_VPITCH, _R(625,191,665,240), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[instr_ovhd0+1]);
+	RegisterPanelArea (hPanel, AID_VBANK,  _R(558,191,608,231), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[instr_ovhd0+2]);
+	RegisterPanelArea (hPanel, AID_VYAW,   _R(492,191,542,231), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[instr_ovhd0+3]);
+	RegisterPanelArea (hPanel, AID_APITCH, _R(625,264,665,313), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[instr_ovhd0+4]);
+	RegisterPanelArea (hPanel, AID_ABANK,  _R(558,264,608,304), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[instr_ovhd0+5]);
+	RegisterPanelArea (hPanel, AID_AYAW,   _R(492,264,542,304), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[instr_ovhd0+6]);
+	RegisterPanelArea (hPanel, AID_MPITCH, _R(625,337,665,386), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[instr_ovhd0+7]);
+	RegisterPanelArea (hPanel, AID_MBANK,  _R(558,337,608,377), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[instr_ovhd0+8]);
+	RegisterPanelArea (hPanel, AID_MYAW,   _R(492,337,542,377), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[instr_ovhd0+9]);
 	InitPanel (1);
 }
 
@@ -3620,9 +3570,6 @@ bool DeltaGlider::clbkLoadVC (int id)
 		oapiVCRegisterArea (AID_MAINDISP2, _R( 85,16, 98,89), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex1);
 		oapiVCRegisterArea (AID_MAINDISP3, _R(120,16,133,89), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex1);
 		oapiVCRegisterArea (AID_MAINDISP4, _R( 23,16, 29,89), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex1);
-		oapiVCRegisterArea (AID_PGIMBALMAINDISP, _R(227,2,240,79), PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND, tex1);
-		oapiVCRegisterArea (AID_YGIMBALMAINDISP, _R(6,107,83,120), PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND, tex1);
-		oapiVCRegisterArea (AID_HBALANCEDISP, _R(97,95,103,158), PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND, tex1);
 		//oapiVCRegisterArea (AID_MAINPROP, _R(122,102,135,197), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex1);
 		//oapiVCRegisterArea (AID_MAINPROPMASS, _R(110, 199, 140, 208), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_NONE, tex1);
 		oapiVCRegisterArea (AID_RCSPROP, _R(162,102,175,197), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex1);
@@ -3634,15 +3581,7 @@ bool DeltaGlider::clbkLoadVC (int id)
 		oapiVCRegisterArea (AID_LOADINSTR,  _R(111, 17,167, 73), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex2);
 
 		// angular velocity/acceleration/torque indicators
-		oapiVCRegisterArea (AID_VPITCH, _R(205, 48,245, 97), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_NONE, tex3);
-		oapiVCRegisterArea (AID_VBANK,  _R(137, 48,187, 88), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_NONE, tex3);
-		oapiVCRegisterArea (AID_VYAW,   _R( 71, 48,121, 88), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_NONE, tex3);
-		oapiVCRegisterArea (AID_APITCH, _R(205,121,245,170), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_NONE, tex3);
-		oapiVCRegisterArea (AID_ABANK,  _R(137,121,187,161), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_NONE, tex3);
-		oapiVCRegisterArea (AID_AYAW,   _R( 71,121,121,161), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_NONE, tex3);
-		oapiVCRegisterArea (AID_MPITCH, _R(205,194,245,243), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_NONE, tex3);
-		oapiVCRegisterArea (AID_MBANK,  _R(137,194,187,234), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_NONE, tex3);
-		oapiVCRegisterArea (AID_MYAW,   _R( 71,194,121,234), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_NONE, tex3);
+		oapiVCRegisterArea (AID_ANGRATEINDICATOR, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
 
 		// scram engine indicators
 		if (ScramVersion()) {
@@ -3651,93 +3590,153 @@ bool DeltaGlider::clbkLoadVC (int id)
 			oapiVCRegisterArea (AID_SCRAMTEMPDISP, _R(6,10,87,140), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND, tex2);
 			oapiVCRegisterArea (AID_SCRAMPROP, _R(200,102,213,197), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex1);
 			oapiVCRegisterArea (AID_SCRAMPROPMASS, _R(188, 199, 218, 208), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_NONE, tex1);
-			oapiVCRegisterArea (AID_GIMBALSCRAMDISP, _R(236,86,249,163), PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND, tex1);
-			oapiVCRegisterArea (AID_GIMBALSCRAM, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-			oapiVCSetAreaClickmode_Quadrilateral (AID_GIMBALSCRAM, _V(-0.2666,1.0629,7.2484), _V(-0.248,1.0613,7.2548), _V(-0.2666,1.04,7.2425), _V(-0.248,1.0384,7.2488));
-			oapiVCRegisterArea (AID_GIMBALSCRAMMODE, PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-			oapiVCSetAreaClickmode_Spherical (AID_GIMBALSCRAMMODE, _V(-0.2672,1.0256,7.2336),0.01);
 			oapiVCRegisterArea (AID_ENGINESCRAM, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED);
 			oapiVCSetAreaClickmode_Quadrilateral (AID_ENGINESCRAM, _V(-0.45,0.98,6.94), _V(-0.39,0.98,6.94), _V(-0.45,0.95,7.07), _V(-0.39,0.95,7.07));
 		}
 
 		// HUD mode indicator/selector buttons on the dash panel
 		oapiVCRegisterArea (AID_HUDMODE, PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_HUDMODE, _V(-0.0279,1.2902,7.2630), _V(0.0285,1.2902,7.2630), _V(-0.0279,1.3070,7.2630), _V(0.0285,1.3070,7.2630));
+		oapiVCSetAreaClickmode_Quadrilateral (AID_HUDMODE, VC_HUD_BUTTONS_mousearea[0], VC_HUD_BUTTONS_mousearea[1], VC_HUD_BUTTONS_mousearea[2], VC_HUD_BUTTONS_mousearea[3]);
 
 		// HUD brightness dial
 		oapiVCRegisterArea (AID_HUDBRIGHT, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_HUDBRIGHT, _V(-0.0204,1.2649,7.2680), _V(-0.0004,1.2649,7.2680), _V(-0.0204,1.2849,7.2680), _V(-0.0004,1.2849,7.2680));
+		oapiVCSetAreaClickmode_Quadrilateral (AID_HUDBRIGHT, VC_HUD_BRIGHTNESS_mousearea[0], VC_HUD_BRIGHTNESS_mousearea[1], VC_HUD_BRIGHTNESS_mousearea[2], VC_HUD_BRIGHTNESS_mousearea[3]);
 
 		// HUD colour selector button
 		oapiVCRegisterArea (AID_HUDCOLOUR, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Spherical (AID_HUDCOLOUR, _V(0.0167,1.2753,7.2630),0.01);
+		oapiVCSetAreaClickmode_Spherical (AID_HUDCOLOUR, VC_HUD_COLBUTTON_mousepoint, VC_HUD_COLBUTTON_mouserad);
+
+		// HUD extend/retract switch
+		oapiVCRegisterArea (AID_HUDRETRACT, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_HUDRETRACT, VC_HUDRETRACT_SWITCH_mousearea[0], VC_HUDRETRACT_SWITCH_mousearea[1], VC_HUDRETRACT_SWITCH_mousearea[2], VC_HUDRETRACT_SWITCH_mousearea[3]);
+		((DGSwitch1*)instr[43])->DefineAnimationVC (VC_HUDRETRACT_SWITCH_ref, VC_HUDRETRACT_SWITCH_axis, GRP_SWITCH2_VC, VC_HUDRETRACT_SWITCH_vofs);
+
+		// Landing/docking light switch
+		oapiVCRegisterArea (AID_LANDDOCKLIGHT, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_LANDDOCKLIGHT, VC_LANDINGLIGHT_SWITCH_mousearea[0], VC_LANDINGLIGHT_SWITCH_mousearea[1], VC_LANDINGLIGHT_SWITCH_mousearea[2], VC_LANDINGLIGHT_SWITCH_mousearea[3]);
+		((DGSwitch1*)instr[44])->DefineAnimationVC (VC_LANDINGLIGHT_SWITCH_ref, VC_LANDINGLIGHT_SWITCH_axis, GRP_SWITCH2_VC, VC_LANDINGLIGHT_SWITCH_vofs);
+
+		// Strobe light switch
+		oapiVCRegisterArea (AID_STROBE_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_STROBE_SWITCH, VC_STROBELIGHT_SWITCH_mousearea[0], VC_STROBELIGHT_SWITCH_mousearea[1], VC_STROBELIGHT_SWITCH_mousearea[2], VC_STROBELIGHT_SWITCH_mousearea[3]);
+		((DGSwitch1*)instr[45])->DefineAnimationVC (VC_STROBELIGHT_SWITCH_ref, VC_STROBELIGHT_SWITCH_axis, GRP_SWITCH2_VC, VC_STROBELIGHT_SWITCH_vofs);
+
+		// Nav light switch
+		oapiVCRegisterArea (AID_NAVLIGHT_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_NAVLIGHT_SWITCH, VC_NAVLIGHT_SWITCH_mousearea[0], VC_NAVLIGHT_SWITCH_mousearea[1], VC_NAVLIGHT_SWITCH_mousearea[2], VC_NAVLIGHT_SWITCH_mousearea[3]);
+		((DGSwitch1*)instr[46])->DefineAnimationVC (VC_NAVLIGHT_SWITCH_ref, VC_NAVLIGHT_SWITCH_axis, GRP_SWITCH2_VC, VC_NAVLIGHT_SWITCH_vofs);
+
+		// Hatch open/close switch
+		oapiVCRegisterArea (AID_HATCH_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_HATCH_SWITCH, VC_HATCH_SWITCH_mousearea[0], VC_HATCH_SWITCH_mousearea[1], VC_HATCH_SWITCH_mousearea[2], VC_HATCH_SWITCH_mousearea[3]);
+		((DGSwitch1*)instr[47])->DefineAnimationVC (VC_HATCH_SWITCH_ref, VC_HATCH_SWITCH_axis, GRP_SWITCH2_VC, VC_HATCH_SWITCH_vofs);
+
+		// Inner airlock open/close switch
+		oapiVCRegisterArea (AID_ILOCK_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_ILOCK_SWITCH, VC_ILOCK_SWITCH_mousearea[0], VC_ILOCK_SWITCH_mousearea[1], VC_ILOCK_SWITCH_mousearea[2], VC_ILOCK_SWITCH_mousearea[3]);
+		((DGSwitch1*)instr[48])->DefineAnimationVC (VC_ILOCK_SWITCH_ref, VC_ILOCK_SWITCH_axis, GRP_SWITCH2_VC, VC_ILOCK_SWITCH_vofs);
+
+		// Outer airlock open/close switch
+		oapiVCRegisterArea (AID_OLOCK_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_OLOCK_SWITCH, VC_OLOCK_SWITCH_mousearea[0], VC_OLOCK_SWITCH_mousearea[1], VC_OLOCK_SWITCH_mousearea[2], VC_OLOCK_SWITCH_mousearea[3]);
+		((DGSwitch1*)instr[49])->DefineAnimationVC (VC_OLOCK_SWITCH_ref, VC_OLOCK_SWITCH_axis, GRP_SWITCH2_VC, VC_OLOCK_SWITCH_vofs);
 
 		//oapiVCRegisterArea (AID_MWS, PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
 		//oapiVCSetAreaClickmode_Spherical (AID_MWS, _V(0.0755,1.2185,7.3576), 0.013);
 
 		// Navmode indicator/selector on the top right of the front panel
 		oapiVCRegisterArea (AID_NAVMODE, PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_NAVMODE, _V(0.1000,1.2600,7.2650), _V(0.1773,1.2600,7.2650), _V(0.1000,1.2944,7.2650), _V(0.1773,1.2944,7.2650));
+		oapiVCSetAreaClickmode_Quadrilateral (AID_NAVMODE, VC_NAV_BUTTONS_mousearea[0], VC_NAV_BUTTONS_mousearea[1], VC_NAV_BUTTONS_mousearea[2], VC_NAV_BUTTONS_mousearea[3]);
 
 		// RCS mode dial
 		oapiVCRegisterArea (AID_ATTITUDEMODE, PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_ATTITUDEMODE, _V(0.0499,1.2653,7.2680), _V(0.0799,1.2653,7.2680), _V(0.0499,1.2953,7.2680), _V(0.0799,1.2953,7.2680));
+		oapiVCSetAreaClickmode_Quadrilateral (AID_ATTITUDEMODE, VC_RCS_DIAL_mousearea[0], VC_RCS_DIAL_mousearea[1], VC_RCS_DIAL_mousearea[2], VC_RCS_DIAL_mousearea[3]);
 
 		// Button row 1
 		oapiVCRegisterArea (AID_BUTTONROW1, PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_BUTTONROW1, _V(0.3014,0.8519,6.9562), _V(0.3679,0.8519,6.9562), _V(0.3014,0.8520,7.0163), _V(0.3679,0.8520,7.0163));
 
+		// Instrument light switch
+		oapiVCRegisterArea (AID_INSTRLIGHT_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_INSTRLIGHT_SWITCH, VC_INSTRLIGHT_SWITCH_mousearea[0], VC_INSTRLIGHT_SWITCH_mousearea[1], VC_INSTRLIGHT_SWITCH_mousearea[2], VC_INSTRLIGHT_SWITCH_mousearea[3]);
+		((DGSwitch1*)instr[38])->DefineAnimationVC (VC_INSTRLIGHT_SWITCH_ref, VC_INSTRLIGHT_SWITCH_axis, GRP_SWITCH2_VC, VC_INSTRLIGHT_SWITCH_vofs);
+
+		// Floodlight switch
+		oapiVCRegisterArea (AID_FLOODLIGHT_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_FLOODLIGHT_SWITCH, VC_FLOODLIGHT_SWITCH_mousearea[0], VC_FLOODLIGHT_SWITCH_mousearea[1], VC_FLOODLIGHT_SWITCH_mousearea[2], VC_FLOODLIGHT_SWITCH_mousearea[3]);
+		((DGSwitch1*)instr[40])->DefineAnimationVC (VC_FLOODLIGHT_SWITCH_ref, VC_FLOODLIGHT_SWITCH_axis, GRP_SWITCH2_VC, VC_FLOODLIGHT_SWITCH_vofs);
+
+		// Instrument brightness dial
+		oapiVCRegisterArea (AID_INSTRBRIGHT_DIAL, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_INSTRBRIGHT_DIAL, VC_INSTR_BRIGHTNESS_mousearea[0], VC_INSTR_BRIGHTNESS_mousearea[1], VC_INSTR_BRIGHTNESS_mousearea[2], VC_INSTR_BRIGHTNESS_mousearea[3]);
+
+		// Floodlight brightness dial
+		oapiVCRegisterArea (AID_FLOODBRIGHT_DIAL, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_FLOODBRIGHT_DIAL, VC_FLOOD_BRIGHTNESS_mousearea[0], VC_FLOOD_BRIGHTNESS_mousearea[1], VC_FLOOD_BRIGHTNESS_mousearea[2], VC_FLOOD_BRIGHTNESS_mousearea[3]);
+
 		// AF control dial
 		oapiVCRegisterArea (AID_ADCTRLMODE, PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_ADCTRLMODE, _V(-0.3323,1.0814,7.2380), _V(-0.3023,1.0814,7.2380), _V(-0.3323,1.1096,7.2483), _V(-0.3023,1.1096,7.2483));
+		oapiVCSetAreaClickmode_Quadrilateral (AID_ADCTRLMODE, VC_AF_DIAL_mousearea[0], VC_AF_DIAL_mousearea[1], VC_AF_DIAL_mousearea[2], VC_AF_DIAL_mousearea[3]);
+
+		// Gimbal control dial
+		oapiVCRegisterArea (AID_MAINGIMBALDIAL, PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_MAINGIMBALDIAL, vc_gimdial_mousearea[0], vc_gimdial_mousearea[1], vc_gimdial_mousearea[2], vc_gimdial_mousearea[3]);
+
+		// Gimbal manual switches
+		oapiVCRegisterArea (AID_PGIMBALMAIN, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_PGIMBALMAIN, vc_gpswitch_mousearea[0], vc_gpswitch_mousearea[1], vc_gpswitch_mousearea[2], vc_gpswitch_mousearea[3]);
+		oapiVCRegisterArea (AID_YGIMBALMAIN, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_YGIMBALMAIN, vc_gyswitch_mousearea[0], vc_gyswitch_mousearea[1], vc_gyswitch_mousearea[2], vc_gyswitch_mousearea[3]);
+
+		// Gimbal status display
+		oapiVCRegisterArea (AID_MAINGIMBALDISP, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
+
+		// Hover control dial
+		oapiVCRegisterArea (AID_HOVERDIAL, PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_HOVERDIAL, vc_hvrdial_mousearea[0], vc_hvrdial_mousearea[1], vc_hvrdial_mousearea[2], vc_hvrdial_mousearea[3]);
+
+		// Hover manual switches
+		oapiVCRegisterArea (AID_PHOVER, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_PHOVER, vc_hpswitch_mousearea[0], vc_hpswitch_mousearea[1], vc_hpswitch_mousearea[2], vc_hpswitch_mousearea[3]);
+		oapiVCRegisterArea (AID_RHOVER, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_RHOVER, vc_hrswitch_mousearea[0], vc_hrswitch_mousearea[1], vc_hrswitch_mousearea[2], vc_hrswitch_mousearea[3]);
+
+		// Hover status display
+		oapiVCRegisterArea (AID_HBALANCEDISP, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
 
 		// Elevator trim wheel
 		oapiVCRegisterArea (AID_ELEVATORTRIM, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_ELEVATORTRIM, _V(-0.3350,0.8801,7.1116), _V(-0.3150,0.8801,7.1116), _V(-0.3350,0.9614,7.1699), _V(-0.3150,0.9614,7.1699));
+		oapiVCSetAreaClickmode_Quadrilateral (AID_ELEVATORTRIM, vc_etrimwheel_mousearea[0], vc_etrimwheel_mousearea[1], vc_etrimwheel_mousearea[2], vc_etrimwheel_mousearea[3]);
 
 		// Gear lever
 		oapiVCRegisterArea (AID_GEARLEVER, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_GEARLEVER, _V(-0.3860,0.8964,7.1233), _V(-0.3500,0.8964,7.1233), _V(-0.3860,1.0102,7.2049), _V(-0.3500,1.0102,7.2049));
+		oapiVCSetAreaClickmode_Quadrilateral (AID_GEARLEVER, vc_gearlever_mousearea[0], vc_gearlever_mousearea[1], vc_gearlever_mousearea[2], vc_gearlever_mousearea[3]);
 
 		// Airbrake lever
 		oapiVCRegisterArea (AID_AIRBRAKE, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_AIRBRAKE, _V(-0.3250,0.9777,7.1816), _V(-0.2900,0.9777,7.1816), _V(-0.3250,1.0427,7.2282), _V(-0.2900,1.0427,7.2282));
+		oapiVCSetAreaClickmode_Quadrilateral (AID_AIRBRAKE, vc_abrakelever_mousearea[0], vc_abrakelever_mousearea[1], vc_abrakelever_mousearea[2], vc_abrakelever_mousearea[3]);
 
 		// Nosecone lever
 		oapiVCRegisterArea (AID_NOSECONELEVER, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_NOSECONELEVER, _V(0.3510,0.8964,7.1233), _V(0.3890,0.8964,7.1233), _V(0.3510,1.0102,7.2049), _V(0.3890,1.0102,7.2049));
+		oapiVCSetAreaClickmode_Quadrilateral (AID_NOSECONELEVER, vc_nconelever_mousearea[0], vc_nconelever_mousearea[1], vc_nconelever_mousearea[2], vc_nconelever_mousearea[3]);
 
 		// Undock lever
 		oapiVCRegisterArea (AID_DOCKRELEASE, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_DOCKRELEASE, _V(0.3039,0.8834,7.1139), _V(0.3360,0.8834,7.1139), _V(0.3039,0.9533,7.1641), _V(0.3360,0.9533,7.1641));
-
-		oapiVCRegisterArea (AID_OLOCKOPEN, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Spherical (AID_OLOCKOPEN, _V(0.2506,1.0884,7.2866),0.01);
-		oapiVCRegisterArea (AID_OLOCKCLOSE, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Spherical (AID_OLOCKCLOSE, _V(0.2506,1.1054,7.2866),0.01);
-
-		oapiVCRegisterArea (AID_ILOCKOPEN, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Spherical (AID_ILOCKOPEN, _V(0.2824,1.0981,7.2611),0.01);
-		oapiVCRegisterArea (AID_ILOCKCLOSE, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Spherical (AID_ILOCKCLOSE, _V(0.2824,1.1151,7.2611),0.01);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_DOCKRELEASE, vc_undocklever_mousearea[0], vc_undocklever_mousearea[1], vc_undocklever_mousearea[2], vc_undocklever_mousearea[3]);
 
 		// Retro engine door switch
 		oapiVCRegisterArea (AID_RETRODOORSWITCH, PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_RETRODOORSWITCH, _V(0.2971,0.9839,7.1836), _V(0.3371,0.9839,7.1836), _V(0.2971,1.0327,7.2185), _V(0.3371,1.0327,7.2185));
-		//oapiVCRegisterArea (AID_RCOVEROPEN, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
-		//oapiVCSetAreaClickmode_Spherical (AID_RCOVEROPEN, _V(0.2508,1.0420,7.2694),0.01);
-		//oapiVCRegisterArea (AID_RCOVERCLOSE, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
-		//oapiVCSetAreaClickmode_Spherical (AID_RCOVERCLOSE, _V(0.2508,1.0590,7.2694),0.01);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_RETRODOORSWITCH, vc_rcoverswitch_mousearea[0], vc_rcoverswitch_mousearea[1], vc_rcoverswitch_mousearea[2], vc_rcoverswitch_mousearea[3]);
 
 		oapiVCRegisterArea (AID_RADIATOREX, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Spherical (AID_RADIATOREX, _V(0.2582,0.9448,7.22),0.01);
 		oapiVCRegisterArea (AID_RADIATORIN, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Spherical (AID_RADIATORIN, _V(0.2582,0.9618,7.22),0.01);
 
-		oapiVCRegisterArea (AID_HATCHOPEN, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Spherical (AID_HATCHOPEN, _V(0.2511,0.9921,7.2507), 0.01);
-		oapiVCRegisterArea (AID_HATCHCLOSE, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Spherical (AID_HATCHCLOSE, _V(0.2511,1.0091,7.2507), 0.01);
+		//oapiVCRegisterArea (AID_HATCHOPEN, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
+		//oapiVCSetAreaClickmode_Spherical (AID_HATCHOPEN, _V(0.2511,0.9921,7.2507), 0.01);
+		//oapiVCRegisterArea (AID_HATCHCLOSE, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
+		//oapiVCSetAreaClickmode_Spherical (AID_HATCHCLOSE, _V(0.2511,1.0091,7.2507), 0.01);
 
 		oapiVCRegisterArea (AID_LADDEREX, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Spherical (AID_LADDEREX, _V(0.2889,1.0537,7.2388), 0.01);
@@ -3747,21 +3746,6 @@ bool DeltaGlider::clbkLoadVC (int id)
 		oapiVCRegisterArea (AID_GEARINDICATOR, PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE);
 		oapiVCRegisterArea (AID_NOSECONEINDICATOR, _R(32,127,61,158), PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND, tex1);
 
-		oapiVCRegisterArea (AID_PGIMBALMAIN, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_PGIMBALMAIN, _V(-0.3739,1.1105,7.1478), _V(-0.3593,1.108,7.1618), _V(-0.3728,1.0875,7.1426), _V(-0.3582,1.085,7.1566));
-		oapiVCRegisterArea (AID_YGIMBALMAIN, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_YGIMBALMAIN, _V(-0.3728,1.0522,7.1301), _V(-0.3566,1.0494,7.1460), _V(-0.3720,1.0324,7.1259), _V(-0.3558,1.0293,7.1416));
-
-		oapiVCRegisterArea (AID_PGIMBALMAINMODE, PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Spherical (AID_PGIMBALMAINMODE, _V(-0.3708,1.0743,7.1357),0.01);
-		oapiVCRegisterArea (AID_YGIMBALMAINMODE, PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_YGIMBALMAINMODE, _V(-0.3984,1.0665,7.1074), _V(-0.392,1.0662,7.1132), _V(-0.3975,1.0379,7.1012), _V(-0.3909,1.0373,7.1072));
-
-		oapiVCRegisterArea (AID_HOVERBALANCE, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_HOVERBALANCE, _V(-0.2691,1.1353,7.27), _V(-0.2606,1.1346,7.2729), _V(-0.2691,1.1065,7.2625), _V(-0.2606,1.1058,7.2654));
-		oapiVCRegisterArea (AID_HBALANCEMODE, PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Spherical (AID_HBALANCEMODE, _V(-0.2684,1.0972,7.2555),0.01);
-		
 		campos = CAM_VCPILOT;
 		break;
 
@@ -3796,6 +3780,8 @@ bool DeltaGlider::clbkLoadVC (int id)
 	default:
 		return false;
 	}
+	pctrl->clbkLoadVC (id);
+
 	InitVCMesh();
 
 	return true;
@@ -3816,7 +3802,7 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 	case AID_MFD2_LBUTTONS:
 	case AID_MFD2_RBUTTONS:
 	case AID_MFD2_BBUTTONS:
-		return instr[15+id]->ProcessMouseVC (event, p);
+		return instr[13+id]->ProcessMouseVC (event, p);
 	case AID_MFD1_PWR:
 		oapiToggleMFD_on (MFD_LEFT);
 		return true;
@@ -3824,9 +3810,17 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 		oapiToggleMFD_on (MFD_RIGHT);
 		return true;
 	case AID_BUTTONROW1:
-		return instr[27]->ProcessMouseVC (event, p);
-	case AID_RETRODOORSWITCH:
+		return instr[25]->ProcessMouseVC (event, p);
+	case AID_INSTRLIGHT_SWITCH:
 		return instr[38]->ProcessMouseVC (event, p);
+	case AID_FLOODLIGHT_SWITCH:
+		return instr[40]->ProcessMouseVC (event, p);
+	case AID_INSTRBRIGHT_DIAL:
+		return instr[39]->ProcessMouseVC (event, p);
+	case AID_FLOODBRIGHT_DIAL:
+		return instr[41]->ProcessMouseVC (event, p);
+	case AID_RETRODOORSWITCH:
+		return instr[36]->ProcessMouseVC (event, p);
 	case AID_ENGINEMAIN:
 		if (event & PANEL_MOUSE_LBDOWN) { // record which slider to operate
 			if      (p.x < 0.3) ctrl = 0; // left engine
@@ -3886,15 +3880,33 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 	case AID_HUDMODE:
 		return instr[13]->ProcessMouseVC (event, p);
 	case AID_HUDBRIGHT:
-		return instr[36]->ProcessMouseVC (event, p);
+		return instr[34]->ProcessMouseVC (event, p);
 	case AID_HUDCOLOUR:
-		return instr[37]->ProcessMouseVC (event, p);
+		return instr[35]->ProcessMouseVC (event, p);
+	case AID_HUDRETRACT:
+		return instr[43]->ProcessMouseVC (event, p);
+	case AID_LANDDOCKLIGHT:
+		return instr[44]->ProcessMouseVC (event, p);
+	case AID_STROBE_SWITCH:
+		return instr[45]->ProcessMouseVC (event, p);
+	case AID_NAVLIGHT_SWITCH:
+		return instr[46]->ProcessMouseVC (event, p);
+	case AID_HATCH_SWITCH:
+		return instr[47]->ProcessMouseVC (event, p);
+	case AID_ILOCK_SWITCH:
+		return instr[48]->ProcessMouseVC (event, p);
+	case AID_OLOCK_SWITCH:
+		return instr[49]->ProcessMouseVC (event, p);
 	case AID_NAVMODE:
 		return instr[5]->ProcessMouseVC (event, p);
 	case AID_ATTITUDEMODE:
 		return instr[10]->ProcessMouseVC (event, p);
 	case AID_ADCTRLMODE:
 		return instr[11]->ProcessMouseVC (event, p);
+	case AID_MAINGIMBALDIAL:
+		return instr[15]->ProcessMouseVC (event, p);
+	case AID_HOVERDIAL:
+		return instr[19]->ProcessMouseVC (event, p);
 	case AID_ELEVATORTRIM:
 		return instr[6]->ProcessMouseVC (event, p);
 	case AID_GEARLEVER:
@@ -3902,38 +3914,14 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 	case AID_AIRBRAKE:
 		return instr[7]->ProcessMouseVC (event, p);
 	case AID_NOSECONELEVER:
-		return instr[25]->ProcessMouseVC (event, p);
+		return instr[23]->ProcessMouseVC (event, p);
 	case AID_DOCKRELEASE:
 		return instr[12]->ProcessMouseVC (event, p);
-	case AID_OLOCKOPEN:
-		ActivateOuterAirlock (DOOR_OPENING);
-		return true;
-	case AID_OLOCKCLOSE:
-		ActivateOuterAirlock (DOOR_CLOSING);
-		return true;
-	case AID_ILOCKOPEN:
-		ActivateInnerAirlock (DOOR_OPENING);
-		return true;
-	case AID_ILOCKCLOSE:
-		ActivateInnerAirlock (DOOR_CLOSING);
-		return true;
-	//case AID_RCOVEROPEN:
-	//	ActivateRCover (DOOR_OPENING);
-	//	return true;
-	//case AID_RCOVERCLOSE:
-	//	ActivateRCover (DOOR_CLOSING);
-	//	return true;
 	case AID_RADIATOREX:
 		ActivateRadiator (DOOR_OPENING);
 		return true;
 	case AID_RADIATORIN:
 		ActivateRadiator (DOOR_CLOSING);
-		return true;
-	case AID_HATCHOPEN:
-		ActivateHatch (DOOR_OPENING);
-		return true;
-	case AID_HATCHCLOSE:
-		ActivateHatch (DOOR_CLOSING);
 		return true;
 	case AID_LADDEREX:
 		ActivateLadder (DOOR_OPENING);
@@ -3942,48 +3930,20 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 		ActivateLadder (DOOR_CLOSING);
 		return true;
 	case AID_PGIMBALMAIN:
-		return instr[16]->ProcessMouseVC (event, p);
-	case AID_YGIMBALMAIN:
-		return instr[19]->ProcessMouseVC (event, p);
-	case AID_PGIMBALMAINMODE:
 		return instr[17]->ProcessMouseVC (event, p);
-	case AID_YGIMBALMAINMODE:
-		return instr[20]->ProcessMouseVC (event, p);
-	case AID_GIMBALSCRAM:
-		return instr[instr_scram0+2]->ProcessMouseVC (event, p);
-		//if (event & PANEL_MOUSE_LBDOWN) {
-		//	if      (p.x < 0.25) ctrl = 1;
-		//	else if (p.x > 0.75) ctrl = 2;
-		//	else                 ctrl = 3;
-		//	if      (p.y < 0.5 ) mode = 1;
-		//	else                 mode = 2;
-		//} else if (event & PANEL_MOUSE_LBUP) {
-		//	ctrl = 0;
-		//}
-		//if (IncScramGimbal (ctrl, mode))
-		//	oapiVCTriggerRedrawArea (0, AID_GIMBALSCRAMDISP);
-		//return (event & PANEL_MOUSE_LBDOWN || event & PANEL_MOUSE_LBUP);
-	case AID_GIMBALSCRAMMODE:
-		return instr[instr_scram0+3]->ProcessMouseVC (event, p);
-		//spmode = 1-spmode;
-		//return true;
-	case AID_HOVERBALANCE:
-		if (event & PANEL_MOUSE_LBDOWN) {
-			if (p.y < 0.5) mode = 1;
-			else           mode = 2;
-		} else if (event & PANEL_MOUSE_LBUP) {
-			mode = 0;
-		}
-		if (ShiftHoverBalance (mode))
-			oapiVCTriggerRedrawArea (0, AID_HBALANCEDISP);
-		return (event & PANEL_MOUSE_LBDOWN || event & PANEL_MOUSE_LBUP);
-	case AID_HBALANCEMODE:
-		hbmode = 1-hbmode;
-		return true;
+	case AID_YGIMBALMAIN:
+		return instr[18]->ProcessMouseVC (event, p);
+	case AID_PHOVER:
+		return instr[21]->ProcessMouseVC (event, p);
+	case AID_RHOVER:
+		return instr[22]->ProcessMouseVC (event, p);
 	case AID_MWS:
 		bMWSActive = bMWSOn = false;
 		return true;
 	}
+	if (int res = pctrl->clbkVCMouseEvent (id, event, p))
+		return (res==1);
+
 	return false;
 }
 
@@ -3992,6 +3952,8 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 // --------------------------------------------------------------
 bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 {
+	if (!vcmesh) return false;
+
 	switch (id) {
 	case AID_MFD1_LBUTTONS:
 	case AID_MFD1_RBUTTONS:
@@ -3999,9 +3961,9 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 	case AID_MFD2_LBUTTONS:
 	case AID_MFD2_RBUTTONS:
 	case AID_MFD2_BBUTTONS:
-		return (vcmesh ? instr[15+id]->RedrawVC(vcmesh, vctex) : false);
+		return (vcmesh ? instr[13+id]->RedrawVC(vcmesh, vctex) : false);
 	case AID_HUDCOLOUR:
-		return (vcmesh ? instr[37]->RedrawVC (vcmesh, surf) : false);
+		return (vcmesh ? instr[35]->RedrawVC (vcmesh, surf) : false);
 	case AID_ENGINEMAIN:
 		RedrawVC_ThMain();
 		return false;
@@ -4016,27 +3978,22 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 		return false;
 	case AID_ADCTRLMODE:
 		return instr[11]->RedrawVC (0, 0);
+	case AID_MAINGIMBALDIAL:
+		return instr[15]->RedrawVC (0, 0);
+	case AID_MAINGIMBALDISP:
+		return instr[16]->RedrawVC (vcmesh, 0);
 	case AID_PGIMBALMAIN:
-		return instr[16]->RedrawVC (0, surf);
+		return instr[17]->RedrawVC (vcmesh, 0);
 	case AID_YGIMBALMAIN:
-		return instr[19]->RedrawVC (0, surf);
-	case AID_PGIMBALMAINMODE:
-		SetVC_PGimbalMode ();
-		return false;
-	case AID_YGIMBALMAINMODE:
-		return instr[20]->RedrawVC (0, surf);
-	case AID_GIMBALSCRAM:
-		return instr[instr_scram0+2]->RedrawVC (0, surf);
-	case AID_GIMBALSCRAMMODE:
-		return instr[instr_scram0+3]->RedrawVC (0, surf);
-	case AID_HOVERBALANCE:
-		SetAnimation (anim_hbalance, hbswitch ? 2-hbswitch:0.5);
-		return false;
-	case AID_HBALANCEMODE:
-		SetVC_HoverBalanceMode ();
-		return false;
+		return instr[18]->RedrawVC (vcmesh, 0);
+	case AID_HOVERDIAL:
+		return instr[19]->RedrawVC (0, 0);
 	case AID_HBALANCEDISP:
-		return RedrawPanel_HoverBalanceDisp (surf);
+		return instr[20]->RedrawVC (vcmesh, 0);
+	case AID_PHOVER:
+		return instr[21]->RedrawVC (vcmesh, 0);
+	case AID_RHOVER:
+		return instr[22]->RedrawVC (vcmesh, 0);
 	case AID_MAINPROP:
 		return instr[4]->RedrawVC (vcmesh, intex);
 	case AID_RCSPROP:
@@ -4061,16 +4018,10 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 		return RedrawPanel_Slip (surf, event == PANEL_REDRAW_INIT);
 	case AID_LOADINSTR:
 		return RedrawPanel_Wingload (surf, event == PANEL_REDRAW_INIT);
-	case AID_PGIMBALMAINDISP:
-		return instr[15]->RedrawVC (0, surf);
-	case AID_YGIMBALMAINDISP:
-		return instr[18]->RedrawVC (0, surf);
 	case AID_SCRAMDISP2:
 		return RedrawPanel_ScramFlow (surf);
 	case AID_SCRAMDISP3:
 		return RedrawPanel_ScramTSFC (surf);
-	case AID_GIMBALSCRAMDISP:
-		return instr[instr_scram0+1]->RedrawVC (0, surf);
 	case AID_SCRAMTEMPDISP:
 		return RedrawPanel_ScramTempDisp (surf);
 	case AID_ELEVATORTRIM:
@@ -4081,27 +4032,38 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 		return instr[1]->RedrawVC (vcmesh, surf);
 	case AID_HUDMODE:
 		return (vcmesh ? instr[13]->RedrawVC (vcmesh, surf) : false);
+	case AID_HUDRETRACT:
+		return (vcmesh ? instr[43]->RedrawVC (vcmesh, surf) : false);
+	case AID_LANDDOCKLIGHT:
+		return (vcmesh ? instr[44]->RedrawVC (vcmesh, surf) : false);
+	case AID_STROBE_SWITCH:
+		return (vcmesh ? instr[45]->RedrawVC (vcmesh, surf) : false);
+	case AID_NAVLIGHT_SWITCH:
+		return (vcmesh ? instr[46]->RedrawVC (vcmesh, surf) : false);
+	case AID_HATCH_SWITCH:
+		return (vcmesh ? instr[47]->RedrawVC (vcmesh, surf) : false);
+	case AID_ILOCK_SWITCH:
+		return (vcmesh ? instr[48]->RedrawVC (vcmesh, surf) : false);
+	case AID_OLOCK_SWITCH:
+		return (vcmesh ? instr[49]->RedrawVC (vcmesh, surf) : false);
 	case AID_NAVMODE:
 		return (vcmesh ? instr[5]->RedrawVC (vcmesh, surf) : false);
 	case AID_GEARINDICATOR:
-		return instr[24]->RedrawVC (vcmesh, surf);
+		return instr[37]->RedrawVC (vcmesh, surf);
 	case AID_NOSECONEINDICATOR:
-		return instr[26]->RedrawVC (vcmesh, surf);
-	case AID_VPITCH:
-	case AID_VBANK:
-	case AID_VYAW:
-		return RedrawPanel_RotVelocity (surf, id);
-	case AID_APITCH:
-	case AID_ABANK:
-	case AID_AYAW:
-		return RedrawPanel_RotAcceleration (surf, id);
-	case AID_MPITCH:
-	case AID_MBANK:
-	case AID_MYAW:
-		return RedrawPanel_RotMoment (surf, id);
+		return instr[24]->RedrawVC (vcmesh, surf);
+	case AID_FLOODLIGHT_SWITCH:
+		return (vcmesh ? instr[40]->RedrawVC (vcmesh, surf) : false);
+	case AID_INSTRLIGHT_SWITCH:
+		return (vcmesh ? instr[38]->RedrawVC (vcmesh, surf) : false);
+	case AID_ANGRATEINDICATOR:
+		return (vcmesh ? instr[42]->RedrawVC (vcmesh, oapiGetTextureHandle (vcmesh_tpl, 14)) : false);
 	case AID_MWS:
-		return (vcmesh ? instr[29]->RedrawVC (vcmesh, 0) : false);
+		return (vcmesh ? instr[27]->RedrawVC (vcmesh, 0) : false);
 	}
+	if (int res = pctrl->clbkVCRedrawEvent (id, event, vcmesh, surf))
+		return (res == 1);
+
 	return false;
 }
 
@@ -4210,6 +4172,7 @@ DLLCLBK void InitModule (HINSTANCE hModule)
 	g_Param.brush[3] = CreateSolidBrush (RGB(160,120,64)); // brown
 	g_Param.pen[0] = CreatePen (PS_SOLID, 1, RGB(224,224,224));
 	g_Param.pen[1] = CreatePen (PS_SOLID, 3, RGB(164,164,164));
+	g_Param.surf = oapiLoadTexture ("DG\\blitsrc1.dds", true);
 }
 
 // --------------------------------------------------------------
@@ -4512,16 +4475,16 @@ BOOL CALLBACK Ctrl_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			dg->ActivateRadiator (DeltaGlider::DOOR_OPENING);
 			return 0;
 		case IDC_NAVLIGHT:
-			dg->SetNavlight (SendDlgItemMessage (hWnd, IDC_NAVLIGHT, BM_GETCHECK, 0, 0) == BST_CHECKED);
+			dg->SetNavLight (SendDlgItemMessage (hWnd, IDC_NAVLIGHT, BM_GETCHECK, 0, 0) == BST_CHECKED);
 			return 0;
-		case IDC_BEACONLIGHT:
-			dg->SetBeacon (SendDlgItemMessage (hWnd, IDC_BEACONLIGHT, BM_GETCHECK, 0, 0) == BST_CHECKED);
-			return 0;
+		//case IDC_BEACONLIGHT:
+		//	dg->SetBeacon (SendDlgItemMessage (hWnd, IDC_BEACONLIGHT, BM_GETCHECK, 0, 0) == BST_CHECKED);
+		//	return 0;
 		case IDC_STROBELIGHT:
-			dg->SetStrobe (SendDlgItemMessage (hWnd, IDC_STROBELIGHT, BM_GETCHECK, 0, 0) == BST_CHECKED);
+			dg->SetStrobeLight (SendDlgItemMessage (hWnd, IDC_STROBELIGHT, BM_GETCHECK, 0, 0) == BST_CHECKED);
 			return 0;
 		case IDC_DOCKINGLIGHT:
-			dg->SetDockingLight (SendDlgItemMessage (hWnd, IDC_DOCKINGLIGHT, BM_GETCHECK, 0, 0) == BST_CHECKED);
+			//dg->SetDockingLight (SendDlgItemMessage (hWnd, IDC_DOCKINGLIGHT, BM_GETCHECK, 0, 0) == BST_CHECKED);
 			return 0;
 		//case IDC_DAMAGE:
 		//	oapiOpenDialog (g_Param.hDLL, IDD_DAMAGE, Damage_DlgProc, dg);

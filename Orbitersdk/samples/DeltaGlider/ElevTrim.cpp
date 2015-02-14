@@ -13,6 +13,7 @@
 #include "DeltaGlider.h"
 #include "meshres_p0.h"
 #include "meshres_vc.h"
+#include "dg_vc_anim.h"
 
 // ==============================================================
 
@@ -81,11 +82,10 @@ bool ElevatorTrim::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 		ges.Vtx = vtx;
 		ges.vIdx = vidx;
 
-		static double y0[nvtx] = {0.9183, 0.9208, 0.9232};
-		static double z0[nvtx] = {7.1390, 7.1408, 7.1425};
+		const double *y0 = vc_etrim_needle0_y;
+		const double *z0 = vc_etrim_needle0_z;
 		static double range = 0.032;
-		static double tilt = 0.6222;
-		static double dy = -range*cos(tilt), dz = -range*sin(tilt);
+		static double dy = -range*cos(vc_etrim_tilt), dz = -range*sin(vc_etrim_tilt);
 		for (DWORD i = 0; i < nvtx; i++) {
 			vtx[i].y = (float)(y0[i] + level*dy);
 			vtx[i].z = (float)(z0[i] + level*dz);

@@ -1,7 +1,7 @@
 // ==============================================================
 //                ORBITER MODULE: DeltaGlider
 //                  Part of the ORBITER SDK
-//          Copyright (C) 2001-2014 Martin Schweiger
+//          Copyright (C) 2001-2015 Martin Schweiger
 //                   All rights reserved
 //
 // SwitchArray.cpp
@@ -21,6 +21,92 @@ static const float tx_x0 = tx_x1+tx_dx;
 
 const DWORD nbutton = 8;
 
+// ==============================================================
+
+HatchSwitch::HatchSwitch (VESSEL3 *v)
+: DGSwitch1(v, DGSwitch1::TWOSTATE)
+{
+}
+
+// --------------------------------------------------------------
+
+void HatchSwitch::ResetVC (DEVMESHHANDLE hMesh)
+{
+	SetState (((DeltaGlider*)vessel)->hatch_status == DeltaGlider::DOOR_CLOSED ||
+			  ((DeltaGlider*)vessel)->hatch_status == DeltaGlider::DOOR_CLOSING ? DOWN:UP);
+}
+
+// --------------------------------------------------------------
+
+bool HatchSwitch::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	if (DGSwitch1::ProcessMouseVC (event, p)) {
+		DGSwitch1::State state = GetState();
+		((DeltaGlider*)vessel)->ActivateHatch (state==UP ? DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
+		return true;
+	}
+	return false;
+}
+
+// ==============================================================
+
+ILockSwitch::ILockSwitch (VESSEL3 *v)
+: DGSwitch1(v, DGSwitch1::TWOSTATE)
+{
+}
+
+// --------------------------------------------------------------
+
+void ILockSwitch::ResetVC (DEVMESHHANDLE hMesh)
+{
+	SetState (((DeltaGlider*)vessel)->ilock_status == DeltaGlider::DOOR_CLOSED ||
+			  ((DeltaGlider*)vessel)->ilock_status == DeltaGlider::DOOR_CLOSING ? DOWN:UP);
+}
+
+// --------------------------------------------------------------
+
+bool ILockSwitch::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	if (DGSwitch1::ProcessMouseVC (event, p)) {
+		DGSwitch1::State state = GetState();
+		((DeltaGlider*)vessel)->ActivateInnerAirlock (state==UP ? DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
+		return true;
+	}
+	return false;
+}
+
+// ==============================================================
+
+OLockSwitch::OLockSwitch (VESSEL3 *v)
+: DGSwitch1(v, DGSwitch1::TWOSTATE)
+{
+}
+
+// --------------------------------------------------------------
+
+void OLockSwitch::ResetVC (DEVMESHHANDLE hMesh)
+{
+	SetState (((DeltaGlider*)vessel)->olock_status == DeltaGlider::DOOR_CLOSED ||
+			  ((DeltaGlider*)vessel)->olock_status == DeltaGlider::DOOR_CLOSING ? DOWN:UP);
+}
+
+// --------------------------------------------------------------
+
+bool OLockSwitch::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	if (DGSwitch1::ProcessMouseVC (event, p)) {
+		DGSwitch1::State state = GetState();
+		((DeltaGlider*)vessel)->ActivateOuterAirlock (state==UP ? DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
+		return true;
+	}
+	return false;
+}
+
+
+
+
+
+// ==============================================================
 // ==============================================================
 
 SwitchArray::SwitchArray (VESSEL3 *v): PanelElement (v)
@@ -101,27 +187,15 @@ bool SwitchArray::ProcessMouse2D (int event, int mx, int my)
 	state = (my < 19 ? 0:1);
 	if (state != btnstate[btn]) {
 		switch (btn) {
-			case 0: dg->SetNavlight (state != 0); return true;
-			case 1: dg->SetBeacon (state != 0);   return true;
-			case 2: dg->SetStrobe (state != 0);   return true;
-			case 3: dg->SetDockingLight (state != 0); return true;
+			case 0: dg->SetNavLight (state != 0); return true;
+			//case 1: dg->SetBeacon (state != 0);   return true;
+			case 2: dg->SetStrobeLight (state != 0);   return true;
+			//case 3: dg->SetDockingLight (state != 0); return true;
 			case 4: dg->ActivateRadiator (state == 0 ? DeltaGlider::DOOR_CLOSING : DeltaGlider::DOOR_OPENING); return true;
 			case 5: dg->ActivateRCover (state == 0 ? DeltaGlider::DOOR_CLOSING : DeltaGlider::DOOR_OPENING); return true;
 			case 6: dg->ActivateHatch (state == 0 ? DeltaGlider::DOOR_CLOSING : DeltaGlider::DOOR_OPENING); return true;
 			case 7: dg->ActivateLadder (state == 0 ? DeltaGlider::DOOR_CLOSING : DeltaGlider::DOOR_OPENING); return true;
 		}
 	}
-	return false;
-}
-
-// ==============================================================
-
-bool SwitchArray::ProcessMouseVC (int event, VECTOR3 &p)
-{
-	DeltaGlider *dg = (DeltaGlider*)vessel;
-	int sw = max(0, min (1, (int)(p.x*2.0)));
-	int pos = max(0, min (1, (int)(p.y*2.0)));
-
-	dg->SetSwitch (sw, pos);
 	return false;
 }

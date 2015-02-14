@@ -6895,6 +6895,22 @@ inline MATRIX3 mul (const MATRIX3 &A, const MATRIX3 &B)
 	return mat;
 }
 
+/**
+ * \ingroup vec
+ * \brief Construct a rotation matrix from an axis and an angle
+ * \param axis rotation axis direction (must be normalised)
+ * \param angle rotation angle [rad]
+ * \return rotation matrix
+ */
+inline MATRIX3 rotm (const VECTOR3 &axis, double angle)
+{
+	double c = cos(angle), s = sin(angle);
+	double t = 1-c, x = axis.x, y = axis.y, z = axis.z;
+
+	return _M(t*x*x+c, t*x*y-z*s, t*x*z+y*s,
+		      t*x*y+z*s, t*y*y+c, t*y*z-x*s,
+			  t*x*z-y*s, t*y*z+x*s, t*z*z+c);
+}
 
 inline VECTOR4 _V(double x, double y, double z, double w)
 {

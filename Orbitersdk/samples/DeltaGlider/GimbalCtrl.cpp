@@ -1,7 +1,7 @@
 // ==============================================================
 //                ORBITER MODULE: DeltaGlider
 //                  Part of the ORBITER SDK
-//          Copyright (C) 2001-2008 Martin Schweiger
+//          Copyright (C) 2001-2015 Martin Schweiger
 //                   All rights reserved
 //
 // GimbalCtrl.cpp
@@ -10,6 +10,9 @@
 
 #define STRICT 1
 #include "GimbalCtrl.h"
+#include "meshres_p0.h"
+#include "meshres_vc.h"
+#include "dg_vc_anim.h"
 
 // constants for texture coordinates
 static const float texw = (float)PANEL2D_TEXW; // texture width
@@ -28,57 +31,225 @@ static const float sc_y0 = 431.5f;
 
 // ==============================================================
 
-PMainGimbalDisp::PMainGimbalDisp (VESSEL3 *v): PanelElement (v)
+MainGimbalDial::MainGimbalDial (VESSEL3 *v): PanelElement (v)
 {
 }
 
 // ==============================================================
 
-void PMainGimbalDisp::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
+void MainGimbalDial::Reset2D (MESHHANDLE hMesh)
 {
-	static const DWORD NVTX = 8;
-	static const DWORD NIDX = 12;
-	static const NTVERTEX VTX[NVTX] = {
-		{pm_x0,      pm_y0-bb_dy,0,  0,0,0,  tx_x0/texw, tx_y0/texh},
-		{pm_x0+bb_dx,pm_y0-bb_dy,0,  0,0,0,  (tx_x0+tx_dx)/texw, tx_y0/texh},
-		{pm_x0,      pm_y0+bb_dy,0,  0,0,0,  tx_x0/texw, (tx_y0+tx_dy)/texh},
-		{pm_x0+bb_dx,pm_y0+bb_dy,0,  0,0,0,  (tx_x0+tx_dx)/texw, (tx_y0+tx_dy)/texh},
-		{pm_x0+2.0f*bb_dx+1.0f,pm_y0-bb_dy,0,  0,0,0,  tx_x0/texw, tx_y0/texh},
-		{pm_x0+bb_dx+1.0f,pm_y0-bb_dy,0,  0,0,0,  (tx_x0+tx_dx)/texw, tx_y0/texh},
-		{pm_x0+2.0f*bb_dx+1.0f,pm_y0+bb_dy,0,  0,0,0,  tx_x0/texw, (tx_y0+tx_dy)/texh},
-		{pm_x0+bb_dx+1.0f,pm_y0+bb_dy,0,  0,0,0,  (tx_x0+tx_dx)/texw, (tx_y0+tx_dy)/texh}
-	};
-	static const WORD IDX[NIDX] = {
-		0,1,2, 3,2,1,
-		4,6,5, 7,5,6
-	};
-
-	AddGeometry (hMesh, grpidx, VTX, NVTX, IDX, NIDX);
+	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
+	vtxofs = 144;
 }
 
 // ==============================================================
 
-bool PMainGimbalDisp::Redraw2D (SURFHANDLE surf)
+bool MainGimbalDial::Redraw2D (SURFHANDLE surf)
 {
-	return false; // for now
+	// constants for texture coordinates
+	static const float texw = (float)PANEL2D_TEXW; // texture width
+	static const float texh = (float)PANEL2D_TEXH; // texture height
+	static const float tx_x0 = 1160.5f;            // left edge of texture block
+	static const float tx_y0 = texh-615.5f;        // top edge of texture block
+	static const float tx_dx = 39.0f;              // texture block width
+	static const float tx_dy = 43.0f;              // texture block height
+	static float tu[4] = {tx_x0/texw,(tx_x0+tx_dx)/texw,tx_x0/texw,(tx_x0+tx_dx)/texw};
 
-	int i, j, lvl;
-	for (i = 0; i < 2; i++) {
-		lvl = ((DeltaGlider*)vessel)->mpgimbalidx[i]-35;
-		for (j = 0; j < 4; j++)
-			grp->Vtx[vtxofs+i*4+j].y = pm_y0-bb_dy+(j/2)*(2*bb_dy) + lvl;
+	DeltaGlider *dg = (DeltaGlider*)vessel;
+	float dtu = (float)(dg->GetMainGimbalMode()*40.0)/texw;
+	for (int i = 0; i < 4; i++)
+		grp->Vtx[vtxofs+i].tu = tu[i]+dtu;
+	return false;
+}
+
+// ==============================================================
+
+bool MainGimbalDial::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
+{
+	DeltaGlider *dg = (DeltaGlider*)vessel;
+	int mode = dg->GetMainGimbalMode();
+	dg->SetAnimation (dg->anim_gimbaldial, mode*0.5);
+	return false;
+}
+
+// ==============================================================
+
+bool MainGimbalDial::ProcessMouse2D (int event, int mx, int my)
+{
+	DeltaGlider *dg = (DeltaGlider*)vessel;
+	int mode = dg->GetMainGimbalMode();
+
+	if (mx < 20) { // dial turn left
+		if (mode > 0) {
+			dg->SetMainGimbalMode (mode-1);
+			return true;
+		}
+	} else { // dial turn right
+		if (mode < 2) {
+			dg->SetMainGimbalMode (mode+1);
+			return true;
+		}
 	}
 	return false;
 }
 
 // ==============================================================
 
-bool PMainGimbalDisp::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
+bool MainGimbalDial::ProcessMouseVC (int event, VECTOR3 &p)
 {
 	DeltaGlider *dg = (DeltaGlider*)vessel;
-	oapiBlt (surf, dg->srf[8], 0, dg->mpgimbalidx[0], 0, 0, 6, 7, SURF_PREDEF_CK);
-	oapiBlt (surf, dg->srf[8], 7, dg->mpgimbalidx[1], 6, 0, 6, 7, SURF_PREDEF_CK);
-	return true;
+	DWORD mode = dg->GetMainGimbalMode();
+
+	if (p.x < 0.5) { // dial turn left
+		if (mode > 0) {
+			dg->SetMainGimbalMode (mode-1);
+			return true;
+		}
+	} else { // dial turn right
+		if (mode < 2) {
+			dg->SetMainGimbalMode (mode+1);
+			return true;
+		}
+	}
+	return false;
+}
+
+// ==============================================================
+// ==============================================================
+
+MainGimbalDisp::MainGimbalDisp (VESSEL3 *v): PanelElement (v)
+{
+	for (int i = 0; i < 2; i++) {
+		pofs_cur[i] = yofs_cur[i] = 0;
+		pofs_cmd[i] = yofs_cmd[i] = 0;
+	}
+	memset (&vc_grp, 0, sizeof(GROUPREQUESTSPEC));
+}
+
+// ==============================================================
+
+MainGimbalDisp::~MainGimbalDisp ()
+{
+	if (vc_grp.Vtx) delete []vc_grp.Vtx;
+}
+
+// ==============================================================
+
+void MainGimbalDisp::Reset2D (MESHHANDLE hMesh)
+{
+	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
+	vtxofs = 148;
+}
+
+// ==============================================================
+
+void MainGimbalDisp::ResetVC (DEVMESHHANDLE hMesh)
+{
+	vc_grp.nVtx = 16;
+	if (!vc_grp.Vtx) vc_grp.Vtx = new NTVERTEX[vc_grp.nVtx];
+	if (oapiGetMeshGroup (hMesh, GRP_VC_INSTR_VC, &vc_grp) != 0) { // problems
+		delete []vc_grp.Vtx;
+		vc_grp.Vtx = 0;
+	}
+}
+
+// ==============================================================
+
+bool MainGimbalDisp::Redraw2D (SURFHANDLE surf)
+{
+	DeltaGlider *dg = (DeltaGlider*)vessel;
+	int i, j, ofs;
+	double g;
+	const float x0 =  28.5f;
+	const float xx =  42.0f;
+	const float y0 = 135.5f;
+	const float dx =  10.0f;
+	const float dy =  10.0f;
+
+	for (i = 0; i < 2; i++) {
+		g = dg->MainPGimbal(i);
+		ofs = (int)floor((g/MAIN_PGIMBAL_RANGE)*18+0.5);
+		if (ofs != pofs_cur[i]) {
+			for (j = 0; j < 4; j++)
+				grp->Vtx[vtxofs+4*i+j].y = y0 + dy*(j/2) + ofs;
+			pofs_cur[i] = ofs;
+		}
+		g = dg->MainYGimbal(i);
+		ofs = (int)floor((g/MAIN_YGIMBAL_RANGE)*18+0.5);
+		if (ofs != yofs_cur[i]) {
+			for (j = 0; j < 4; j++)
+				grp->Vtx[vtxofs+4*i+j].x = x0 + i*xx + dx*(j%2) - ofs;
+			yofs_cur[i] = ofs;
+		}
+	}
+
+	for (i = 0; i < 2; i++) {
+		g = dg->MainPGimbal(i, false);
+		ofs = (int)floor((g/MAIN_PGIMBAL_RANGE)*18+0.5);
+		if (ofs != pofs_cmd[i]) {
+			for (j = 0; j < 4; j++)
+				grp->Vtx[vtxofs+8+4*i+j].y = y0 + dy*(j/2) + ofs;
+			pofs_cmd[i] = ofs;
+		}
+		g = dg->MainYGimbal(i, false);
+		ofs = (int)floor((g/MAIN_YGIMBAL_RANGE)*18+0.5);
+		if (ofs != yofs_cmd[i]) {
+			for (j = 0; j < 4; j++)
+				grp->Vtx[vtxofs+8+4*i+j].x = x0 + i*xx + dx*(j%2) - ofs;
+			yofs_cmd[i] = ofs;
+		}
+	}
+
+	return false;
+}
+
+// ==============================================================
+
+bool MainGimbalDisp::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
+{
+	const double &slope = vc_lpanel_tilt;
+	const VECTOR3 (&cnt)[2] = vc_gimind_cnt;
+	static const double cosa = cos(slope), sina = sin(slope);
+	static const double indsize = 0.002586;
+	static const double xrange = 0.0103/MAIN_YGIMBAL_RANGE;
+	static const double yrange = 0.0103/MAIN_PGIMBAL_RANGE;
+
+	DeltaGlider *dg = (DeltaGlider*)vessel;
+	NTVERTEX *Vtx = vc_grp.Vtx;
+	if (hMesh && Vtx) {
+		int i, j;
+		double dx, dy;
+		float y, z;
+		for (i = 0; i < 2; i++) {
+			dx = -dg->MainYGimbal(i)*xrange;
+			dy = -dg->MainPGimbal(i)*yrange;
+			for (j = 0; j < 4; j++) {
+				Vtx[4+i*8+j].x = cnt[i].x + dx + indsize*(j%2 ? 1:-1);
+				Vtx[4+i*8+j].y = dy + indsize*(j/2 ? 1:-1);
+			}
+			dx = -dg->MainYGimbal(i,false)*xrange;
+			dy = -dg->MainPGimbal(i,false)*yrange;
+			for (j = 0; j < 4; j++) {
+				Vtx[i*8+j].x = cnt[i].x + dx + indsize*(j%2 ? 1:-1);
+				Vtx[i*8+j].y = dy + indsize*(j/2 ? 1:-1);
+			}
+		}
+		for (i = 0; i < 16; i++) {
+			y = Vtx[i].y;
+			z = (i%8) < 4 ? -0.0005f : -0.001f;
+			Vtx[i].y = (float)(cnt[0].y + y*cosa - z*sina);
+			Vtx[i].z = (float)(cnt[0].z + y*sina + z*cosa);
+		}
+		GROUPEDITSPEC ges;
+		ges.flags = GRPEDIT_VTXCRD;
+		ges.nVtx = vc_grp.nVtx;
+		ges.Vtx  = vc_grp.Vtx;
+		ges.vIdx = 0;
+		oapiEditMeshGroup (hMesh, GRP_VC_INSTR_VC, &ges);
+
+	}
+	return false;
 }
 
 // ==============================================================
@@ -86,41 +257,38 @@ bool PMainGimbalDisp::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 
 PMainGimbalCtrl::PMainGimbalCtrl (VESSEL3 *v): PanelElement (v)
 {
+	for (int i = 0; i < 2; i++)
+		vc_state[i] = 0;
 }
 
 // ==============================================================
 
-void PMainGimbalCtrl::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
+void PMainGimbalCtrl::Reset2D (MESHHANDLE hMesh)
 {
-	static const DWORD NVTX = 8;
-	static const DWORD NIDX = 12;
-	static const NTVERTEX VTX[NVTX] = {
-		{64, 83,0,  0,0,0,  1054/texw, (texh-616)/texh},
-		{78, 83,0,  0,0,0,  1068/texw, (texh-616)/texh},
-		{64,125,0,  0,0,0,  1054/texw, (texh-574)/texh},
-		{78,125,0,  0,0,0,  1068/texw, (texh-574)/texh},
-		{83, 83,0,  0,0,0,  1054/texw, (texh-616)/texh},
-		{97, 83,0,  0,0,0,  1068/texw, (texh-616)/texh},
-		{83,125,0,  0,0,0,  1054/texw, (texh-574)/texh},
-		{97,125,0,  0,0,0,  1068/texw, (texh-574)/texh}
-	};
-	static const WORD IDX[NIDX] = {
-		0,1,2, 3,2,1,
-		4,5,6, 7,6,5
-	};
-	AddGeometry (hMesh, grpidx, VTX, NVTX, IDX, NIDX);
+	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
+	vtxofs = 164;
+}
+
+// ==============================================================
+
+void PMainGimbalCtrl::ResetVC (DEVMESHHANDLE hMesh)
+{
+	GROUPREQUESTSPEC grs;
+	memset (&grs, 0, sizeof(GROUPREQUESTSPEC));
+	grs.Vtx = vtx0;
+	grs.nVtx = nvtx_per_switch*2;
+	oapiGetMeshGroup (hMesh, GRP_SWITCHES1_VC, &grs);
 }
 
 // ==============================================================
 
 bool PMainGimbalCtrl::Redraw2D (SURFHANDLE surf)
 {
-	return false; // for now
 	int i, j, state;
 	for (i = 0; i < 2; i++) {
 		state = ((DeltaGlider*)vessel)->mpswitch[i];
 		for (j = 0; j < 4; j++)
-			grp->Vtx[vtxofs+i*4+j].tu = (1054+state*16+(j%2)*14)/texw;
+			grp->Vtx[vtxofs+i*4+j].tu = (1053.5f+state*16+(j%2)*15)/texw;
 	}
 	return false;
 }
@@ -129,12 +297,45 @@ bool PMainGimbalCtrl::Redraw2D (SURFHANDLE surf)
 
 bool PMainGimbalCtrl::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 {
-	int i, state;
-	DeltaGlider *dg = (DeltaGlider*)vessel;
+	const VECTOR3 &ref = vc_gpswitch_ref;
+	static const double tilt[3] = {0,15*RAD,-15*RAD};
+
+	int i, j, ofs, state;
+	bool redraw = false;
 	for (i = 0; i < 2; i++) {
-		state = dg->mpswitch[i];
-		vessel->SetAnimation (dg->anim_pmaingimbal[i], state ? 2-state:0.5);
+		state = ((DeltaGlider*)vessel)->mpswitch[i];
+		if (state != vc_state[i]) {
+			vc_state[i] = state;
+			redraw = true;
+		}
 	}
+	if (!redraw) return false;
+
+	NTVERTEX vtx[nvtx_per_switch*2];
+	memcpy (vtx, vtx0, nvtx_per_switch*2*sizeof(NTVERTEX));
+
+	for (i = 0; i < 2; i++) {
+		ofs = i*nvtx_per_switch;
+		state = vc_state[i];
+		if (!state) continue;
+		MATRIX3 R = rotm(vc_gpswitch_axis,tilt[state]);
+		for (j = 0; j < nvtx_per_switch; j++) {
+			VECTOR3 v = {vtx[ofs+j].x-ref.x, vtx[ofs+j].y-ref.y, vtx[ofs+j].z-ref.z};
+			VECTOR3 vr = mul(R,v);
+			vtx[ofs+j].x = (float)(vr.x + ref.x);
+			vtx[ofs+j].y = (float)(vr.y + ref.y);
+			vtx[ofs+j].z = (float)(vr.z + ref.z);
+			VECTOR3 n = {vtx[ofs+j].nx, vtx[ofs+j].ny, vtx[ofs+j].nz};
+			VECTOR3 nr = mul(R,n);
+			vtx[ofs+j].nx = (float)nr.x;
+			vtx[ofs+j].ny = (float)nr.y;
+			vtx[ofs+j].nz = (float)nr.z;
+		}
+	}
+
+	static const int grpid = GRP_SWITCHES1_VC;
+	GROUPEDITSPEC ges = {GRPEDIT_VTXCRD|GRPEDIT_VTXNML,0,vtx,nvtx_per_switch*2,0};
+	oapiEditMeshGroup (hMesh, grpid, &ges);
 	return false;
 }
 
@@ -147,14 +348,12 @@ bool PMainGimbalCtrl::ProcessMouse2D (int event, int mx, int my)
 		if      (mx <  10) ctrl = 1;
 		else if (mx >= 25) ctrl = 2;
 		else               ctrl = 3;
-		if      (my <  22) mode = 1;
-		else               mode = 2;
+		if      (my <  22) mode = 2;
+		else               mode = 1;
 	} else if (event & PANEL_MOUSE_LBUP) {
 		ctrl = 0;
 	}
-	if (((DeltaGlider*)vessel)->IncMainPGimbal (ctrl, mode))
-		oapiTriggerPanelRedrawArea (0, AID_PGIMBALMAINDISP);
-	return (event & PANEL_MOUSE_LBDOWN || event & PANEL_MOUSE_LBUP);
+	return ((DeltaGlider*)vessel)->IncMainPGimbal (ctrl, mode);
 }
 
 // ==============================================================
@@ -171,118 +370,8 @@ bool PMainGimbalCtrl::ProcessMouseVC (int event, VECTOR3 &p)
 	} else if (event & PANEL_MOUSE_LBUP) {
 		ctrl = 0;
 	}
-	if (((DeltaGlider*)vessel)->IncMainPGimbal (ctrl, mode))
-		oapiVCTriggerRedrawArea (0, AID_PGIMBALMAINDISP);
-	return (event & PANEL_MOUSE_LBDOWN || event & PANEL_MOUSE_LBUP);
-}
-
-// ==============================================================
-// ==============================================================
-
-PMainGimbalCntr::PMainGimbalCntr (VESSEL3 *v): PanelElement (v)
-{
-}
-
-// ==============================================================
-
-void PMainGimbalCntr::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
-{
-	static const DWORD NVTX = 4;
-	static const DWORD NIDX = 6;
-	static const NTVERTEX VTX[NVTX] = {
-		{58,140,0,  0,0,0,  1029/texw, (texh-584)/texh},
-		{68,140,0,  0,0,0,  1039/texw, (texh-584)/texh},
-		{58,150,0,  0,0,0,  1029/texw, (texh-574)/texh},
-		{68,150,0,  0,0,0,  1039/texw, (texh-574)/texh}
-	};
-	static const WORD IDX[NIDX] = {
-		0,1,2, 3,2,1
-	};
-	AddGeometry (hMesh, grpidx, VTX, NVTX, IDX, NIDX);
-}
-
-// ==============================================================
-
-bool PMainGimbalCntr::Redraw2D (SURFHANDLE surf)
-{
-	return false; // for now
-
-	int j, mode = ((DeltaGlider*)vessel)->mpmode;
-	for (j = 0; j < 4; j++)
-		grp->Vtx[vtxofs+j].tu = (1029+(j%2)*10+mode*12)/texw;
-	return false;
-}
-
-// ==============================================================
-
-bool PMainGimbalCntr::ProcessMouse2D (int event, int mx, int my)
-{
-	((DeltaGlider*)vessel)->mpmode = 1-((DeltaGlider*)vessel)->mpmode;
-	return true;
-}
-
-// ==============================================================
-
-bool PMainGimbalCntr::ProcessMouseVC (int event, VECTOR3 &p)
-{
-	((DeltaGlider*)vessel)->mpmode = 1-((DeltaGlider*)vessel)->mpmode;
-	return true;
-}
-
-// ==============================================================
-// ==============================================================
-
-YMainGimbalDisp::YMainGimbalDisp (VESSEL3 *v): PanelElement (v)
-{
-}
-
-// ==============================================================
-
-void YMainGimbalDisp::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
-{
-	static const DWORD NVTX = 8;
-	static const DWORD NIDX = 12;
-	static const NTVERTEX VTX[NVTX] = {
-		{59.5f-3.0f,239.0f,0,  0,0,0,  1147.5f/texw, (texh-608.5f)/texh},
-		{59.5f+3.0f,239.0f,0,  0,0,0,  1147.5f/texw, (texh-614.5f)/texh},
-		{59.5f-3.0f,246.0f,0,  0,0,0,  1154.5f/texw, (texh-608.5f)/texh},
-		{59.5f+3.0f,246.0f,0,  0,0,0,  1154.5f/texw, (texh-614.5f)/texh},
-		{59.5f-3.0f,254.0f,0,  0,0,0,  1147.5f/texw, (texh-608.5f)/texh},
-		{59.5f+3.0f,254.0f,0,  0,0,0,  1147.5f/texw, (texh-614.5f)/texh},
-		{59.5f-3.0f,247.0f,0,  0,0,0,  1154.5f/texw, (texh-608.5f)/texh},
-		{59.5f+3.0f,247.0f,0,  0,0,0,  1154.5f/texw, (texh-614.5f)/texh}
-	};
-	static const WORD IDX[NIDX] = {
-		0,1,2, 3,2,1,
-		4,6,5, 7,5,6
-	};
-
-	AddGeometry (hMesh, grpidx, VTX, NVTX, IDX, NIDX);
-}
-
-// ==============================================================
-
-bool YMainGimbalDisp::Redraw2D (SURFHANDLE surf)
-{
-	return false; // for now
-
-	int i, j, lvl;
-	for (i = 0; i < 2; i++) {
-		lvl = ((DeltaGlider*)vessel)->mygimbalidx[i]-35;
-		for (j = 0; j < 4; j++)
-			grp->Vtx[vtxofs+i*4+j].x = 59.5f-3.0f+(j%2)*6.0f + lvl;
-	}
-	return false;
-}
-
-// ==============================================================
-
-bool YMainGimbalDisp::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
-{
-	DeltaGlider *dg = (DeltaGlider*)vessel;
-	oapiBlt (surf, dg->srf[8], dg->mygimbalidx[0], 0, 0, 8, 7, 6, SURF_PREDEF_CK);
-	oapiBlt (surf, dg->srf[8], dg->mygimbalidx[1], 7, 7, 8, 7, 6, SURF_PREDEF_CK);
-	return true;
+	((DeltaGlider*)vessel)->IncMainPGimbal (ctrl, mode);
+	return (event & (PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP));
 }
 
 // ==============================================================
@@ -290,43 +379,42 @@ bool YMainGimbalDisp::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 
 YMainGimbalCtrl::YMainGimbalCtrl (VESSEL3 *v): PanelElement (v)
 {
+	int i;
+	for (i = 0; i < 2; i++)
+		vc_state[i] = 0;
+	for (i = 0; i < nvtx_per_switch*2; i++)
+		vperm[i] = (WORD)(i+nvtx_per_switch*2);
 }
 
 // ==============================================================
 
-void YMainGimbalCtrl::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
+void YMainGimbalCtrl::Reset2D (MESHHANDLE hMesh)
 {
-	static const DWORD NVTX = 8;
-	static const DWORD NIDX = 12;
-	static const NTVERTEX VTX[NVTX] = {
-		{56,179,0,  0,0,0,  1054/texw, (texh-574)/texh},
-		{98,179,0,  0,0,0,  1054/texw, (texh-616)/texh},
-		{56,193,0,  0,0,0,  1068/texw, (texh-574)/texh},
-		{98,193,0,  0,0,0,  1068/texw, (texh-616)/texh},
-		{56,198,0,  0,0,0,  1054/texw, (texh-574)/texh},
-		{98,198,0,  0,0,0,  1054/texw, (texh-616)/texh},
-		{56,212,0,  0,0,0,  1068/texw, (texh-574)/texh},
-		{98,212,0,  0,0,0,  1068/texw, (texh-616)/texh}
-	};
-	static const WORD IDX[NIDX] = {
-		0,1,2, 3,2,1,
-		4,5,6, 7,6,5
-	};
+	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
+	vtxofs = 172;
+}
 
-	AddGeometry (hMesh, grpidx, VTX, NVTX, IDX, NIDX);
+// ==============================================================
+
+void YMainGimbalCtrl::ResetVC (DEVMESHHANDLE hMesh)
+{
+	GROUPREQUESTSPEC grs;
+	memset (&grs, 0, sizeof(GROUPREQUESTSPEC));
+	grs.Vtx = vtx0;
+	grs.nVtx = nvtx_per_switch*2;
+	grs.VtxPerm = vperm;
+	oapiGetMeshGroup (hMesh, GRP_SWITCHES1_VC, &grs);
 }
 
 // ==============================================================
 
 bool YMainGimbalCtrl::Redraw2D (SURFHANDLE surf)
 {
-	return false; // for now
 	int i, j, state;
 	for (i = 0; i < 2; i++) {
-		static int map[3] = {0,2,1};
-		state = map[((DeltaGlider*)vessel)->myswitch[i]];
+		state = ((DeltaGlider*)vessel)->myswitch[i];
 		for (j = 0; j < 4; j++)
-			grp->Vtx[vtxofs+i*4+j].tu = (1054+state*16+(j%2)*14)/texw;
+			grp->Vtx[vtxofs+i*4+j].tu = (1053.5+state*16+(j%2)*15)/texw;
 	}
 	return false;
 }
@@ -335,12 +423,45 @@ bool YMainGimbalCtrl::Redraw2D (SURFHANDLE surf)
 
 bool YMainGimbalCtrl::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 {
-	int i, state;
-	DeltaGlider *dg = (DeltaGlider*)vessel;
+	const VECTOR3 &ref = vc_gyswitch_ref;
+	static const double tilt[3] = {0,15*RAD,-15*RAD};
+
+	int i, j, ofs, state;
+	bool redraw = false;
 	for (i = 0; i < 2; i++) {
-		state = dg->myswitch[i];
-		vessel->SetAnimation (dg->anim_ymaingimbal[i], state ? 2-state:0.5);
+		state = ((DeltaGlider*)vessel)->myswitch[i];
+		if (state != vc_state[i]) {
+			vc_state[i] = state;
+			redraw = true;
+		}
 	}
+	if (!redraw) return false;
+
+	NTVERTEX vtx[nvtx_per_switch*2];
+	memcpy (vtx, vtx0, nvtx_per_switch*2*sizeof(NTVERTEX));
+
+	for (i = 0; i < 2; i++) {
+		ofs = i*nvtx_per_switch;
+		state = vc_state[i];
+		if (!state) continue;
+		MATRIX3 R = rotm(vc_gyswitch_axis,tilt[state]);
+		for (j = 0; j < nvtx_per_switch; j++) {
+			VECTOR3 v = {vtx[ofs+j].x-ref.x, vtx[ofs+j].y-ref.y, vtx[ofs+j].z-ref.z};
+			VECTOR3 vr = mul(R,v);
+			vtx[ofs+j].x = (float)(vr.x + ref.x);
+			vtx[ofs+j].y = (float)(vr.y + ref.y);
+			vtx[ofs+j].z = (float)(vr.z + ref.z);
+			VECTOR3 n = {vtx[ofs+j].nx, vtx[ofs+j].ny, vtx[ofs+j].nz};
+			VECTOR3 nr = mul(R,n);
+			vtx[ofs+j].nx = (float)nr.x;
+			vtx[ofs+j].ny = (float)nr.y;
+			vtx[ofs+j].nz = (float)nr.z;
+		}
+	}
+
+	static const int grpid = GRP_SWITCHES1_VC;
+	GROUPEDITSPEC ges = {GRPEDIT_VTXCRD|GRPEDIT_VTXNML,0,vtx,nvtx_per_switch*2,vperm};
+	oapiEditMeshGroup (hMesh, grpid, &ges);
 	return false;
 }
 
@@ -358,381 +479,12 @@ bool YMainGimbalCtrl::ProcessMouse2D (int event, int mx, int my)
 	} else if (event & PANEL_MOUSE_LBUP) {
 		ctrl = 0;
 	}
-	if (((DeltaGlider*)vessel)->IncMainYGimbal (ctrl, mode))
-		oapiTriggerPanelRedrawArea (0, AID_YGIMBALMAINDISP);
-	return (event & PANEL_MOUSE_LBDOWN || event & PANEL_MOUSE_LBUP);
+	return ((DeltaGlider*)vessel)->IncMainYGimbal (ctrl, mode);
 }
 
 // ==============================================================
 
 bool YMainGimbalCtrl::ProcessMouseVC (int event, VECTOR3 &p)
-{
-	static int ctrl = 0, mode = 0;
-	if (event & PANEL_MOUSE_LBDOWN) {
-		if      (p.y < 0.25) ctrl = 1;
-		else if (p.y > 0.75) ctrl = 2;
-		else                 ctrl = 3;
-		if      (p.x < 0.5 ) mode = 1;
-		else                 mode = 2;
-	} else if (event & PANEL_MOUSE_LBUP) {
-		ctrl = 0;
-	}
-	if (((DeltaGlider*)vessel)->IncMainYGimbal (ctrl, mode))
-		oapiVCTriggerRedrawArea (0, AID_YGIMBALMAINDISP);
-	return (event & PANEL_MOUSE_LBDOWN || event & PANEL_MOUSE_LBUP);
-}
-
-// ==============================================================
-// ==============================================================
-
-YMainGimbalMode::YMainGimbalMode (VESSEL3 *v): PanelElement (v)
-{
-}
-
-// ==============================================================
-
-void YMainGimbalMode::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
-{
-	static const DWORD NVTX = 4*3;
-	static const DWORD NIDX = 6*3;
-	static const NTVERTEX VTX[NVTX] = {
-		{ 9,166,0,  0,0,0,  1029/texw, (texh-584)/texh},
-		{19,166,0,  0,0,0,  1039/texw, (texh-584)/texh},
-		{ 9,176,0,  0,0,0,  1029/texw, (texh-574)/texh},
-		{19,176,0,  0,0,0,  1039/texw, (texh-574)/texh},
-		{ 9,183,0,  0,0,0,  1029/texw, (texh-584)/texh},
-		{19,183,0,  0,0,0,  1039/texw, (texh-584)/texh},
-		{ 9,193,0,  0,0,0,  1029/texw, (texh-574)/texh},
-		{19,193,0,  0,0,0,  1039/texw, (texh-574)/texh},
-		{ 9,200,0,  0,0,0,  1029/texw, (texh-584)/texh},
-		{19,200,0,  0,0,0,  1039/texw, (texh-584)/texh},
-		{ 9,210,0,  0,0,0,  1029/texw, (texh-574)/texh},
-		{19,210,0,  0,0,0,  1039/texw, (texh-574)/texh}
-	};
-	static const WORD IDX[NIDX] = {
-		0,1,2, 3,2,1,
-		4,5,6, 7,6,5,
-		8,9,10, 11,10,9
-	};
-
-	AddGeometry (hMesh, grpidx, VTX, NVTX, IDX, NIDX);
-}
-
-// ==============================================================
-
-bool YMainGimbalMode::Redraw2D (SURFHANDLE surf)
-{
-	return false; // for now
-
-	DeltaGlider *dg = (DeltaGlider*)vessel;
-	int i, j, ofs;
-	for (i = 0; i < 3; i++) {
-		ofs = (dg->mymode == i+1 ? 12:0);
-		for (j = 0; j < 4; j++)
-			grp->Vtx[vtxofs+i*4+j].tu = (1029+(j%2)*10+ofs)/texw;
-	}
-	return false;
-}
-
-// ==============================================================
-
-bool YMainGimbalMode::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
-{
-	((DeltaGlider*)vessel)->SetVC_YGimbalMode();
-	return false;
-}
-
-// ==============================================================
-
-bool YMainGimbalMode::ProcessMouse2D (int event, int mx, int my)
-{
-	DeltaGlider *dg = (DeltaGlider*)vessel;
-	int mode = dg->mymode;
-	if (my < 12)                  dg->mymode = (mode == 1 ? 0 : 1);
-	else if (my >= 17 && my < 29) dg->mymode = (mode == 2 ? 0 : 2);
-	else if (my >= 34)            dg->mymode = (mode == 3 ? 0 : 3);
-	return (mode != dg->mymode);
-}
-
-// ==============================================================
-
-bool YMainGimbalMode::ProcessMouseVC (int event, VECTOR3 &p)
-{
-	DeltaGlider *dg = (DeltaGlider*)vessel;
-	int mode = dg->mymode;
-	if (p.y < 0.25)                       dg->mymode = (mode == 1 ? 0 : 1);
-	else if (p.y >= 0.375 && p.y < 0.625) dg->mymode = (mode == 2 ? 0 : 2);
-	else if (p.y >= 0.75)                 dg->mymode = (mode == 3 ? 0 : 3);
-	return (mode != dg->mymode);
-}
-
-// ==============================================================
-// ==============================================================
-
-HoverBalanceDisp::HoverBalanceDisp (VESSEL3 *v): PanelElement (v)
-{
-}
-
-void HoverBalanceDisp::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
-{
-	static const DWORD NVTX = 4;
-	static const DWORD NIDX = 6;
-	static const NTVERTEX VTX[NVTX] = {
-		{27,  327.5f-3,0,  0,0,0,  tx_x0/texw, tx_y0/texh},
-		{27+7,327.5f-3,0,  0,0,0,  (tx_x0+tx_dx)/texw, tx_y0/texh},
-		{27,  327.5f+3,0,  0,0,0,  tx_x0/texw, (tx_y0+tx_dy)/texh},
-		{27+7,327.5f+3,0,  0,0,0,  (tx_x0+tx_dx)/texw, (tx_y0+tx_dy)/texh}
-	};
-	static const WORD IDX[NIDX] = {
-		0,1,2, 3,2,1
-	};
-
-	AddGeometry (hMesh, grpidx, VTX, NVTX, IDX, NIDX);
-}
-
-// ==============================================================
-
-bool HoverBalanceDisp::Redraw2D (SURFHANDLE surf)
-{
-	return false; // for now
-
-	int j, lvl = ((DeltaGlider*)vessel)->hbalanceidx - 28;
-	for (j = 0; j < 4; j++)
-		grp->Vtx[vtxofs+j].y = 327.5f-3.0f+(j/2)*6.0f + lvl;
-	return false;
-}
-
-// ==============================================================
-// ==============================================================
-
-HoverBalanceCtrl::HoverBalanceCtrl (VESSEL3 *v): PanelElement (v)
-{
-}
-
-// ==============================================================
-
-void HoverBalanceCtrl::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
-{
-	static const DWORD NVTX = 4;
-	static const DWORD NIDX = 6;
-	static const NTVERTEX VTX[NVTX] = {
-		{64,305,0,  0,0,0,  1054/texw, (texh-616)/texh},
-		{78,305,0,  0,0,0,  1068/texw, (texh-616)/texh},
-		{64,347,0,  0,0,0,  1054/texw, (texh-574)/texh},
-		{78,347,0,  0,0,0,  1068/texw, (texh-574)/texh}
-	};
-	static const WORD IDX[NIDX] = {
-		0,1,2, 3,2,1
-	};
-	AddGeometry (hMesh, grpidx, VTX, NVTX, IDX, NIDX);
-}
-
-// ==============================================================
-
-bool HoverBalanceCtrl::Redraw2D (SURFHANDLE surf)
-{
-	return false; // for now
-
-	int j, state = ((DeltaGlider*)vessel)->hbswitch;
-	for (j = 0; j < 4; j++)
-		grp->Vtx[vtxofs+j].tu = (1054+state*16+(j%2)*14)/texw;
-	return false;
-}
-
-// ==============================================================
-
-bool HoverBalanceCtrl::ProcessMouse2D (int event, int mx, int my)
-{
-	static int mode = 0;
-
-	if (event & PANEL_MOUSE_LBDOWN) {
-		if (my < 22) mode = 1;
-		else         mode = 2;
-	} else if (event & PANEL_MOUSE_LBUP) {
-		mode = 0;
-	}
-	if (((DeltaGlider*)vessel)->ShiftHoverBalance (mode))
-		oapiTriggerPanelRedrawArea (0, AID_HBALANCEDISP);
-	return (event & PANEL_MOUSE_LBDOWN || event & PANEL_MOUSE_LBUP);
-}
-
-// ==============================================================
-// ==============================================================
-
-HoverBalanceCntr::HoverBalanceCntr (VESSEL3 *v): PanelElement (v)
-{
-}
-
-// ==============================================================
-
-void HoverBalanceCntr::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
-{
-	static const DWORD NVTX = 4;
-	static const DWORD NIDX = 6;
-	static const NTVERTEX VTX[NVTX] = {
-		{58,355,0,  0,0,0,  1029/texw, (texh-584)/texh},
-		{68,355,0,  0,0,0,  1039/texw, (texh-584)/texh},
-		{58,365,0,  0,0,0,  1029/texw, (texh-574)/texh},
-		{68,365,0,  0,0,0,  1039/texw, (texh-574)/texh}
-	};
-	static const WORD IDX[NIDX] = {
-		0,1,2, 3,2,1
-	};
-	AddGeometry (hMesh, grpidx, VTX, NVTX, IDX, NIDX);
-}
-
-// ==============================================================
-
-bool HoverBalanceCntr::Redraw2D (SURFHANDLE surf)
-{
-	return false; // for now
-
-	int j, mode = ((DeltaGlider*)vessel)->hbmode;
-	for (j = 0; j < 4; j++)
-		grp->Vtx[vtxofs+j].tu = (1029+(j%2)*10+mode*12)/texw;
-	return false;
-}
-
-// ==============================================================
-
-bool HoverBalanceCntr::ProcessMouse2D (int event, int mx, int my)
-{
-	((DeltaGlider*)vessel)->hbmode = 1-((DeltaGlider*)vessel)->hbmode;
-	return true;
-}
-
-// ==============================================================
-// ==============================================================
-
-ScramGimbalDisp::ScramGimbalDisp (DeltaGlider *v): DGPanelElement (v)
-{
-}
-
-// ==============================================================
-
-void ScramGimbalDisp::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
-{
-	static const DWORD NVTX = 8;
-	static const DWORD NIDX = 12;
-	static const NTVERTEX VTX[NVTX] = {
-		{pm_x0,      sc_y0-bb_dy,0,  0,0,0,  tx_x0/texw, tx_y0/texh},
-		{pm_x0+bb_dx,sc_y0-bb_dy,0,  0,0,0,  (tx_x0+tx_dx)/texw, tx_y0/texh},
-		{pm_x0,      sc_y0+bb_dy,0,  0,0,0,  tx_x0/texw, (tx_y0+tx_dy)/texh},
-		{pm_x0+bb_dx,sc_y0+bb_dy,0,  0,0,0,  (tx_x0+tx_dx)/texw, (tx_y0+tx_dy)/texh},
-		{pm_x0+2.0f*bb_dx+1.0f,sc_y0-bb_dy,0,  0,0,0,  tx_x0/texw, tx_y0/texh},
-		{pm_x0+bb_dx+1.0f,sc_y0-bb_dy,0,  0,0,0,  (tx_x0+tx_dx)/texw, tx_y0/texh},
-		{pm_x0+2.0f*bb_dx+1.0f,sc_y0+bb_dy,0,  0,0,0,  tx_x0/texw, (tx_y0+tx_dy)/texh},
-		{pm_x0+bb_dx+1.0f,sc_y0+bb_dy,0,  0,0,0,  (tx_x0+tx_dx)/texw, (tx_y0+tx_dy)/texh}
-	};
-	static const WORD IDX[NIDX] = {
-		0,1,2, 3,2,1,
-		4,6,5, 7,5,6
-	};
-	AddGeometry (hMesh, grpidx, VTX, NVTX, IDX, NIDX);
-}
-
-// ==============================================================
-
-bool ScramGimbalDisp::Redraw2D (SURFHANDLE surf)
-{
-	return false; // for now
-
-	int i, j, lvl;
-	for (i = 0; i < 2; i++) {
-		lvl = dg->scgimbalidx[i]-35;
-		for (j = 0; j < 4; j++)
-			grp->Vtx[vtxofs+i*4+j].y = sc_y0-bb_dy+(j/2)*(2*bb_dy) + lvl;
-	}
-	return false;
-}
-
-// ==============================================================
-
-bool ScramGimbalDisp::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
-{
-	oapiBlt (surf, dg->srf[8], 0, dg->scgimbalidx[0], 0, 0, 6, 7, SURF_PREDEF_CK);
-	oapiBlt (surf, dg->srf[8], 7, dg->scgimbalidx[1], 6, 0, 6, 7, SURF_PREDEF_CK);
-	return true;
-}
-
-// ==============================================================
-// ==============================================================
-
-ScramGimbalCtrl::ScramGimbalCtrl (DeltaGlider *v): DGPanelElement (v)
-{
-}
-
-// ==============================================================
-
-void ScramGimbalCtrl::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
-{
-	static const DWORD NVTX = 8;
-	static const DWORD NIDX = 12;
-	static const NTVERTEX VTX[NVTX] = {
-		{64,412,0,  0,0,0,  1054/texw, (texh-616)/texh},
-		{78,412,0,  0,0,0,  1068/texw, (texh-616)/texh},
-		{64,454,0,  0,0,0,  1054/texw, (texh-574)/texh},
-		{78,454,0,  0,0,0,  1068/texw, (texh-574)/texh},
-		{83,412,0,  0,0,0,  1054/texw, (texh-616)/texh},
-		{97,412,0,  0,0,0,  1068/texw, (texh-616)/texh},
-		{83,454,0,  0,0,0,  1054/texw, (texh-574)/texh},
-		{97,454,0,  0,0,0,  1068/texw, (texh-574)/texh}
-	};
-	static const WORD IDX[NIDX] = {
-		0,1,2, 3,2,1,
-		4,5,6, 7,6,5
-	};
-	AddGeometry (hMesh, grpidx, VTX, NVTX, IDX, NIDX);
-}
-
-// ==============================================================
-
-bool ScramGimbalCtrl::Redraw2D (SURFHANDLE surf)
-{
-	return false; // for now
-	int i, j, state;
-	for (i = 0; i < 2; i++) {
-		state = dg->sgswitch[i];
-		for (j = 0; j < 4; j++)
-			grp->Vtx[vtxofs+i*4+j].tu = (1054+state*16+(j%2)*14)/texw;
-	}
-	return false;
-}
-
-// ==============================================================
-
-bool ScramGimbalCtrl::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
-{
-	int i, state;
-	for (i = 0; i < 2; i++) {
-		state = dg->sgswitch[i];
-		dg->SetAnimation (dg->anim_scramgimbal[i], state ? 2-state:0.5);
-	}
-	return false;
-}
-
-// ==============================================================
-
-bool ScramGimbalCtrl::ProcessMouse2D (int event, int mx, int my)
-{
-	static int ctrl = 0, mode = 0;
-	if (event & PANEL_MOUSE_LBDOWN) {
-		if      (mx <  10) ctrl = 1;
-		else if (mx >= 25) ctrl = 2;
-		else               ctrl = 3;
-		if      (my <  22) mode = 1;
-		else               mode = 2;
-	} else if (event & PANEL_MOUSE_LBUP) {
-		ctrl = 0;
-	}
-	if (dg->IncScramGimbal (ctrl, mode))
-		oapiTriggerPanelRedrawArea (0, AID_GIMBALSCRAMDISP);
-	return (event & PANEL_MOUSE_LBDOWN || event & PANEL_MOUSE_LBUP);
-}
-
-// ==============================================================
-
-bool ScramGimbalCtrl::ProcessMouseVC (int event, VECTOR3 &p)
 {
 	static int ctrl = 0, mode = 0;
 	if (event & PANEL_MOUSE_LBDOWN) {
@@ -744,69 +496,6 @@ bool ScramGimbalCtrl::ProcessMouseVC (int event, VECTOR3 &p)
 	} else if (event & PANEL_MOUSE_LBUP) {
 		ctrl = 0;
 	}
-	if (dg->IncScramGimbal (ctrl, mode))
-		oapiVCTriggerRedrawArea (0, AID_GIMBALSCRAMDISP);
-	return (event & PANEL_MOUSE_LBDOWN || event & PANEL_MOUSE_LBUP);
+	((DeltaGlider*)vessel)->IncMainYGimbal (ctrl, mode);
+	return (event & (PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP));
 }
-
-// ==============================================================
-// ==============================================================
-
-ScramGimbalCntr::ScramGimbalCntr (DeltaGlider *v): DGPanelElement (v)
-{
-}
-
-// ==============================================================
-
-void ScramGimbalCntr::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
-{
-	static const DWORD NVTX = 4;
-	static const DWORD NIDX = 6;
-	static const NTVERTEX VTX[NVTX] = {
-		{58,469,0,  0,0,0,  1029/texw, (texh-584)/texh},
-		{68,469,0,  0,0,0,  1039/texw, (texh-584)/texh},
-		{58,479,0,  0,0,0,  1029/texw, (texh-574)/texh},
-		{68,479,0,  0,0,0,  1039/texw, (texh-574)/texh}
-	};
-	static const WORD IDX[NIDX] = {
-		0,1,2, 3,2,1
-	};
-	AddGeometry (hMesh, grpidx, VTX, NVTX, IDX, NIDX);
-}
-
-// ==============================================================
-
-bool ScramGimbalCntr::Redraw2D (SURFHANDLE surf)
-{
-	return 0; // for now
-
-	int j, mode = dg->spmode;
-	for (j = 0; j < 4; j++)
-		grp->Vtx[vtxofs+j].tu = (1029+(j%2)*10+mode*12)/texw;
-	return false;
-}
-
-// ==============================================================
-
-bool ScramGimbalCntr::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
-{
-	dg->SetVC_ScramGimbalMode();
-	return false;
-}
-
-// ==============================================================
-
-bool ScramGimbalCntr::ProcessMouse2D (int event, int mx, int my)
-{
-	dg->spmode = 1-dg->mpmode;
-	return true;
-}
-
-// ==============================================================
-
-bool ScramGimbalCntr::ProcessMouseVC (int event, VECTOR3 &p)
-{
-	dg->spmode = 1-dg->spmode;
-	return true;
-}
-

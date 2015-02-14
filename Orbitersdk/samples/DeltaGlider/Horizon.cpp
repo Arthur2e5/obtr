@@ -168,7 +168,7 @@ bool InstrAtt::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 			// scale and rotate for bank
 			Vtx[i].x *= scale;
 			y = Vtx[i].y*scale;
-			z = (i < 8 ? -0.0005f : z = -0.001f);
+			z = (i < 8 ? -0.0005f : -0.001f);
 			// tilt to panel inclination
 			Vtx[i].y = (float)(ycnt + y*cosa - z*sina);
 			Vtx[i].z = (float)(zcnt + y*sina + z*cosa);

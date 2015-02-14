@@ -1,7 +1,7 @@
 // ==============================================================
 //                 ORBITER MODULE: Framerate
 //                  Part of the ORBITER SDK
-//          Copyright (C) 2003-2014 Martin Schweiger
+//          Copyright (C) 2003-2015 Martin Schweiger
 //                   All rights reserved
 //
 // Framerate.cpp

@@ -1,7 +1,7 @@
 // ==============================================================
 //                ORBITER MODULE: DeltaGlider
 //                  Part of the ORBITER SDK
-//          Copyright (C) 2001-2008 Martin Schweiger
+//          Copyright (C) 2001-2015 Martin Schweiger
 //                   All rights reserved
 //
 // HudBtn.h
@@ -11,7 +11,7 @@
 #ifndef __HUDBTN_H
 #define __HUDBTN_H
 
-#include "..\Common\Vessel\Instrument.h"
+#include "DGSwitches.h"
 
 // ==============================================================
 // HUD mode selector buttons
@@ -44,6 +44,14 @@ public:
 
 private:
 	DWORD pending_action;
+};
+
+// ==============================================================
+// HUD retract/extend switch
+class HUDUpDownSwitch: public DGSwitch1 {
+public:
+	HUDUpDownSwitch (VESSEL3 *v);
+	bool ProcessMouseVC (int event, VECTOR3 &p);
 };
 
 #endif // !__HUDBTN_H
