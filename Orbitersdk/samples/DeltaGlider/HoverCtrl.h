@@ -12,15 +12,16 @@
 #define __HOVERCTRL_H
 
 #include "DeltaGlider.h"
+#include "DGSwitches.h"
 
 // ==============================================================
 
-class HoverCtrlDial: public PanelElement {
+class HoverCtrlDial: public DGDial1 {
 public:
 	HoverCtrlDial (VESSEL3 *v);
 	void Reset2D (MESHHANDLE hMesh);
+	void ResetVC (DEVMESHHANDLE hMesh);
 	bool Redraw2D (SURFHANDLE surf);
-	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
 	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 };
@@ -45,40 +46,24 @@ private:
 
 // ==============================================================
 
-class PHoverCtrl: public PanelElement {
+class PHoverCtrl: public DGSwitch2 {
 public:
 	PHoverCtrl (VESSEL3 *v);
-	void Reset2D (MESHHANDLE hMesh);
-	void ResetVC (DEVMESHHANDLE hMesh);
-	bool Redraw2D (SURFHANDLE surf);
-	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
+	//void Reset2D (MESHHANDLE hMesh);
+	//bool Redraw2D (SURFHANDLE surf);
 	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
-
-private:
-	int vc_state;
-	static const int nvtx_per_switch = 28;
-	NTVERTEX vtx0[nvtx_per_switch];
-	WORD vperm[nvtx_per_switch];
 };
 
 // ==============================================================
 
-class RHoverCtrl: public PanelElement {
+class RHoverCtrl: public DGSwitch2 {
 public:
 	RHoverCtrl (VESSEL3 *v);
-	void Reset2D (MESHHANDLE hMesh);
-	void ResetVC (DEVMESHHANDLE hMesh);
-	bool Redraw2D (SURFHANDLE surf);
-	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
+	//void Reset2D (MESHHANDLE hMesh);
+	//bool Redraw2D (SURFHANDLE surf);
 	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
-
-private:
-	int vc_state;
-	static const int nvtx_per_switch = 28;
-	NTVERTEX vtx0[nvtx_per_switch];
-	WORD vperm[nvtx_per_switch];
 };
 
 #endif // !__HOVERCTRL_H

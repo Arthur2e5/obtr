@@ -1,4 +1,4 @@
-// Created by deltaglider_vc.m 12-Feb-2015
+// Created by deltaglider_vc.m 20-Feb-2015
 
 #ifndef __DG_VC_ANIM_H
 #define __DG_VC_ANIM_H
@@ -14,6 +14,66 @@ const VECTOR3 VC_AF_DIAL_ref = {-0.30800,1.09196,7.24186};
 
 // AF_DIAL (VC): rotation axis
 const VECTOR3 VC_AF_DIAL_axis = {0.00000,-0.34202,0.93969};
+
+// GIMBAL_DIAL (VC): mouse catch area
+const VECTOR3 VC_GIMBAL_DIAL_mousearea[4] = {{-0.27440,1.00130,7.19359},{-0.24440,1.00130,7.19359},{-0.27440,1.02568,7.21107},{-0.24440,1.02568,7.21107}};
+
+// GIMBAL_DIAL (VC): rotation reference
+const VECTOR3 VC_GIMBAL_DIAL_ref = {-0.25940,1.01349,7.20233};
+
+// GIMBAL_DIAL (VC): rotation axis
+const VECTOR3 VC_GIMBAL_DIAL_axis = {0.00000,-0.58280,0.81262};
+
+// HOVER_DIAL (VC): mouse catch area
+const VECTOR3 VC_HOVER_DIAL_mousearea[4] = {{-0.17658,1.00130,7.19359},{-0.14658,1.00130,7.19359},{-0.17658,1.02568,7.21107},{-0.14658,1.02568,7.21107}};
+
+// HOVER_DIAL (VC): rotation reference
+const VECTOR3 VC_HOVER_DIAL_ref = {-0.16158,1.01349,7.20233};
+
+// HOVER_DIAL (VC): rotation axis
+const VECTOR3 VC_HOVER_DIAL_axis = {0.00000,-0.58280,0.81262};
+
+// GIMBAL_PSWITCH (VC): mouse catch area
+const VECTOR3 VC_GIMBAL_PSWITCH_mousearea[4] = {{-0.22289,1.00616,7.19708},{-0.20305,1.00616,7.19708},{-0.22289,1.02521,7.21074},{-0.20305,1.02521,7.21074}};
+
+// GIMBAL_PSWITCH (VC): rotation reference
+const VECTOR3 VC_GIMBAL_PSWITCH_ref = {-0.21297,1.01432,7.20581};
+
+// GIMBAL_PSWITCH (VC): rotation axis
+const VECTOR3 VC_GIMBAL_PSWITCH_axis = {1.00000,0.00000,0.00000};
+
+// GIMBAL_YSWITCH (VC): mouse catch area
+const VECTOR3 VC_GIMBAL_YSWITCH_mousearea[4] = {{-0.22469,0.99298,7.18762},{-0.22469,0.97686,7.17606},{-0.20125,0.99298,7.18762},{-0.20125,0.97686,7.17606}};
+
+// GIMBAL_YSWITCH (VC): rotation reference
+const VECTOR3 VC_GIMBAL_YSWITCH_ref = {-0.21297,0.98355,7.18374};
+
+// GIMBAL_YSWITCH (VC): rotation axis
+const VECTOR3 VC_GIMBAL_YSWITCH_axis = {0.00000,-0.81262,-0.58280};
+
+// HOVER_PSWITCH (VC): mouse catch area
+const VECTOR3 VC_HOVER_PSWITCH_mousearea[4] = {{-0.11920,1.00616,7.19708},{-0.11109,1.00616,7.19708},{-0.11920,1.02521,7.21074},{-0.11109,1.02521,7.21074}};
+
+// HOVER_PSWITCH (VC): rotation reference
+const VECTOR3 VC_HOVER_PSWITCH_ref = {-0.11515,1.01432,7.20581};
+
+// HOVER_PSWITCH (VC): rotation axis
+const VECTOR3 VC_HOVER_PSWITCH_axis = {1.00000,0.00000,0.00000};
+
+// HOVER_RSWITCH (VC): mouse catch area
+const VECTOR3 VC_HOVER_RSWITCH_mousearea[4] = {{-0.12687,0.99298,7.18762},{-0.12687,0.98638,7.18289},{-0.10343,0.99298,7.18762},{-0.10343,0.98638,7.18289}};
+
+// HOVER_RSWITCH (VC): rotation reference
+const VECTOR3 VC_HOVER_RSWITCH_ref = {-0.11515,0.98831,7.18716};
+
+// HOVER_RSWITCH (VC): rotation axis
+const VECTOR3 VC_HOVER_RSWITCH_axis = {0.00000,-0.81262,-0.58280};
+
+// GIMBAL_INDICATOR (VC): rotation reference
+const VECTOR3 VC_GIMBAL_INDICATOR_ref[2] = {{-0.27012,0.98457,7.18405},{-0.24598,0.98457,7.18405}};
+
+// HOVER_INDICATOR (VC): rotation reference
+const VECTOR3 VC_HOVER_INDICATOR_ref = {-0.16023,0.98457,7.18405};
 
 // RCS_DIAL (VC): mouse catch area
 const VECTOR3 VC_RCS_DIAL_mousearea[4] = {{0.05000,1.26200,7.26800},{0.08000,1.26200,7.26800},{0.05000,1.29200,7.26800},{0.08000,1.29200,7.26800}};
@@ -204,42 +264,6 @@ const VECTOR3 vc_abrakelever_mousearea[4] = {{-0.33700,0.97755,7.17655},{-0.2930
 // Elevator trim wheel (VC): mouse catch area
 const VECTOR3 vc_etrimwheel_mousearea[4] = {{-0.34600,0.87841,7.10545},{-0.31600,0.87841,7.10545},{-0.34600,0.96780,7.16956},{-0.31600,0.96780,7.16956}};
 
-// Gimbal pitch switches (VC): mouse catch area
-const VECTOR3 vc_gpswitch_mousearea[4] = {{-0.22189,1.00616,7.19708},{-0.20205,1.00616,7.19708},{-0.22189,1.02521,7.21074},{-0.20205,1.02521,7.21074}};
-
-// Gimbal pitch switches (VC): rotation axis
-const VECTOR3 vc_gpswitch_axis = {1.00000,0.00000,0.00000};
-
-// Gimbal pitch switches (VC): rotation reference
-const VECTOR3 vc_gpswitch_ref = {-0.21197,1.01432,7.20581};
-
-// Gimbal yaw switches (VC): mouse catch area
-const VECTOR3 vc_gyswitch_mousearea[4] = {{-0.22369,0.99298,7.18762},{-0.22369,0.97686,7.17606},{-0.20025,0.99298,7.18762},{-0.20025,0.97686,7.17606}};
-
-// Gimbal yaw switches (VC): rotation axis
-const VECTOR3 vc_gyswitch_axis = {0.00000,-0.81262,-0.58280};
-
-// Gimbal yaw switches (VC): rotation reference
-const VECTOR3 vc_gyswitch_ref = {-0.21197,0.98355,7.18374};
-
-// Hover pitch switch (VC): mouse catch area
-const VECTOR3 vc_hpswitch_mousearea[4] = {{-0.11820,1.00616,7.19708},{-0.11009,1.00616,7.19708},{-0.11820,1.02521,7.21074},{-0.11009,1.02521,7.21074}};
-
-// Hover pitch switch (VC): rotation axis
-const VECTOR3 vc_hpswitch_axis = {1.00000,0.00000,0.00000};
-
-// Hover pitch switch (VC): rotation reference
-const VECTOR3 vc_hpswitch_ref = {-0.11415,1.01432,7.20581};
-
-// Hover roll switch (VC): mouse catch area
-const VECTOR3 vc_hrswitch_mousearea[4] = {{-0.12587,0.99298,7.18762},{-0.12587,0.98638,7.18289},{-0.10243,0.99298,7.18762},{-0.10243,0.98638,7.18289}};
-
-// Hover roll switch (VC): rotation axis
-const VECTOR3 vc_hrswitch_axis = {0.00000,-0.81262,-0.58280};
-
-// Hover roll switch (VC): rotation reference
-const VECTOR3 vc_hrswitch_ref = {-0.11415,0.98831,7.18716};
-
 // Elevator trim indicator (VC): neutral position y
 const double vc_etrim_needle0_y[3] = {0.920665,0.923103,0.925541};
 
@@ -248,30 +272,6 @@ const double vc_etrim_needle0_z[3] = {7.135757,7.137506,7.139254};
 
 // Elevator trim indicator (VC): tilt angle
 const double vc_etrim_tilt = 0.622165;
-
-// Gimbal position display (VC): centre positions
-const VECTOR3 vc_gimind_cnt[2] = {{-0.26912,0.98457,7.18405},{-0.24498,0.98457,7.18405}};
-
-// Hover att position display (VC): centre position
-const VECTOR3 vc_hvrind_cnt = {-0.15923,0.98457,7.18405};
-
-// Gimbal mode dial (VC): mouse catch area
-const VECTOR3 vc_gimdial_mousearea[4] = {{-0.27340,1.00130,7.19359},{-0.24340,1.00130,7.19359},{-0.27340,1.02568,7.21107},{-0.24340,1.02568,7.21107}};
-
-// Gimbal mode dial (VC): rotation axis
-const VECTOR3 vc_gimdial_axis = {0.00000,0.58280,-0.81262};
-
-// Gimbal mode dial (VC): rotation reference
-const VECTOR3 vc_gimdial_ref = {-0.25840,1.01349,7.20233};
-
-// Hover att mode dial (VC): mouse catch area
-const VECTOR3 vc_hvrdial_mousearea[4] = {{-0.17558,1.00130,7.19359},{-0.14558,1.00130,7.19359},{-0.17558,1.02568,7.21107},{-0.14558,1.02568,7.21107}};
-
-// Hover att mode dial (VC): rotation axis
-const VECTOR3 vc_hrvdial_axis = {0.00000,0.58280,-0.81262};
-
-// Hover att mode dial (VC): rotation reference
-const VECTOR3 vc_hvrdial_ref = {-0.16058,1.01349,7.20233};
 
 // Elevator trim wheel (VC): rotation axis
 const VECTOR3 etrim_wheel_axis = {1.00000,0.00000,0.00000};
@@ -311,6 +311,28 @@ const VECTOR3 vc_rcoverswitch_ref = {0.00000,1.00378,7.19660};
 
 // Retro cover switch (VC): mouse catch area
 const VECTOR3 vc_rcoverswitch_mousearea[4] = {{0.29700,0.98115,7.17668},{0.33700,0.98115,7.17668},{0.29700,1.02991,7.21164},{0.33700,1.02991,7.21164}};
+
+const int VC_AF_DIAL_vofs = 0;
+
+const int VC_GIMBAL_DIAL_vofs = 76;
+
+const int VC_HOVER_DIAL_vofs = 152;
+
+const int VC_GIMBAL_PSWITCH_vofs = 0;
+
+const int VC_GIMBAL_YSWITCH_vofs = 56;
+
+const int VC_HOVER_PSWITCH_vofs = 112;
+
+const int VC_HOVER_RSWITCH_vofs = 140;
+
+const int VC_GIMBAL_INDICATOR_LEFT_vofs = 0;
+
+const int VC_GIMBAL_INDICATOR_RIGHT_vofs = 8;
+
+const int VC_HOVER_INDICATOR_vofs = 16;
+
+const int VC_RCS_DIAL_vofs = 228;
 
 const int VC_INSTRLIGHT_SWITCH_vofs = 0;
 

@@ -236,7 +236,6 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	}
 	phover = phover_cmd = 0.0;
 	rhover = rhover_cmd = 0.0;
-	hpswitch = hrswitch = 0;
 	for (i = 0; i < 3; i++)
 		for (j = 0; j < 3; j++) rotidx[i][j] = 0;
 
@@ -723,33 +722,12 @@ void DeltaGlider::DefineAnimations ()
 	anim_floodbdial = CreateAnimation (0.5);
 	AddAnimationComponent (anim_floodbdial, 0, 1, &FloodBDialTransform);
 
-	// RCS control dial
-	static UINT RCSDialGrp = GRP_RCS_DIAL_VC;
-	static MGROUP_ROTATE RCSDial (1, &RCSDialGrp, 1,
-		VC_RCS_DIAL_ref, VC_RCS_DIAL_axis, (float)(-100*RAD));
-	anim_rcsdial = CreateAnimation (0.5);
-	AddAnimationComponent (anim_rcsdial, 0, 1, &RCSDial);
-
-	// Airfoil control dial
-	static UINT AFDialGrp = GRP_AF_DIAL_VC;
-	static MGROUP_ROTATE AFDial (1, &AFDialGrp, 1,
-		VC_AF_DIAL_ref, VC_AF_DIAL_axis, (float)(-100*RAD));
-	anim_afdial = CreateAnimation (0.5);
-	AddAnimationComponent (anim_afdial, 0, 1, &AFDial);
-
-	// Gimbal control dial
-	static UINT GimbalDialGrp = GRP_GIMBAL_CTRL_VC;
-	static MGROUP_ROTATE GimbalDial (1, &GimbalDialGrp, 1,
-		vc_gimdial_ref, vc_gimdial_axis, (float)(100*RAD));
-	anim_gimbaldial = CreateAnimation (0.5);
-	AddAnimationComponent (anim_gimbaldial, 0, 1, &GimbalDial);
-
 	// Hover control dial
-	static UINT HoverDialGrp = GRP_HOVER_CTRL_VC;
-	static MGROUP_ROTATE HoverDial (1, &HoverDialGrp, 1,
-		vc_hvrdial_ref, vc_hrvdial_axis, (float)(100*RAD));
-	anim_hoverdial = CreateAnimation (0.5);
-	AddAnimationComponent (anim_hoverdial, 0, 1, &HoverDial);
+	//static UINT HoverDialGrp = GRP_HOVER_CTRL_VC;
+	//static MGROUP_ROTATE HoverDial (1, &HoverDialGrp, 1,
+	//	vc_hvrdial_ref, vc_hrvdial_axis, (float)(100*RAD));
+	//anim_hoverdial = CreateAnimation (0.5);
+	//AddAnimationComponent (anim_hoverdial, 0, 1, &HoverDial);
 
 	// Retro engine cover switch
 	static UINT RetroSwitchGrp = GRP_RETRO_COVER_SWITCH_VC;
@@ -1451,35 +1429,6 @@ void DeltaGlider::RevertRadiator (void)
 		DOOR_OPENING : DOOR_CLOSING);
 }
 
-//void DeltaGlider::SetNavlight (bool on)
-//{
-//	beacon[0].active = beacon[1].active = beacon[2].active = on;
-//	oapiTriggerPanelRedrawArea (0, AID_SWITCHARRAY);
-//	UpdateCtrlDialog (this);
-//}
-
-//void DeltaGlider::SetBeacon (bool on)
-//{
-//	beacon[3].active = beacon[4].active = on;
-//	oapiTriggerPanelRedrawArea (0, AID_SWITCHARRAY);
-//	UpdateCtrlDialog (this);
-//}
-
-//void DeltaGlider::SetStrobe (bool on)
-//{
-//	beacon[5].active = beacon[6].active = on;
-//	oapiTriggerPanelRedrawArea (0, AID_SWITCHARRAY);
-//	UpdateCtrlDialog (this);
-//}
-
-//void DeltaGlider::SetDockingLight (bool on)
-//{
-//	beacon[7].active = on;
-//	docking_light->Activate (on);
-//	oapiTriggerPanelRedrawArea (0, AID_SWITCHARRAY);
-//	UpdateCtrlDialog (this);
-//}
-
 bool DeltaGlider::DecAttMode ()
 {
 	int mode = GetAttitudeMode();
@@ -1667,29 +1616,25 @@ bool DeltaGlider::IncMainYGimbal (int which, int mode)
 	return true;
 }
 
-bool DeltaGlider::IncPHover (int which, int mode)
+bool DeltaGlider::IncPHover (int mode)
 {
-	const double cmd_speed = 0.5;
-	double dcmd = oapiGetSimStep() * cmd_speed * PHOVER_RANGE * (mode == 1 ? 1.0:-1.0);
-	if (mode && which) {
+	if (mode) {
+		const double cmd_speed = 0.5;
+		double dcmd = oapiGetSimStep() * cmd_speed * PHOVER_RANGE * (mode == 1 ? -1.0:1.0);
 		if (hover_mode == 2)
 			phover_cmd = min (PHOVER_RANGE, max (-PHOVER_RANGE, phover_cmd+dcmd));
-		hpswitch = 3-mode;
-	} else
-		hpswitch = 0;
+	}
 	return true;
 }
 
-bool DeltaGlider::IncRHover (int which, int mode)
+bool DeltaGlider::IncRHover (int mode)
 {
-	const double cmd_speed = 0.5;
-	double dcmd = oapiGetSimStep() * cmd_speed * RHOVER_RANGE * (mode == 1 ? 1.0:-1.0);
-	if (mode && which) {
+	if (mode) {
+		const double cmd_speed = 0.5;
+		double dcmd = oapiGetSimStep() * cmd_speed * RHOVER_RANGE * (mode == 1 ? -1.0:1.0);
 		if (hover_mode == 2)
 			rhover_cmd = min (RHOVER_RANGE, max (-RHOVER_RANGE, rhover_cmd+dcmd));
-		hrswitch = 3-mode;
-	} else
-		hrswitch = 0;
+	}
 	return true;
 }
 
@@ -3398,7 +3343,9 @@ void DeltaGlider::DefinePanelMain (PANELHANDLE hPanel)
 	RegisterPanelArea (hPanel, AID_HOVERDIAL,    _R(  32,280,  72,324), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, panel2dtex, instr[19]);
 	RegisterPanelArea (hPanel, AID_HBALANCEDISP, _R(   0,  0,   0,  0), PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, instr[20]);
 	RegisterPanelArea (hPanel, AID_PHOVER,       _R(  69, 402, 85,446), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, instr[21]);
+	((DGSwitch2*)instr[21])->DefineAnimation2D (DGSwitch2::VERT, GRP_INSTRUMENTS_ABOVE_P0, 192);
 	RegisterPanelArea (hPanel, AID_RHOVER,       _R(   9, 415, 53,431), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, instr[22]);
+	((DGSwitch2*)instr[22])->DefineAnimation2D (DGSwitch2::HORZ, GRP_INSTRUMENTS_ABOVE_P0, 196);
 	RegisterPanelArea (hPanel, AID_GEARINDICATOR, _R(0,0,0,0),          PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, instr[37]);
 	RegisterPanelArea (hPanel, AID_NOSECONELEVER, _R(1141,327,1180,421), PANEL_REDRAW_USER,  PANEL_MOUSE_LBDOWN, panel2dtex, instr[23]);
 	RegisterPanelArea (hPanel, AID_NOSECONEINDICATOR, _R(0,0,0,0),      PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, instr[24]);
@@ -3609,37 +3556,37 @@ bool DeltaGlider::clbkLoadVC (int id)
 		// HUD extend/retract switch
 		oapiVCRegisterArea (AID_HUDRETRACT, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_HUDRETRACT, VC_HUDRETRACT_SWITCH_mousearea[0], VC_HUDRETRACT_SWITCH_mousearea[1], VC_HUDRETRACT_SWITCH_mousearea[2], VC_HUDRETRACT_SWITCH_mousearea[3]);
-		((DGSwitch1*)instr[43])->DefineAnimationVC (VC_HUDRETRACT_SWITCH_ref, VC_HUDRETRACT_SWITCH_axis, GRP_SWITCH2_VC, VC_HUDRETRACT_SWITCH_vofs);
+		((DGSwitch1*)instr[43])->DefineAnimationVC (VC_HUDRETRACT_SWITCH_ref, VC_HUDRETRACT_SWITCH_axis, GRP_SWITCH1_VC, VC_HUDRETRACT_SWITCH_vofs);
 
 		// Landing/docking light switch
 		oapiVCRegisterArea (AID_LANDDOCKLIGHT, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_LANDDOCKLIGHT, VC_LANDINGLIGHT_SWITCH_mousearea[0], VC_LANDINGLIGHT_SWITCH_mousearea[1], VC_LANDINGLIGHT_SWITCH_mousearea[2], VC_LANDINGLIGHT_SWITCH_mousearea[3]);
-		((DGSwitch1*)instr[44])->DefineAnimationVC (VC_LANDINGLIGHT_SWITCH_ref, VC_LANDINGLIGHT_SWITCH_axis, GRP_SWITCH2_VC, VC_LANDINGLIGHT_SWITCH_vofs);
+		((DGSwitch1*)instr[44])->DefineAnimationVC (VC_LANDINGLIGHT_SWITCH_ref, VC_LANDINGLIGHT_SWITCH_axis, GRP_SWITCH1_VC, VC_LANDINGLIGHT_SWITCH_vofs);
 
 		// Strobe light switch
 		oapiVCRegisterArea (AID_STROBE_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_STROBE_SWITCH, VC_STROBELIGHT_SWITCH_mousearea[0], VC_STROBELIGHT_SWITCH_mousearea[1], VC_STROBELIGHT_SWITCH_mousearea[2], VC_STROBELIGHT_SWITCH_mousearea[3]);
-		((DGSwitch1*)instr[45])->DefineAnimationVC (VC_STROBELIGHT_SWITCH_ref, VC_STROBELIGHT_SWITCH_axis, GRP_SWITCH2_VC, VC_STROBELIGHT_SWITCH_vofs);
+		((DGSwitch1*)instr[45])->DefineAnimationVC (VC_STROBELIGHT_SWITCH_ref, VC_STROBELIGHT_SWITCH_axis, GRP_SWITCH1_VC, VC_STROBELIGHT_SWITCH_vofs);
 
 		// Nav light switch
 		oapiVCRegisterArea (AID_NAVLIGHT_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_NAVLIGHT_SWITCH, VC_NAVLIGHT_SWITCH_mousearea[0], VC_NAVLIGHT_SWITCH_mousearea[1], VC_NAVLIGHT_SWITCH_mousearea[2], VC_NAVLIGHT_SWITCH_mousearea[3]);
-		((DGSwitch1*)instr[46])->DefineAnimationVC (VC_NAVLIGHT_SWITCH_ref, VC_NAVLIGHT_SWITCH_axis, GRP_SWITCH2_VC, VC_NAVLIGHT_SWITCH_vofs);
+		((DGSwitch1*)instr[46])->DefineAnimationVC (VC_NAVLIGHT_SWITCH_ref, VC_NAVLIGHT_SWITCH_axis, GRP_SWITCH1_VC, VC_NAVLIGHT_SWITCH_vofs);
 
 		// Hatch open/close switch
 		oapiVCRegisterArea (AID_HATCH_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_HATCH_SWITCH, VC_HATCH_SWITCH_mousearea[0], VC_HATCH_SWITCH_mousearea[1], VC_HATCH_SWITCH_mousearea[2], VC_HATCH_SWITCH_mousearea[3]);
-		((DGSwitch1*)instr[47])->DefineAnimationVC (VC_HATCH_SWITCH_ref, VC_HATCH_SWITCH_axis, GRP_SWITCH2_VC, VC_HATCH_SWITCH_vofs);
+		((DGSwitch1*)instr[47])->DefineAnimationVC (VC_HATCH_SWITCH_ref, VC_HATCH_SWITCH_axis, GRP_SWITCH1_VC, VC_HATCH_SWITCH_vofs);
 
 		// Inner airlock open/close switch
 		oapiVCRegisterArea (AID_ILOCK_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_ILOCK_SWITCH, VC_ILOCK_SWITCH_mousearea[0], VC_ILOCK_SWITCH_mousearea[1], VC_ILOCK_SWITCH_mousearea[2], VC_ILOCK_SWITCH_mousearea[3]);
-		((DGSwitch1*)instr[48])->DefineAnimationVC (VC_ILOCK_SWITCH_ref, VC_ILOCK_SWITCH_axis, GRP_SWITCH2_VC, VC_ILOCK_SWITCH_vofs);
+		((DGSwitch1*)instr[48])->DefineAnimationVC (VC_ILOCK_SWITCH_ref, VC_ILOCK_SWITCH_axis, GRP_SWITCH1_VC, VC_ILOCK_SWITCH_vofs);
 
 		// Outer airlock open/close switch
 		oapiVCRegisterArea (AID_OLOCK_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_OLOCK_SWITCH, VC_OLOCK_SWITCH_mousearea[0], VC_OLOCK_SWITCH_mousearea[1], VC_OLOCK_SWITCH_mousearea[2], VC_OLOCK_SWITCH_mousearea[3]);
-		((DGSwitch1*)instr[49])->DefineAnimationVC (VC_OLOCK_SWITCH_ref, VC_OLOCK_SWITCH_axis, GRP_SWITCH2_VC, VC_OLOCK_SWITCH_vofs);
+		((DGSwitch1*)instr[49])->DefineAnimationVC (VC_OLOCK_SWITCH_ref, VC_OLOCK_SWITCH_axis, GRP_SWITCH1_VC, VC_OLOCK_SWITCH_vofs);
 
 		//oapiVCRegisterArea (AID_MWS, PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
 		//oapiVCSetAreaClickmode_Spherical (AID_MWS, _V(0.0755,1.2185,7.3576), 0.013);
@@ -3651,6 +3598,7 @@ bool DeltaGlider::clbkLoadVC (int id)
 		// RCS mode dial
 		oapiVCRegisterArea (AID_ATTITUDEMODE, PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_ATTITUDEMODE, VC_RCS_DIAL_mousearea[0], VC_RCS_DIAL_mousearea[1], VC_RCS_DIAL_mousearea[2], VC_RCS_DIAL_mousearea[3]);
+		((DGDial1*)instr[10])->DefineAnimationVC (VC_RCS_DIAL_ref, VC_RCS_DIAL_axis, GRP_DIAL1_VC, VC_RCS_DIAL_vofs);
 
 		// Button row 1
 		oapiVCRegisterArea (AID_BUTTONROW1, PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN);
@@ -3659,12 +3607,12 @@ bool DeltaGlider::clbkLoadVC (int id)
 		// Instrument light switch
 		oapiVCRegisterArea (AID_INSTRLIGHT_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_INSTRLIGHT_SWITCH, VC_INSTRLIGHT_SWITCH_mousearea[0], VC_INSTRLIGHT_SWITCH_mousearea[1], VC_INSTRLIGHT_SWITCH_mousearea[2], VC_INSTRLIGHT_SWITCH_mousearea[3]);
-		((DGSwitch1*)instr[38])->DefineAnimationVC (VC_INSTRLIGHT_SWITCH_ref, VC_INSTRLIGHT_SWITCH_axis, GRP_SWITCH2_VC, VC_INSTRLIGHT_SWITCH_vofs);
+		((DGSwitch1*)instr[38])->DefineAnimationVC (VC_INSTRLIGHT_SWITCH_ref, VC_INSTRLIGHT_SWITCH_axis, GRP_SWITCH1_VC, VC_INSTRLIGHT_SWITCH_vofs);
 
 		// Floodlight switch
 		oapiVCRegisterArea (AID_FLOODLIGHT_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_FLOODLIGHT_SWITCH, VC_FLOODLIGHT_SWITCH_mousearea[0], VC_FLOODLIGHT_SWITCH_mousearea[1], VC_FLOODLIGHT_SWITCH_mousearea[2], VC_FLOODLIGHT_SWITCH_mousearea[3]);
-		((DGSwitch1*)instr[40])->DefineAnimationVC (VC_FLOODLIGHT_SWITCH_ref, VC_FLOODLIGHT_SWITCH_axis, GRP_SWITCH2_VC, VC_FLOODLIGHT_SWITCH_vofs);
+		((DGSwitch1*)instr[40])->DefineAnimationVC (VC_FLOODLIGHT_SWITCH_ref, VC_FLOODLIGHT_SWITCH_axis, GRP_SWITCH1_VC, VC_FLOODLIGHT_SWITCH_vofs);
 
 		// Instrument brightness dial
 		oapiVCRegisterArea (AID_INSTRBRIGHT_DIAL, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
@@ -3677,29 +3625,34 @@ bool DeltaGlider::clbkLoadVC (int id)
 		// AF control dial
 		oapiVCRegisterArea (AID_ADCTRLMODE, PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_ADCTRLMODE, VC_AF_DIAL_mousearea[0], VC_AF_DIAL_mousearea[1], VC_AF_DIAL_mousearea[2], VC_AF_DIAL_mousearea[3]);
+		((DGDial1*)instr[11])->DefineAnimationVC (VC_AF_DIAL_ref, VC_AF_DIAL_axis, GRP_DIAL1_VC, VC_AF_DIAL_vofs);
 
 		// Gimbal control dial
 		oapiVCRegisterArea (AID_MAINGIMBALDIAL, PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_MAINGIMBALDIAL, vc_gimdial_mousearea[0], vc_gimdial_mousearea[1], vc_gimdial_mousearea[2], vc_gimdial_mousearea[3]);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_MAINGIMBALDIAL, VC_GIMBAL_DIAL_mousearea[0], VC_GIMBAL_DIAL_mousearea[1], VC_GIMBAL_DIAL_mousearea[2], VC_GIMBAL_DIAL_mousearea[3]);
+		((DGDial1*)instr[15])->DefineAnimationVC (VC_GIMBAL_DIAL_ref, VC_GIMBAL_DIAL_axis, GRP_DIAL1_VC, VC_GIMBAL_DIAL_vofs);
 
 		// Gimbal manual switches
 		oapiVCRegisterArea (AID_PGIMBALMAIN, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_PGIMBALMAIN, vc_gpswitch_mousearea[0], vc_gpswitch_mousearea[1], vc_gpswitch_mousearea[2], vc_gpswitch_mousearea[3]);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_PGIMBALMAIN, VC_GIMBAL_PSWITCH_mousearea[0], VC_GIMBAL_PSWITCH_mousearea[1], VC_GIMBAL_PSWITCH_mousearea[2], VC_GIMBAL_PSWITCH_mousearea[3]);
 		oapiVCRegisterArea (AID_YGIMBALMAIN, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_YGIMBALMAIN, vc_gyswitch_mousearea[0], vc_gyswitch_mousearea[1], vc_gyswitch_mousearea[2], vc_gyswitch_mousearea[3]);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_YGIMBALMAIN, VC_GIMBAL_YSWITCH_mousearea[0], VC_GIMBAL_YSWITCH_mousearea[1], VC_GIMBAL_YSWITCH_mousearea[2], VC_GIMBAL_YSWITCH_mousearea[3]);
 
 		// Gimbal status display
 		oapiVCRegisterArea (AID_MAINGIMBALDISP, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
 
 		// Hover control dial
 		oapiVCRegisterArea (AID_HOVERDIAL, PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_HOVERDIAL, vc_hvrdial_mousearea[0], vc_hvrdial_mousearea[1], vc_hvrdial_mousearea[2], vc_hvrdial_mousearea[3]);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_HOVERDIAL, VC_HOVER_DIAL_mousearea[0], VC_HOVER_DIAL_mousearea[1], VC_HOVER_DIAL_mousearea[2], VC_HOVER_DIAL_mousearea[3]);
+		((DGDial1*)instr[19])->DefineAnimationVC (VC_HOVER_DIAL_ref, VC_HOVER_DIAL_axis, GRP_DIAL1_VC, VC_HOVER_DIAL_vofs);
 
 		// Hover manual switches
 		oapiVCRegisterArea (AID_PHOVER, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_PHOVER, vc_hpswitch_mousearea[0], vc_hpswitch_mousearea[1], vc_hpswitch_mousearea[2], vc_hpswitch_mousearea[3]);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_PHOVER, VC_HOVER_PSWITCH_mousearea[0], VC_HOVER_PSWITCH_mousearea[1], VC_HOVER_PSWITCH_mousearea[2], VC_HOVER_PSWITCH_mousearea[3]);
+		((DGSwitch2*)instr[21])->DefineAnimationVC (VC_HOVER_PSWITCH_ref, VC_HOVER_PSWITCH_axis, GRP_SWITCH2_VC, VC_HOVER_PSWITCH_vofs);
 		oapiVCRegisterArea (AID_RHOVER, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_RHOVER, vc_hrswitch_mousearea[0], vc_hrswitch_mousearea[1], vc_hrswitch_mousearea[2], vc_hrswitch_mousearea[3]);
+		oapiVCSetAreaClickmode_Quadrilateral (AID_RHOVER, VC_HOVER_RSWITCH_mousearea[0], VC_HOVER_RSWITCH_mousearea[1], VC_HOVER_RSWITCH_mousearea[2], VC_HOVER_RSWITCH_mousearea[3]);
+		((DGSwitch2*)instr[22])->DefineAnimationVC (VC_HOVER_RSWITCH_ref, VC_HOVER_RSWITCH_axis, GRP_SWITCH2_VC, VC_HOVER_RSWITCH_vofs);
 
 		// Hover status display
 		oapiVCRegisterArea (AID_HBALANCEDISP, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
@@ -3974,12 +3927,11 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 		RedrawVC_ThScram();
 		return false;
 	case AID_ATTITUDEMODE:
-		SetAnimation (anim_rcsdial, GetAttitudeMode()*0.5);
-		return false;
+		return instr[10]->RedrawVC (vcmesh, 0);
 	case AID_ADCTRLMODE:
-		return instr[11]->RedrawVC (0, 0);
+		return instr[11]->RedrawVC (vcmesh, 0);
 	case AID_MAINGIMBALDIAL:
-		return instr[15]->RedrawVC (0, 0);
+		return instr[15]->RedrawVC (vcmesh, 0);
 	case AID_MAINGIMBALDISP:
 		return instr[16]->RedrawVC (vcmesh, 0);
 	case AID_PGIMBALMAIN:
@@ -3987,7 +3939,7 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 	case AID_YGIMBALMAIN:
 		return instr[18]->RedrawVC (vcmesh, 0);
 	case AID_HOVERDIAL:
-		return instr[19]->RedrawVC (0, 0);
+		return instr[19]->RedrawVC (vcmesh, 0);
 	case AID_HBALANCEDISP:
 		return instr[20]->RedrawVC (vcmesh, 0);
 	case AID_PHOVER:

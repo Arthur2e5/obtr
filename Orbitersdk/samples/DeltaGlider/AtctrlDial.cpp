@@ -15,7 +15,8 @@
 
 // ==============================================================
 
-ATCtrlDial::ATCtrlDial (VESSEL3 *v): PanelElement (v)
+ATCtrlDial::ATCtrlDial (VESSEL3 *v)
+: DGDial1 (v, 3, -50*RAD, 50*RAD)
 {
 }
 
@@ -25,6 +26,14 @@ void ATCtrlDial::Reset2D (MESHHANDLE hMesh)
 {
 	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
 	vtxofs = 4;
+}
+
+// ==============================================================
+
+void ATCtrlDial::ResetVC (DEVMESHHANDLE hMesh)
+{
+	DWORD mode = vessel->GetADCtrlMode();
+	SetPosition (mode == 0 ? 0 : mode == 7 ? 1 : 2);
 }
 
 // ==============================================================
@@ -48,16 +57,6 @@ bool ATCtrlDial::Redraw2D (SURFHANDLE surf)
 
 // ==============================================================
 
-bool ATCtrlDial::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
-{
-	DeltaGlider *dg = (DeltaGlider*)vessel;
-	DWORD mode = vessel->GetADCtrlMode();
-	dg->SetAnimation (dg->anim_afdial, mode == 0 ? 0 : mode == 7 ? 0.5 : 1);
-	return false;
-}
-
-// ==============================================================
-
 bool ATCtrlDial::ProcessMouse2D (int event, int mx, int my)
 {
 	DeltaGlider *dg = (DeltaGlider*)vessel;
@@ -68,18 +67,10 @@ bool ATCtrlDial::ProcessMouse2D (int event, int mx, int my)
 
 bool ATCtrlDial::ProcessMouseVC (int event, VECTOR3 &p)
 {
-	DWORD mode = vessel->GetADCtrlMode();
-
-	if (p.x < 0.5) { // dial turn left
-		if (mode > 0) {
-			vessel->SetADCtrlMode (mode==1 ? 7 : 0);
-			return true;
-		}
-	} else { // dial turn right
-		if (mode != 1) {
-			vessel->SetADCtrlMode (mode==0 ? 7 : 1);
-			return true;
-		}
+	if (DGDial1::ProcessMouseVC (event, p)) {
+		int pos = GetPosition();
+		vessel->SetADCtrlMode (pos == 0 ? 0 : pos == 1 ? 7 : 1);
+		return true;
 	}
 	return false;
 }

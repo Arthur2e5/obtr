@@ -2053,6 +2053,20 @@ const UINT ALLDOCKS = (UINT)-1;
  *   (Parameter type: bool)
  */
 #define OBJPRM_PLANET_CLOUDOVERSATURATE  0x0018
+
+/**
+ * \brief Extend horizon visibility radius (avoid disappearing
+ *    mountaintop artefacts)
+ *   (Parameter type: double)
+ */
+#define OBJPRM_PLANET_HORIZONEXCESS      0x0019
+
+/**
+ * \brief Extend tile bounding box (avoid disappearing tiles
+ *   for irregular shaped bodies)
+ *   (Parameter type: double)
+ */
+#define OBJPRM_PLANET_TILEBBEXCESS       0x0020
 //@}
 
 typedef int (*KeyFunc)(const char *keybuf);

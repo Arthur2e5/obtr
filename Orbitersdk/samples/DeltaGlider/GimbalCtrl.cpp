@@ -31,7 +31,8 @@ static const float sc_y0 = 431.5f;
 
 // ==============================================================
 
-MainGimbalDial::MainGimbalDial (VESSEL3 *v): PanelElement (v)
+MainGimbalDial::MainGimbalDial (VESSEL3 *v)
+: DGDial1 (v, 3, -50*RAD, 50*RAD)
 {
 }
 
@@ -41,6 +42,14 @@ void MainGimbalDial::Reset2D (MESHHANDLE hMesh)
 {
 	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
 	vtxofs = 144;
+}
+
+// ==============================================================
+
+void MainGimbalDial::ResetVC (DEVMESHHANDLE hMesh)
+{
+	int mode = ((DeltaGlider*)vessel)->GetMainGimbalMode();
+	SetPosition (mode);
 }
 
 // ==============================================================
@@ -60,16 +69,6 @@ bool MainGimbalDial::Redraw2D (SURFHANDLE surf)
 	float dtu = (float)(dg->GetMainGimbalMode()*40.0)/texw;
 	for (int i = 0; i < 4; i++)
 		grp->Vtx[vtxofs+i].tu = tu[i]+dtu;
-	return false;
-}
-
-// ==============================================================
-
-bool MainGimbalDial::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
-{
-	DeltaGlider *dg = (DeltaGlider*)vessel;
-	int mode = dg->GetMainGimbalMode();
-	dg->SetAnimation (dg->anim_gimbaldial, mode*0.5);
 	return false;
 }
 
@@ -98,19 +97,10 @@ bool MainGimbalDial::ProcessMouse2D (int event, int mx, int my)
 
 bool MainGimbalDial::ProcessMouseVC (int event, VECTOR3 &p)
 {
-	DeltaGlider *dg = (DeltaGlider*)vessel;
-	DWORD mode = dg->GetMainGimbalMode();
-
-	if (p.x < 0.5) { // dial turn left
-		if (mode > 0) {
-			dg->SetMainGimbalMode (mode-1);
-			return true;
-		}
-	} else { // dial turn right
-		if (mode < 2) {
-			dg->SetMainGimbalMode (mode+1);
-			return true;
-		}
+	if (DGDial1::ProcessMouseVC (event, p)) {
+		int pos = GetPosition();
+		((DeltaGlider*)vessel)->SetMainGimbalMode (pos);
+		return true;
 	}
 	return false;
 }
@@ -209,7 +199,7 @@ bool MainGimbalDisp::Redraw2D (SURFHANDLE surf)
 bool MainGimbalDisp::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 {
 	const double &slope = vc_lpanel_tilt;
-	const VECTOR3 (&cnt)[2] = vc_gimind_cnt;
+	const VECTOR3 (&cnt)[2] = VC_GIMBAL_INDICATOR_ref;
 	static const double cosa = cos(slope), sina = sin(slope);
 	static const double indsize = 0.002586;
 	static const double xrange = 0.0103/MAIN_YGIMBAL_RANGE;
@@ -237,7 +227,7 @@ bool MainGimbalDisp::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 		}
 		for (i = 0; i < 16; i++) {
 			y = Vtx[i].y;
-			z = (i%8) < 4 ? -0.0005f : -0.001f;
+			z = (i%8) < 4 ? -0.0002f : -0.0004f;
 			Vtx[i].y = (float)(cnt[0].y + y*cosa - z*sina);
 			Vtx[i].z = (float)(cnt[0].z + y*sina + z*cosa);
 		}
@@ -277,7 +267,7 @@ void PMainGimbalCtrl::ResetVC (DEVMESHHANDLE hMesh)
 	memset (&grs, 0, sizeof(GROUPREQUESTSPEC));
 	grs.Vtx = vtx0;
 	grs.nVtx = nvtx_per_switch*2;
-	oapiGetMeshGroup (hMesh, GRP_SWITCHES1_VC, &grs);
+	oapiGetMeshGroup (hMesh, GRP_SWITCH2_VC, &grs);
 }
 
 // ==============================================================
@@ -297,7 +287,9 @@ bool PMainGimbalCtrl::Redraw2D (SURFHANDLE surf)
 
 bool PMainGimbalCtrl::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 {
-	const VECTOR3 &ref = vc_gpswitch_ref;
+	return false; // DEBUG
+
+	const VECTOR3 &ref = VC_GIMBAL_PSWITCH_ref;
 	static const double tilt[3] = {0,15*RAD,-15*RAD};
 
 	int i, j, ofs, state;
@@ -318,7 +310,7 @@ bool PMainGimbalCtrl::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 		ofs = i*nvtx_per_switch;
 		state = vc_state[i];
 		if (!state) continue;
-		MATRIX3 R = rotm(vc_gpswitch_axis,tilt[state]);
+		MATRIX3 R = rotm(VC_GIMBAL_PSWITCH_axis,tilt[state]);
 		for (j = 0; j < nvtx_per_switch; j++) {
 			VECTOR3 v = {vtx[ofs+j].x-ref.x, vtx[ofs+j].y-ref.y, vtx[ofs+j].z-ref.z};
 			VECTOR3 vr = mul(R,v);
@@ -333,7 +325,7 @@ bool PMainGimbalCtrl::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 		}
 	}
 
-	static const int grpid = GRP_SWITCHES1_VC;
+	static const int grpid = GRP_SWITCH2_VC;
 	GROUPEDITSPEC ges = {GRPEDIT_VTXCRD|GRPEDIT_VTXNML,0,vtx,nvtx_per_switch*2,0};
 	oapiEditMeshGroup (hMesh, grpid, &ges);
 	return false;
@@ -383,7 +375,7 @@ YMainGimbalCtrl::YMainGimbalCtrl (VESSEL3 *v): PanelElement (v)
 	for (i = 0; i < 2; i++)
 		vc_state[i] = 0;
 	for (i = 0; i < nvtx_per_switch*2; i++)
-		vperm[i] = (WORD)(i+nvtx_per_switch*2);
+		vperm[i] = (WORD)(i+VC_GIMBAL_YSWITCH_vofs);
 }
 
 // ==============================================================
@@ -403,7 +395,7 @@ void YMainGimbalCtrl::ResetVC (DEVMESHHANDLE hMesh)
 	grs.Vtx = vtx0;
 	grs.nVtx = nvtx_per_switch*2;
 	grs.VtxPerm = vperm;
-	oapiGetMeshGroup (hMesh, GRP_SWITCHES1_VC, &grs);
+	oapiGetMeshGroup (hMesh, GRP_SWITCH2_VC, &grs);
 }
 
 // ==============================================================
@@ -423,7 +415,9 @@ bool YMainGimbalCtrl::Redraw2D (SURFHANDLE surf)
 
 bool YMainGimbalCtrl::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 {
-	const VECTOR3 &ref = vc_gyswitch_ref;
+	return false; // DEBUG
+
+	const VECTOR3 &ref = VC_GIMBAL_YSWITCH_ref;
 	static const double tilt[3] = {0,15*RAD,-15*RAD};
 
 	int i, j, ofs, state;
@@ -444,7 +438,7 @@ bool YMainGimbalCtrl::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 		ofs = i*nvtx_per_switch;
 		state = vc_state[i];
 		if (!state) continue;
-		MATRIX3 R = rotm(vc_gyswitch_axis,tilt[state]);
+		MATRIX3 R = rotm(VC_GIMBAL_YSWITCH_axis,tilt[state]);
 		for (j = 0; j < nvtx_per_switch; j++) {
 			VECTOR3 v = {vtx[ofs+j].x-ref.x, vtx[ofs+j].y-ref.y, vtx[ofs+j].z-ref.z};
 			VECTOR3 vr = mul(R,v);
@@ -459,7 +453,7 @@ bool YMainGimbalCtrl::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 		}
 	}
 
-	static const int grpid = GRP_SWITCHES1_VC;
+	static const int grpid = GRP_SWITCH2_VC;
 	GROUPEDITSPEC ges = {GRPEDIT_VTXCRD|GRPEDIT_VTXNML,0,vtx,nvtx_per_switch*2,vperm};
 	oapiEditMeshGroup (hMesh, grpid, &ges);
 	return false;

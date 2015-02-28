@@ -15,7 +15,8 @@
 
 // ==============================================================
 
-RCSDial::RCSDial (VESSEL3 *v): PanelElement (v)
+RCSDial::RCSDial (VESSEL3 *v)
+: DGDial1 (v, 3, -50*RAD, 50*RAD)
 {
 }
 
@@ -25,6 +26,14 @@ void RCSDial::Reset2D (MESHHANDLE hMesh)
 {
 	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
 	vtxofs = 0;
+}
+
+// ==============================================================
+
+void RCSDial::ResetVC (DEVMESHHANDLE hMesh)
+{
+	DWORD mode = vessel->GetAttitudeMode();
+	SetPosition (mode);
 }
 
 // ==============================================================
@@ -58,8 +67,10 @@ bool RCSDial::ProcessMouse2D (int event, int mx, int my)
 
 bool RCSDial::ProcessMouseVC (int event, VECTOR3 &p)
 {
-	DeltaGlider *dg = (DeltaGlider*)vessel;
-
-	if (p.x < 0.5) return dg->DecAttMode();
-	else           return dg->IncAttMode();
+	if (DGDial1::ProcessMouseVC (event, p)) {
+		int pos = GetPosition();
+		vessel->SetAttitudeMode (pos);
+		return true;
+	}
+	return false;
 }

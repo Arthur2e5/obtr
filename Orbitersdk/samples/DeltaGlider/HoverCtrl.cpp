@@ -19,7 +19,8 @@ static const float texw = (float)PANEL2D_TEXW; // texture width
 
 // ==============================================================
 
-HoverCtrlDial::HoverCtrlDial (VESSEL3 *v): PanelElement (v)
+HoverCtrlDial::HoverCtrlDial (VESSEL3 *v)
+: DGDial1 (v, 3, -50*RAD, 50*RAD)
 {
 }
 
@@ -29,6 +30,14 @@ void HoverCtrlDial::Reset2D (MESHHANDLE hMesh)
 {
 	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
 	vtxofs = 180;
+}
+
+// ==============================================================
+
+void HoverCtrlDial::ResetVC (DEVMESHHANDLE hMesh)
+{
+	int mode = ((DeltaGlider*)vessel)->GetHoverMode();
+	SetPosition (mode);
 }
 
 // ==============================================================
@@ -53,13 +62,13 @@ bool HoverCtrlDial::Redraw2D (SURFHANDLE surf)
 
 // ==============================================================
 
-bool HoverCtrlDial::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
-{
-	DeltaGlider *dg = (DeltaGlider*)vessel;
-	int mode = dg->GetHoverMode();
-	dg->SetAnimation (dg->anim_hoverdial, mode*0.5);
-	return false;
-}
+//bool HoverCtrlDial::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
+//{
+//	DeltaGlider *dg = (DeltaGlider*)vessel;
+//	int mode = dg->GetHoverMode();
+//	dg->SetAnimation (dg->anim_hoverdial, mode*0.5);
+//	return false;
+//}
 
 // ==============================================================
 
@@ -86,19 +95,10 @@ bool HoverCtrlDial::ProcessMouse2D (int event, int mx, int my)
 
 bool HoverCtrlDial::ProcessMouseVC (int event, VECTOR3 &p)
 {
-	DeltaGlider *dg = (DeltaGlider*)vessel;
-	DWORD mode = dg->GetHoverMode();
-
-	if (p.x < 0.5) { // dial turn left
-		if (mode > 0) {
-			dg->SetHoverMode (mode-1);
-			return true;
-		}
-	} else { // dial turn right
-		if (mode < 2) {
-			dg->SetHoverMode (mode+1);
-			return true;
-		}
+	if (DGDial1::ProcessMouseVC (event, p)) {
+		int pos = GetPosition();
+		((DeltaGlider*)vessel)->SetHoverMode (pos);
+		return true;
 	}
 	return false;
 }
@@ -148,7 +148,7 @@ void HoverDisp::ResetVC (DEVMESHHANDLE hMesh)
 bool HoverDisp::Redraw2D (SURFHANDLE surf)
 {
 	DeltaGlider *dg = (DeltaGlider*)vessel;
-	int i, j, ofs;
+	int j, ofs;
 	double g;
 	const float x0 =  47.5f;
 	const float y0 = 346.5f;
@@ -193,7 +193,7 @@ bool HoverDisp::Redraw2D (SURFHANDLE surf)
 bool HoverDisp::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 {
 	const double &slope = vc_lpanel_tilt;
-	const VECTOR3 &cnt = vc_hvrind_cnt;
+	const VECTOR3 &cnt = VC_HOVER_INDICATOR_ref;
 	static const double cosa = cos(slope), sina = sin(slope);
 	static const double indsize = 0.002586;
 	static const double xrange = 0.0103/RHOVER_RANGE;
@@ -219,7 +219,7 @@ bool HoverDisp::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 		}
 		for (i = 0; i < 8; i++) {
 			y = Vtx[i].y;
-			z = i < 4 ? -0.0005f : -0.001f;
+			z = i < 4 ? -0.0002f : -0.0004f;
 			Vtx[i].y = (float)(cnt.y + y*cosa - z*sina);
 			Vtx[i].z = (float)(cnt.z + y*sina + z*cosa);
 		}
@@ -234,109 +234,30 @@ bool HoverDisp::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 // ==============================================================
 // ==============================================================
 
-PHoverCtrl::PHoverCtrl (VESSEL3 *v): PanelElement (v)
+PHoverCtrl::PHoverCtrl (VESSEL3 *v)
+: DGSwitch2 (v)
 {
-	vc_state = 0;
-	for (int i = 0; i < nvtx_per_switch; i++)
-		vperm[i] = (WORD)(i+nvtx_per_switch*4);
-}
-
-// ==============================================================
-
-void PHoverCtrl::Reset2D (MESHHANDLE hMesh)
-{
-	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
-	vtxofs = 192;
-}
-
-// ==============================================================
-
-void PHoverCtrl::ResetVC (DEVMESHHANDLE hMesh)
-{
-	GROUPREQUESTSPEC grs;
-	memset (&grs, 0, sizeof(GROUPREQUESTSPEC));
-	grs.Vtx = vtx0;
-	grs.nVtx = nvtx_per_switch;
-	grs.VtxPerm = vperm;
-	oapiGetMeshGroup (hMesh, GRP_SWITCHES1_VC, &grs);
-}
-
-// ==============================================================
-
-bool PHoverCtrl::Redraw2D (SURFHANDLE surf)
-{
-	int j, state;
-	state = ((DeltaGlider*)vessel)->hpswitch;
-	for (j = 0; j < 4; j++)
-		grp->Vtx[vtxofs+j].tu = (1053.5f+state*16+(j%2)*15)/texw;
-	return false;
-}
-
-// ==============================================================
-
-bool PHoverCtrl::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
-{
-	const VECTOR3 &ref = vc_hpswitch_ref;
-	static const double tilt[3] = {0,15*RAD,-15*RAD};
-
-	int j, state;
-	state = ((DeltaGlider*)vessel)->hpswitch;
-	if (state == vc_state) return false; // nothing to do
-	vc_state = state;
-
-	NTVERTEX vtx[nvtx_per_switch];
-	memcpy (vtx, vtx0, nvtx_per_switch*sizeof(NTVERTEX));
-
-	if (state) {
-		MATRIX3 R = rotm(vc_hpswitch_axis,tilt[state]);
-		for (j = 0; j < nvtx_per_switch; j++) {
-			VECTOR3 v = {vtx[j].x-ref.x, vtx[j].y-ref.y, vtx[j].z-ref.z};
-			VECTOR3 vr = mul(R,v);
-			vtx[j].x = (float)(vr.x + ref.x);
-			vtx[j].y = (float)(vr.y + ref.y);
-			vtx[j].z = (float)(vr.z + ref.z);
-			VECTOR3 n = {vtx[j].nx, vtx[j].ny, vtx[j].nz};
-			VECTOR3 nr = mul(R,n);
-			vtx[j].nx = (float)nr.x;
-			vtx[j].ny = (float)nr.y;
-			vtx[j].nz = (float)nr.z;
-		}
-	}
-
-	static const int grpid = GRP_SWITCHES1_VC;
-	GROUPEDITSPEC ges = {GRPEDIT_VTXCRD|GRPEDIT_VTXNML,0,vtx,nvtx_per_switch,vperm};
-	oapiEditMeshGroup (hMesh, grpid, &ges);
-	return false;
 }
 
 // ==============================================================
 
 bool PHoverCtrl::ProcessMouse2D (int event, int mx, int my)
 {
-	static int ctrl = 0, mode = 0;
-	if (event & PANEL_MOUSE_LBDOWN) {
-		if      (my <  22) mode = 2;
-		else               mode = 1;
-		ctrl = 1;
-	} else if (event & PANEL_MOUSE_LBUP) {
-		ctrl = 0;
-	}
-	return ((DeltaGlider*)vessel)->IncPHover (ctrl, mode);
+	static int ctrl = 0;
+	if (DGSwitch2::ProcessMouse2D (event, mx, my))
+		ctrl = (int)GetState();
+	((DeltaGlider*)vessel)->IncPHover (ctrl);
+	return (event & (PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP));
 }
 
 // ==============================================================
 
 bool PHoverCtrl::ProcessMouseVC (int event, VECTOR3 &p)
 {
-	static int ctrl = 0, mode = 0;
-	if (event & PANEL_MOUSE_LBDOWN) {
-		if      (p.y < 0.5 ) mode = 1;
-		else                 mode = 2;
-		ctrl = 1;
-	} else if (event & PANEL_MOUSE_LBUP) {
-		ctrl = 0;
-	}
-	((DeltaGlider*)vessel)->IncPHover (ctrl, mode);
+	static int ctrl = 0;
+	if (DGSwitch2::ProcessMouseVC (event, p))
+		ctrl = (int)GetState();
+	((DeltaGlider*)vessel)->IncPHover (ctrl);
 	return (event & (PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP));
 }
 
@@ -344,109 +265,30 @@ bool PHoverCtrl::ProcessMouseVC (int event, VECTOR3 &p)
 // ==============================================================
 // ==============================================================
 
-RHoverCtrl::RHoverCtrl (VESSEL3 *v): PanelElement (v)
+RHoverCtrl::RHoverCtrl (VESSEL3 *v)
+: DGSwitch2 (v)
 {
-	vc_state = 0;
-	for (int i = 0; i < nvtx_per_switch; i++)
-		vperm[i] = (WORD)(i+nvtx_per_switch*5);
-}
-
-// ==============================================================
-
-void RHoverCtrl::Reset2D (MESHHANDLE hMesh)
-{
-	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
-	vtxofs = 196;
-}
-
-// ==============================================================
-
-void RHoverCtrl::ResetVC (DEVMESHHANDLE hMesh)
-{
-	GROUPREQUESTSPEC grs;
-	memset (&grs, 0, sizeof(GROUPREQUESTSPEC));
-	grs.Vtx = vtx0;
-	grs.nVtx = nvtx_per_switch;
-	grs.VtxPerm = vperm;
-	oapiGetMeshGroup (hMesh, GRP_SWITCHES1_VC, &grs);
-}
-
-// ==============================================================
-
-bool RHoverCtrl::Redraw2D (SURFHANDLE surf)
-{
-	int j, state;
-	state = ((DeltaGlider*)vessel)->hrswitch;
-	for (j = 0; j < 4; j++)
-		grp->Vtx[vtxofs+j].tu = (1053.5+state*16+(j%2)*15)/texw;
-	return false;
-}
-
-// ==============================================================
-
-bool RHoverCtrl::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
-{
-	const VECTOR3 &ref = vc_hrswitch_ref;
-	static const double tilt[3] = {0,15*RAD,-15*RAD};
-
-	int j, state;
-	state = ((DeltaGlider*)vessel)->hrswitch;
-	if (state == vc_state) return false; // nothing to do
-	vc_state = state;
-
-	NTVERTEX vtx[nvtx_per_switch];
-	memcpy (vtx, vtx0, nvtx_per_switch*sizeof(NTVERTEX));
-
-	if (state) {
-		MATRIX3 R = rotm(vc_hrswitch_axis,tilt[state]);
-		for (j = 0; j < nvtx_per_switch; j++) {
-			VECTOR3 v = {vtx[j].x-ref.x, vtx[j].y-ref.y, vtx[j].z-ref.z};
-			VECTOR3 vr = mul(R,v);
-			vtx[j].x = (float)(vr.x + ref.x);
-			vtx[j].y = (float)(vr.y + ref.y);
-			vtx[j].z = (float)(vr.z + ref.z);
-			VECTOR3 n = {vtx[j].nx, vtx[j].ny, vtx[j].nz};
-			VECTOR3 nr = mul(R,n);
-			vtx[j].nx = (float)nr.x;
-			vtx[j].ny = (float)nr.y;
-			vtx[j].nz = (float)nr.z;
-		}
-	}
-
-	static const int grpid = GRP_SWITCHES1_VC;
-	GROUPEDITSPEC ges = {GRPEDIT_VTXCRD|GRPEDIT_VTXNML,0,vtx,nvtx_per_switch,vperm};
-	oapiEditMeshGroup (hMesh, grpid, &ges);
-	return false;
 }
 
 // ==============================================================
 
 bool RHoverCtrl::ProcessMouse2D (int event, int mx, int my)
 {
-	static int ctrl = 0, mode = 0;
-	if (event & PANEL_MOUSE_LBDOWN) {
-		if      (mx <  22) mode = 1;
-		else               mode = 2;
-		ctrl = 1;
-	} else if (event & PANEL_MOUSE_LBUP) {
-		ctrl = 0;
-	}
-	return ((DeltaGlider*)vessel)->IncRHover (ctrl, mode);
+	static int ctrl = 0;
+	if (DGSwitch2::ProcessMouse2D (event, mx, my))
+		ctrl = (int)GetState();
+	((DeltaGlider*)vessel)->IncRHover (ctrl);
+	return (event & (PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP));
 }
 
 // ==============================================================
 
 bool RHoverCtrl::ProcessMouseVC (int event, VECTOR3 &p)
 {
-	static int ctrl = 0, mode = 0;
-	if (event & PANEL_MOUSE_LBDOWN) {
-		if      (p.y < 0.5 ) mode = 1;
-		else                 mode = 2;
-		ctrl = 1;
-	} else if (event & PANEL_MOUSE_LBUP) {
-		ctrl = 0;
-	}
-	((DeltaGlider*)vessel)->IncRHover (ctrl, mode);
+	static int ctrl = 0;
+	if (DGSwitch2::ProcessMouseVC (event, p))
+		ctrl = (int)GetState();
+	((DeltaGlider*)vessel)->IncRHover (ctrl);
 	return (event & (PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP));
 }
 

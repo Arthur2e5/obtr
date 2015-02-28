@@ -8,6 +8,7 @@
 // Prototypes for DG-specific cockpit switches and dials
 // ==============================================================
 
+#include "DeltaGlider.h"
 #include "DGSwitches.h"
 
 // ==============================================================
@@ -15,19 +16,26 @@
 double DGSwitch1::travel = 28.0*RAD;
 const int DGSwitch1::nvtx = 33;
 
-DGSwitch1::DGSwitch1 (VESSEL3 *v, Mode m): PanelElement(v), mode(m)
+// --------------------------------------------------------------
+
+DGSwitch1::DGSwitch1 (VESSEL3 *v, Mode m)
+: PanelElement(v), mode(m)
 {
 	state = vstate = CENTER; // we always initiate as centered, even for 2state switches
 }
 
+// --------------------------------------------------------------
+
 void DGSwitch1::DefineAnimationVC (const VECTOR3 &ref, const VECTOR3 &axis,
-	int meshgrp, int vtxofs)
+	DWORD meshgrp, int vtxofs)
 {
 	rf = ref;
 	ax = axis;
-	grp = meshgrp;
+	mgrp = meshgrp;
 	vofs = vtxofs;
 }
+
+// --------------------------------------------------------------
 
 bool DGSwitch1::ProcessMouseVC (int event, VECTOR3 &p)
 {
@@ -40,6 +48,8 @@ bool DGSwitch1::ProcessMouseVC (int event, VECTOR3 &p)
 	}
 	return (state != vstate);
 }
+
+// --------------------------------------------------------------
 
 bool DGSwitch1::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 {
@@ -56,7 +66,7 @@ bool DGSwitch1::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 		WORD vperm[nvtx];
 		for (i = 0; i < nvtx; i++) vperm[i] = vofs + i;
 		GROUPREQUESTSPEC grs = {vtx, nvtx, vperm, 0, 0, 0, 0, 0};
-		oapiGetMeshGroup (hMesh, grp, &grs);
+		oapiGetMeshGroup (hMesh, mgrp, &grs);
 		for (i = 0; i < nvtx; i++) {
 			p.x = vtx[i].x - rf.x;
 			p.y = vtx[i].y - rf.y;
@@ -74,11 +84,13 @@ bool DGSwitch1::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 			vtx[i].nz = (float)pt.z;
 		}
 		GROUPEDITSPEC ges = {GRPEDIT_VTXCRD|GRPEDIT_VTXNML, 0, vtx, nvtx, vperm};
-		oapiEditMeshGroup (hMesh, grp, &ges);
+		oapiEditMeshGroup (hMesh, mgrp, &ges);
 		vstate = state;
 	}
 	return false;
 }
+
+// --------------------------------------------------------------
 
 bool DGSwitch1::SetState (State s)
 {
@@ -90,6 +102,8 @@ bool DGSwitch1::SetState (State s)
 	return false;
 }
 
+// --------------------------------------------------------------
+
 DGSwitch1::State DGSwitch1::Up ()
 {
 	if (state != UP)
@@ -97,9 +111,246 @@ DGSwitch1::State DGSwitch1::Up ()
 	return state;
 }
 
+// --------------------------------------------------------------
+
 DGSwitch1::State DGSwitch1::Down ()
 {
 	if (state != DOWN)
 		SetState (state == UP && mode != TWOSTATE ? CENTER : DOWN);
 	return state;
+}
+
+// ==============================================================
+
+const int DGSwitch2::nvtx = 28;
+double DGSwitch2::travel = 15.0*RAD;
+
+// --------------------------------------------------------------
+
+DGSwitch2::DGSwitch2 (VESSEL3 *v)
+: PanelElement(v)
+{
+	orient = VERT;
+	state = vstate = CENTER;
+}
+
+// --------------------------------------------------------------
+
+void DGSwitch2::DefineAnimation2D (Orientation o, DWORD meshgrp, DWORD vofs)
+{
+	orient = o;
+	mgrp = meshgrp;
+	vtxofs = vofs;
+}
+
+// --------------------------------------------------------------
+
+void DGSwitch2::DefineAnimationVC (const VECTOR3 &ref, const VECTOR3 &axis,
+	DWORD meshgrp, DWORD vofs)
+{
+	rf = ref;
+	ax = axis;
+	mgrp = meshgrp;
+	vtxofs = vofs;
+}
+
+// --------------------------------------------------------------
+
+void DGSwitch2::Reset2D (MESHHANDLE hMesh)
+{
+	grp = oapiMeshGroup (hMesh, mgrp);
+}
+
+// --------------------------------------------------------------
+
+bool DGSwitch2::ProcessMouse2D (int event, int mx, int my)
+{
+	if (event & PANEL_MOUSE_LBDOWN) {
+		if (orient == VERT) SetState (my <  22 ? UP : DOWN);
+		else                SetState (mx >= 22 ? UP : DOWN);
+	} else if (event & PANEL_MOUSE_LBUP) {
+		SetState (CENTER);
+	}
+	return (state != vstate);
+}
+
+// --------------------------------------------------------------
+
+bool DGSwitch2::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	if (event & PANEL_MOUSE_LBDOWN) {
+		SetState (p.y < 0.5 ? DOWN : UP);
+	} else if (event & PANEL_MOUSE_LBUP) {
+		SetState (CENTER);
+	}
+	return (state != vstate);
+}
+
+// --------------------------------------------------------------
+
+bool DGSwitch2::Redraw2D (SURFHANDLE surf)
+{
+	static const float texw = (float)PANEL2D_TEXW; // texture width
+	if (state != vstate) {
+		int ofs = state*16;
+		if (orient == HORZ_RL && state) ofs = 48-ofs;
+		for (int i = 0; i < 4; i++)
+			grp->Vtx[vtxofs+i].tu = (1053.5f+ofs+(i%2)*15)/texw;
+		vstate = state;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
+bool DGSwitch2::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
+{
+	static double phi[3] = {0.0, travel, -travel};
+	if (state != vstate) {
+		int i;
+		double phi0 = phi[vstate];
+		double phi1 = phi[state];
+		double dphi = phi1-phi0;
+		VECTOR3 p, pt;
+		MATRIX3 R = rotm(ax,dphi); // rotation matrix from current to new state
+
+		NTVERTEX vtx[nvtx];
+		WORD vperm[nvtx];
+		for (i = 0; i < nvtx; i++) vperm[i] = vtxofs + i;
+		GROUPREQUESTSPEC grs = {vtx, nvtx, vperm, 0, 0, 0, 0, 0};
+		oapiGetMeshGroup (hMesh, mgrp, &grs);
+		for (i = 0; i < nvtx; i++) {
+			p.x = vtx[i].x - rf.x;
+			p.y = vtx[i].y - rf.y;
+			p.z = vtx[i].z - rf.z;
+			pt = mul(R,p);
+			vtx[i].x = (float)(pt.x + rf.x);
+			vtx[i].y = (float)(pt.y + rf.y);
+			vtx[i].z = (float)(pt.z + rf.z);
+			p.x = vtx[i].nx;
+			p.y = vtx[i].ny;
+			p.z = vtx[i].nz;
+			pt = mul(R,p);
+			vtx[i].nx = (float)pt.x;
+			vtx[i].ny = (float)pt.y;
+			vtx[i].nz = (float)pt.z;
+		}
+		GROUPEDITSPEC ges = {GRPEDIT_VTXCRD|GRPEDIT_VTXNML, 0, vtx, nvtx, vperm};
+		oapiEditMeshGroup (hMesh, mgrp, &ges);
+		vstate = state;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
+bool DGSwitch2::SetState (State s)
+{
+	if (state != s) {
+		state = s;
+		return true;
+	}
+	return false;
+}
+
+// ==============================================================
+
+const int DGDial1::nvtx = 76;
+
+// --------------------------------------------------------------
+
+DGDial1::DGDial1 (VESSEL3 *v, int np, double pos0, double delta)
+: PanelElement(v), npos(np), p0(pos0), dp(delta)
+{
+	pos = 0;
+	vpos = -1; // undefined
+}
+
+// --------------------------------------------------------------
+
+void DGDial1::DefineAnimationVC (const VECTOR3 &ref, const VECTOR3 &axis, DWORD meshgrp, int vtxofs)
+{
+	rf = ref;
+	ax = axis;
+	mgrp = meshgrp;
+	vofs = vtxofs;
+}
+
+// --------------------------------------------------------------
+
+bool DGDial1::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	if (event & PANEL_MOUSE_LBDOWN) {
+		if (p.x < 0.5) Left();
+		else           Right();
+	}
+	return (pos != vpos);
+}
+
+// --------------------------------------------------------------
+
+bool DGDial1::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
+{
+	if (pos != vpos) {
+		int i;
+		double phi0 = (vpos >= 0 ? p0 + vpos*dp : 0.0);
+		double phi1 = p0 + pos*dp;
+		double dphi = phi0-phi1;
+		VECTOR3 p, pt;
+		MATRIX3 R = rotm(ax,dphi);
+
+		NTVERTEX vtx[nvtx];
+		WORD vperm[nvtx];
+		for (i = 0; i < nvtx; i++) vperm[i] = vofs + i;
+		GROUPREQUESTSPEC grs = {vtx, nvtx, vperm, 0, 0, 0, 0, 0};
+		oapiGetMeshGroup (hMesh, mgrp, &grs);
+		for (i = 0; i < nvtx; i++) {
+			p.x = vtx[i].x - rf.x;
+			p.y = vtx[i].y - rf.y;
+			p.z = vtx[i].z - rf.z;
+			pt = mul(R,p);
+			vtx[i].x = (float)(pt.x + rf.x);
+			vtx[i].y = (float)(pt.y + rf.y);
+			vtx[i].z = (float)(pt.z + rf.z);
+			p.x = vtx[i].nx;
+			p.y = vtx[i].ny;
+			p.z = vtx[i].nz;
+			pt = mul(R,p);
+			vtx[i].nx = (float)pt.x;
+			vtx[i].ny = (float)pt.y;
+			vtx[i].nz = (float)pt.z;
+		}
+		GROUPEDITSPEC ges = {GRPEDIT_VTXCRD|GRPEDIT_VTXNML, 0, vtx, nvtx, vperm};
+		oapiEditMeshGroup (hMesh, mgrp, &ges);
+
+		vpos = pos;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
+bool DGDial1::SetPosition (int newpos)
+{
+	if (newpos != pos) {
+		pos = newpos;
+		return true;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
+int DGDial1::Left ()
+{
+	if (pos > 0) pos--;
+	return pos;
+}
+
+// --------------------------------------------------------------
+
+int DGDial1::Right ()
+{
+	if (pos < npos-1) pos++;
+	return pos;
 }

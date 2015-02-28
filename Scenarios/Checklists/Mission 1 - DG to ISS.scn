@@ -32,7 +32,6 @@ END_MFD
 BEGIN_MFD Right
   TYPE Map
   REF Earth
-  BTARGET Habana
   OTARGET ISS
 END_MFD
 

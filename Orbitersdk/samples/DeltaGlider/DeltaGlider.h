@@ -242,8 +242,8 @@ public:
 	{ return actual ? phover : phover_cmd; }
 	inline double RHover (bool actual=true) const
 	{ return actual ? rhover : rhover_cmd; }
-	bool IncPHover (int which, int mode);                      // manually change hover pitch command
-	bool IncRHover (int which, int mode);                      // manually change hover roll command
+	bool IncPHover (int mode);                                 // manually change hover pitch command
+	bool IncRHover (int mode);                                 // manually change hover roll command
 	void AutoHoverAtt ();                                      // set hover pitch/roll commands from user input
 	void TrackHoverAtt ();                                     // follow hover-induced attitude to commanded values
 	void TestDamage ();
@@ -285,8 +285,6 @@ public:
 	double load_ind;  // angle of load indicator needle
 	int mpswitch[2], mpmode; // main gimbal pitch button states
 	int myswitch[2], mymode; // main gimbal yaw button states
-	int hpswitch;            // hover pitch button state
-	int hrswitch;            // hover roll button state
 	int hbalanceidx, hbswitch, hbmode;       // hover balance slider position
 	bool psngr[4];                           // passengers?
 	bool bDamageEnabled;                     // damage/failure testing?
@@ -360,10 +358,7 @@ public:
 	UINT anim_scramthrottle[2]; // VC scram throttle levers (left and right)
 	UINT anim_gearlever;        // VC gear lever
 	UINT anim_airbrakelever;    // VC airbrake lever
-	UINT anim_rcsdial;          // VC RCS dial animation
-	UINT anim_afdial;           // VC AF dial animation
-	UINT anim_gimbaldial;       // VC gimbal dial animation
-	UINT anim_hoverdial;        // VC hover dial animation
+	//UINT anim_hoverdial;        // VC hover dial animation
 	UINT anim_retroswitch;      // VC retro cover switch animation
 	UINT anim_ladderswitch;     // VC ladder switch animation
 	UINT anim_radiatorswitch;   // VC radiator switch animation
