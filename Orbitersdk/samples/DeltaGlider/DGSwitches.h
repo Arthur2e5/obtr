@@ -73,7 +73,6 @@ private:
 	State vstate;       // current visual state
 	VECTOR3 rf, ax;     // rotation reference point, axis
 	DWORD mgrp;         // group index
-	//int vofs;           // vertex offset
 	const static int nvtx; // number of vertices in switch lever
 	static double travel;  // switch lever angle from center to up position [rad]
 };
@@ -104,6 +103,30 @@ private:
 	DWORD mgrp;        // group index
 	int vofs;          // vertex offset
 	const static int nvtx;   // number of vertices in switch lever
+};
+
+// ==============================================================
+// Push button with illuminated label
+
+class DGButton3: public PanelElement {
+public:
+	enum State { OFF, ON, PRESSED_FROM_OFF, PRESSED_FROM_ON };
+	DGButton3 (VESSEL3 *v);
+	void DefineAnimationVC (const VECTOR3 &axis, DWORD meshgrp, DWORD meshgrp_label,
+		DWORD vofs, DWORD vofs_label);
+	bool ProcessMouseVC (int event, VECTOR3 &p);
+	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
+	inline State GetState() const { return state; }
+	void SetState (State newstate);
+
+private:
+	DWORD mgrp;              // group index for button
+	DWORD mgrp_lbl;          // group index for label
+	DWORD vtxofs_lbl;        // vertex offset for label
+	VECTOR3 ax;              // push down direction
+	State state, vstate;     // logical, visual button state
+	const static int nvtx;   // number of vertices in button
+	const static int nvtx_lbl; // number of vertices in label
 };
 
 #endif // !__DGSWITCHES_H

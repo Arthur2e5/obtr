@@ -66,4 +66,12 @@ public:
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 };
 
+// ==============================================================
+
+class HoverAltBtn: public DGButton3 {
+public:
+	HoverAltBtn (VESSEL3 *v);
+	bool ProcessMouseVC (int event, VECTOR3 &p);
+};
+
 #endif // !__HOVERCTRL_H

@@ -66,35 +66,35 @@ static HELPCONTEXT g_hc = {
 static const DWORD ntdvtx_geardown = 13;
 static TOUCHDOWNVTX tdvtx_geardown[ntdvtx_geardown] = {
 	{_V( 0   ,-2.57,10   ), 1e6, 1e5, 0.8, 0.1},
-	{_V(-3.5 ,-2.57,-1   ), 1e6, 1e5, 0.8, 0.1},
-	{_V( 3.5 ,-2.57,-1   ), 1e6, 1e5, 0.8, 0.1},
-	{_V(-8.5 ,-0.3 ,-7.05), 1e7, 1e6, 0.8},
-	{_V( 8.5 ,-0.3 ,-7.05), 1e7, 1e6, 0.8},
-	{_V(-8.5 ,-0.4 ,-3   ), 1e7, 1e6, 0.8},
-	{_V( 8.5 ,-0.4 ,-3   ), 1e7, 1e6, 0.8},
-	{_V(-8.85, 2.3 ,-5.05), 1e7, 1e6, 0.8},
-	{_V( 8.85, 2.3 ,-5.05), 1e7, 1e6, 0.8},
-	{_V(-8.85, 2.3 ,-7.05), 1e7, 1e6, 0.8},
-	{_V( 8.85, 2.3 ,-7.05), 1e7, 1e6, 0.8},
-	{_V( 0   , 2   , 6.2 ), 1e7, 1e6, 0.8},
-	{_V( 0   ,-0.6 ,10.65), 1e7, 1e6, 0.8}
+	{_V(-3.5 ,-2.57,-1   ), 1e6, 1e5, 1.5, 0.2},
+	{_V( 3.5 ,-2.57,-1   ), 1e6, 1e5, 1.5, 0.2},
+	{_V(-8.5 ,-0.3 ,-7.05), 1e7, 1e6, 1.5},
+	{_V( 8.5 ,-0.3 ,-7.05), 1e7, 1e6, 1.5},
+	{_V(-8.5 ,-0.4 ,-3   ), 1e7, 1e6, 1.5},
+	{_V( 8.5 ,-0.4 ,-3   ), 1e7, 1e6, 1.5},
+	{_V(-8.85, 2.3 ,-5.05), 1e7, 1e6, 1.5},
+	{_V( 8.85, 2.3 ,-5.05), 1e7, 1e6, 1.5},
+	{_V(-8.85, 2.3 ,-7.05), 1e7, 1e6, 1.5},
+	{_V( 8.85, 2.3 ,-7.05), 1e7, 1e6, 1.5},
+	{_V( 0   , 2   , 6.2 ), 1e7, 1e6, 1.5},
+	{_V( 0   ,-0.6 ,10.65), 1e7, 1e6, 1.5}
 };
 
 static const DWORD ntdvtx_gearup = 13;
 static TOUCHDOWNVTX tdvtx_gearup[ntdvtx_gearup] = {
-	{_V( 0   ,-1.5 ,9),     1e6, 1e5, 0.8, 0.8},
-	{_V(-6   ,-0.8 ,-5),    1e6, 1e5, 0.8, 0.8},
-	{_V( 3   ,-1.2 ,-5),    1e6, 1e5, 0.8, 0.8},
-	{_V(-8.5 ,-0.3 ,-7.05), 1e7, 1e6, 0.8},
-	{_V( 8.5 ,-0.3 ,-7.05), 1e7, 1e6, 0.8},
-	{_V(-8.5 ,-0.4 ,-3   ), 1e7, 1e6, 0.8},
-	{_V( 8.5 ,-0.4 ,-3   ), 1e7, 1e6, 0.8},
-	{_V(-8.85, 2.3 ,-5.05), 1e7, 1e6, 0.8},
-	{_V( 8.85, 2.3 ,-5.05), 1e7, 1e6, 0.8},
-	{_V(-8.85, 2.3 ,-7.05), 1e7, 1e6, 0.8},
-	{_V( 8.85, 2.3 ,-7.05), 1e7, 1e6, 0.8},
-	{_V( 0   , 2   , 6.2 ), 1e7, 1e6, 0.8},
-	{_V( 0   ,-0.6 ,10.65), 1e7, 1e6, 0.8}
+	{_V( 0   ,-1.5 ,9),     1e6, 1e5, 1.5, 1.5},
+	{_V(-6   ,-0.8 ,-5),    1e6, 1e5, 1.5, 1.5},
+	{_V( 3   ,-1.2 ,-5),    1e6, 1e5, 1.5, 1.5},
+	{_V(-8.5 ,-0.3 ,-7.05), 1e7, 1e6, 1.5},
+	{_V( 8.5 ,-0.3 ,-7.05), 1e7, 1e6, 1.5},
+	{_V(-8.5 ,-0.4 ,-3   ), 1e7, 1e6, 1.5},
+	{_V( 8.5 ,-0.4 ,-3   ), 1e7, 1e6, 1.5},
+	{_V(-8.85, 2.3 ,-5.05), 1e7, 1e6, 1.5},
+	{_V( 8.85, 2.3 ,-5.05), 1e7, 1e6, 1.5},
+	{_V(-8.85, 2.3 ,-7.05), 1e7, 1e6, 1.5},
+	{_V( 8.85, 2.3 ,-7.05), 1e7, 1e6, 1.5},
+	{_V( 0   , 2   , 6.2 ), 1e7, 1e6, 1.5},
+	{_V( 0   ,-0.6 ,10.65), 1e7, 1e6, 1.5}
 };
 
 // ==============================================================
@@ -153,7 +153,7 @@ void HLiftCoeff (VESSEL *v, double beta, double M, double Re, void *context, dou
 // Constructor
 // --------------------------------------------------------------
 DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
-: VESSEL3 (hObj, fmodel)
+: VESSEL4 (hObj, fmodel)
 {
 	int i, j;
 
@@ -290,7 +290,7 @@ void DeltaGlider::SetEmptyMass () const
 	for (int i = 0; i < 4; i++)
 		if (psngr[i]) emass += PSNGR_MASS;
 
-	VESSEL3::SetEmptyMass (emass);
+	VESSEL4::SetEmptyMass (emass);
 }
 
 // --------------------------------------------------------------
@@ -300,7 +300,7 @@ void DeltaGlider::CreatePanelElements ()
 {
 	int i, j;
 
-	ninstr_main = 50;
+	ninstr_main = 51;
 	instr_scram0 = ninstr_main;
 	ninstr_main += (ScramVersion() ? 1 : 0);
 
@@ -323,7 +323,7 @@ void DeltaGlider::CreatePanelElements ()
 	instr[10] = new RCSDial (this);
 	instr[11] = new ATCtrlDial (this);
 	instr[12] = new UndockButton (this);
-	instr[13] = new HUDButton (this);
+	instr[13] = new HUDModeButtons (this);
 	instr[14] = new GearLever (this);
 	instr[15] = new MainGimbalDial (this);
 	instr[16] = new MainGimbalDisp (this);
@@ -359,6 +359,7 @@ void DeltaGlider::CreatePanelElements ()
 	instr[47] = new HatchSwitch (this);
 	instr[48] = new ILockSwitch (this);
 	instr[49] = new OLockSwitch (this);
+	instr[50] = new HoverAltBtn (this);
 
 	aap = new AAP (this);   aap->AttachHSI ((InstrHSI*)instr[1]);
 
@@ -928,7 +929,7 @@ bool DeltaGlider::clbkDrawHUD (int mode, const HUDPAINTSPEC *hps, oapi::Sketchpa
 	if (oapiCockpitMode() != COCKPIT_VIRTUAL) return false;
 
 	// draw the default HUD
-	VESSEL3::clbkDrawHUD (mode, hps, skp);
+	VESSEL4::clbkDrawHUD (mode, hps, skp);
 	int cx = hps->CX, cy = hps->CY;
 
 	// show gear deployment status
@@ -969,7 +970,7 @@ bool DeltaGlider::clbkDrawHUD (int mode, const HUDPAINTSPEC *hps, oapi::Sketchpa
 
 void DeltaGlider::clbkRenderHUD (int mode, const HUDPAINTSPEC *hps, SURFHANDLE hTex)
 {
-	VESSEL3::clbkRenderHUD (mode, hps, hTex);
+	VESSEL4::clbkRenderHUD (mode, hps, hTex);
 
 	static float texw = 512.0f, texh = 256.0f;
 	float cx = (float)hps->CX, cy = (float)hps->CY;
@@ -1308,7 +1309,7 @@ void DeltaGlider::SetInstrLight (bool on, bool force)
 	if (vcmesh) {
 		static MATERIAL norm = {{1,1,1,1},{0.8,0.8,0.8,1},{0.1,0.1,0.1,0},{0.15,0.15,0.15,1},5};
 		static MATERIAL label_glow[3] = {
-			{{0,0,0,0},{0,0,0,0},{0,0,0,0},{0.15,1,0.15,1},0},
+			{{0,0,0,0},{0,0,0,0},{0,0,0,0},{0.35,1,0.35,1},0},
 		    {{0,0,0,0},{0,0,0,0},{0,0,0,0},{1,0.7,0.15,1},0},
 			{{0,0,0,0},{0,0,0,0},{0,0,0,0},{0.6,0.6,1.0,1},0}};
 		static MATERIAL btn_glow = {{1,1,1,1},{1,1,1,1},{0.1,0.1,0.1,1},{0.6,0.6,0.6,1},5};
@@ -2217,6 +2218,7 @@ void DeltaGlider::SetHUDMode (int mode)
 		if (oapiCockpitMode() != COCKPIT_VIRTUAL || hud_status == DOOR_CLOSED)
 			oapiSetHUDMode (mode);
 		oapiTriggerRedrawArea (0, 0, AID_HUDMODE);
+		((HUDModeButtons*)instr[13])->SetMode (mode);
 	}
 }
 
@@ -2289,6 +2291,10 @@ void DeltaGlider::DrawNeedle (HDC hDC, int x, int y, double rad, double angle, d
 	MoveToEx (hDC, x, y, 0); LineTo (hDC, x + (int)(dx+0.5), y - (int)(dy+0.5));
 }
 
+void DeltaGlider::ProcessHoverHoldalt ()
+{
+}
+
 void DeltaGlider::InitVCMesh()
 {
 	SetInstrLight (instr_light_on, true);
@@ -2328,7 +2334,7 @@ void DeltaGlider::clbkSetClassCaps (FILEHANDLE cfg)
 	if (oapiReadItem_bool (cfg, "SCRAMJET", b) && b) // set up scramjet configuration
 		scramjet = new Ramjet (this);
 
-	VESSEL3::SetEmptyMass (scramjet ? EMPTY_MASS_SC : EMPTY_MASS);
+	VESSEL4::SetEmptyMass (scramjet ? EMPTY_MASS_SC : EMPTY_MASS);
 	VECTOR3 r[2] = {{0,0,6}, {0,0,-4}};
 	SetSize (10.0);
 	SetVisibilityLimit (7.5e-4, 1.5e-3);
@@ -2712,7 +2718,7 @@ void DeltaGlider::clbkSaveState (FILEHANDLE scn)
 	int i;
 
 	// Write default vessel parameters
-	VESSEL3::clbkSaveState (scn);
+	VESSEL4::clbkSaveState (scn);
 
 	// Write custom parameters
 	if (gear_status) {
@@ -2945,7 +2951,25 @@ void DeltaGlider::clbkHUDMode (int mode)
 // --------------------------------------------------------------
 void DeltaGlider::clbkNavMode (int mode, bool active)
 {
-	oapiTriggerRedrawArea (0, 0, AID_NAVMODE);
+	if (mode == NAVMODE_HOLDALT) {
+		((HoverAltBtn*)instr[50])->SetState(active ? DGButton3::ON : DGButton3::OFF);
+		if (active)
+			hover_alt = GetAltitude();
+		oapiTriggerRedrawArea (0, 0, AID_HOVERALTBTN);
+	} else
+		oapiTriggerRedrawArea (0, 0, AID_NAVMODE);
+}
+
+// --------------------------------------------------------------
+// Respond to navmode processing request
+// --------------------------------------------------------------
+int DeltaGlider::clbkNavProcess (int mode)
+{
+	if (mode & NAVBIT_HOLDALT) {
+		//mode ^= NAVBIT_HOLDALT;
+		//ProcessHoverHoldalt();
+	}
+	return mode;
 }
 
 // --------------------------------------------------------------
@@ -3542,8 +3566,13 @@ bool DeltaGlider::clbkLoadVC (int id)
 		}
 
 		// HUD mode indicator/selector buttons on the dash panel
-		oapiVCRegisterArea (AID_HUDMODE, PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN);
+		oapiVCRegisterArea (AID_HUDMODE, PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_HUDMODE, VC_HUD_BUTTONS_mousearea[0], VC_HUD_BUTTONS_mousearea[1], VC_HUD_BUTTONS_mousearea[2], VC_HUD_BUTTONS_mousearea[3]);
+		{
+			static DWORD hudbtn_vofs[3] = {VC_BTN_HUDMODE_1_vofs,VC_BTN_HUDMODE_2_vofs,VC_BTN_HUDMODE_3_vofs};
+			static DWORD hudbtn_label_vofs[3] = {VC_BTN_HUDMODE_1_LABEL_vofs, VC_BTN_HUDMODE_2_LABEL_vofs, VC_BTN_HUDMODE_3_LABEL_vofs};
+			((HUDModeButtons*)instr[13])->DefineAnimationsVC (VC_BTN_HUDMODE_1_axis, GRP_BUTTON3_VC, GRP_LIT_SURF_VC, hudbtn_vofs, hudbtn_label_vofs);
+		}
 
 		// HUD brightness dial
 		oapiVCRegisterArea (AID_HUDBRIGHT, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
@@ -3657,6 +3686,11 @@ bool DeltaGlider::clbkLoadVC (int id)
 		// Hover status display
 		oapiVCRegisterArea (AID_HBALANCEDISP, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
 
+		// Hover hold alt button
+		oapiVCRegisterArea (AID_HOVERALTBTN, PANEL_REDRAW_MOUSE | PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
+		oapiVCSetAreaClickmode_Spherical (AID_HOVERALTBTN, VC_BTN_HOVER_HOLDALT_ref, VC_BTN_HOVER_HOLDALT_mouserad);
+		((DGButton3*)instr[50])->DefineAnimationVC (VC_BTN_HOVER_HOLDALT_axis, GRP_BUTTON3_VC, GRP_LIT_SURF_VC, VC_BTN_HOVER_HOLDALT_vofs, VC_BTN_HOVER_HOLDALT_LABEL_vofs);
+
 		// Elevator trim wheel
 		oapiVCRegisterArea (AID_ELEVATORTRIM, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_ELEVATORTRIM, vc_etrimwheel_mousearea[0], vc_etrimwheel_mousearea[1], vc_etrimwheel_mousearea[2], vc_etrimwheel_mousearea[3]);
@@ -3685,11 +3719,6 @@ bool DeltaGlider::clbkLoadVC (int id)
 		oapiVCSetAreaClickmode_Spherical (AID_RADIATOREX, _V(0.2582,0.9448,7.22),0.01);
 		oapiVCRegisterArea (AID_RADIATORIN, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Spherical (AID_RADIATORIN, _V(0.2582,0.9618,7.22),0.01);
-
-		//oapiVCRegisterArea (AID_HATCHOPEN, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
-		//oapiVCSetAreaClickmode_Spherical (AID_HATCHOPEN, _V(0.2511,0.9921,7.2507), 0.01);
-		//oapiVCRegisterArea (AID_HATCHCLOSE, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
-		//oapiVCSetAreaClickmode_Spherical (AID_HATCHCLOSE, _V(0.2511,1.0091,7.2507), 0.01);
 
 		oapiVCRegisterArea (AID_LADDEREX, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Spherical (AID_LADDEREX, _V(0.2889,1.0537,7.2388), 0.01);
@@ -3890,6 +3919,8 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 		return instr[21]->ProcessMouseVC (event, p);
 	case AID_RHOVER:
 		return instr[22]->ProcessMouseVC (event, p);
+	case AID_HOVERALTBTN:
+		return instr[50]->ProcessMouseVC (event, p);
 	case AID_MWS:
 		bMWSActive = bMWSOn = false;
 		return true;
@@ -3946,6 +3977,8 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 		return instr[21]->RedrawVC (vcmesh, 0);
 	case AID_RHOVER:
 		return instr[22]->RedrawVC (vcmesh, 0);
+	case AID_HOVERALTBTN:
+		return instr[50]->RedrawVC (vcmesh, 0);
 	case AID_MAINPROP:
 		return instr[4]->RedrawVC (vcmesh, intex);
 	case AID_RCSPROP:

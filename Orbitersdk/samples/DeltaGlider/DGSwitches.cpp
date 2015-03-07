@@ -354,3 +354,101 @@ int DGDial1::Right ()
 	if (pos < npos-1) pos++;
 	return pos;
 }
+
+// ==============================================================
+
+const int DGButton3::nvtx = 20;
+const int DGButton3::nvtx_lbl = 8;
+
+// --------------------------------------------------------------
+
+DGButton3::DGButton3 (VESSEL3 *v)
+: PanelElement(v)
+{
+	state = vstate = OFF;
+}
+
+// --------------------------------------------------------------
+
+void DGButton3::DefineAnimationVC (const VECTOR3 &axis, DWORD meshgrp, DWORD meshgrp_label,
+	DWORD vofs, DWORD vofs_label)
+{
+	mgrp = meshgrp;
+	mgrp_lbl = meshgrp_label;
+	vtxofs = vofs;
+	vtxofs_lbl = vofs_label;
+	ax = axis;
+}
+
+// --------------------------------------------------------------
+
+bool DGButton3::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	if (event & PANEL_MOUSE_LBDOWN) {
+		state = (state == OFF ? PRESSED_FROM_OFF : PRESSED_FROM_ON);
+	} else if (event & PANEL_MOUSE_LBUP) {
+		state = (state == PRESSED_FROM_OFF ? ON : OFF);
+	}
+	return (state != vstate);
+}
+
+// --------------------------------------------------------------
+
+bool DGButton3::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
+{
+	static const double zpos[4] = {0, 0.005, 0.0065, 0.0065};
+	if (state != vstate) {
+		int i;
+		double dz = zpos[state]-zpos[vstate];
+		VECTOR3 shift = ax*dz;
+		float dsx = (float)shift.x, dsy = (float)shift.y, dsz = (float)shift.z;
+
+		// animate button
+		NTVERTEX vtx[nvtx];
+		WORD vperm[nvtx];
+		for (i = 0; i < nvtx; i++) vperm[i] = vtxofs+i;
+		GROUPREQUESTSPEC grs = {vtx, nvtx, vperm, 0, 0, 0, 0, 0};
+		oapiGetMeshGroup (hMesh, mgrp, &grs);
+		for (i = 0; i < nvtx; i++) {
+			vtx[i].x += dsx;
+			vtx[i].y += dsy;
+			vtx[i].z += dsz;
+		}
+		GROUPEDITSPEC ges = {GRPEDIT_VTXCRD, 0, vtx, nvtx, vperm};
+		oapiEditMeshGroup (hMesh, mgrp, &ges);
+
+		// animate label
+		NTVERTEX vtx_lbl[nvtx_lbl];
+		WORD vperm_lbl[nvtx_lbl];
+		for (i = 0; i < nvtx_lbl; i++) vperm_lbl[i] = vtxofs_lbl+i;
+		GROUPREQUESTSPEC grs_lbl = {vtx_lbl, nvtx_lbl, vperm_lbl, 0, 0, 0, 0, 0};
+		oapiGetMeshGroup (hMesh, mgrp_lbl, &grs_lbl);
+		for (i = 0; i < nvtx_lbl; i++) {
+			vtx_lbl[i].x += dsx;
+			vtx_lbl[i].y += dsy;
+			vtx_lbl[i].z += dsz;
+		}
+
+		// show/hide indicator
+		DWORD ges_flag = GRPEDIT_VTXCRD;
+		bool have_ind = (vstate != OFF);
+		bool need_ind = (state != OFF);
+		if (have_ind != need_ind) {
+			vtx_lbl[6].tv = vtx_lbl[7].tv = (float)((need_ind ? 1.5:10.5)/1024.0);
+			ges_flag |= GRPEDIT_VTXTEXV;
+		}
+		GROUPEDITSPEC ges_lbl = {ges_flag, 0, vtx_lbl, nvtx_lbl, vperm_lbl};
+		oapiEditMeshGroup (hMesh, mgrp_lbl, &ges_lbl);
+
+		vstate = state;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
+void DGButton3::SetState (State newstate)
+{
+	if (newstate != state)
+		state = newstate;
+}

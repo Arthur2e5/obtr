@@ -24,7 +24,7 @@ HoverCtrlDial::HoverCtrlDial (VESSEL3 *v)
 {
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 void HoverCtrlDial::Reset2D (MESHHANDLE hMesh)
 {
@@ -32,7 +32,7 @@ void HoverCtrlDial::Reset2D (MESHHANDLE hMesh)
 	vtxofs = 180;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 void HoverCtrlDial::ResetVC (DEVMESHHANDLE hMesh)
 {
@@ -40,7 +40,7 @@ void HoverCtrlDial::ResetVC (DEVMESHHANDLE hMesh)
 	SetPosition (mode);
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool HoverCtrlDial::Redraw2D (SURFHANDLE surf)
 {
@@ -60,17 +60,7 @@ bool HoverCtrlDial::Redraw2D (SURFHANDLE surf)
 	return false;
 }
 
-// ==============================================================
-
-//bool HoverCtrlDial::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
-//{
-//	DeltaGlider *dg = (DeltaGlider*)vessel;
-//	int mode = dg->GetHoverMode();
-//	dg->SetAnimation (dg->anim_hoverdial, mode*0.5);
-//	return false;
-//}
-
-// ==============================================================
+// --------------------------------------------------------------
 
 bool HoverCtrlDial::ProcessMouse2D (int event, int mx, int my)
 {
@@ -91,7 +81,7 @@ bool HoverCtrlDial::ProcessMouse2D (int event, int mx, int my)
 	return false;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool HoverCtrlDial::ProcessMouseVC (int event, VECTOR3 &p)
 {
@@ -105,7 +95,6 @@ bool HoverCtrlDial::ProcessMouseVC (int event, VECTOR3 &p)
 
 
 // ==============================================================
-// ==============================================================
 
 HoverDisp::HoverDisp (VESSEL3 *v): PanelElement (v)
 {
@@ -116,14 +105,14 @@ HoverDisp::HoverDisp (VESSEL3 *v): PanelElement (v)
 		vperm[i] = (WORD)(i+16);
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 HoverDisp::~HoverDisp ()
 {
 	if (vc_grp.Vtx) delete []vc_grp.Vtx;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 void HoverDisp::Reset2D (MESHHANDLE hMesh)
 {
@@ -131,7 +120,7 @@ void HoverDisp::Reset2D (MESHHANDLE hMesh)
 	vtxofs = 184;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 void HoverDisp::ResetVC (DEVMESHHANDLE hMesh)
 {
@@ -143,7 +132,7 @@ void HoverDisp::ResetVC (DEVMESHHANDLE hMesh)
 	}
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool HoverDisp::Redraw2D (SURFHANDLE surf)
 {
@@ -188,7 +177,7 @@ bool HoverDisp::Redraw2D (SURFHANDLE surf)
 	return false;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool HoverDisp::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 {
@@ -232,14 +221,13 @@ bool HoverDisp::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 
 
 // ==============================================================
-// ==============================================================
 
 PHoverCtrl::PHoverCtrl (VESSEL3 *v)
 : DGSwitch2 (v)
 {
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool PHoverCtrl::ProcessMouse2D (int event, int mx, int my)
 {
@@ -250,7 +238,7 @@ bool PHoverCtrl::ProcessMouse2D (int event, int mx, int my)
 	return (event & (PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP));
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool PHoverCtrl::ProcessMouseVC (int event, VECTOR3 &p)
 {
@@ -263,14 +251,13 @@ bool PHoverCtrl::ProcessMouseVC (int event, VECTOR3 &p)
 
 
 // ==============================================================
-// ==============================================================
 
 RHoverCtrl::RHoverCtrl (VESSEL3 *v)
 : DGSwitch2 (v)
 {
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool RHoverCtrl::ProcessMouse2D (int event, int mx, int my)
 {
@@ -281,7 +268,7 @@ bool RHoverCtrl::ProcessMouse2D (int event, int mx, int my)
 	return (event & (PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP));
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool RHoverCtrl::ProcessMouseVC (int event, VECTOR3 &p)
 {
@@ -292,3 +279,22 @@ bool RHoverCtrl::ProcessMouseVC (int event, VECTOR3 &p)
 	return (event & (PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP));
 }
 
+
+// ==============================================================
+
+HoverAltBtn::HoverAltBtn (VESSEL3 *v)
+: DGButton3 (v)
+{
+}
+
+// --------------------------------------------------------------
+
+bool HoverAltBtn::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	if (DGButton3::ProcessMouseVC (event, p)) {
+		DGButton3::State state = GetState();
+		if (state == DGButton3::OFF) vessel->DeactivateNavmode (NAVMODE_HOLDALT);
+		else if (state == DGButton3::ON) vessel->ActivateNavmode (NAVMODE_HOLDALT);
+	}
+	return (event & (PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP));
+}

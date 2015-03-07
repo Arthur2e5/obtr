@@ -1679,6 +1679,20 @@ typedef enum {
 
 /**
  * \ingroup defines
+ * \defgroup nav_bitflag Navigation mode bitflags
+ */
+//@{
+#define NAVBIT_KILLROT    0x01
+#define NAVBIT_HLEVEL     0x02
+#define NAVBIT_PROGRADE   0x04
+#define NAVBIT_RETROGRADE 0x08
+#define NAVBIT_NORMAL     0x10
+#define NAVBIT_ANTINORMAL 0x20
+#define NAVBIT_HOLDALT    0x40
+//@}
+
+/**
+ * \ingroup defines
  * \defgroup manctrl_mode Manual control mode identifiers
  *
  * Constants used to identify attitude control modes for manual input.

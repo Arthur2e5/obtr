@@ -6187,7 +6187,7 @@ public:
 // virtual tables)!
 // ======================================================================
 
-class VESSEL4: public VESSEL3 {
+class OAPIFUNC VESSEL4: public VESSEL3 {
 public:
 	/**
 	 * \brief Creates a VESSEL4 interface for a vessel object.
@@ -6222,6 +6222,27 @@ public:
 	 *   for improved performance.
 	 */
 	int RegisterPanelArea (PANELHANDLE hPanel, int id, const RECT &pos, int texidx, const RECT &texpos, int draw_event, int mouse_event, int bkmode);
+
+	using VESSEL3::RegisterPanelArea; // keep previous interface valid
+
+	/**
+	 * \brief Processing of navigation autopilot programmes
+	 * \param mode Bit-flags for active nav programmes (see \ref nav_bitflag)
+	 * \return Modified nav programme bitflags (see notes)
+	 * \default Does nothing and returns \p mode (i.e. leaves all navmode processing
+	 *   to the default Orbiter core routines.
+	 * \note This method is called at each frame while at least one nav programme
+	 *   is active. It is only called once per frame even if multiple programmes are
+	 *   active. Check the \p mode parameter to see which.
+	 * \note The module is free to process all, a subset, or none of the active
+	 *   programmes. The return value indicates to Orbiter which of the programmes
+	 *   have been processed: clear the flags for all processed programmes, and leave
+	 *   the flags for any skipped programmes.
+	 * \note You cannot set any flags in the return value that were not set already
+	 *   in the input parameter. Activating/deactivating navmodes should be done via
+	 *   VESSEL::ActivateNavmode, VESSEL::DeactivateNavmode, VESSEL::ToggleNavmode
+	 */
+	virtual int clbkNavProcess (int mode);
 };
 
 // ======================================================================

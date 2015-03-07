@@ -57,6 +57,15 @@ bool RCSDial::Redraw2D (SURFHANDLE surf)
 
 // ==============================================================
 
+bool RCSDial::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
+{
+	int pos = vessel->GetAttitudeMode();
+	SetPosition(pos);
+	return DGDial1::RedrawVC (hMesh, surf);
+}
+
+// ==============================================================
+
 bool RCSDial::ProcessMouse2D (int event, int mx, int my)
 {
 	DeltaGlider *dg = (DeltaGlider*)vessel;

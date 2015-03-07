@@ -1,4 +1,4 @@
-// Created by deltaglider_vc.m 20-Feb-2015
+// Created by deltaglider_vc.m 06-Mar-2015
 
 #ifndef __DG_VC_ANIM_H
 #define __DG_VC_ANIM_H
@@ -75,6 +75,15 @@ const VECTOR3 VC_GIMBAL_INDICATOR_ref[2] = {{-0.27012,0.98457,7.18405},{-0.24598
 // HOVER_INDICATOR (VC): rotation reference
 const VECTOR3 VC_HOVER_INDICATOR_ref = {-0.16023,0.98457,7.18405};
 
+// BTN_HOVER_HOLDALT (VC): mouse catch radius
+const double VC_BTN_HOVER_HOLDALT_mouserad = 0.015778;
+
+// BTN_HOVER_HOLDALT (VC): rotation reference
+const VECTOR3 VC_BTN_HOVER_HOLDALT_ref = {-0.07503,1.02668,7.21179};
+
+// BTN_HOVER_HOLDALT (VC): rotation axis
+const VECTOR3 VC_BTN_HOVER_HOLDALT_axis = {0.00000,-0.58280,0.81262};
+
 // RCS_DIAL (VC): mouse catch area
 const VECTOR3 VC_RCS_DIAL_mousearea[4] = {{0.05000,1.26200,7.26800},{0.08000,1.26200,7.26800},{0.05000,1.29200,7.26800},{0.08000,1.29200,7.26800}};
 
@@ -85,7 +94,34 @@ const VECTOR3 VC_RCS_DIAL_ref = {0.06500,1.27700,7.26800};
 const VECTOR3 VC_RCS_DIAL_axis = {0.00000,0.00000,1.00000};
 
 // HUD_BUTTONS (VC): mouse catch area
-const VECTOR3 VC_HUD_BUTTONS_mousearea[4] = {{-0.02856,1.28531,7.26800},{0.02856,1.28531,7.26800},{-0.02856,1.30211,7.26800},{0.02856,1.30211,7.26800}};
+const VECTOR3 VC_HUD_BUTTONS_mousearea[4] = {{-0.02840,1.28605,7.26800},{0.02840,1.28605,7.26800},{-0.02840,1.30047,7.26800},{0.02840,1.30047,7.26800}};
+
+// BTN_HUDMODE_1 (VC): mouse catch radius
+const double VC_BTN_HUDMODE_1_mouserad = 0.015778;
+
+// BTN_HUDMODE_1 (VC): rotation reference
+const VECTOR3 VC_BTN_HUDMODE_1_ref = {-0.01938,1.29371,7.26800};
+
+// BTN_HUDMODE_1 (VC): rotation axis
+const VECTOR3 VC_BTN_HUDMODE_1_axis = {0.00000,0.00000,1.00000};
+
+// BTN_HUDMODE_2 (VC): mouse catch radius
+const double VC_BTN_HUDMODE_2_mouserad = 0.015778;
+
+// BTN_HUDMODE_2 (VC): rotation reference
+const VECTOR3 VC_BTN_HUDMODE_2_ref = {0.00000,1.29371,7.26800};
+
+// BTN_HUDMODE_2 (VC): rotation axis
+const VECTOR3 VC_BTN_HUDMODE_2_axis = {0.00000,0.00000,1.00000};
+
+// BTN_HUDMODE_3 (VC): mouse catch radius
+const double VC_BTN_HUDMODE_3_mouserad = 0.015778;
+
+// BTN_HUDMODE_3 (VC): rotation reference
+const VECTOR3 VC_BTN_HUDMODE_3_ref = {0.01938,1.29371,7.26800};
+
+// BTN_HUDMODE_3 (VC): rotation axis
+const VECTOR3 VC_BTN_HUDMODE_3_axis = {0.00000,0.00000,1.00000};
 
 // HUD_BRIGHTNESS (VC): mouse catch area
 const VECTOR3 VC_HUD_BRIGHTNESS_mousearea[4] = {{-0.02020,1.26191,7.26800},{-0.00060,1.26191,7.26800},{-0.02020,1.28151,7.26800},{-0.00060,1.28151,7.26800}};
@@ -100,7 +136,7 @@ const VECTOR3 VC_HUD_BRIGHTNESS_axis = {0.00000,0.00000,1.00000};
 const VECTOR3 VC_HUD_COLBUTTON_mousepoint = {0.01650,1.27171,7.26800};
 
 // HUD_COLBUTTON (VC): mouse catch radius
-const double VC_HUD_COLBUTTON_mouserad = 0.018000;
+const double VC_HUD_COLBUTTON_mouserad = 0.009000;
 
 // NAV_BUTTONS (VC): mouse catch area
 const VECTOR3 VC_NAV_BUTTONS_mousearea[4] = {{0.10136,1.25700,7.26800},{0.17864,1.25700,7.26800},{0.10136,1.29144,7.26800},{0.17864,1.29144,7.26800}};
@@ -332,7 +368,23 @@ const int VC_GIMBAL_INDICATOR_RIGHT_vofs = 8;
 
 const int VC_HOVER_INDICATOR_vofs = 16;
 
+const int VC_BTN_HOVER_HOLDALT_vofs = 0;
+
+const int VC_BTN_HOVER_HOLDALT_LABEL_vofs = 0;
+
 const int VC_RCS_DIAL_vofs = 228;
+
+const int VC_BTN_HUDMODE_1_vofs = 20;
+
+const int VC_BTN_HUDMODE_1_LABEL_vofs = 8;
+
+const int VC_BTN_HUDMODE_2_vofs = 40;
+
+const int VC_BTN_HUDMODE_2_LABEL_vofs = 16;
+
+const int VC_BTN_HUDMODE_3_vofs = 60;
+
+const int VC_BTN_HUDMODE_3_LABEL_vofs = 24;
 
 const int VC_INSTRLIGHT_SWITCH_vofs = 0;
 

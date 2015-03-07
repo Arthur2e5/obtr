@@ -15,15 +15,22 @@
 
 // ==============================================================
 // HUD mode selector buttons
-class HUDButton: public PanelElement {
+class HUDModeButtons: public PanelElement {
 public:
-	HUDButton (VESSEL3 *v);
+	HUDModeButtons (VESSEL3 *v);
+	~HUDModeButtons ();
+	void DefineAnimationsVC (const VECTOR3 &axis, DWORD meshgrp, DWORD meshgrp_label,
+		DWORD vofs[3], DWORD vofs_label[3]);
+	void SetMode (int mode);
 	void Reset2D (MESHHANDLE hMesh);
-	void ResetVC (DEVMESHHANDLE hMesh);
 	bool Redraw2D (SURFHANDLE surf);
 	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
 	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
+
+private:
+	DGButton3 *btn[3];
+	int vmode; // currently displayed HUD mode
 };
 
 // ==============================================================

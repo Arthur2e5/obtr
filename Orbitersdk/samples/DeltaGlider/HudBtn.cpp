@@ -16,13 +16,34 @@
 
 // ==============================================================
 
-HUDButton::HUDButton (VESSEL3 *v): PanelElement (v)
+HUDModeButtons::HUDModeButtons (VESSEL3 *v)
+: PanelElement (v)
 {
+	vmode = 0;
+	for (int i = 0; i < 3; i++)
+		btn[i] = new DGButton3 (v);
 }
 
 // --------------------------------------------------------------
 
-void HUDButton::Reset2D (MESHHANDLE hMesh)
+HUDModeButtons::~HUDModeButtons ()
+{
+	for (int i = 0; i < 3; i++)
+		delete btn[i];
+}
+
+// --------------------------------------------------------------
+
+void HUDModeButtons::DefineAnimationsVC (const VECTOR3 &axis, DWORD meshgrp, DWORD meshgrp_label,
+	DWORD vofs[3], DWORD vofs_label[3])
+{
+	for (int i = 0; i < 3; i++) 
+		btn[i]->DefineAnimationVC (axis, meshgrp, meshgrp_label, vofs[i], vofs_label[i]);
+}
+
+// --------------------------------------------------------------
+
+void HUDModeButtons::Reset2D (MESHHANDLE hMesh)
 {
 	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
 	vtxofs = 8;
@@ -30,13 +51,7 @@ void HUDButton::Reset2D (MESHHANDLE hMesh)
 
 // --------------------------------------------------------------
 
-void HUDButton::ResetVC (DEVMESHHANDLE hMesh)
-{
-}
-
-// --------------------------------------------------------------
-
-bool HUDButton::Redraw2D (SURFHANDLE surf)
+bool HUDModeButtons::Redraw2D (SURFHANDLE surf)
 {
 	// constants for texture coordinates
 	static const float tx_dy =  4.0f;       // texture block height
@@ -54,47 +69,16 @@ bool HUDButton::Redraw2D (SURFHANDLE surf)
 
 // --------------------------------------------------------------
 
-bool HUDButton::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
+bool HUDModeButtons::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 {
-	if (!hMesh) return false;
-	DeltaGlider *dg = (DeltaGlider*)vessel;
-
-	static const int nbutton = 3;
-	static const int nvtx_per_button = 16;
-	static const int nvtx = nbutton * nvtx_per_button;
-	int i, j;
-	NTVERTEX vtx[nvtx];
-	GROUPEDITSPEC ges;
-	ges.flags = GRPEDIT_VTXCRDZ | GRPEDIT_VTXTEXV;
-	ges.Vtx = vtx;
-	ges.nVtx = nvtx;
-	ges.vIdx = NULL;
-	static float z0_base[nvtx_per_button] = {
-		7.2630f,7.2630f,7.2630f,7.2630f,7.2630f,7.2630f,7.2680f,7.2680f,
-		7.2630f,7.2630f,7.2680f,7.2680f,7.2630f,7.2630f,7.2680f,7.2680f
-	};
-	static float z0_shift = 0.004f;
-	static float v0_base[nvtx_per_button] = {
-		0.2002f,0.2002f,0.1602f,0.1602f,0.1602f,0.1602f,0.1602f,0.1602f,
-		0.2002f,0.1602f,0.2002f,0.1602f,0.2002f,0.1602f,0.2002f,0.1602f
-	};
-	static float v0_shift = (float)(41.0/1024.0);
-	static const int mode[3] = {HUD_ORBIT,HUD_SURFACE,HUD_DOCKING};
-	for (i = 0; i < nbutton; i++) {
-		int vofs = i*nvtx_per_button;
-		bool hilight = (dg->GetHUDMode() == mode[i]);
-		for (j = 0; j < nvtx_per_button; j++) {
-			vtx[vofs+j].z = z0_base[j] + (hilight ? z0_shift : 0);
-			vtx[vofs+j].tv = v0_base[j] + (hilight && i<3 ? v0_shift : 0);
-		}
-	}
-	oapiEditMeshGroup (hMesh, GRP_HUD_BUTTONS_VC, &ges);
+	for (int i = 0; i < 3; i++)
+		btn[i]->RedrawVC (hMesh, surf);
 	return false;
 }
 
 // --------------------------------------------------------------
 
-bool HUDButton::ProcessMouse2D (int event, int mx, int my)
+bool HUDModeButtons::ProcessMouse2D (int event, int mx, int my)
 {
 	DeltaGlider *dg = (DeltaGlider*)vessel;
 	if (mx%29 < 20) {
@@ -109,13 +93,36 @@ bool HUDButton::ProcessMouse2D (int event, int mx, int my)
 
 // --------------------------------------------------------------
 
-bool HUDButton::ProcessMouseVC (int event, VECTOR3 &p)
+bool HUDModeButtons::ProcessMouseVC (int event, VECTOR3 &p)
 {
-	DeltaGlider *dg = (DeltaGlider*)vessel;
-	static const int mode[3] = {HUD_ORBIT,HUD_SURFACE,HUD_DOCKING};
-	int btn = max(0, min (2, (int)(p.x*3.0)));
-	dg->SetHUDMode (mode[btn]);
+	int i;
+	int ix = (int)(p.x*126.0);
+	int b = ix/43;
+	if (ix-b*43 >= 40) return false;
+
+	if (event & PANEL_MOUSE_LBDOWN) {
+		for (i = 0; i < 3; i++)
+			btn[i]->SetState (i==b ? DGButton3::PRESSED_FROM_OFF : DGButton3::OFF);
+		DeltaGlider *dg = (DeltaGlider*)vessel;
+		static const int mode[3] = {HUD_ORBIT,HUD_SURFACE,HUD_DOCKING};
+		vmode = mode[b];
+		dg->SetHUDMode (vmode);
+	} else if (event & PANEL_MOUSE_LBUP) {
+		btn[b]->SetState (DGButton3::ON);
+	}
 	return true;
+}
+
+// --------------------------------------------------------------
+
+void HUDModeButtons::SetMode (int mode)
+{
+	if (mode != vmode) {
+		int b = mode-HUD_ORBIT;
+		for (int i = 0; i < 3; i++)
+			btn[i]->SetState (i==b ? DGButton3::ON : DGButton3::OFF);
+		vmode = mode;
+	}
 }
 
 // ==============================================================

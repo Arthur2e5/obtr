@@ -166,7 +166,7 @@ const DWORD INSTR3_TEXH   =  188;
 // Interface for derived vessel class: DeltaGlider
 // ==========================================================
 
-class DeltaGlider: public VESSEL3 {
+class DeltaGlider: public VESSEL4 {
 	friend class AAP;
 	friend class FuelMFD;
 	friend class PressureControl;
@@ -268,6 +268,7 @@ public:
 	void clbkHUDMode (int mode);
 	void clbkMFDMode (int mfd, int mode);
 	void clbkNavMode (int mode, bool active);
+	int  clbkNavProcess (int mode);
 	int  clbkConsumeDirectKey (char *kstate);
 	int  clbkConsumeBufferedKey (DWORD key, bool down, char *kstate);
 	bool clbkLoadGenericCockpit ();
@@ -399,6 +400,7 @@ private:
 	bool RedrawPanel_Number (SURFHANDLE surf, int x, int y, char *num);
 	void ApplySkin();                            // apply custom skin
 	void PaintMarkings (SURFHANDLE tex);         // paint individual vessel markings
+	void ProcessHoverHoldalt();                  // hover mode: hold altitude
 
 	Ramjet *scramjet;                            // scramjet module (NULL = none)
 	void ScramjetThrust ();                      // scramjet thrust calculation
@@ -449,6 +451,7 @@ private:
 	double phover, phover_cmd;                   // current/commanded hover pitch angle (tan)
 	double rhover, rhover_cmd;                   // current/commanded hover roll angle (tan)
 	int hover_mode;                              // setting of hover mode dial
+	double hover_alt;                            // hover target altitude
 
 	UINT engsliderpos[5];    // throttle settings for main,hover,scram engines
 	double scram_intensity[2];
@@ -541,32 +544,33 @@ typedef struct {
 #define AID_HBALANCEDISP        45
 #define AID_PHOVER              46
 #define AID_RHOVER              47
-#define AID_RADIATORSWITCH      48
-#define AID_RETRODOORSWITCH     49
-#define AID_HATCHSWITCH         50
-#define AID_LADDERSWITCH        51
-#define AID_MWS                 52
-#define AID_AIRBRAKE            53
-#define AID_SWITCHARRAY         54
-#define AID_AAP                 55
-#define AID_INSTRLIGHT_SWITCH   56
-#define AID_INSTRBRIGHT_DIAL    57
-#define AID_FLOODLIGHT_SWITCH   58
-#define AID_FLOODBRIGHT_DIAL    59
-#define AID_ANGRATEINDICATOR    60
-#define AID_HUDRETRACT          61
-#define AID_LANDDOCKLIGHT       62
-#define AID_STROBE_SWITCH       63
-#define AID_NAVLIGHT_SWITCH     64
-#define AID_HATCH_SWITCH        65
-#define AID_ILOCK_SWITCH        66
-#define AID_OLOCK_SWITCH        67
-#define AID_PVALVE0_SWITCH      68
-#define AID_PVALVE1_SWITCH      69
-#define AID_PVALVE2_SWITCH      70
-#define AID_PVALVE3_SWITCH      71
-#define AID_PVALVE4_SWITCH      72
-#define AID_PRESSUREDISP        73
+#define AID_HOVERALTBTN         48
+#define AID_RADIATORSWITCH      49
+#define AID_RETRODOORSWITCH     50
+#define AID_HATCHSWITCH         51
+#define AID_LADDERSWITCH        52
+#define AID_MWS                 53
+#define AID_AIRBRAKE            54
+#define AID_SWITCHARRAY         55
+#define AID_AAP                 56
+#define AID_INSTRLIGHT_SWITCH   57
+#define AID_INSTRBRIGHT_DIAL    58
+#define AID_FLOODLIGHT_SWITCH   59
+#define AID_FLOODBRIGHT_DIAL    60
+#define AID_ANGRATEINDICATOR    61
+#define AID_HUDRETRACT          62
+#define AID_LANDDOCKLIGHT       63
+#define AID_STROBE_SWITCH       64
+#define AID_NAVLIGHT_SWITCH     65
+#define AID_HATCH_SWITCH        66
+#define AID_ILOCK_SWITCH        67
+#define AID_OLOCK_SWITCH        68
+#define AID_PVALVE0_SWITCH      69
+#define AID_PVALVE1_SWITCH      70
+#define AID_PVALVE2_SWITCH      71
+#define AID_PVALVE3_SWITCH      72
+#define AID_PVALVE4_SWITCH      73
+#define AID_PRESSUREDISP        74
 
 // Panel 1
 #define AID_AIRLOCKSWITCH      100
