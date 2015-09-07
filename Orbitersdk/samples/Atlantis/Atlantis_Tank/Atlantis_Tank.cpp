@@ -190,7 +190,7 @@ void Atlantis_Tank::SetSRBGimbal (const VECTOR3 &angle) const
 
 VECTOR3 Atlantis_Tank::GetSRBThrustDir (int which) const
 {
-	if (pSRB[which]) return pSRB[which]->GetThrustDir();
+	if (pSRB[which]) return pSRB[which]->GetThrustGimbal();
 	else return _V(0,0,1);
 }
 
@@ -217,9 +217,9 @@ void Atlantis_Tank::SeparateSRBs ()
 	for (int i = 0; i < 2; i++) {
 		if (pSRB[i]) {
 			const double angle = 0.25*PI;
-			VECTOR3 dir = _V(0.02, i ? -0.04 : 0.04, 0.9553);
+			VECTOR3 dir = _V(0.0, i ? -0.04 : 0.04, 0.9992);
 			Undock (i+1);
-			pSRB[i]->SetThrustGimbal (dir); // set SRB gimbals for safe separation
+			pSRB[i]->CmdThrustGimbal (dir); // set SRB gimbals for safe separation
 			pSRB[i]->FireBolt();
 			pSRB[i] = NULL;
 		}

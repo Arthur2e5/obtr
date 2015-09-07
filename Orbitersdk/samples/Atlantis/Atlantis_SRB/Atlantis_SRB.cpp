@@ -59,20 +59,6 @@ void Atlantis_SRB::SetLaunchElevation (double elev)
 	}
 }
 
-// reconstruct liftoff time from fuel level
-void Atlantis_SRB::SetRefTime (void)
-{
-	extern int SRB_nt;
-	extern double SRB_Seq[], SRB_Prop[], SRB_PrpSCL[];
-
-	int i;
-	double fuel = GetFuelMass()/GetMaxFuelMass();
-	for (i = 1; i < SRB_nt; i++)
-		if (fuel >= SRB_Prop[i]) break;
-	double met = SRB_Seq[i] + (fuel-SRB_Prop[i])/SRB_PrpSCL[i-1];
-	t0 = oapiGetSimTime()-met;
-}
-
 double Atlantis_SRB::ThrustProfile (double met)
 {
 	// This thrust profile is adapted from STS 107 Columbia Accident
@@ -130,7 +116,13 @@ void Atlantis_SRB::SetThrustGimbal (const VECTOR3 &dir)
 	SetThrusterDir (th_main, dir);
 }
 
-VECTOR3 Atlantis_SRB::GetThrustDir ()
+void Atlantis_SRB::CmdThrustGimbal (const VECTOR3 &dir)
+{
+	gimbalcmd = dir;
+	bGimbalCmd = true;
+}
+
+VECTOR3 Atlantis_SRB::GetThrustGimbal ()
 {
 	VECTOR3 dir;
 	GetThrusterDir (th_main, dir);
@@ -185,7 +177,7 @@ void Atlantis_SRB::clbkSetClassCaps (FILEHANDLE cfg)
 	AddExhaustStream (th_main, _V(0,0,-25), &srb_exhaust);
 
 	// separation bolts
-	th_bolt = CreateThruster (_V(0,0,1.0), _V(-1,0,0), 3e6, ph_main, 1e7);
+	th_bolt = CreateThruster (_V(0,0,3.0), _V(-1,0,0), 3e6, ph_main, 1e7);
 	// for simplicity, the separation bolts directly use SRB propellant. We give
 	// them an insanely high ISP to avoid significant propellant drainage
 
@@ -199,12 +191,50 @@ void Atlantis_SRB::clbkSetClassCaps (FILEHANDLE cfg)
 
 	bMainEngine = false;
 	bSeparationEngine = false;
+	bGimbalCmd = false;
+	srbpos = SRB_UNDEFINED;
 }
 
 // Finish setup
 void Atlantis_SRB::clbkPostCreation ()
 {
-	//SetRefTime ();	// reconstruct ignition time from fuel level
+	// find out which side of the ET we are attached to
+	OBJHANDLE hTank = GetDockStatus (GetDockHandle (0));
+	if (hTank) {
+		for (UINT i = 1; i <= 2; i++) {
+			OBJHANDLE hSRB = oapiGetDockStatus (oapiGetDockHandle (hTank, i));
+			if (hSRB == GetHandle()) {
+				srbpos = (i == 1 ? SRB_LEFT : SRB_RIGHT);
+				break;
+			}
+		}
+	}
+	if (srbpos != SRB_UNDEFINED)
+		SetThrusterDir(th_bolt, srbpos == SRB_LEFT ? _V(-0.4,-0.9165,0) : _V(-0.4,0.9165,0));
+}
+
+// Read current state
+void Atlantis_SRB::clbkLoadStateEx (FILEHANDLE scn, void *vs)
+{
+	char *line;
+
+	while (oapiReadScenario_nextline (scn, line)) {
+		if (!_strnicmp (line, "MET ", 4)) {
+			double met;
+			sscanf (line+4, "%lf", &met);
+			t0 = oapiGetSimTime()-met;
+			bMainEngine = true;
+		} else
+			ParseScenarioLineEx (line, vs);
+	}
+}
+
+// Write current state
+void Atlantis_SRB::clbkSaveState (FILEHANDLE scn)
+{
+	VESSEL2::clbkSaveState (scn);
+	if (bMainEngine)
+		oapiWriteScenario_float(scn, "MET", oapiGetSimTime()-t0);
 }
 
 // Simulation time step
@@ -222,6 +252,18 @@ void Atlantis_SRB::clbkPostStep (double simt, double simdt, double mjd)
 			DelThruster (th_bolt);
 			bSeparationEngine = false;
 		}
+	}
+	if (bGimbalCmd) {
+		double dg_max = simdt*SRB_GIMBAL_SPEED;
+		VECTOR3 gimbalcur = GetThrustGimbal();
+		VECTOR3 gdiff = gimbalcmd-gimbalcur;
+		double dg = length(gdiff);
+		if (dg > dg_max) {
+			gdiff *= dg_max/dg;
+		} else {
+			bGimbalCmd = false;
+		}
+		SetThrustGimbal (gimbalcur + gdiff);
 	}
 
 #ifdef UNDEF

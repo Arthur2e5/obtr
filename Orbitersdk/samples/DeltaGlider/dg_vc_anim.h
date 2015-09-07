@@ -1,4 +1,4 @@
-// Created by deltaglider_vc.m 06-Mar-2015
+// Created by deltaglider_vc.m 09-Mar-2015
 
 #ifndef __DG_VC_ANIM_H
 #define __DG_VC_ANIM_H
@@ -139,7 +139,61 @@ const VECTOR3 VC_HUD_COLBUTTON_mousepoint = {0.01650,1.27171,7.26800};
 const double VC_HUD_COLBUTTON_mouserad = 0.009000;
 
 // NAV_BUTTONS (VC): mouse catch area
-const VECTOR3 VC_NAV_BUTTONS_mousearea[4] = {{0.10136,1.25700,7.26800},{0.17864,1.25700,7.26800},{0.10136,1.29144,7.26800},{0.17864,1.29144,7.26800}};
+const VECTOR3 VC_NAV_BUTTONS_mousearea[4] = {{0.10191,1.25710,7.26800},{0.17809,1.25710,7.26800},{0.10191,1.28640,7.26800},{0.17809,1.28640,7.26800}};
+
+// BTN_NAVMODE_1 (VC): mouse catch radius
+const double VC_BTN_NAVMODE_1_mouserad = 0.015778;
+
+// BTN_NAVMODE_1 (VC): rotation reference
+const VECTOR3 VC_BTN_NAVMODE_1_ref = {0.11092,1.26476,7.26800};
+
+// BTN_NAVMODE_1 (VC): rotation axis
+const VECTOR3 VC_BTN_NAVMODE_1_axis = {0.00000,0.00000,1.00000};
+
+// BTN_NAVMODE_2 (VC): mouse catch radius
+const double VC_BTN_NAVMODE_2_mouserad = 0.015778;
+
+// BTN_NAVMODE_2 (VC): rotation reference
+const VECTOR3 VC_BTN_NAVMODE_2_ref = {0.13031,1.26476,7.26800};
+
+// BTN_NAVMODE_2 (VC): rotation axis
+const VECTOR3 VC_BTN_NAVMODE_2_axis = {0.00000,0.00000,1.00000};
+
+// BTN_NAVMODE_3 (VC): mouse catch radius
+const double VC_BTN_NAVMODE_3_mouserad = 0.015778;
+
+// BTN_NAVMODE_3 (VC): rotation reference
+const VECTOR3 VC_BTN_NAVMODE_3_ref = {0.13031,1.27964,7.26800};
+
+// BTN_NAVMODE_3 (VC): rotation axis
+const VECTOR3 VC_BTN_NAVMODE_3_axis = {0.00000,0.00000,1.00000};
+
+// BTN_NAVMODE_4 (VC): mouse catch radius
+const double VC_BTN_NAVMODE_4_mouserad = 0.015778;
+
+// BTN_NAVMODE_4 (VC): rotation reference
+const VECTOR3 VC_BTN_NAVMODE_4_ref = {0.14969,1.26476,7.26800};
+
+// BTN_NAVMODE_4 (VC): rotation axis
+const VECTOR3 VC_BTN_NAVMODE_4_axis = {0.00000,0.00000,1.00000};
+
+// BTN_NAVMODE_5 (VC): mouse catch radius
+const double VC_BTN_NAVMODE_5_mouserad = 0.015778;
+
+// BTN_NAVMODE_5 (VC): rotation reference
+const VECTOR3 VC_BTN_NAVMODE_5_ref = {0.14969,1.27964,7.26800};
+
+// BTN_NAVMODE_5 (VC): rotation axis
+const VECTOR3 VC_BTN_NAVMODE_5_axis = {0.00000,0.00000,1.00000};
+
+// BTN_NAVMODE_6 (VC): mouse catch radius
+const double VC_BTN_NAVMODE_6_mouserad = 0.015778;
+
+// BTN_NAVMODE_6 (VC): rotation reference
+const VECTOR3 VC_BTN_NAVMODE_6_ref = {0.16908,1.26476,7.26800};
+
+// BTN_NAVMODE_6 (VC): rotation axis
+const VECTOR3 VC_BTN_NAVMODE_6_axis = {0.00000,0.00000,1.00000};
 
 // INSTRLIGHT_SWITCH (VC): mouse catch area
 const VECTOR3 VC_INSTRLIGHT_SWITCH_mousearea[4] = {{-0.14510,1.65220,6.93405},{-0.12510,1.65220,6.93405},{-0.14510,1.66256,6.89541},{-0.12510,1.66256,6.89541}};
@@ -385,6 +439,30 @@ const int VC_BTN_HUDMODE_2_LABEL_vofs = 16;
 const int VC_BTN_HUDMODE_3_vofs = 60;
 
 const int VC_BTN_HUDMODE_3_LABEL_vofs = 24;
+
+const int VC_BTN_NAVMODE_1_vofs = 80;
+
+const int VC_BTN_NAVMODE_1_LABEL_vofs = 32;
+
+const int VC_BTN_NAVMODE_2_vofs = 100;
+
+const int VC_BTN_NAVMODE_2_LABEL_vofs = 40;
+
+const int VC_BTN_NAVMODE_3_vofs = 120;
+
+const int VC_BTN_NAVMODE_3_LABEL_vofs = 48;
+
+const int VC_BTN_NAVMODE_4_vofs = 140;
+
+const int VC_BTN_NAVMODE_4_LABEL_vofs = 56;
+
+const int VC_BTN_NAVMODE_5_vofs = 160;
+
+const int VC_BTN_NAVMODE_5_LABEL_vofs = 64;
+
+const int VC_BTN_NAVMODE_6_vofs = 180;
+
+const int VC_BTN_NAVMODE_6_LABEL_vofs = 72;
 
 const int VC_INSTRLIGHT_SWITCH_vofs = 0;
 

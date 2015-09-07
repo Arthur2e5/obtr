@@ -17,7 +17,7 @@ public:
 
 	void clbkSimulationStart (RenderMode mode);
 	void clbkSimulationEnd ();
-	void clbkPostStep (double simt, double simdt, double mjd);
+	void clbkPreStep (double simt, double simdt, double mjd);
 
 	HWND Open ();
 	void Close ();

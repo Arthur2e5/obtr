@@ -129,7 +129,7 @@ void LuaConsole::clbkSimulationEnd ()
 
 // ==============================================================
 
-void LuaConsole::clbkPostStep (double simt, double simdt, double mjd)
+void LuaConsole::clbkPreStep (double simt, double simdt, double mjd)
 {
 	if (interp) {
 		if (interp->IsBusy() || cConsoleCmd[0] || interp->nJobs()) { // let the interpreter do some work

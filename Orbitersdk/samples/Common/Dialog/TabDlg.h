@@ -43,7 +43,11 @@ public:
 
 	virtual int OnClose ();
 	// Dialog close request
-	// Default behaviour: calls Close
+	// Default behaviour: calls Close, returns TRUE
+
+	virtual int Closed ();
+	// Invoked after dialog is closed
+	// Default behaviour: nothing, returns TRUE
 
 protected:
 	int AddTab (TabPage *tab, const char *label);

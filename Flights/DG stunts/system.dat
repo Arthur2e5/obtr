@@ -6,15 +6,15 @@
 7 NOTE (And to make it a bit more entertaining, we have a Delta-glider lined up to pull a few stunts around the Kennedy Space Center.)
 24.7463 CAMERA SET Track:GL-01:30.00:GLOBAL 19.548 1.452 -0.638
 24.75 NOTE All the scenarios in the 'Tutorials' and 'Playback' folders are pre-recorded flights. Try them out at your leisure.
-31 CAMERA SET Ground:GL-01:20.00:Earth -80.69109 28.60885 4.27
+31 CAMERA SET Ground:GL-01:20.00:Earth -80.69109 28.60885 8.27
 31 NOTE You can't take control of the spacecraft during a playback, but you can switch the camera views and operate the MFD instruments in the cockpit.
 41.4277 CAMERA SET Track:GL-01:20.00:GLOBAL 19.548 1.397 0.648
 41.43 NOTE You can set playback options by opening the Recording/Playback dialog box with Ctrl-F5.
 53 NOTE It is useful to enable the 'Play at recording speed' option, especially for long missions, to make use of recorded time acceleration.
 65.53 NOTE The 'Use recorded camera settings' option automatically switches the views during playback. Disable this if you want to control the camera yourself.
-65.5306 CAMERA SET Track:GL-01:10.00:GLOBAL 48.400 -0.520 -0.685
-79.9543 CAMERA SET Ground:GL-01:10.00:Earth -80.61948 28.62642 18.88
-79.96 NOTE You can exit playback mode any time by clicking the 'STOP' button on the flight recorder dialog, or by pressing the F5 key.
+65.5306 CAMERA SET Track:GL-01:10.00:GLOBAL 48.400 -0.557 -0.800
+77.9543 CAMERA SET Ground:GL-01:10.00:Earth -80.62009 28.62691 18.88
+77.96 NOTE You can exit playback mode any time by clicking the 'STOP' button on the flight recorder dialog, or by pressing the F5 key.
 88.2597 CAMERA SET Track:GL-01:30.00:GLOBAL 17.454 2.373 0.156
 88.26 NOTE The simulation then switches to active mode, and you are back in control.
 99 NOTE A good strategy is to watch a tutorial first, and next time fly it yourself and try to repeat the mission.
@@ -35,11 +35,11 @@
 218 NOTE If you want to insert an event at some point during the playback, pause the simulation (Ctrl-P), select an event type from the pulldown list in the editor window, and press 'Insert'.
 229.075 NOTE Next, edit any event parameters to your preferences.
 239.089 CAMERA SET Track:GL-01:10.00:GLOBAL 54.207 -0.654 -0.575
-247 CAMERA SET Ground:GL-01:10.00:Earth -80.69021 28.60638 1.00
-247 NOTE Finally, press 'Commit' to enter the event into the playback stream and un-pause the playback. The new event will be applied immediately.
-261.849 CAMERA SET Track:GL-01:30.00:RELATIVE 7.049 -2.881 -0.212
-261.849 NOTEPOS 0.3 0.7 0.7 1
-261.849 NOTE The DG is rolling out on the SLF runway 33, so it's time to end this little tutorial.
-270 CAMERA SET Cockpit:GL-01:50.00
-270 NOTEPOS 0.3 0.2 0.7 1
-270 NOTE You can take it for a spin yourself now (and maybe try the recorder). Make sure you don't overwrite any playbacks you want to keep!
+244 CAMERA SET Ground:GL-01:10.00:Earth -80.69021 28.60638 7.00
+244 NOTE Finally, press 'Commit' to enter the event into the playback stream and un-pause the playback. The new event will be applied immediately.
+250.849 CAMERA SET Track:GL-01:30.00:RELATIVE 7.049 -2.881 -0.212
+250.849 NOTEPOS 0.3 0.7 0.7 1
+250.849 NOTE The DG is rolling out on the SLF runway 33, so it's time to end this little tutorial.
+256 CAMERA SET Cockpit:GL-01:50.00
+256 NOTEPOS 0.3 0.2 0.7 1
+256 NOTE You can take it for a spin yourself now (and maybe try the recorder). Make sure you don't overwrite any playbacks you want to keep!

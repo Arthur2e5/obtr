@@ -5346,7 +5346,7 @@ OAPIFUNC void oapiColourFill (SURFHANDLE tgt, DWORD fillcolor, int tgtx = 0, int
 	*  modes are available to all vessel types, while specific modes are only
 	*  available for a single vessel class. Generic modes should be registered in
 	*  the \ref InitModule callback function of a plugin module. Vessel class specific
-	*  modes are not implemented yet.
+	*  modes should be registered via VESSEL4::RegisterMFDMode.
 	* \note MFDMODESPECEX is a struct defining the parameters of the new mode:
 	* \code
 	* typedef struct {
@@ -5356,7 +5356,7 @@ OAPIFUNC void oapiColourFill (SURFHANDLE tgt, DWORD fillcolor, int tgtx = 0, int
 	*   int (*msgproc)(UINT,UINT,WPARAM,LPARAM);   // address of MFD message parser
 	* } MFDMODESPEC; \endcode
 	* \note See orbitersdk\\samples\\CustomMFD for a sample MFD mode implementation.
-	* \sa oapiUnregisterMFDMode
+	* \sa oapiUnregisterMFDMode, VESSEL4::RegisterMFDMode
 	*/
 OAPIFUNC int oapiRegisterMFDMode (MFDMODESPECEX &spec);
 

@@ -60,7 +60,7 @@ extern void GetSRB_State (double met, double &thrust_level, double &prop_level);
 // Constructor
 // --------------------------------------------------------------
 Atlantis::Atlantis (OBJHANDLE hObj, int fmodel)
-: VESSEL3 (hObj, fmodel)
+: VESSEL4 (hObj, fmodel)
 {
 #ifdef _DEBUG
         // D. Beachy: for BoundsChecker debugging
@@ -70,6 +70,7 @@ Atlantis::Atlantis (OBJHANDLE hObj, int fmodel)
 
 	plop            = new PayloadBayOp (this);
 	ascap           = new AscentAP (this);
+	ascapMfdId      = RegisterAscentApMfd ();
 	status          = 3;
 	gear_status     = AnimState::CLOSED;
 	gear_proc       = 0.0;
@@ -78,7 +79,7 @@ Atlantis::Atlantis (OBJHANDLE hObj, int fmodel)
 	spdb_proc       = 0.0;
 
 	engine_light_level = 0.0;
-	COLOUR4 col_diff = {1,1,1,0};
+	COLOUR4 col_diff = {1,0.8,0.8,0};
 	COLOUR4 col_zero = {0,0,0,0};
 	engine_light = AddPointLight (_V(0,0,-25), 300, 2e-4, 0, 4e-4, col_diff, col_zero, col_zero);
 	engine_light->SetIntensityRef (&engine_light_level);
@@ -99,15 +100,15 @@ Atlantis::Atlantis (OBJHANDLE hObj, int fmodel)
 	CreateOMS();  // OMS thrusters (activated only after tank separation)
 	CreateRCS();  // Reaction control system (activated only after tank separation)
 
+	// Animations
+	DefineAnimations();
+
 	// Aerodynamics
 	CreateAirfoils();
 
 	CreateDock (ORBITER_DOCKPOS, _V(0,1,0), _V(0,0,-1));
 	hDockET = CreateDock (_V(0.0,-2.48, 8.615), _V(0,-1,0), _V(0,0,1));
 	pET = NULL; // ET reference
-
-	// Animations
-	DefineAnimations();
 
 	center_arm      = false;
 	arm_moved       = false;
@@ -139,6 +140,8 @@ Atlantis::Atlantis (OBJHANDLE hObj, int fmodel)
 		PARTICLESTREAMSPEC::LVL_FLAT, 1, 1, PARTICLESTREAMSPEC::ATM_PLIN, 6e7, 12e7
 	};
 	AddReentryStream (&rps);
+
+	ascentApDlg = 0;
 }
 
 // --------------------------------------------------------------
@@ -146,6 +149,8 @@ Atlantis::Atlantis (OBJHANDLE hObj, int fmodel)
 // --------------------------------------------------------------
 Atlantis::~Atlantis ()
 {
+	UnregisterMFDMode (ascapMfdId);
+	if (ascentApDlg) delete ascentApDlg;
 	delete ascap;
 	delete plop;
 	int i;
@@ -472,6 +477,9 @@ void Atlantis::EnableRCS (bool enable)
 		SetThrusterResource (GetGroupThruster (THGROUP_ATT_FORWARD, i), hProp);
 	for (i = 0; i < GetGroupThrusterCount (THGROUP_ATT_BACK); i++)
 		SetThrusterResource (GetGroupThruster (THGROUP_ATT_BACK, i), hProp);
+
+	bool enable_as = (GetAttitudeMode() == RCS_NONE || enable == false);
+	SetADCtrlMode (enable_as ? 7 : 0);
 }
 
 // --------------------------------------------------------------
@@ -659,6 +667,42 @@ void Atlantis::DefineAnimations (void)
 }
 
 // --------------------------------------------------------------
+// Register the MFD interface for the ascent autopilot
+// --------------------------------------------------------------
+int Atlantis::RegisterAscentApMfd ()
+{
+	static char *name = "Ascent AP";
+	MFDMODESPECEX spec;
+	spec.name = name;
+	spec.key = OAPI_KEY_B;
+	spec.context = NULL;
+	spec.msgproc = AscentApMfd::MsgProc;
+	return RegisterMFDMode (spec);
+}
+
+// --------------------------------------------------------------
+// Open the dialog interface for the ascent autopilot
+// --------------------------------------------------------------
+void Atlantis::CreateAscentAPDlg ()
+{
+	if (!ascentApDlg) {
+		ascentApDlg = new AscentAPDlg(ascap);
+		ascentApDlg->Open (g_Param.hDLL, true);
+	}
+}
+
+// --------------------------------------------------------------
+// Close the dialog interface for the ascent autopilot
+// --------------------------------------------------------------
+void Atlantis::DestroyAscentAPDlg ()
+{
+	if (ascentApDlg) {
+		delete ascentApDlg;
+		ascentApDlg = 0;
+	}
+}
+
+// --------------------------------------------------------------
 // Jettison both SRBs from ET
 // --------------------------------------------------------------
 void Atlantis::SeparateBoosters (double met)
@@ -688,7 +732,7 @@ void Atlantis::SeparateTank ()
 	EnableSSME (false);
 	EnableRCS (true);
 	EnableOMS (true);
-	SetADCtrlMode (7);
+	//SetADCtrlMode (7);
 
 	// reconfigure
 	status = 3;
@@ -958,6 +1002,59 @@ void Atlantis::AutoGimbal (const VECTOR3 &tgt_rate)
 	}
 }
 
+// --------------------------------------------------------------
+// RCS automatic control for commanding a target attitude rate
+// Used by the ascent autopilot when gimbal control is no longer available
+// (SSME cut off)
+// --------------------------------------------------------------
+void Atlantis::AutoRCS (const VECTOR3 &tgt_rate)
+{
+	// Harmonic oscillator design parameters
+	const double a_pitch = 4;
+	const double b_pitch = 2;
+	const double a_yaw = 2e-1;
+	const double b_yaw = 6e-2;
+	const double a_roll = 2e-1;
+	const double b_roll = 6e-2;
+
+	VECTOR3 avel, aacc;
+	GetAngularVel(avel);
+	GetAngularAcc(aacc);
+	double dt = oapiGetSimStep();
+	double drcs;
+
+	// Pitch RCS settings
+	drcs = a_pitch*(tgt_rate.x-avel.x) - b_pitch*aacc.x;
+	if (drcs > 0.0) {
+		SetThrusterGroupLevel(THGROUP_ATT_PITCHUP, min(drcs, 1.0));
+		SetThrusterGroupLevel(THGROUP_ATT_PITCHDOWN, 0);
+	} else {
+		SetThrusterGroupLevel(THGROUP_ATT_PITCHUP, 0);
+		SetThrusterGroupLevel(THGROUP_ATT_PITCHDOWN, min(-drcs, 1.0));
+	}
+
+	// Yaw RCS settings
+	drcs = a_yaw*(tgt_rate.y-avel.y) - b_yaw*aacc.y;
+	if (drcs > 0.0) {
+		SetThrusterGroupLevel(THGROUP_ATT_YAWLEFT, min(drcs, 1.0));
+		SetThrusterGroupLevel(THGROUP_ATT_YAWRIGHT, 0);
+	} else {
+		SetThrusterGroupLevel(THGROUP_ATT_YAWLEFT, 0);
+		SetThrusterGroupLevel(THGROUP_ATT_YAWRIGHT, min(-drcs, 1.0));
+	}
+
+	// Roll RCS settings
+	drcs = a_roll*(tgt_rate.z-avel.z) - b_roll*aacc.z;
+	if (drcs > 0.0) {
+		SetThrusterGroupLevel(THGROUP_ATT_BANKRIGHT, min(drcs, 1.0));
+		SetThrusterGroupLevel(THGROUP_ATT_BANKLEFT, 0);
+	} else {
+		SetThrusterGroupLevel(THGROUP_ATT_BANKRIGHT, 0);
+		SetThrusterGroupLevel(THGROUP_ATT_BANKLEFT, min(-drcs, 1.0));
+	}
+}
+
+
 void Atlantis::LaunchClamps ()
 {
 	// TODO
@@ -992,35 +1089,35 @@ void Atlantis::LaunchClamps ()
 void Atlantis::SetGearParameters (double state)
 {
 	static TOUCHDOWNVTX tdvtx[14] = {
-		{_V( 0,    -3.3,18.75), 1e9, 1e7, 0.3},
-		{_V(-3.96, -5.5, -3.2), 1e9, 1e7, 0.3},
-		{_V( 3.96, -5.5, -3.2), 1e9, 1e7, 0.3},
-		{_V(-11.9, -2.1, -10),  1e9, 1e7, 0.3},
-		{_V( 11.9, -2.1, -10),  1e9, 1e7, 0.3},
-		{_V(-11.3, -2.1, -6),   1e9, 1e7, 0.3},
-		{_V( 11.3, -2.1, -6),   1e9, 1e7, 0.3},
-		{_V(-2.95, -2.0,-14.35),1e9, 1e7, 0.3},
-		{_V( 2.95, -2.0,-14.35),1e9, 1e7, 0.3},
-		{_V(-1.9,  -1.0,-14.8), 1e9, 1e7, 0.3},
-		{_V( 1.9,  -1.0,-14.8), 1e9, 1e7, 0.3},
-		{_V( 0,    11.2,-16.4), 1e9, 1e7, 0.3},
-		{_V( 0,    11.3,-14.0), 1e9, 1e7, 0.3},
-		{_V( 0,    -0.9, 20.6), 1e9, 1e7, 0.3}
+		{_V( 0,    -3.3,18.75), 1e8, 1e6, 1.6, 0.1},
+		{_V(-3.96, -5.5, -3.2), 1e8, 1e6, 3, 0.2},
+		{_V( 3.96, -5.5, -3.2), 1e8, 1e6, 3, 0.2},
+		{_V(-11.9, -2.1, -10),  1e8, 1e6, 3},
+		{_V( 11.9, -2.1, -10),  1e8, 1e6, 3},
+		{_V(-11.3, -2.1, -6),   1e8, 1e6, 3},
+		{_V( 11.3, -2.1, -6),   1e8, 1e6, 3},
+		{_V(-2.95, -2.0,-14.35),1e8, 1e6, 3},
+		{_V( 2.95, -2.0,-14.35),1e8, 1e6, 3},
+		{_V(-1.9,  -1.0,-14.8), 1e8, 1e6, 3},
+		{_V( 1.9,  -1.0,-14.8), 1e8, 1e6, 3},
+		{_V( 0,    11.2,-16.4), 1e8, 1e6, 3},
+		{_V( 0,    11.3,-14.0), 1e8, 1e6, 3},
+		{_V( 0,    -0.9, 20.6), 1e8, 1e6, 3}
 	};
 	if (state == 1.0) { // gear fully deployed
 		static TOUCHDOWNVTX geardn_vtx[3] = {
-			{_V( 0,    -3.3,18.75), 1e9, 1e7, 0.3},
-			{_V(-3.96, -5.5, -3.2), 1e9, 1e7, 0.3},
-			{_V( 3.96, -5.5, -3.2), 1e9, 1e7, 0.3},
+			{_V( 0,    -3.3,18.75), 1e8, 1e6, 1.6, 0.1},
+			{_V(-3.96, -5.5, -3.2), 1e8, 1e6, 3, 0.2},
+			{_V( 3.96, -5.5, -3.2), 1e8, 1e6, 3, 0.2},
 		};
 		memcpy (tdvtx, geardn_vtx, 3*sizeof(TOUCHDOWNVTX));
 		SetTouchdownPoints (tdvtx, 14);
 		SetSurfaceFrictionCoeff (0.05, 0.4);
 	} else {
 		static TOUCHDOWNVTX gearup_vtx[3] = {
-			{_V( 0,    -2.2,16.75), 1e9, 1e7, 0.3},
-			{_V(-3.96, -2.7, -3.2), 1e9, 1e7, 0.3},
-			{_V( 3.96, -2.7, -3.2), 1e9, 1e7, 0.3},
+			{_V( 0,    -2.2,16.75), 1e8, 1e6, 3},
+			{_V(-3.96, -2.7, -3.2), 1e8, 1e6, 3},
+			{_V( 3.96, -2.7, -3.2), 1e8, 1e6, 3},
 		};
 		memcpy (tdvtx, gearup_vtx, 3*sizeof(TOUCHDOWNVTX));
 		SetTouchdownPoints (tdvtx, 14);
@@ -1197,7 +1294,7 @@ void Atlantis::clbkSetClassCaps (FILEHANDLE cfg)
 void Atlantis::clbkSetStateEx (const void *status)
 {
 	// default parameter initialisation
-	VESSEL3::clbkSetStateEx (status);
+	VESSEL4::clbkSetStateEx (status);
 }
 
 // --------------------------------------------------------------
@@ -1217,8 +1314,8 @@ void Atlantis::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 	while (oapiReadScenario_nextline (scn, line)) {
         if (!_strnicmp (line, "CONFIGURATION", 13)) {
             sscanf (line+13, "%d", &status);
-		} else if (!_strnicmp (line, "MET", 3)) {
-			sscanf (line+3, "%lf", &met);
+		//} else if (!_strnicmp (line, "MET", 3)) {
+		//	sscanf (line+3, "%lf", &met);
 		} else if (!_strnicmp (line, "GEAR", 4)) {
 			sscanf (line+4, "%d%lf", &action, &gear_proc);
 			gear_status = (AnimState::Action)(action+1);
@@ -1241,9 +1338,9 @@ void Atlantis::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 		} else if (!_strnicmp (line, "ARM_STATUS", 10)) {
 			sscanf (line+10, "%lf%lf%lf%lf%lf%lf", &arm_sy, &arm_sp, &arm_ep, &arm_wp, &arm_wy, &arm_wr);
         } else {
-			if (plop->ParseScenarioLine (line)) continue; // offer the line to bay door operations
-            ParseScenarioLineEx (line, vs);
-			// unrecognised option - pass to Orbiter's generic parser
+			if      (plop->ParseScenarioLine (line)) continue;  // offer the line to bay door operations
+			else if (ascap->ParseScenarioLine (line)) continue; // offer to ascent autopilot
+            else    ParseScenarioLineEx (line, vs);             // unrecognised option - pass to Orbiter's generic parser
         }
     }
 	if (status == 0) {
@@ -1277,6 +1374,7 @@ void Atlantis::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 		VECTOR3 plat_ofs = _V(-2.59805, 1.69209, -5.15524);
 		mesh_platform = AddMesh("shuttle_eva_plat", &plat_ofs);
 	}
+	t0 = ascap->GetMT0();
 
 	SetGearParameters (gear_proc);
 	UpdateMesh ();
@@ -1290,13 +1388,13 @@ void Atlantis::clbkSaveState (FILEHANDLE scn)
 	char cbuf[256];
 
 	// default vessel parameters
-	VESSEL3::clbkSaveState (scn);
+	VESSEL4::clbkSaveState (scn);
 
 	// custom parameters
 	oapiWriteScenario_int (scn, "CONFIGURATION", status);
 
-	if (status == 1)
-		oapiWriteScenario_float (scn, "MET", oapiGetSimTime()-t0);
+	//if (status == 1)
+	//	oapiWriteScenario_float (scn, "MET", oapiGetSimTime()-t0);
 
 	sprintf (cbuf, "%d %0.4f", gear_status-1, gear_proc);
 	oapiWriteScenario_string (scn, "GEAR", cbuf);
@@ -1324,6 +1422,7 @@ void Atlantis::clbkSaveState (FILEHANDLE scn)
 
 	// save bay door operations status
 	plop->SaveState (scn);
+	ascap->SaveState (scn);
 }
 
 // --------------------------------------------------------------
@@ -1334,7 +1433,7 @@ void Atlantis::clbkPostCreation ()
 	VESSELSTATUS vs;
 	VESSEL *pV;
 
-	VESSEL3::clbkPostCreation();
+	VESSEL4::clbkPostCreation();
 	if (status < 3) {
 		OBJHANDLE hET = GetDockStatus (GetDockHandle (1));
 		if (!hET) {
@@ -1377,7 +1476,7 @@ void Atlantis::clbkPostCreation ()
 	EnableSSME (status < 3);
 	EnableRCS (status == 3);
 	EnableOMS (status == 3);
-	SetADCtrlMode (status < 3 ? 0 : 7);
+	//SetADCtrlMode (status < 3 ? 0 : 7);
 }
 
 // --------------------------------------------------------------
@@ -1397,13 +1496,16 @@ void Atlantis::clbkFocusChanged (bool getfocus, OBJHANDLE newv, OBJHANDLE oldv)
 void Atlantis::clbkPreStep (double simt, double simdt, double mjd)
 {
 	ascap->Update (simt);
-	double met = (status == 0 ? 0.0 : simt-t0);
+	if (ascentApDlg) ascentApDlg->Update (simt);
+
+	//double met = (status == 0 ? 0.0 : simt-t0);
+	double met = ascap->GetMET (simt);
 
 	engine_light_level = GetThrusterGroupLevel (THGROUP_MAIN);
 
 	VECTOR3 tgt_rate = _V(0,0,0); // target rotation rates - used for setting engine gimbals
 
-	if (status >= 1 && status <= 2) {
+	if (status >= 1 && status <= 3) {
 		// ascent autopilot
 		ascap->GetTargetRate (met, tgt_rate);
 
@@ -1425,7 +1527,8 @@ void Atlantis::clbkPreStep (double simt, double simdt, double mjd)
 	case 0: // launch configuration
 		if (!ascap->Active() && pET && GetEngineLevel (ENGINE_MAIN) > 0.95) {
 			pET->IgniteSRBs ();
-			t0 = simt /*+ SRB_STABILISATION_TIME*/;   // store designated liftoff time
+			t0 = ascap->StartMissionTime (simt);
+			//t0 = simt /*+ SRB_STABILISATION_TIME*/;   // store designated liftoff time
 			status = 1;
 		} else if (GetEngineLevel (ENGINE_MAIN) > 0) {
 			//AutoGimbal (tgt_rate);
@@ -1441,10 +1544,14 @@ void Atlantis::clbkPreStep (double simt, double simdt, double mjd)
 		break;
 	case 2: // Orbiter+ET configuration
 		AutoGimbal (tgt_rate);
-		if (pET && (pET->GetMainPropellantMass () < 10.0 || bManualSeparate)) {
+		if (pET && (/*pET->GetMainPropellantMass () < 10.0 ||*/ bManualSeparate)) {
 			SeparateTank ();
 			bManualSeparate = false;
 		}
+		break;
+	case 3: // Orbiter
+		if (ascap->Active())
+			AutoRCS (tgt_rate);
 		break;
 	}
 
@@ -1627,6 +1734,15 @@ void Atlantis::clbkAnimate (double simt)
 void Atlantis::clbkMFDMode (int mfd, int mode)
 {
 	oapiVCTriggerRedrawArea (-1, AID_CDR1_BUTTONS+mfd-MFD_LEFT);
+}
+
+// --------------------------------------------------------------
+// Respond to RCS mode change
+// --------------------------------------------------------------
+void Atlantis::clbkRCSMode (int mode)
+{
+	SetADCtrlMode (mode ? 0 : 7);
+	// turn off aerodynamic control surfaces if RCS is enabled
 }
 
 // --------------------------------------------------------------
@@ -1969,7 +2085,7 @@ bool Atlantis::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 bool Atlantis::clbkDrawHUD (int mode, const HUDPAINTSPEC *hps, oapi::Sketchpad *skp)
 {
 	// draw the default HUD
-	VESSEL3::clbkDrawHUD (mode, hps, skp);
+	VESSEL4::clbkDrawHUD (mode, hps, skp);
 	int cx = hps->CX, cy = hps->CY;
 
 	// show OMS thrust marker
@@ -2103,7 +2219,7 @@ BOOL CALLBACK Atlantis_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 			oapiCloseDialog (hWnd);
 			return TRUE;
 		case IDC_ASCENTAP:
-			sts->AscentAutopilot()->OpenDialog ();
+			sts->CreateAscentAPDlg();
 			break;
 		case IDC_PLBAYOP:
 			sts->plop->OpenDialog ();

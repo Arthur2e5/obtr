@@ -65,36 +65,36 @@ static HELPCONTEXT g_hc = {
 
 static const DWORD ntdvtx_geardown = 13;
 static TOUCHDOWNVTX tdvtx_geardown[ntdvtx_geardown] = {
-	{_V( 0   ,-2.57,10   ), 1e6, 1e5, 0.8, 0.1},
-	{_V(-3.5 ,-2.57,-1   ), 1e6, 1e5, 1.5, 0.2},
-	{_V( 3.5 ,-2.57,-1   ), 1e6, 1e5, 1.5, 0.2},
-	{_V(-8.5 ,-0.3 ,-7.05), 1e7, 1e6, 1.5},
-	{_V( 8.5 ,-0.3 ,-7.05), 1e7, 1e6, 1.5},
-	{_V(-8.5 ,-0.4 ,-3   ), 1e7, 1e6, 1.5},
-	{_V( 8.5 ,-0.4 ,-3   ), 1e7, 1e6, 1.5},
-	{_V(-8.85, 2.3 ,-5.05), 1e7, 1e6, 1.5},
-	{_V( 8.85, 2.3 ,-5.05), 1e7, 1e6, 1.5},
-	{_V(-8.85, 2.3 ,-7.05), 1e7, 1e6, 1.5},
-	{_V( 8.85, 2.3 ,-7.05), 1e7, 1e6, 1.5},
-	{_V( 0   , 2   , 6.2 ), 1e7, 1e6, 1.5},
-	{_V( 0   ,-0.6 ,10.65), 1e7, 1e6, 1.5}
+	{_V( 0   ,-2.57,10   ), 1e6, 1e5, 1.6, 0.1},
+	{_V(-3.5 ,-2.57,-1   ), 1e6, 1e5, 3.0, 0.2},
+	{_V( 3.5 ,-2.57,-1   ), 1e6, 1e5, 3.0, 0.2},
+	{_V(-8.5 ,-0.3 ,-7.05), 1e7, 1e5, 3.0},
+	{_V( 8.5 ,-0.3 ,-7.05), 1e7, 1e5, 3.0},
+	{_V(-8.5 ,-0.4 ,-3   ), 1e7, 1e5, 3.0},
+	{_V( 8.5 ,-0.4 ,-3   ), 1e7, 1e5, 3.0},
+	{_V(-8.85, 2.3 ,-5.05), 1e7, 1e5, 3.0},
+	{_V( 8.85, 2.3 ,-5.05), 1e7, 1e5, 3.0},
+	{_V(-8.85, 2.3 ,-7.05), 1e7, 1e5, 3.0},
+	{_V( 8.85, 2.3 ,-7.05), 1e7, 1e5, 3.0},
+	{_V( 0   , 2   , 6.2 ), 1e7, 1e5, 3.0},
+	{_V( 0   ,-0.6 ,10.65), 1e7, 1e5, 3.0}
 };
 
 static const DWORD ntdvtx_gearup = 13;
 static TOUCHDOWNVTX tdvtx_gearup[ntdvtx_gearup] = {
-	{_V( 0   ,-1.5 ,9),     1e6, 1e5, 1.5, 1.5},
-	{_V(-6   ,-0.8 ,-5),    1e6, 1e5, 1.5, 1.5},
-	{_V( 3   ,-1.2 ,-5),    1e6, 1e5, 1.5, 1.5},
-	{_V(-8.5 ,-0.3 ,-7.05), 1e7, 1e6, 1.5},
-	{_V( 8.5 ,-0.3 ,-7.05), 1e7, 1e6, 1.5},
-	{_V(-8.5 ,-0.4 ,-3   ), 1e7, 1e6, 1.5},
-	{_V( 8.5 ,-0.4 ,-3   ), 1e7, 1e6, 1.5},
-	{_V(-8.85, 2.3 ,-5.05), 1e7, 1e6, 1.5},
-	{_V( 8.85, 2.3 ,-5.05), 1e7, 1e6, 1.5},
-	{_V(-8.85, 2.3 ,-7.05), 1e7, 1e6, 1.5},
-	{_V( 8.85, 2.3 ,-7.05), 1e7, 1e6, 1.5},
-	{_V( 0   , 2   , 6.2 ), 1e7, 1e6, 1.5},
-	{_V( 0   ,-0.6 ,10.65), 1e7, 1e6, 1.5}
+	{_V( 0   ,-1.5 ,9),     1e7, 1e5, 3.0, 3.0},
+	{_V(-6   ,-0.8 ,-5),    1e7, 1e5, 3.0, 3.0},
+	{_V( 3   ,-1.2 ,-5),    1e7, 1e5, 3.0, 3.0},
+	{_V(-8.5 ,-0.3 ,-7.05), 1e7, 1e5, 3.0},
+	{_V( 8.5 ,-0.3 ,-7.05), 1e7, 1e5, 3.0},
+	{_V(-8.5 ,-0.4 ,-3   ), 1e7, 1e5, 3.0},
+	{_V( 8.5 ,-0.4 ,-3   ), 1e7, 1e5, 3.0},
+	{_V(-8.85, 2.3 ,-5.05), 1e7, 1e5, 3.0},
+	{_V( 8.85, 2.3 ,-5.05), 1e7, 1e5, 3.0},
+	{_V(-8.85, 2.3 ,-7.05), 1e7, 1e5, 3.0},
+	{_V( 8.85, 2.3 ,-7.05), 1e7, 1e5, 3.0},
+	{_V( 0   , 2   , 6.2 ), 1e7, 1e5, 3.0},
+	{_V( 0   ,-0.6 ,10.65), 1e7, 1e5, 3.0}
 };
 
 // ==============================================================
@@ -315,7 +315,7 @@ void DeltaGlider::CreatePanelElements ()
 	instr[2]  = new InstrAOA (this);
 	instr[3]  = new InstrVS (this);
 	instr[4]  = new FuelMFD (this);
-	instr[5]  = new NavButton (this);
+	instr[5]  = new NavButtons (this);
 	instr[6]  = new ElevatorTrim (this);
 	instr[7]  = new Airbrake (this);
 	instr[8]  = new ThrottleMain (this);
@@ -2943,7 +2943,6 @@ void DeltaGlider::clbkADCtrlMode (DWORD mode)
 void DeltaGlider::clbkHUDMode (int mode)
 {
 	SetHUDMode (mode);
-	//oapiTriggerRedrawArea (0, 0, AID_HUDMODE);
 }
 
 // --------------------------------------------------------------
@@ -2956,8 +2955,10 @@ void DeltaGlider::clbkNavMode (int mode, bool active)
 		if (active)
 			hover_alt = GetAltitude();
 		oapiTriggerRedrawArea (0, 0, AID_HOVERALTBTN);
-	} else
+	} else {
+		((NavButtons*)instr[5])->SetMode (mode, active);
 		oapiTriggerRedrawArea (0, 0, AID_NAVMODE);
+	}
 }
 
 // --------------------------------------------------------------
@@ -3621,8 +3622,15 @@ bool DeltaGlider::clbkLoadVC (int id)
 		//oapiVCSetAreaClickmode_Spherical (AID_MWS, _V(0.0755,1.2185,7.3576), 0.013);
 
 		// Navmode indicator/selector on the top right of the front panel
-		oapiVCRegisterArea (AID_NAVMODE, PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN);
+		oapiVCRegisterArea (AID_NAVMODE, PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_NAVMODE, VC_NAV_BUTTONS_mousearea[0], VC_NAV_BUTTONS_mousearea[1], VC_NAV_BUTTONS_mousearea[2], VC_NAV_BUTTONS_mousearea[3]);
+		{
+			static DWORD navbtn_vofs[6] = {VC_BTN_NAVMODE_1_vofs, VC_BTN_NAVMODE_2_vofs, VC_BTN_NAVMODE_3_vofs,
+				                           VC_BTN_NAVMODE_4_vofs, VC_BTN_NAVMODE_5_vofs, VC_BTN_NAVMODE_6_vofs}; 
+			static DWORD navlbl_vofs[6] = {VC_BTN_NAVMODE_1_LABEL_vofs, VC_BTN_NAVMODE_2_LABEL_vofs, VC_BTN_NAVMODE_3_LABEL_vofs,
+				                           VC_BTN_NAVMODE_4_LABEL_vofs, VC_BTN_NAVMODE_5_LABEL_vofs, VC_BTN_NAVMODE_6_LABEL_vofs};
+			((NavButtons*)instr[5])->DefineAnimationsVC (VC_BTN_NAVMODE_1_axis, GRP_BUTTON3_VC, GRP_LIT_SURF_VC, navbtn_vofs, navlbl_vofs);
+		}
 
 		// RCS mode dial
 		oapiVCRegisterArea (AID_ATTITUDEMODE, PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN);

@@ -141,6 +141,8 @@ const double SRB_SEPARATION_TIME = 126.0;
 const double SRB_CUTOUT_TIME = 135.0;
 // MET: engine shutdown
 
+const double SRB_GIMBAL_SPEED = 0.5;
+
 // ==========================================================
 // Thruster reference positions and thrust directions
 // ==========================================================
@@ -219,12 +221,13 @@ typedef struct {
 } GDIParams;
 
 class Atlantis_Tank;
+class AscentAPDlg;
 
 // ==========================================================
 // Interface for derived vessel class: Atlantis
 // ==========================================================
 
-class Atlantis: public VESSEL3 {
+class Atlantis: public VESSEL4 {
 	friend class AscentAP;
 	friend class PayloadBayOp;
 	friend BOOL CALLBACK RMS_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -234,6 +237,9 @@ public:
 	~Atlantis();
 
 	AscentAP *AscentAutopilot() { return ascap; }
+	int RegisterAscentApMfd();
+	void CreateAscentAPDlg();
+	void DestroyAscentAPDlg();
 
 	void SeparateBoosters (double srb_time);
 	// Jettison both SRBs from ET
@@ -311,6 +317,7 @@ public:
 	void clbkVisualDestroyed (VISHANDLE vis, int refcount);
 	void clbkAnimate (double simt);
 	void clbkMFDMode (int mfd, int mode);
+	void clbkRCSMode (int mode);
 	bool clbkLoadGenericCockpit ();
 	bool clbkLoadVC (int id);
 	bool clbkVCMouseEvent (int id, int event, VECTOR3 &p);
@@ -354,6 +361,9 @@ private:
 	// Automatic gimbal adjustment for SSME and SRB engines to correct
 	// for CG shift, SRB thrust variations, atmospheric effects, etc.
 
+	void AutoRCS (const VECTOR3 &tgt_rate);
+	// Automatic RCS control for ascent autopilot
+
 	void LaunchClamps();
 	bool EnableSSME (bool enable);
 	void EnableOMS (bool enable);
@@ -364,6 +374,7 @@ private:
 	ATTACHMENTHANDLE CanArrest() const;
 
 	AscentAP *ascap;                           // ascent autopilot
+	int ascapMfdId;                            // ID for ascent autopilot MFD mode
 	Atlantis_Tank *pET;                        // pointer to ET object (if attached)
 	DOCKHANDLE hDockET;                        // docking connector to ET
 
@@ -407,6 +418,8 @@ private:
 
 	LightEmitter *engine_light;
 	double engine_light_level;
+
+	AscentAPDlg *ascentApDlg;
 };
 
 // ==========================================================
@@ -419,26 +432,31 @@ public:
 	// Construct interface from existing object
 
 	void SetLaunchElevation (double elev);
-	void SetRefTime (void);
 	double ThrustProfile (double met);
 	double GetThrustLevel () const;
 
 	bool Ignite ();
 	void FireBolt ();
 	void SetThrustGimbal (const VECTOR3 &dir);
-	VECTOR3 GetThrustDir ();
+	void CmdThrustGimbal (const VECTOR3 &dir);
+	VECTOR3 GetThrustGimbal ();
 
 	// Overloaded callback functions
 	void clbkSetClassCaps (FILEHANDLE cfg);
 	void clbkPostStep (double simt, double simdt, double mjd);
 	void clbkPostCreation ();
+	void clbkLoadStateEx (FILEHANDLE scn, void *vs);
+	void clbkSaveState (FILEHANDLE scn);
 
 private:
 	double launchelev;          // elevation above ground at launch [m]
 	double t0;                  // reference time: liftoff
 	double tsep;                // simulation time at which SRB separation was initiated
+	VECTOR3 gimbalcmd;          // commanded gimbal direction
+	bool bGimbalCmd;            // is gimbal command active?
 	bool bMainEngine;           // main engine firing?
 	bool bSeparationEngine;     // separation thrusters firing?
+	enum SRBPosition { SRB_UNDEFINED, SRB_LEFT, SRB_RIGHT } srbpos;
 	MESHHANDLE hSRBMesh;
 	PROPELLANT_HANDLE ph_main;  // handle for propellant resource
 	THRUSTER_HANDLE th_main;    // engine handle

@@ -16,13 +16,32 @@
 
 // ==============================================================
 
-NavButton::NavButton (VESSEL3 *v): PanelElement (v)
+NavButtons::NavButtons (VESSEL3 *v): PanelElement (v)
 {
+	for (int i = 0; i < 6; i++)
+		btn[i] = new DGButton3 (v);
 }
 
 // --------------------------------------------------------------
 
-void NavButton::Reset2D (MESHHANDLE hMesh)
+NavButtons::~NavButtons ()
+{
+	for (int i = 0; i < 6; i++)
+		delete btn[i];
+}
+
+// --------------------------------------------------------------
+
+void NavButtons::DefineAnimationsVC (const VECTOR3 &axis, DWORD meshgrp, DWORD meshgrp_label,
+	DWORD vofs[6], DWORD vofs_label[6])
+{
+	for (int i = 0; i < 6; i++) 
+		btn[i]->DefineAnimationVC (axis, meshgrp, meshgrp_label, vofs[i], vofs_label[i]);
+}
+
+// --------------------------------------------------------------
+
+void NavButtons::Reset2D (MESHHANDLE hMesh)
 {
 	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
 	vtxofs = 20;
@@ -30,7 +49,7 @@ void NavButton::Reset2D (MESHHANDLE hMesh)
 
 // --------------------------------------------------------------
 
-bool NavButton::Redraw2D (SURFHANDLE)
+bool NavButtons::Redraw2D (SURFHANDLE)
 {
 	// constants for texture coordinates
 	static const float texh = (float)PANEL2D_TEXH; // texture height
@@ -54,49 +73,16 @@ bool NavButton::Redraw2D (SURFHANDLE)
 
 // --------------------------------------------------------------
 
-bool NavButton::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE)
+bool NavButtons::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 {
-	if (!hMesh) return false;
-
-	static const int nbutton = 6;
-	static const int nvtx_per_button = 16;
-	static const int nvtx = nbutton * nvtx_per_button;
-	int i, j;
-	NTVERTEX vtx[nvtx];
-	GROUPEDITSPEC ges;
-	ges.flags = GRPEDIT_VTXCRDZ | GRPEDIT_VTXTEXU;
-	ges.Vtx = vtx;
-	ges.nVtx = nvtx;
-	ges.vIdx = NULL;
-	static float z0_base[nvtx_per_button] = {
-		7.2630f,7.2630f,7.2630f,7.2630f,7.2630f,7.2630f,7.2680f,7.2680f,
-		7.2630f,7.2630f,7.2680f,7.2680f,7.2630f,7.2630f,7.2680f,7.2680f
-	};
-	//static float z0_base[nvtx_per_button] = {
-	//	7.2650f,7.2650f,7.2650f,7.2650f,7.2650f,7.2650f,7.2700f,7.2700f,
-	//	7.2650f,7.2650f,7.2700f,7.2700f,7.2650f,7.2650f,7.2700f,7.2700f
-	//};
-	static float z0_shift = 0.004f;
-	static float u0_base[nvtx_per_button] = {
-		0.3594f,0.3984f,0.3594f,0.3984f,0.3594f,0.3984f,0.3594f,0.3984f,
-		0.3594f,0.3594f,0.3594f,0.3594f,0.3594f,0.3594f,0.3594f,0.3594f
-	};
-	static float u0_shift = (float)(40.0/1024.0);
-	for (i = 0; i < nbutton; i++) {
-		int vofs = i*nvtx_per_button;
-		bool hilight = vessel->GetNavmodeState (i + NAVMODE_KILLROT);
-		for (j = 0; j < nvtx_per_button; j++) {
-			vtx[vofs+j].z = z0_base[j] + (hilight ? z0_shift : 0);
-			vtx[vofs+j].tu = u0_base[j] + (hilight ? u0_shift : 0);
-		}
-	}
-	oapiEditMeshGroup (hMesh, GRP_NAV_BUTTONS_VC, &ges);
+	for (int i = 0; i < 6; i++)
+		btn[i]->RedrawVC (hMesh, surf);
 	return false;
 }
 
 // --------------------------------------------------------------
 
-bool NavButton::ProcessMouse2D (int event, int mx, int my)
+bool NavButtons::ProcessMouse2D (int event, int mx, int my)
 {
 	int mode = 0;
 	if (my < 39) {
@@ -115,21 +101,48 @@ bool NavButton::ProcessMouse2D (int event, int mx, int my)
 
 // --------------------------------------------------------------
 
-bool NavButton::ProcessMouseVC (int event, VECTOR3 &p)
+bool NavButtons::ProcessMouseVC (int event, VECTOR3 &p)
 {
-	double dp;
-	static int modemap[2][4] = {{2,6,4,1},{0,5,3,0}};
-	if (modf (p.x*20.0/5.0, &dp) < 0.8) {
-		int col = (int)dp;
-		if (modf (p.y*40.0/20.0, &dp) < 0.95) {
-			int row = (int)dp;
-			int mode = modemap[row][col];
-			if (mode > 0) {
-				vessel->ToggleNavmode (mode);
-				return true;
+	static int modemap[2][4] = {{1,4,6,2},{0,3,5,0}};
+	static int btnmode[6] = {1,4,3,6,5,2};
+	static int modebtn[6] = {0,5,2,1,4,3};
+	int ix = (int)(p.x*169.0);
+	int iy = (int)(p.y*63);
+	int br = ix/43;
+	int bc = iy/33;
+	if (ix-br*43 >= 40) return false;
+	if (iy-bc*33 >= 30) return false;
+	int mode = modemap[bc][br];
+	if (!mode) return false;
+	int b = modebtn[mode-1];
+	int i;
+
+	if (event & PANEL_MOUSE_LBDOWN) {
+		for (i = 0; i < 6; i++) {
+			if (i==b) {
+				btn[i]->SetState (btn[i]->GetState() == DGButton3::OFF ? DGButton3::PRESSED_FROM_OFF : DGButton3::PRESSED_FROM_ON);
+			} else {
+				bool ison = vessel->GetNavmodeState (btnmode[i]);
+				btn[i]->SetState (ison ? DGButton3::ON : DGButton3::OFF);
 			}
 		}
+		vessel->ToggleNavmode (mode);
+	} else if (event & PANEL_MOUSE_LBUP) {
+		btn[b]->SetState (btn[b]->GetState() == DGButton3::PRESSED_FROM_OFF ? DGButton3::ON : DGButton3::OFF);
 	}
-	return false;
-	
+	return true;
+}
+
+// --------------------------------------------------------------
+
+void NavButtons::SetMode (int mode, bool active)
+{
+	static int modebtn[6] = {0,5,2,1,4,3};
+	int b = modebtn[mode-1];
+	if (active) {
+		if (btn[b]->GetState () == DGButton3::OFF)
+			btn[b]->SetState (DGButton3::ON);
+	} else {
+		btn[b]->SetState (DGButton3::OFF);
+	}
 }

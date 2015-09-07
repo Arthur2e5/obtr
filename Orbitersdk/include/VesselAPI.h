@@ -6226,6 +6226,33 @@ public:
 	using VESSEL3::RegisterPanelArea; // keep previous interface valid
 
 	/**
+	 * \brief Register a user-defined MFD mode for the vessel.
+	 * \param spec MFD mode specifications
+	 * \note This method is similar to the global oapiRegisterMFDMode function,
+	 *   but it registers the MFD mode only for an individual vessel instance.
+	 *   This allows to create vessel-specific MFD modes directly in the vessel
+	 *   module. Typically this method would be called in the vessel constructor.
+ 	 * \note MFDMODESPECEX is a struct defining the parameters of the new mode:
+	 * \code
+	 * typedef struct {
+	 *   char *name;    // points to the name of the new mode
+	 *   DWORD key;     // mode selection key
+	 *   void *context; // mode-specific context pointer
+	 *   int (*msgproc)(UINT,UINT,WPARAM,LPARAM);   // address of MFD message parser
+	 * } MFDMODESPEC; \endcode
+	 * \sa VESSEL4::UnregisterMFDMode, oapiRegisterMFDMode
+	 */
+	int RegisterMFDMode (const MFDMODESPECEX &spec);
+
+	/**
+	 * \brief Unregister a previously registered vessel-specific MFD mode.
+	 * \param mode mode identifier, as returned by \ref VESSEL4::RegisterMFDMode
+	 * \return \e true on success (mode was successfully unregistered).
+	 * \sa VESSEL4::RegisterMFDMode
+	 */
+	bool UnregisterMFDMode (int mode);
+
+	/**
 	 * \brief Processing of navigation autopilot programmes
 	 * \param mode Bit-flags for active nav programmes (see \ref nav_bitflag)
 	 * \return Modified nav programme bitflags (see notes)

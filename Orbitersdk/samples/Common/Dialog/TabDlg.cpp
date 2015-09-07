@@ -49,6 +49,7 @@ void TabbedDialog::Close ()
 		ClearTabs ();
 		oapiCloseDialog (hDlg);
 		hDlg = NULL;
+		Closed ();
 	}
 }
 
@@ -111,6 +112,13 @@ int TabbedDialog::OnInitDialog (WPARAM wParam)
 int TabbedDialog::OnClose ()
 {
 	Close ();
+	return TRUE;
+}
+
+// --------------------------------------------------------------
+
+int TabbedDialog::Closed ()
+{
 	return TRUE;
 }
 

@@ -1307,7 +1307,7 @@ public:
 	 * \param [out] emean pointer to variable receiving mean elevation data
 	 */
 	bool ElevationGrid (ELEVHANDLE emgr, int ilat, int ilng, int lvl,
-		int pilat, int pilng, int plvl, INT16 *pelev, INT16 *elev, double *emean) const;
+		int pilat, int pilng, int plvl, INT16 *pelev, INT16 *elev, double *emean=0) const;
 
 protected:
 	/** \brief Launchpad video tab indicator

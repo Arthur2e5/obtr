@@ -1,16 +1,11 @@
 BEGIN_DESC
-Tutorial playback scenario:
-
-
-This tutorial explains the use of the flight recorder and playback facility in Orbiter. (and it features a Delta-glider performing highly illegal stunts around the Kennedy Space Center!)
-
-
-Playback duration: 4min 45sec.
+Orbiter playback scenario at T = 4
 END_DESC
 
 BEGIN_ENVIRONMENT
   System Sol
-  Date MJD 55269.6688770483
+  Date MJD 55269.6691348312
+  Help CurrentState_img
 END_ENVIRONMENT
 
 BEGIN_FOCUS
@@ -46,7 +41,10 @@ GL-01:DG-S
   STATUS Landed Earth
   POS -80.6826150 28.5969630
   HEADING 330.02
+  ALT 2.460
+  AROT 67.240 33.986 10.209
   RCSMODE 0
+  AFCMODE 7
   PRPLEVEL 0:0.995000 1:1.000000 2:1.000000
   NAVFREQ 94 524 84 114
   XPDR 0
@@ -54,7 +52,7 @@ GL-01:DG-S
   GEAR 1 1.0000
   PSNGR 4
   SKIN BLUE
-  LIGHTS 1 0 1
+  LIGHTS 1 1 1 0
   TANKCONFIG 1
   AAP 0:0 0:0 0:0
 END

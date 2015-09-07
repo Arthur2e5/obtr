@@ -27,13 +27,13 @@
 148.993 CAMERA SET Track:Atlantis:30.00:GLOBAL 6.294 -1.505 -0.720
 156 NOTE Ten seconds before touchdown the landing gear is lowered.
 163 NOTE The final flare lifts the Shuttle nose and reduces the glide angle.
-163 CAMERA SET Ground:Atlantis:10.00:Earth -80.68496 28.59670 1.65
-170 NOTE Main gear touchdown!
-175.3 CAMERA SET Ground:Atlantis:10.00:Earth -80.69144 28.60699 1.00
+163 CAMERA SET Ground:Atlantis:10.00:Earth -80.68496 28.59670 8.65
+168 NOTE Main gear touchdown!
+175.3 CAMERA SET Ground:Atlantis:10.00:Earth -80.69144 28.60699 8.00
 183 NOTE And the nose wheel drops to the runway.
 192 NOTEOFF
 192 CAMERA SET Track:Atlantis:10.00:RELATIVE 168.364 0.002 -1.311
-201.027 CAMERA SET Ground:Atlantis:10.00:Earth -80.69659 28.62364 1.00
-208.275 CAMERA SET Ground:Atlantis:30.00:Earth -80.69860 28.62055 9.03 -0.46 -0.12
+201.027 CAMERA SET Ground:Atlantis:10.00:Earth -80.69659 28.62364 8.00
+208.275 CAMERA SET Ground:Atlantis:30.00:Earth -80.69860 28.62055 9.03 -0.46 -0.02
 218 NOTEPOS 0.3 0.7 0.7 1
 218 NOTE Space Shuttle Atlantis rolls to a full stop on the runway to complete a successful mission.
