@@ -1814,7 +1814,7 @@ typedef union {
 /// \defgroup mfdidentifier MFD identifiers
 // ===========================================================================
 //@{
-#define MAXMFD                  10  ///< Max. number of MFD displays per panel
+#define MAXMFD                  12  ///< Max. number of MFD displays per panel
 #define MFD_LEFT                 0  ///< Left default MFD display
 #define MFD_RIGHT                1  ///< Right default MFD display
 #define MFD_USER1                2  ///< User-defined MFD display 1
@@ -1825,6 +1825,8 @@ typedef union {
 #define MFD_USER6                7  ///< User-defined MFD display 6
 #define MFD_USER7                8  ///< User-defined MFD display 7
 #define MFD_USER8                9  ///< User-defined MFD display 8
+#define MFD_USER9               10  ///< User-defined MFD display 9
+#define MFD_USER10              11  ///< User-defined MFD display 10
 //@}
 
 // ===========================================================================
@@ -4690,6 +4692,21 @@ OAPIFUNC void oapiToggleMFD_on (int mfd);
 	* \sa \ref mfdidentifier "MFD Identifiers"
 	*/
 OAPIFUNC int oapiGetMFDMode (int mfd);
+
+	/**
+	* \brief Modify the refresh interval of the specified MFD instrument.
+	* \param mfd MFD identifier (e.g. \c MFD_LEFT, \c MFD_RIGHT)
+	* \param multiplier refresh interval scale factor (1 = default)
+	* \return Previous multiplier value
+	* \note The actual refresh rate is the product of the multiplier and the
+	*   base refresh rate, which is globally user-selectable in the Launchpad
+	*   dialog, and my be modified by specific MFD modes.
+	* \note The multiplier is reset to 1 whenever the panel mode or virtual
+	*   panel position is changed, so oapiSetMFDRefreshIntervalMultiplier
+	*   should be called during VESSEL2::clbkLoadVC, VESSEL3::clbkLoadPanel2D
+	*   or VESSEL2::clbkLoadGenericCockpit.
+	*/
+OAPIFUNC double oapiSetMFDRefreshIntervalMultiplier (int mfd, double multiplier=1.0);
 
 OAPIFUNC int oapiBroadcastMFDMessage (int mode, int msg, void *data);
 	
