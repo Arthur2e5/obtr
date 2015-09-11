@@ -1936,7 +1936,7 @@ bool Atlantis::clbkLoadVC (int id)
 		ok = true;
 		break;
 	case 2: // payload view position
-		SetCameraOffset (_V(0.4,3.15,12.8));
+		SetCameraOffset (_V(0.4,3.15,13.0));
 		SetCameraDefaultDirection (_V(0,0,-1));
 		SetCameraMovement (_V(0,0.20,0.20), 0, 40.0*RAD, _V(0.3,-0.3,0.15), 60.0*RAD, -50.0*RAD, _V(-0.8,0,0), 0, 0);
 		oapiVCSetNeighbours (1, 0, -1, 0);
