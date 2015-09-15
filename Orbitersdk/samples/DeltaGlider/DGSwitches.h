@@ -106,6 +106,26 @@ private:
 };
 
 // ==============================================================
+// Simple square pushable button
+
+class DGButton2: public PanelElement {
+public:
+	enum State { OFF, ON };
+	DGButton2 (VESSEL3 *v);
+	void DefineAnimationVC (const VECTOR3 &axis, DWORD meshgrp, DWORD vofs);
+	bool ProcessMouseVC (int event, VECTOR3 &p);
+	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
+	inline State GetState() const { return state; }
+	void SetState (State newstate);
+
+private:
+	DWORD mgrp;              // group index for button
+	const static int nvtx;   // number of vertices in button
+	VECTOR3 ax;              // push down direction
+	State state, vstate;     // logical, visual button state
+};
+
+// ==============================================================
 // Push button with illuminated label
 
 class DGButton3: public PanelElement {

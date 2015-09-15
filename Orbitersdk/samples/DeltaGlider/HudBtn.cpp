@@ -144,44 +144,18 @@ bool HUDBrightnessDial::ProcessMouseVC (int event, VECTOR3 &p)
 // ==============================================================
 // ==============================================================
 
-HUDColourButton::HUDColourButton (VESSEL3 *v): PanelElement (v)
+HUDColourButton::HUDColourButton (VESSEL3 *v): DGButton2(v)
 {
-	pending_action = 0;
-}
-
-bool HUDColourButton::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
-{
-	if (pending_action) {
-		static const int nvtx_per_button = 20;
-		static const double depth = 0.004;
-		static int meshgrp = GRP_BUTTON2_VC;
-		NTVERTEX dvtx[nvtx_per_button];
-		WORD vofs[nvtx_per_button];
-		float dz = (float)(pending_action == 1 ? depth : -depth);
-		static int vofs0 = 0;
-		for (int i = 0; i < nvtx_per_button; i++) {
-			dvtx[i].z = dz;
-			vofs[i] = vofs0 + i;
-		}
-		GROUPEDITSPEC ges = {GRPEDIT_VTXCRDADDZ, 0, dvtx, nvtx_per_button, vofs};
-		oapiEditMeshGroup (hMesh, meshgrp, &ges);
-
-		pending_action = 0;
-	}
-	return false;
 }
 
 // --------------------------------------------------------------
 
 bool HUDColourButton::ProcessMouseVC (int event, VECTOR3 &p)
 {
-	if (event & PANEL_MOUSE_LBDOWN) {
+	DGButton2::ProcessMouseVC (event, p);
+	if (event & PANEL_MOUSE_LBDOWN)
 		oapiToggleHUDColour ();
-		pending_action = 1;
-	} else {
-		pending_action = 2;
-	}
-	return true;
+	return (event & (PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP));
 }
 
 // ==============================================================

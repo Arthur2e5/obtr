@@ -1,4 +1,4 @@
-// Created by deltaglider_vc.m 09-Mar-2015
+// Created by deltaglider_vc.m 15-Sep-2015
 
 #ifndef __DG_VC_ANIM_H
 #define __DG_VC_ANIM_H
@@ -69,6 +69,15 @@ const VECTOR3 VC_HOVER_RSWITCH_ref = {-0.11515,0.98831,7.18716};
 // HOVER_RSWITCH (VC): rotation axis
 const VECTOR3 VC_HOVER_RSWITCH_axis = {0.00000,-0.81262,-0.58280};
 
+// HOVER_HOLDALT_SWITCH (VC): mouse catch area
+const VECTOR3 VC_HOVER_HOLDALT_SWITCH_mousearea[4] = {{-0.09125,1.00140,7.19366},{-0.09125,0.99481,7.18893},{-0.06781,1.00140,7.19366},{-0.06781,0.99481,7.18893}};
+
+// HOVER_HOLDALT_SWITCH (VC): rotation reference
+const VECTOR3 VC_HOVER_HOLDALT_SWITCH_ref = {-0.07953,0.99674,7.19320};
+
+// HOVER_HOLDALT_SWITCH (VC): rotation axis
+const VECTOR3 VC_HOVER_HOLDALT_SWITCH_axis = {0.00000,-0.81262,-0.58280};
+
 // GIMBAL_INDICATOR (VC): rotation reference
 const VECTOR3 VC_GIMBAL_INDICATOR_ref[2] = {{-0.27012,0.98457,7.18405},{-0.24598,0.98457,7.18405}};
 
@@ -83,6 +92,15 @@ const VECTOR3 VC_BTN_HOVER_HOLDALT_ref = {-0.07503,1.02668,7.21179};
 
 // BTN_HOVER_HOLDALT (VC): rotation axis
 const VECTOR3 VC_BTN_HOVER_HOLDALT_axis = {0.00000,-0.58280,0.81262};
+
+// BTN_HOVER_HOLDALT_CUR (VC): mouse catch radius
+const double VC_BTN_HOVER_HOLDALT_CUR_mouserad = 0.009000;
+
+// BTN_HOVER_HOLDALT_CUR (VC): rotation reference
+const VECTOR3 VC_BTN_HOVER_HOLDALT_CUR_ref = {-0.06060,0.99811,7.19130};
+
+// BTN_HOVER_HOLDALT_CUR (VC): rotation axis
+const VECTOR3 VC_BTN_HOVER_HOLDALT_CUR_axis = {0.00000,-0.58280,0.81262};
 
 // RCS_DIAL (VC): mouse catch area
 const VECTOR3 VC_RCS_DIAL_mousearea[4] = {{0.05000,1.26200,7.26800},{0.08000,1.26200,7.26800},{0.05000,1.29200,7.26800},{0.08000,1.29200,7.26800}};
@@ -132,11 +150,14 @@ const VECTOR3 VC_HUD_BRIGHTNESS_ref = {-0.01040,1.27171,7.26800};
 // HUD_BRIGHTNESS (VC): rotation axis
 const VECTOR3 VC_HUD_BRIGHTNESS_axis = {0.00000,0.00000,1.00000};
 
-// HUD_COLBUTTON (VC): mouse catch point
-const VECTOR3 VC_HUD_COLBUTTON_mousepoint = {0.01650,1.27171,7.26800};
-
 // HUD_COLBUTTON (VC): mouse catch radius
 const double VC_HUD_COLBUTTON_mouserad = 0.009000;
+
+// HUD_COLBUTTON (VC): rotation reference
+const VECTOR3 VC_HUD_COLBUTTON_ref = {0.01650,1.27171,7.26800};
+
+// HUD_COLBUTTON (VC): rotation axis
+const VECTOR3 VC_HUD_COLBUTTON_axis = {0.00000,0.00000,1.00000};
 
 // NAV_BUTTONS (VC): mouse catch area
 const VECTOR3 VC_NAV_BUTTONS_mousearea[4] = {{0.10191,1.25710,7.26800},{0.17809,1.25710,7.26800},{0.10191,1.28640,7.26800},{0.17809,1.28640,7.26800}};
@@ -416,6 +437,8 @@ const int VC_HOVER_PSWITCH_vofs = 112;
 
 const int VC_HOVER_RSWITCH_vofs = 140;
 
+const int VC_HOVER_HOLDALT_SWITCH_vofs = 168;
+
 const int VC_GIMBAL_INDICATOR_LEFT_vofs = 0;
 
 const int VC_GIMBAL_INDICATOR_RIGHT_vofs = 8;
@@ -425,6 +448,8 @@ const int VC_HOVER_INDICATOR_vofs = 16;
 const int VC_BTN_HOVER_HOLDALT_vofs = 0;
 
 const int VC_BTN_HOVER_HOLDALT_LABEL_vofs = 0;
+
+const int VC_BTN_HOVER_HOLDALT_CUR_vofs = 0;
 
 const int VC_RCS_DIAL_vofs = 228;
 
@@ -439,6 +464,8 @@ const int VC_BTN_HUDMODE_2_LABEL_vofs = 16;
 const int VC_BTN_HUDMODE_3_vofs = 60;
 
 const int VC_BTN_HUDMODE_3_LABEL_vofs = 24;
+
+const int VC_HUD_COLBUTTON_vofs = 20;
 
 const int VC_BTN_NAVMODE_1_vofs = 80;
 

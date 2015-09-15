@@ -7,6 +7,9 @@
 // Instrument.h
 // Interface for class PanelElement:
 //   Base class for panel and VC instrument visualisations
+// Interface for class SubSystem:
+//   Base class for a vessel subsystem: acts as a container for
+//   a group of panel elements and underlying system logic
 // ==============================================================
 
 #ifndef __INSTRUMENT_H
@@ -46,5 +49,29 @@ protected:
 };
 
 // ==============================================================
+
+class SubSystem {
+public:
+	SubSystem (VESSEL3 *v, int ident);
+	// create a new subsystem for vessel 'v' with identifier 'ident'
+
+	virtual ~SubSystem ();
+	inline VESSEL3 *Vessel() const { return vessel; }
+	inline int Id() const { return id; }
+	inline int Global(int elementid) const { return elementid + (id+1)*1000; } // map a local element id to global id
+	virtual void clbkPostStep (double simt, double simdt, double mjd) {}
+	virtual bool clbkLoadVC (int vcid);  // create the VC elements for the subsystem
+	virtual void clbkResetVC (DEVMESHHANDLE hMesh);
+	virtual bool clbkVCRedrawEvent (int id, int event, DEVMESHHANDLE hMesh, SURFHANDLE hSurf);
+	virtual bool clbkVCMouseEvent (int id, int event, VECTOR3 &p);
+
+protected:
+	PanelElement **element;
+	DWORD nelement;
+
+private:
+	VESSEL3 *vessel;
+	int id;
+};
 
 #endif // !__INSTRUMENT_H

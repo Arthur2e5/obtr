@@ -67,11 +67,85 @@ public:
 };
 
 // ==============================================================
+// ==============================================================
+// Hover hold altitude control subsystem
+
+class HoverHoldAltControl: public DGSubSystem {
+	friend class HoverHoldAltIndicator;
+
+public:
+	HoverHoldAltControl (DeltaGlider *vessel, int ident);
+	void Activate (bool ison);
+	double TargetAlt() const { return holdalt; }
+	void SetTargetAlt (double alt);
+	void SetTargetAltCurrent ();
+	void clbkPostStep (double simt, double simdt, double mjd);
+	bool clbkLoadVC (int vcid);
+	enum HoldMode { HOLDMODE_NONE, HOLDMODE_ALT, HOLDMODE_RATE };
+
+private:
+	double holdalt;   // current hold altitude
+	bool active;      // hover hold altitude active?
+	VESSEL::AltitudeMode altmode;
+	HoldMode holdmode;
+	static const int AID_HOLDALT_DISP;
+	static const int AID_HOLDALT_BTN;
+	static const int AID_HOLDALT_SELECT;
+	static const int AID_HOLDALT_SETCUR;
+};
+
+// ==============================================================
+// Hover hold altitude button
 
 class HoverAltBtn: public DGButton3 {
 public:
-	HoverAltBtn (VESSEL3 *v);
+	HoverAltBtn (HoverHoldAltControl *hhac);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
+
+private:
+	HoverHoldAltControl *ctrl;
+};
+
+// ==============================================================
+// Hover altitude/rate selector switch
+
+class HoverAltSwitch: public DGSwitch2 {
+public:
+	HoverAltSwitch (HoverHoldAltControl *hhac);
+	bool ProcessMouseVC (int event, VECTOR3 &p);
+
+private:
+	HoverHoldAltControl *ctrl;
+};
+
+// ==============================================================
+// Hover "copy current" button
+
+class HoverAltCurBtn: public DGButton2 {
+public:
+	HoverAltCurBtn (HoverHoldAltControl *hhac);
+	bool ProcessMouseVC (int event, VECTOR3 &p);
+
+private:
+	HoverHoldAltControl *ctrl;
+};
+
+// ==============================================================
+// Hover hold altitude indicator displays
+
+class HoverHoldAltIndicator: public PanelElement {
+public:
+	HoverHoldAltIndicator (HoverHoldAltControl *hhac, SURFHANDLE blitsrc);
+	void ResetVC (DEVMESHHANDLE hMesh);
+	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE hSurf);
+
+private:
+	void UpdateReadout (const char *tgtstr, char *curstr);
+	HoverHoldAltControl *ctrl;
+	SURFHANDLE btgt, bsrc;
+	HoverHoldAltControl::HoldMode holdmode_disp;
+	bool hold_disp;
+	char holdstr[10];   // current hold altitude readout
 };
 
 #endif // !__HOVERCTRL_H

@@ -19,10 +19,17 @@ double PressureControl::v_cabin = 24.0;
 double PressureControl::v_airlock = 4.0;
 double PressureControl::p_target = 100e3;
 
+const int PressureControl::AID_PVALVE0_SWITCH = 0;
+const int PressureControl::AID_PVALVE1_SWITCH = 1;
+const int PressureControl::AID_PVALVE2_SWITCH = 2;
+const int PressureControl::AID_PVALVE3_SWITCH = 3;
+const int PressureControl::AID_PVALVE4_SWITCH = 4;
+const int PressureControl::AID_PRESSUREDISP = 5;
+
 // --------------------------------------------------------------
 
-PressureControl::PressureControl (DeltaGlider *vessel)
-: dg(vessel)
+PressureControl::PressureControl (DeltaGlider *vessel, int ident)
+: DGSubSystem(vessel, ident)
 {
 	extern GDIParams g_Param;
 
@@ -30,33 +37,26 @@ PressureControl::PressureControl (DeltaGlider *vessel)
 	p_ext_hatch = p_ext_lock = 0.0;
 	docked = false;
 
+	nelement = 6;
+	element = new PanelElement*[nelement];
 	for (int i = 0; i < 5; i++) {
-		valve_switch[i] = new PValveSwitch (this, i);
+		element[i] = valve_switch[i] = new PValveSwitch (this, i);
 		valve_status[i] = 0;
 	}
-	pind = new PressureIndicator (this, g_Param.surf);
-}
-
-// --------------------------------------------------------------
-
-PressureControl::~PressureControl ()
-{
-	for (int i = 0; i < 5; i++)
-		delete valve_switch[i];
-	delete pind;
+	element[5] = pind = new PressureIndicator (this, g_Param.surf);
 }
 
 // --------------------------------------------------------------
 
 void PressureControl::clbkPostStep (double simt, double simdt, double mjd)
 {
-	docked = dg->DockingStatus(0) != 0;
-	double p_static = dg->GetAtmPressure();
+	docked = DG()->DockingStatus(0) != 0;
+	double p_static = DG()->GetAtmPressure();
 	p_ext_hatch = p_static;
 	if (!docked) {
 		p_ext_lock = p_static;
-		if (dg->nose_status != DeltaGlider::DOOR_CLOSED)
-			p_ext_lock += dg->GetDynPressure() * dg->nose_proc;
+		if (DG()->nose_status != DeltaGlider::DOOR_CLOSED)
+			p_ext_lock += DG()->GetDynPressure() * DG()->nose_proc;
 	}
 	else v_extdock = 2.0; // for now
 
@@ -64,8 +64,8 @@ void PressureControl::clbkPostStep (double simt, double simdt, double mjd)
 
 	// exchange cabin - ext.hatch
 	cs = (valve_status[1] ? 2e-4:0.0);
-	if (dg->hatch_status != DeltaGlider::DOOR_CLOSED) {
-		cs += 0.1*dg->hatch_proc;
+	if (DG()->hatch_status != DeltaGlider::DOOR_CLOSED) {
+		cs += 0.1*DG()->hatch_proc;
 	}
 	if (cs) {
 		pdiff = p_ext_hatch-p_cabin;
@@ -79,8 +79,8 @@ void PressureControl::clbkPostStep (double simt, double simdt, double mjd)
 
 	// exchange airlock - ext.lock
 	cs = (valve_status[3] ? 2e-4:0.0);
-	if (dg->olock_status != DeltaGlider::DOOR_CLOSED) {
-		cs += 1.0*dg->olock_proc;
+	if (DG()->olock_status != DeltaGlider::DOOR_CLOSED) {
+		cs += 1.0*DG()->olock_proc;
 	}
 	if (cs) {
 		pdiff = p_ext_lock-p_airlock;
@@ -102,8 +102,8 @@ void PressureControl::clbkPostStep (double simt, double simdt, double mjd)
 
 	// exchange cabin - airlock
 	cs = (valve_status[2] ? 2e-4:0.0);
-	if (dg->ilock_status != DeltaGlider::DOOR_CLOSED) {
-		cs += 1.0*dg->ilock_proc;
+	if (DG()->ilock_status != DeltaGlider::DOOR_CLOSED) {
+		cs += 1.0*DG()->ilock_proc;
 	}
 	if (cs) {
 		pdiff = p_cabin-p_airlock;
@@ -148,71 +148,31 @@ bool PressureControl::clbkLoadVC (int id)
 	switch (id) {
 	case 0:
 		// Pressure indicator display
-		oapiVCRegisterArea (AID_PRESSUREDISP, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
+		oapiVCRegisterArea (Global(AID_PRESSUREDISP), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
 
 		// Pressure valve switches
-		oapiVCRegisterArea (AID_PVALVE0_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_PVALVE0_SWITCH, VC_CABIN_O2_SWITCH_mousearea[0], VC_CABIN_O2_SWITCH_mousearea[1], VC_CABIN_O2_SWITCH_mousearea[2], VC_CABIN_O2_SWITCH_mousearea[3]);
+		oapiVCRegisterArea (Global(AID_PVALVE0_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (Global(AID_PVALVE0_SWITCH), VC_CABIN_O2_SWITCH_mousearea[0], VC_CABIN_O2_SWITCH_mousearea[1], VC_CABIN_O2_SWITCH_mousearea[2], VC_CABIN_O2_SWITCH_mousearea[3]);
 		valve_switch[0]->DefineAnimationVC (VC_CABIN_O2_SWITCH_ref, VC_CABIN_O2_SWITCH_axis, GRP_SWITCH1_VC, VC_CABIN_O2_SWITCH_vofs);
 
-		oapiVCRegisterArea (AID_PVALVE1_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_PVALVE1_SWITCH, VC_VALVE1_SWITCH_mousearea[0], VC_VALVE1_SWITCH_mousearea[1], VC_VALVE1_SWITCH_mousearea[2], VC_VALVE1_SWITCH_mousearea[3]);
+		oapiVCRegisterArea (Global(AID_PVALVE1_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (Global(AID_PVALVE1_SWITCH), VC_VALVE1_SWITCH_mousearea[0], VC_VALVE1_SWITCH_mousearea[1], VC_VALVE1_SWITCH_mousearea[2], VC_VALVE1_SWITCH_mousearea[3]);
 		valve_switch[1]->DefineAnimationVC (VC_VALVE1_SWITCH_ref, VC_VALVE1_SWITCH_axis, GRP_SWITCH1_VC, VC_VALVE1_SWITCH_vofs);
 
-		oapiVCRegisterArea (AID_PVALVE2_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_PVALVE2_SWITCH, VC_VALVE2_SWITCH_mousearea[0], VC_VALVE2_SWITCH_mousearea[1], VC_VALVE2_SWITCH_mousearea[2], VC_VALVE2_SWITCH_mousearea[3]);
+		oapiVCRegisterArea (Global(AID_PVALVE2_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (Global(AID_PVALVE2_SWITCH), VC_VALVE2_SWITCH_mousearea[0], VC_VALVE2_SWITCH_mousearea[1], VC_VALVE2_SWITCH_mousearea[2], VC_VALVE2_SWITCH_mousearea[3]);
 		valve_switch[2]->DefineAnimationVC (VC_VALVE2_SWITCH_ref, VC_VALVE2_SWITCH_axis, GRP_SWITCH1_VC, VC_VALVE2_SWITCH_vofs);
 
-		oapiVCRegisterArea (AID_PVALVE3_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_PVALVE3_SWITCH, VC_VALVE3_SWITCH_mousearea[0], VC_VALVE3_SWITCH_mousearea[1], VC_VALVE3_SWITCH_mousearea[2], VC_VALVE3_SWITCH_mousearea[3]);
+		oapiVCRegisterArea (Global(AID_PVALVE3_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (Global(AID_PVALVE3_SWITCH), VC_VALVE3_SWITCH_mousearea[0], VC_VALVE3_SWITCH_mousearea[1], VC_VALVE3_SWITCH_mousearea[2], VC_VALVE3_SWITCH_mousearea[3]);
 		valve_switch[3]->DefineAnimationVC (VC_VALVE3_SWITCH_ref, VC_VALVE3_SWITCH_axis, GRP_SWITCH1_VC, VC_VALVE3_SWITCH_vofs);
 
-		oapiVCRegisterArea (AID_PVALVE4_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_PVALVE4_SWITCH, VC_LOCK_O2_SWITCH_mousearea[0], VC_LOCK_O2_SWITCH_mousearea[1], VC_LOCK_O2_SWITCH_mousearea[2], VC_LOCK_O2_SWITCH_mousearea[3]);
+		oapiVCRegisterArea (Global(AID_PVALVE4_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (Global(AID_PVALVE4_SWITCH), VC_LOCK_O2_SWITCH_mousearea[0], VC_LOCK_O2_SWITCH_mousearea[1], VC_LOCK_O2_SWITCH_mousearea[2], VC_LOCK_O2_SWITCH_mousearea[3]);
 		valve_switch[4]->DefineAnimationVC (VC_LOCK_O2_SWITCH_ref, VC_LOCK_O2_SWITCH_axis, GRP_SWITCH1_VC, VC_LOCK_O2_SWITCH_vofs);
 		break;
 	}
 	return true;
-}
-
-// --------------------------------------------------------------
-
-void PressureControl::clbkResetVC (DEVMESHHANDLE vcmesh)
-{
-	pind->ResetVC (vcmesh);
-	for (int i = 0; i < 5; i++)
-		valve_switch[i]->ResetVC (vcmesh);
-}
-
-// --------------------------------------------------------------
-
-int PressureControl::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
-{
-	switch (id) {
-	case AID_PVALVE0_SWITCH:
-	case AID_PVALVE1_SWITCH:
-	case AID_PVALVE2_SWITCH:
-	case AID_PVALVE3_SWITCH:
-	case AID_PVALVE4_SWITCH:
-		return (valve_switch[id-AID_PVALVE0_SWITCH]->ProcessMouseVC (event, p) ? 1:2);
-	}
-	return 0;
-}
-
-// --------------------------------------------------------------
-int PressureControl::clbkVCRedrawEvent (int id, int event, DEVMESHHANDLE vcmesh, SURFHANDLE surf)
-{
-	switch (id) {
-	case AID_PRESSUREDISP:
-		return (pind->RedrawVC (vcmesh, surf) ? 1:2);
-	case AID_PVALVE0_SWITCH:
-	case AID_PVALVE1_SWITCH:
-	case AID_PVALVE2_SWITCH:
-	case AID_PVALVE3_SWITCH:
-	case AID_PVALVE4_SWITCH:
-		return (valve_switch[id-AID_PVALVE0_SWITCH]->RedrawVC (vcmesh, surf) ? 1:2);
-	}
-	return 0;
 }
 
 // ==============================================================
@@ -254,7 +214,7 @@ PressureIndicator::PressureIndicator (PressureControl *pc, SURFHANDLE blitsrc)
 void PressureIndicator::ResetVC (DEVMESHHANDLE hMesh)
 {
 	upt = 0.0;
-	btgt = oapiGetTextureHandle (pctrl->Vessel()->vcmesh_tpl, 14);
+	btgt = oapiGetTextureHandle (pctrl->DG()->vcmesh_tpl, 14);
 	for (int i = 0; i < 4; i++)
 		for (int j = 0; j < 8; j++)
 			label[i][j] = ' ';

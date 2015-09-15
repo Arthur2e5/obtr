@@ -11,6 +11,7 @@
 #ifndef __PRESSURECTRL_H
 #define __PRESSURECTRL_H
 
+#include "DeltaGlider.h"
 #include "DGSwitches.h"
 
 // ==============================================================
@@ -22,12 +23,10 @@ class PressureIndicator;
 // ==============================================================
 // Pressure control module
 
-class PressureControl {
+class PressureControl: public DGSubSystem {
 public:
-	PressureControl (DeltaGlider *vessel);
-	~PressureControl ();
+	PressureControl (DeltaGlider *vessel, int ident);
 	void clbkPostStep (double simt, double simdt, double mjd);
-	inline DeltaGlider *Vessel() const { return dg; }
 	inline double PCabin() const { return p_cabin; }
 	inline double PAirlock() const { return p_airlock; }
 	inline double PExtHatch() const { return p_ext_hatch; }
@@ -36,12 +35,8 @@ public:
 	inline void SetPValve (int i, int status) { valve_status[i] = status; }
 	
 	bool clbkLoadVC (int id);       // create the VC elements for this module
-	int clbkVCMouseEvent (int id, int event, VECTOR3 &p);       // return: 0=id not processed, 1=processed and requires readraw, 2=processed, but no redraw
-	int clbkVCRedrawEvent (int id, int event, DEVMESHHANDLE vcmesh, SURFHANDLE surf); // return: 0=id not processed, 1=processed and redrawn, 2=processed, not redrawn
-	void clbkResetVC (DEVMESHHANDLE vcmesh);
 
 private:
-	DeltaGlider *dg;
 	bool docked;
 	double p_cabin, p_airlock;      // current pressure in cabin and airlock [Pa]
 	double p_ext_hatch, p_ext_lock; // current pressure outside hatch and airlock [Pa]
@@ -52,6 +47,14 @@ private:
 	PValveSwitch *valve_switch[5];  // the switches controlling supply and relief valves
 	int valve_status[5];            // 0=closed, 1=open
 	PressureIndicator *pind;
+
+	// local panel element identifiers
+	static const int AID_PVALVE0_SWITCH;
+	static const int AID_PVALVE1_SWITCH;
+	static const int AID_PVALVE2_SWITCH;
+	static const int AID_PVALVE3_SWITCH;
+	static const int AID_PVALVE4_SWITCH;
+	static const int AID_PRESSUREDISP;
 };
 
 // ==============================================================

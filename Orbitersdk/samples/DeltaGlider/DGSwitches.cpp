@@ -357,6 +357,77 @@ int DGDial1::Right ()
 
 // ==============================================================
 
+const int DGButton2::nvtx = 20;
+
+// --------------------------------------------------------------
+
+DGButton2::DGButton2 (VESSEL3 *v)
+: PanelElement(v)
+{
+	state = vstate = OFF;
+}
+
+// --------------------------------------------------------------
+
+void DGButton2::DefineAnimationVC (const VECTOR3 &axis, DWORD meshgrp, DWORD vofs)
+{
+	mgrp = meshgrp;
+	vtxofs = vofs;
+	ax = axis;
+}
+
+// --------------------------------------------------------------
+
+bool DGButton2::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	if (event & PANEL_MOUSE_LBDOWN) {
+		state = ON;
+	} else if (event & PANEL_MOUSE_LBUP) {
+		state = OFF;
+	}
+	return (state != vstate);
+}
+
+// --------------------------------------------------------------
+
+bool DGButton2::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
+{
+	static const double zpos[2] = {0, 0.004};
+	if (state != vstate) {
+		int i;
+		double dz = zpos[state]-zpos[vstate];
+		VECTOR3 shift = ax*dz;
+		float dsx = (float)shift.x, dsy = (float)shift.y, dsz = (float)shift.z;
+
+		// animate button
+		NTVERTEX vtx[nvtx];
+		WORD vperm[nvtx];
+		for (i = 0; i < nvtx; i++) vperm[i] = vtxofs+i;
+		GROUPREQUESTSPEC grs = {vtx, nvtx, vperm, 0, 0, 0, 0, 0};
+		oapiGetMeshGroup (hMesh, mgrp, &grs);
+		for (i = 0; i < nvtx; i++) {
+			vtx[i].x += dsx;
+			vtx[i].y += dsy;
+			vtx[i].z += dsz;
+		}
+		GROUPEDITSPEC ges = {GRPEDIT_VTXCRD, 0, vtx, nvtx, vperm};
+		oapiEditMeshGroup (hMesh, mgrp, &ges);
+
+		vstate = state;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
+void DGButton2::SetState (State newstate)
+{
+	if (newstate != state)
+		state = newstate;
+}
+
+// ==============================================================
+
 const int DGButton3::nvtx = 20;
 const int DGButton3::nvtx_lbl = 8;
 

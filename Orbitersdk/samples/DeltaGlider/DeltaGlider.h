@@ -163,6 +163,14 @@ const DWORD INSTR3_TEXW   =  268;
 const DWORD INSTR3_TEXH   =  188;
 
 // ==========================================================
+// Forward declarations
+// ==========================================================
+
+// DG subsystems
+class DGSubSystem;
+class HoverHoldAltControl;
+
+// ==========================================================
 // Interface for derived vessel class: DeltaGlider
 // ==========================================================
 
@@ -405,9 +413,13 @@ private:
 	Ramjet *scramjet;                            // scramjet module (NULL = none)
 	void ScramjetThrust ();                      // scramjet thrust calculation
 
-	AAP *aap;                                    // atmospheric autopilot
+	// Vessel subsystems -------------------------------------------------------------
+	HoverHoldAltControl *ssys_hoverhold;         // hover hold alt system
+	PressureControl     *ssys_pressurectrl;      // pressure control system
+	DGSubSystem **ssys;                          // list subsystems
+	DWORD nssys;                                 // number of subsystems
 
-	PressureControl *pctrl;                      // pressure control module
+	AAP *aap;                                    // atmospheric autopilot
 
 	PanelElement **instr;                        // panel instrument objects
 	DWORD ninstr;                                // total number of instruments
@@ -451,7 +463,6 @@ private:
 	double phover, phover_cmd;                   // current/commanded hover pitch angle (tan)
 	double rhover, rhover_cmd;                   // current/commanded hover roll angle (tan)
 	int hover_mode;                              // setting of hover mode dial
-	double hover_alt;                            // hover target altitude
 
 	UINT engsliderpos[5];    // throttle settings for main,hover,scram engines
 	double scram_intensity[2];
@@ -478,6 +489,14 @@ private:
 	struct RngDisp {
 		char dsp[2][10];
 	} p_rngdisp;
+};
+
+// ==============================================================
+
+class DGSubSystem: public SubSystem {
+public:
+	DGSubSystem (DeltaGlider *v, int ident): SubSystem (v, ident) {}
+	inline DeltaGlider *DG() { return (DeltaGlider*)Vessel(); }
 };
 
 // ==============================================================
@@ -544,7 +563,7 @@ typedef struct {
 #define AID_HBALANCEDISP        45
 #define AID_PHOVER              46
 #define AID_RHOVER              47
-#define AID_HOVERALTBTN         48
+//#define AID_HOVERALTBTN         48
 #define AID_RADIATORSWITCH      49
 #define AID_RETRODOORSWITCH     50
 #define AID_HATCHSWITCH         51
@@ -565,12 +584,6 @@ typedef struct {
 #define AID_HATCH_SWITCH        66
 #define AID_ILOCK_SWITCH        67
 #define AID_OLOCK_SWITCH        68
-#define AID_PVALVE0_SWITCH      69
-#define AID_PVALVE1_SWITCH      70
-#define AID_PVALVE2_SWITCH      71
-#define AID_PVALVE3_SWITCH      72
-#define AID_PVALVE4_SWITCH      73
-#define AID_PRESSUREDISP        74
 
 // Panel 1
 #define AID_AIRLOCKSWITCH      100
@@ -597,14 +610,14 @@ typedef struct {
 #define AID_DOCKRELEASE        207
 
 // Virtual cockpit-specific area identifiers:
-#define AID_MFD1_PWR          1024
-#define AID_MFD2_PWR          1027
-#define AID_HUDCOLOUR         1034
-#define AID_HUDBRIGHT         1035
-#define AID_BUTTONROW1        1036
-#define AID_RADIATOREX        1043
-#define AID_RADIATORIN        1044
-#define AID_LADDEREX          1047
-#define AID_LADDERIN          1048
+#define AID_MFD1_PWR           300
+#define AID_MFD2_PWR           301
+#define AID_HUDCOLOUR          302
+#define AID_HUDBRIGHT          303
+#define AID_BUTTONROW1         304
+#define AID_RADIATOREX         305
+#define AID_RADIATORIN         306
+#define AID_LADDEREX           307
+#define AID_LADDERIN           308
 
 #endif // !__DELTAGLIDER_H

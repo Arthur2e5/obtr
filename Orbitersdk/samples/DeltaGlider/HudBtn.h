@@ -43,14 +43,10 @@ public:
 
 // ==============================================================
 // HUD colour selector button
-class HUDColourButton: public PanelElement {
+class HUDColourButton: public DGButton2 {
 public:
 	HUDColourButton (VESSEL3 *v);
-	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
-
-private:
-	DWORD pending_action;
 };
 
 // ==============================================================

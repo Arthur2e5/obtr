@@ -21,43 +21,59 @@ PanelElement::PanelElement (VESSEL3 *v)
 	gidx = 0;
 }
 
+// --------------------------------------------------------------
+
 PanelElement::~PanelElement ()
 {
 }
+
+// --------------------------------------------------------------
 
 void PanelElement::Reset2D ()
 {
 }
 
+// --------------------------------------------------------------
+
 void PanelElement::Reset2D (MESHHANDLE hMesh)
 {
 }
 
+// --------------------------------------------------------------
+
 void PanelElement::ResetVC (DEVMESHHANDLE hMesh)
 {
 }
+
+// --------------------------------------------------------------
 
 bool PanelElement::Redraw2D (SURFHANDLE surf)
 {
 	return false;
 }
 
+// --------------------------------------------------------------
+
 bool PanelElement::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 {
 	return false;
 }
+
+// --------------------------------------------------------------
 
 bool PanelElement::ProcessMouse2D (int event, int mx, int my)
 {
 	return false;
 }
 
+// --------------------------------------------------------------
+
 bool PanelElement::ProcessMouseVC (int event, VECTOR3 &p)
 {
 	return false;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 void PanelElement::AddGeometry (MESHHANDLE hMesh, DWORD grpidx, const NTVERTEX *vtx, DWORD nvtx, const WORD *idx, DWORD nidx)
 {
@@ -68,7 +84,7 @@ void PanelElement::AddGeometry (MESHHANDLE hMesh, DWORD grpidx, const NTVERTEX *
 	oapiAddMeshGroupBlock (hMesh, grpidx, vtx, nvtx, idx, nidx);
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 char *PanelElement::DispStr (double dist, int precision)
 {
@@ -91,4 +107,53 @@ char *PanelElement::DispStr (double dist, int precision)
 		else                  strcpy (strbuf, "--.--");
 	}
 	return strbuf;
+}
+
+// ==============================================================
+
+SubSystem::SubSystem (VESSEL3 *v, int ident)
+: vessel(v), id(ident)
+{
+	element = 0;
+	nelement = 0;
+}
+
+// --------------------------------------------------------------
+
+SubSystem::~SubSystem ()
+{
+	if (nelement) {
+		for (DWORD i = 0; i < nelement; i++)
+			delete element[i];
+		delete []element;
+	}
+}
+
+// --------------------------------------------------------------
+
+bool SubSystem::clbkLoadVC (int vcid)
+{
+	return true;
+}
+
+// --------------------------------------------------------------
+
+void SubSystem::clbkResetVC (DEVMESHHANDLE hMesh)
+{
+	for (DWORD i = 0; i < nelement; i++)
+		element[i]->ResetVC (hMesh);
+}
+
+// --------------------------------------------------------------
+
+bool SubSystem::clbkVCRedrawEvent (int id, int event, DEVMESHHANDLE hMesh, SURFHANDLE hSurf)
+{
+	return (id < nelement ? element[id]->RedrawVC (hMesh, hSurf) : false);
+}
+
+// --------------------------------------------------------------
+
+bool SubSystem::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
+{
+	return (id < nelement ? element[id]->ProcessMouseVC (event, p) : false);
 }

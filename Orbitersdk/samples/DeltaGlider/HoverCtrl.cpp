@@ -281,9 +281,102 @@ bool RHoverCtrl::ProcessMouseVC (int event, VECTOR3 &p)
 
 
 // ==============================================================
+// ==============================================================
 
-HoverAltBtn::HoverAltBtn (VESSEL3 *v)
-: DGButton3 (v)
+const int HoverHoldAltControl::AID_HOLDALT_DISP = 0;
+const int HoverHoldAltControl::AID_HOLDALT_BTN = 1;
+const int HoverHoldAltControl::AID_HOLDALT_SELECT = 2;
+const int HoverHoldAltControl::AID_HOLDALT_SETCUR = 3;
+
+// --------------------------------------------------------------
+
+HoverHoldAltControl::HoverHoldAltControl (DeltaGlider *vessel, int ident)
+: DGSubSystem(vessel, ident)
+{
+	extern GDIParams g_Param;
+
+	holdalt   = 0.0;
+	active = false;
+	altmode = VESSEL::ALTMODE_MEANRAD;
+	holdmode = HOLDMODE_ALT;
+
+	nelement = 4;
+	element = new PanelElement*[nelement];
+	element[AID_HOLDALT_DISP] = new HoverHoldAltIndicator(this, g_Param.surf);
+	element[AID_HOLDALT_BTN] = new HoverAltBtn (this);
+	element[AID_HOLDALT_SELECT] = new HoverAltSwitch (this);
+	element[AID_HOLDALT_SETCUR] = new HoverAltCurBtn (this);
+}
+
+// --------------------------------------------------------------
+
+void HoverHoldAltControl::Activate (bool ison)
+{
+	if (ison != active) {
+		active = ison;
+
+		if (active) DG()->SetHoverHoldAltitude (holdalt, altmode);
+		else        DG()->DeactivateNavmode (NAVMODE_HOLDALT);
+
+		((HoverAltBtn*)element[AID_HOLDALT_BTN])->SetState(active ? DGButton3::ON : DGButton3::OFF);
+		oapiTriggerRedrawArea (0, 0, (Id()+1)*1000+AID_HOLDALT_BTN);
+	}
+}
+
+// --------------------------------------------------------------
+
+void HoverHoldAltControl::SetTargetAlt (double alt)
+{
+	holdalt = alt;
+	if (active) DG()->SetHoverHoldAltitude (holdalt, altmode);
+}
+
+// --------------------------------------------------------------
+
+void HoverHoldAltControl::SetTargetAltCurrent ()
+{
+	SetTargetAlt (DG()->GetAltitude (altmode));
+}
+
+// --------------------------------------------------------------
+
+void HoverHoldAltControl::clbkPostStep (double simt, double simdt, double mjd)
+{
+}
+
+// --------------------------------------------------------------
+
+bool HoverHoldAltControl::clbkLoadVC (int vcid)
+{
+	switch (vcid) {
+	case 0: // VC pilot position
+		// readouts
+		oapiVCRegisterArea (Global(AID_HOLDALT_DISP), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
+
+		// Hover hold alt button
+		oapiVCRegisterArea (Global(AID_HOLDALT_BTN), PANEL_REDRAW_MOUSE | PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
+		oapiVCSetAreaClickmode_Spherical (Global(AID_HOLDALT_BTN), VC_BTN_HOVER_HOLDALT_ref, VC_BTN_HOVER_HOLDALT_mouserad);
+		((DGButton3*)element[AID_HOLDALT_BTN])->DefineAnimationVC (VC_BTN_HOVER_HOLDALT_axis, GRP_BUTTON3_VC, GRP_LIT_SURF_VC, VC_BTN_HOVER_HOLDALT_vofs, VC_BTN_HOVER_HOLDALT_LABEL_vofs);
+
+		// Hover hold alt select switch
+		oapiVCRegisterArea (Global(AID_HOLDALT_SELECT), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
+		oapiVCSetAreaClickmode_Quadrilateral (Global(AID_HOLDALT_SELECT), VC_HOVER_HOLDALT_SWITCH_mousearea[0], VC_HOVER_HOLDALT_SWITCH_mousearea[1], VC_HOVER_HOLDALT_SWITCH_mousearea[2], VC_HOVER_HOLDALT_SWITCH_mousearea[3]);
+		((DGSwitch2*)element[AID_HOLDALT_SELECT])->DefineAnimationVC (VC_HOVER_HOLDALT_SWITCH_ref, VC_HOVER_HOLDALT_SWITCH_axis, GRP_SWITCH2_VC, VC_HOVER_HOLDALT_SWITCH_vofs);
+
+		// Hover hold alt set current button
+		oapiVCRegisterArea (Global(AID_HOLDALT_SETCUR), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
+		oapiVCSetAreaClickmode_Spherical (Global(AID_HOLDALT_SETCUR), VC_BTN_HOVER_HOLDALT_CUR_ref, VC_BTN_HOVER_HOLDALT_CUR_mouserad);
+		((DGButton2*)element[AID_HOLDALT_SETCUR])->DefineAnimationVC (VC_BTN_HOVER_HOLDALT_CUR_axis, GRP_BUTTON2_VC, VC_BTN_HOVER_HOLDALT_CUR_vofs);
+
+		break;
+	}
+	return true;
+}
+
+// ==============================================================
+
+HoverAltBtn::HoverAltBtn (HoverHoldAltControl *hhac)
+: DGButton3 (hhac->DG()), ctrl(hhac)
 {
 }
 
@@ -293,8 +386,136 @@ bool HoverAltBtn::ProcessMouseVC (int event, VECTOR3 &p)
 {
 	if (DGButton3::ProcessMouseVC (event, p)) {
 		DGButton3::State state = GetState();
-		if (state == DGButton3::OFF) vessel->DeactivateNavmode (NAVMODE_HOLDALT);
-		else if (state == DGButton3::ON) vessel->ActivateNavmode (NAVMODE_HOLDALT);
+		if      (state == DGButton3::OFF) ctrl->Activate (false);
+		else if (state == DGButton3::ON)  ctrl->Activate (true);
 	}
 	return (event & (PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP));
+}
+
+// ==============================================================
+
+HoverAltSwitch::HoverAltSwitch (HoverHoldAltControl *hhac)
+: DGSwitch2(hhac->DG()), ctrl(hhac)
+{
+}
+
+// --------------------------------------------------------------
+
+bool HoverAltSwitch::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	static int state = 0;
+	static double refT = 0.0;
+	if (event & PANEL_MOUSE_LBDOWN)
+		refT = oapiGetSysTime();
+
+	if (DGSwitch2::ProcessMouseVC (event, p))
+		state = (int)GetState();
+
+	if (state) {
+		double alt = ctrl->TargetAlt();
+		double t = oapiGetSysTime();
+		double dt = oapiGetSysStep();
+		double downt = t-refT;
+		double dalt = dt * max(fabs(alt),1.0);
+		if (downt < 10.0) dalt *= 1e-6 + downt*(1.0-1e-6)/10.0;
+		if (state == 1) dalt = -dalt;
+		ctrl->SetTargetAlt (alt + dalt);
+	}
+
+	return (event & (PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP));
+}
+
+// ==============================================================
+
+HoverAltCurBtn::HoverAltCurBtn (HoverHoldAltControl *hhac)
+: DGButton2(hhac->DG()), ctrl(hhac)
+{
+}
+
+// --------------------------------------------------------------
+
+bool HoverAltCurBtn::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	DGButton2::ProcessMouseVC (event, p);
+	if (event & PANEL_MOUSE_LBDOWN)
+		ctrl->SetTargetAltCurrent ();
+	return (event & (PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP));
+}
+
+// ==============================================================
+
+HoverHoldAltIndicator::HoverHoldAltIndicator (HoverHoldAltControl *hhac, SURFHANDLE blitsrc)
+: PanelElement (hhac->DG()), ctrl(hhac), bsrc(blitsrc)
+{
+	btgt = 0;
+}
+
+// --------------------------------------------------------------
+
+void HoverHoldAltIndicator::ResetVC (DEVMESHHANDLE hMesh)
+{
+	btgt = oapiGetTextureHandle (ctrl->DG()->vcmesh_tpl, 14);
+	strcpy (holdstr, "         ");
+	holdmode_disp = HoverHoldAltControl::HOLDMODE_NONE;
+	hold_disp = false;
+}
+
+// --------------------------------------------------------------
+
+bool HoverHoldAltIndicator::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE hSurf)
+{
+	bool refresh = false;
+	if (!btgt) return refresh;
+
+	char cbuf[10];
+	FormatValue (cbuf, 10, ctrl->holdalt, 4);
+	if (strncmp (cbuf, holdstr, 10)) {
+		UpdateReadout (cbuf, holdstr);
+		refresh = true;
+	}
+
+	if (holdmode_disp != ctrl->holdmode) {
+		oapiBlt (btgt, bsrc, 314, 2, (ctrl->holdmode-1)*25, 14, 25, 8);
+		holdmode_disp = ctrl->holdmode;
+		refresh = true;
+	}
+
+	if (hold_disp != ctrl->active) {
+		oapiBlt (btgt, bsrc, 348, 2, ctrl->active ? 51:78, 14, 27, 8);
+		hold_disp = ctrl->active;
+		refresh = true;
+	}
+	return refresh;
+}
+
+// --------------------------------------------------------------
+
+void HoverHoldAltIndicator::UpdateReadout (const char *tgtstr, char *curstr)
+{
+	int tgtx = 314;
+	int tgty = 12;
+	const int srcy = 0;
+	int srcx;
+	const int w = 8;
+	const int h = 11;
+	char c;
+	int i;
+	for (i = 0; i < 10 && tgtstr[i]; i++) {
+		if ((c=tgtstr[i]) != curstr[i]) {
+			if (c >= '0' && c <= '9') srcx = (c-'0')*8;
+			else switch(c) {
+				case '.': srcx = 10*8; break;
+				case '+': srcx = 11*8; break;
+				case '-': srcx = 12*8; break;
+				case 'k': srcx = 13*8; break;
+				case 'M': srcx = 14*8; break;
+				case 'G': srcx = 15*8; break;
+				default:  srcx = 16*8; break;
+			}
+			oapiBlt (btgt, bsrc, tgtx, tgty, srcx, srcy, w, h);
+			curstr[i] = c;
+		}
+		tgtx += w;
+	}
+	if (i < 10) curstr[i] = '\0';
 }

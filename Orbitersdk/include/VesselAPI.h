@@ -957,6 +957,38 @@ public:
 	 * \sa navmode, ActivateNavmode, DeactivateNavmode, ToggleNavmode
 	 */
 	bool GetNavmodeState (int mode);
+
+	/**
+	 * \brief Returns the altitude that the holver hold altitude program tries to
+	 *   maintain.
+	 * \param [out] alt target altitude [m]
+	 * \param [out] terrainalt indicates true altitude (terrainalt==true) or altitude
+	 *   relative to mean planet radius (terrainalt==false)
+	 * \return true: hold altitude program is active; false: hold altitude program
+	 *   is not active
+	 * \note If the function returns false, the values pointed to by alt and
+	 *   terrainalt are unchanged.
+	 * \sa ActivateNavmode, DeactivateNavmode, ToggleNavmode, GetNavmodeState
+	 */
+    bool GetHoverHoldAltitude (double &alt, bool &terrainalt);
+
+	/**
+	 * \brief Set the target altitude for the hover hold altitude program and
+	 *   activate the program.
+	 * \param alt target altiude [m]
+	 * \param terrainalt true: hold true altitude; false: hold altitude relative to
+	 *   mean planet radius
+	 * \note If the hold hover altiude program is already active, the target
+	 *   altitude is modified. Otherwise, the program is activated with the
+	 *   specified target altitude.
+	 * \note This method is more versatile than ActivateNavmode(NAVMODE_HOLDALT), which
+	 *   sets the target altitude to the current altitude at activation, and always
+	 *   refers to mean planet radius.
+	 * \note To deactivate the hover hold alt program, use
+	 *   DeactivateNavmode(NAVMODE_HOLDALT)
+	 * \sa GetHoverHoldAltitude, ActivateNavmode, DeactivateNavmode
+	 */
+	void SetHoverHoldAltitude (double alt, bool terrainalt);
 	//@}
 
 
@@ -5709,8 +5741,11 @@ public:
 	 *   id 0 (the main panel). If any panels register neighbour panels
 	 *   (see oapiSetPanelNeighbours), all the neighbours must be
 	 *   supported, too.
-	 * \sa oapiRegisterPanelBackground, oapiRegisterPanelArea,
-	 *   oapiRegisterMFD, clbkLoadGenericCockpit, clbkLoadVC
+	 * \note This is a legacy function. The preferred method is now
+	 *   VESSEL3::clbkLoadPanel2D
+	 * \sa VESSEL3::clbkLoadPanel2D, oapiRegisterPanelBackground,
+	 *   oapiRegisterPanelArea, oapiRegisterMFD, clbkLoadGenericCockpit,
+	 *   clbkLoadVC
 	 */
 	virtual bool clbkLoadPanel (int id);
 

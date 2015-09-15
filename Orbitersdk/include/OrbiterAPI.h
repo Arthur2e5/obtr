@@ -86,6 +86,18 @@ inline double posangle (double angle)
 	return (a >= 0.0 ? a : a+PI2);
 }
 
+/**
+ * \brief Write a floating point value to a string
+ * \param cbuf character buffer
+ * \param n size of cbuf array
+ * \param f floating point value
+ * \param precision output precision
+ * \note Formats the string in the standard Orbiter convention,
+ *   with 'k', 'M', 'G' postfixes as required
+ * \note cbuf must be allocated to sufficient size to hold the string
+ */
+OAPIFUNC void FormatValue (char *cbuf, int n, double f, int precision=4);
+
 // ======================================================================
 // API data types
 // ======================================================================
@@ -2318,15 +2330,6 @@ OAPIFUNC const char *oapiGetCmdLine ();
  *   to the client area of the render window.
  */
 OAPIFUNC void oapiGetViewportSize (DWORD *w, DWORD *h, DWORD *bpp = 0);
-
-/**
- * \brief Returns the scaling factor for 2-D instrument panels.
- * \return Panel scaling factor (>0)
- * \note This function returns the user-defined panel scaling factor.
- * \note The default scaling factor is 1. Values > 1 cause panels to be
- *   expanded, values < 1 cause panels to be shrunk.
- */
-OAPIFUNC double oapiGetPanelScale();
 
 /**
  * \brief Register a module interface class instance
@@ -4989,6 +4992,37 @@ OAPIFUNC int oapiSwitchPanel (int direction);
 	* \sa oapiSwitchPanel
 	*/
 OAPIFUNC int oapiSetPanel (int panel_id);
+
+/**
+ * \brief Returns the scaling factor for 2-D instrument panels.
+ * \return Panel scaling factor (>0)
+ * \note This function returns the panel scaling factor defined by the user
+ *   in the Launchpad dialog.
+ * \note The default scaling factor is 1. Values > 1 cause panels to be
+ *   expanded, values < 1 cause panels to be shrunk.
+ * \note The value returned by this function is only used by legacy panels
+ *   defined in VESSEL2::clbkLoadPanel. Panels created with VESSEL3::clbkLoadPanel2D
+ *   should use oapiGetPanel2DScale instead.
+ * \sa oapigetPanel2DScale
+ */
+OAPIFUNC double oapiGetPanelScale();
+
+/**
+ * \brief Returns the current scaling factor for the active 2D instrument
+ *   panel.
+ * \return Current panel scaling factor.
+ * \note The value returned by this function describes the scaling between the
+ *   coordinates of the panel mesh and the screen pixels. They correspond to the
+ *   values passed to VESSEL3::SetPanelScaling.
+ * \note A scaling value of 1 means every mesh unit corresponds to the size of a
+ *   pixel. Smaller values indicate a scaled-down mesh, larger values a scaled-up mesh.
+ * \note If the current camera view is not in Panel2D mode, the return value is 1.
+ * \note The value returned by this function is only used by instrument panels which
+ *   have been created with VESSEL3::clbkLoadPanel2D. Legacy panels created with
+ *   VESSEL2::clbkLoadPanel should use oapiGetPanelScale instead.
+ * \sa VESSEL3::SetPanelScaling, VESSEL3::clbkLoadPanel2D
+ */
+OAPIFUNC double oapiGetPanel2DScale();
 
 OAPIFUNC void oapiSetPanelBlink (VECTOR3 v[4]);
 //@}

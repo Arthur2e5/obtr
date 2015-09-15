@@ -158,7 +158,12 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	int i, j;
 
 	modelidx = (fmodel ? 1 : 0);
-	pctrl = new PressureControl (this);
+
+	nssys = 2;                      // number of subsystems
+	ssys = new DGSubSystem*[nssys]; // list of subsystems
+	ssys[0] = ssys_hoverhold = new HoverHoldAltControl (this, 0); // hover hold altitude control
+	ssys[1] = ssys_pressurectrl = new PressureControl (this, 1);  // cabin/airlock pressure controls
+
 	aoa_ind = PI;
 	slip_ind = PI*0.5;
 	load_ind = PI;
@@ -266,6 +271,10 @@ DeltaGlider::~DeltaGlider ()
 
 	if (scramjet) delete scramjet;
 
+	for (i = 0; i < nssys; i++)
+		delete ssys[i];
+	delete []ssys;
+
 	for (i = 0; i < ninstr; i++)
 		delete instr[i];
 	delete []instr;
@@ -300,7 +309,7 @@ void DeltaGlider::CreatePanelElements ()
 {
 	int i, j;
 
-	ninstr_main = 51;
+	ninstr_main = 50;
 	instr_scram0 = ninstr_main;
 	ninstr_main += (ScramVersion() ? 1 : 0);
 
@@ -359,7 +368,7 @@ void DeltaGlider::CreatePanelElements ()
 	instr[47] = new HatchSwitch (this);
 	instr[48] = new ILockSwitch (this);
 	instr[49] = new OLockSwitch (this);
-	instr[50] = new HoverAltBtn (this);
+	//instr[50] = new HoverAltBtn (this);
 
 	aap = new AAP (this);   aap->AttachHSI ((InstrHSI*)instr[1]);
 
@@ -2314,7 +2323,7 @@ void DeltaGlider::InitVCMesh()
 		oapiEditMeshGroup (vcmesh, GRP_PILOT_VISOR_VC, &ges);
 
 		for (DWORD i = 0; i < ninstr; i++) instr[i]->ResetVC (vcmesh);
-		pctrl->clbkResetVC (vcmesh);
+		for (DWORD i = 0; i < nssys; i++) ssys[i]->clbkResetVC (vcmesh);
 	}
 }
 
@@ -2951,10 +2960,7 @@ void DeltaGlider::clbkHUDMode (int mode)
 void DeltaGlider::clbkNavMode (int mode, bool active)
 {
 	if (mode == NAVMODE_HOLDALT) {
-		((HoverAltBtn*)instr[50])->SetState(active ? DGButton3::ON : DGButton3::OFF);
-		if (active)
-			hover_alt = GetAltitude();
-		oapiTriggerRedrawArea (0, 0, AID_HOVERALTBTN);
+		ssys_hoverhold->Activate (active);
 	} else {
 		((NavButtons*)instr[5])->SetMode (mode, active);
 		oapiTriggerRedrawArea (0, 0, AID_NAVMODE);
@@ -3274,7 +3280,8 @@ void DeltaGlider::clbkPostStep (double simt, double simdt, double mjd)
 		}
 	}
 
-	pctrl->clbkPostStep (simt, simdt, mjd);
+	for (DWORD i = 0; i < nssys; i++)
+		ssys[i]->clbkPostStep (simt, simdt, mjd);
 }
 
 bool DeltaGlider::clbkLoadGenericCockpit ()
@@ -3581,7 +3588,8 @@ bool DeltaGlider::clbkLoadVC (int id)
 
 		// HUD colour selector button
 		oapiVCRegisterArea (AID_HUDCOLOUR, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Spherical (AID_HUDCOLOUR, VC_HUD_COLBUTTON_mousepoint, VC_HUD_COLBUTTON_mouserad);
+		oapiVCSetAreaClickmode_Spherical (AID_HUDCOLOUR, VC_HUD_COLBUTTON_ref, VC_HUD_COLBUTTON_mouserad);
+		((DGButton2*)instr[35])->DefineAnimationVC (VC_HUD_COLBUTTON_axis, GRP_BUTTON2_VC, VC_HUD_COLBUTTON_vofs);
 
 		// HUD extend/retract switch
 		oapiVCRegisterArea (AID_HUDRETRACT, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
@@ -3694,11 +3702,6 @@ bool DeltaGlider::clbkLoadVC (int id)
 		// Hover status display
 		oapiVCRegisterArea (AID_HBALANCEDISP, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
 
-		// Hover hold alt button
-		oapiVCRegisterArea (AID_HOVERALTBTN, PANEL_REDRAW_MOUSE | PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Spherical (AID_HOVERALTBTN, VC_BTN_HOVER_HOLDALT_ref, VC_BTN_HOVER_HOLDALT_mouserad);
-		((DGButton3*)instr[50])->DefineAnimationVC (VC_BTN_HOVER_HOLDALT_axis, GRP_BUTTON3_VC, GRP_LIT_SURF_VC, VC_BTN_HOVER_HOLDALT_vofs, VC_BTN_HOVER_HOLDALT_LABEL_vofs);
-
 		// Elevator trim wheel
 		oapiVCRegisterArea (AID_ELEVATORTRIM, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_ELEVATORTRIM, vc_etrimwheel_mousearea[0], vc_etrimwheel_mousearea[1], vc_etrimwheel_mousearea[2], vc_etrimwheel_mousearea[3]);
@@ -3770,7 +3773,9 @@ bool DeltaGlider::clbkLoadVC (int id)
 	default:
 		return false;
 	}
-	pctrl->clbkLoadVC (id);
+
+	for (DWORD i = 0; i < nssys; i++)
+		ssys[i]->clbkLoadVC (id);
 
 	InitVCMesh();
 
@@ -3785,6 +3790,15 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 	static int ctrl = 0, mode = 0;
 	static double py = 0;
 
+	// subsystem id?
+	int subsys = (id/1000)-1;
+	if (subsys >= 0) {
+		if (subsys >= nssys) return false; // subsystem id out of range
+		id = id%1000;                      // map from global to subsystem-local element id
+		return ssys[subsys]->clbkVCMouseEvent (id, event, p);
+	}
+
+	// standalone id
 	switch (id) {
 	case AID_MFD1_LBUTTONS:
 	case AID_MFD1_RBUTTONS:
@@ -3927,14 +3941,10 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 		return instr[21]->ProcessMouseVC (event, p);
 	case AID_RHOVER:
 		return instr[22]->ProcessMouseVC (event, p);
-	case AID_HOVERALTBTN:
-		return instr[50]->ProcessMouseVC (event, p);
 	case AID_MWS:
 		bMWSActive = bMWSOn = false;
 		return true;
 	}
-	if (int res = pctrl->clbkVCMouseEvent (id, event, p))
-		return (res==1);
 
 	return false;
 }
@@ -3946,6 +3956,15 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 {
 	if (!vcmesh) return false;
 
+	// subsystem id?
+	int subsys = (id/1000)-1;
+	if (subsys >= 0) {
+		if (subsys >= nssys) return false; // subsystem id out of range
+		id = id%1000;                      // map from global to subsystem-local element id
+		return ssys[subsys]->clbkVCRedrawEvent (id, event, vcmesh, surf);
+	}
+
+	// standalone id
 	switch (id) {
 	case AID_MFD1_LBUTTONS:
 	case AID_MFD1_RBUTTONS:
@@ -3985,8 +4004,6 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 		return instr[21]->RedrawVC (vcmesh, 0);
 	case AID_RHOVER:
 		return instr[22]->RedrawVC (vcmesh, 0);
-	case AID_HOVERALTBTN:
-		return instr[50]->RedrawVC (vcmesh, 0);
 	case AID_MAINPROP:
 		return instr[4]->RedrawVC (vcmesh, intex);
 	case AID_RCSPROP:
@@ -4054,8 +4071,6 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 	case AID_MWS:
 		return (vcmesh ? instr[27]->RedrawVC (vcmesh, 0) : false);
 	}
-	if (int res = pctrl->clbkVCRedrawEvent (id, event, vcmesh, surf))
-		return (res == 1);
 
 	return false;
 }
