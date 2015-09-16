@@ -91,8 +91,7 @@ bool Airbrake::Redraw2D (SURFHANDLE surf)
 bool Airbrake::ProcessMouse2D (int event, int mx, int my)
 {
 	DeltaGlider *dg = (DeltaGlider*)vessel;
-	dg->ActivateAirbrake (my > 30 ? DeltaGlider::DOOR_CLOSING : DeltaGlider::DOOR_OPENING);
-	((DeltaGlider*)vessel)->RevertAirbrake();
+	dg->ActivateAirbrake (my > 30 ? DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
 	return false;
 }
 

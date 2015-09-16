@@ -159,10 +159,12 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 
 	modelidx = (fmodel ? 1 : 0);
 
-	nssys = 2;                      // number of subsystems
+	// Subsystem definitions
+	nssys = 3;                      // number of subsystems
 	ssys = new DGSubSystem*[nssys]; // list of subsystems
-	ssys[0] = ssys_hoverhold = new HoverHoldAltControl (this, 0); // hover hold altitude control
+	ssys[0] = ssys_hoverhold = new HoverHoldAltControl (this, 0); // hover hold altitude controls
 	ssys[1] = ssys_pressurectrl = new PressureControl (this, 1);  // cabin/airlock pressure controls
+	ssys[2] = ssys_hoverbalance = new HoverBalanceControl (this, 2); // hover balance controls
 
 	aoa_ind = PI;
 	slip_ind = PI*0.5;
@@ -218,7 +220,6 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	instr_brightness  = 0.5;
 	flood_brightness  = 0.7;
 	main_gimbal_mode  = 0;
-	hover_mode        = 0;
 	for (i = 0; i < 2; i++)
 		panelcol[i]   = 0;
 	skinpath[0] = '\0';
@@ -239,8 +240,6 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 		mainpropidx[i] = rcspropidx[i] = scrampropidx[i] = -1;
 		mpswitch[i] = myswitch[i] = 0;
 	}
-	phover = phover_cmd = 0.0;
-	rhover = rhover_cmd = 0.0;
 	for (i = 0; i < 3; i++)
 		for (j = 0; j < 3; j++) rotidx[i][j] = 0;
 
@@ -276,7 +275,7 @@ DeltaGlider::~DeltaGlider ()
 	delete []ssys;
 
 	for (i = 0; i < ninstr; i++)
-		delete instr[i];
+		if (instr[i]) delete instr[i];
 	delete []instr;
 
 	delete aap;
@@ -338,10 +337,10 @@ void DeltaGlider::CreatePanelElements ()
 	instr[16] = new MainGimbalDisp (this);
 	instr[17] = new PMainGimbalCtrl (this);
 	instr[18] = new YMainGimbalCtrl (this);
-	instr[19] = new HoverCtrlDial (this);
-	instr[20] = new HoverDisp (this);
-	instr[21] = new PHoverCtrl (this);
-	instr[22] = new RHoverCtrl (this);
+	instr[19] = 0;
+	instr[20] = 0;
+	instr[21] = 0;
+	instr[22] = 0;
 	instr[23] = new NoseconeLever (this);
 	instr[24] = new NoseconeIndicator (this);
 	instr[25] = new SwitchArray (this);
@@ -368,7 +367,6 @@ void DeltaGlider::CreatePanelElements ()
 	instr[47] = new HatchSwitch (this);
 	instr[48] = new ILockSwitch (this);
 	instr[49] = new OLockSwitch (this);
-	//instr[50] = new HoverAltBtn (this);
 
 	aap = new AAP (this);   aap->AttachHSI ((InstrHSI*)instr[1]);
 
@@ -830,6 +828,8 @@ void DeltaGlider::ReleaseSurfaces ()
 void DeltaGlider::InitPanel (int panel)
 {
 	DWORD i;
+	for (i = 0; i < nssys; i++)
+		ssys[i]->clbkReset2D (panel, hPanelMesh);
 
 	switch (panel) {
 	case 0: // main panel
@@ -847,7 +847,7 @@ void DeltaGlider::InitPanel (int panel)
 		srf[11] = oapiCreateSurface (LOADBMP (IDB_WARN));
 
 		// reset state flags for panel instruments
-		for (i = 0; i < ninstr; i++) instr[i]->Reset2D (hPanelMesh);
+		for (i = 0; i < ninstr; i++) if (instr[i]) instr[i]->Reset2D (hPanelMesh);
 
 		for (i = 0; i < 5; i++) engsliderpos[i] = (UINT)-1;
 		for (i = 0; i < 2; i++)
@@ -1284,12 +1284,6 @@ void DeltaGlider::ActivateAirbrake (DoorStatus action, bool half_step)
 	RecordEvent ("AIRBRAKE", action == DOOR_CLOSING ? "CLOSE" : "OPEN");
 }
 
-void DeltaGlider::RevertAirbrake (void)
-{
-	ActivateAirbrake (brake_status == DOOR_CLOSED || brake_status == DOOR_CLOSING ?
-		DOOR_OPENING : DOOR_CLOSING);
-}
-
 void DeltaGlider::ActivateHud (DoorStatus action)
 {
 	hud_status = action;
@@ -1624,116 +1618,6 @@ bool DeltaGlider::IncMainYGimbal (int which, int mode)
 			myswitch[i] = 0;
 	}
 	return true;
-}
-
-bool DeltaGlider::IncPHover (int mode)
-{
-	if (mode) {
-		const double cmd_speed = 0.5;
-		double dcmd = oapiGetSimStep() * cmd_speed * PHOVER_RANGE * (mode == 1 ? -1.0:1.0);
-		if (hover_mode == 2)
-			phover_cmd = min (PHOVER_RANGE, max (-PHOVER_RANGE, phover_cmd+dcmd));
-	}
-	return true;
-}
-
-bool DeltaGlider::IncRHover (int mode)
-{
-	if (mode) {
-		const double cmd_speed = 0.5;
-		double dcmd = oapiGetSimStep() * cmd_speed * RHOVER_RANGE * (mode == 1 ? -1.0:1.0);
-		if (hover_mode == 2)
-			rhover_cmd = min (RHOVER_RANGE, max (-RHOVER_RANGE, rhover_cmd+dcmd));
-	}
-	return true;
-}
-
-void DeltaGlider::AutoHoverAtt ()
-{
-	double lvl;
-
-	// Pitch command
-	lvl = -GetManualControlLevel(THGROUP_ATT_PITCHDOWN, MANCTRL_ROTMODE);
-	if (!lvl) lvl = GetManualControlLevel(THGROUP_ATT_PITCHUP, MANCTRL_ROTMODE);
-	phover_cmd = lvl*PHOVER_RANGE;
-
-	// Roll command
-	lvl = -GetManualControlLevel(THGROUP_ATT_BANKRIGHT, MANCTRL_ROTMODE);
-	if (!lvl) lvl = GetManualControlLevel(THGROUP_ATT_BANKLEFT, MANCTRL_ROTMODE);
-	rhover_cmd = lvl*RHOVER_RANGE;
-}
-
-void DeltaGlider::TrackHoverAtt ()
-{
-	if (hover_mode) {
-		phover = GetPitch();
-		rhover = GetBank();
-		const double fb_scale = 3.0/4.55; // scaling between front and back hovers (distance from CG)
-		double Lf = GetThrusterLevel(th_hover[0]);
-		double Ll = GetThrusterLevel(th_hover[1]);
-		double Lr = GetThrusterLevel(th_hover[2]);
-		double Lb = (Ll+Lr)*0.5;
-		double Lm = (Lf+Lb)*0.5;
-		double Tf = Lf;
-		double Tb = Lb*fb_scale;
-		double Tm = (Tf+Tb)*0.5;
-		if (fabs(phover) <= MAX_AUTO_HOVER_ATT && fabs(rhover) <= MAX_AUTO_HOVER_ATT) { // within control range
-			const double p_alpha = 0.2;
-			const double p_beta = 0.6;
-			const double r_alpha = 0.2;
-			const double r_beta = 0.6;
-			double dp = phover - phover_cmd;
-			double dr = rhover - rhover_cmd;
-			VECTOR3 avel;
-			GetAngularVel(avel);
-			double dpv =  avel.x;
-			double drv = -avel.z;
-			double balance_fb = -p_alpha*dp - p_beta*dpv;
-			double balance_lr = -r_alpha*dr - r_beta*drv;
-			if (Lf || Lb) {
-				// front/back balance
-				double Lf_cmd = Lm+balance_fb;
-				double Lb_cmd = Lm-balance_fb;
-				double D = (Lf_cmd-Lf + (Lb_cmd-Lb)*fb_scale)/(1.0+fb_scale);
-				Lf_cmd -= D;
-				Lb_cmd -= D;
-
-				double Lmin = min (Lf_cmd, Lb_cmd);
-				double Lmax = max (Lf_cmd, Lb_cmd);
-				if (Lmin < 0.0) {
-					if (Lf_cmd < 0.0) Lf_cmd = 0.0, Lb_cmd += Lmin/fb_scale;
-					else              Lb_cmd = 0.0, Lf_cmd += Lmin*fb_scale;
-				}
-				if (Lmax > 1.0) {
-					if (Lf_cmd > 1.0) Lf_cmd = 1.0, Lb_cmd += (Lmax-1.0)/fb_scale;
-					else              Lb_cmd = 1.0, Lf_cmd += (Lmax-1.0)*fb_scale;
-				}
-				// left/right balance
-				double Ll_cmd = Lb_cmd-balance_lr;
-				double Lr_cmd = Lb_cmd+balance_lr;
-				Lmin = min (Ll_cmd, Lr_cmd);
-				Lmax = max (Ll_cmd, Lr_cmd);
-				if (Lmin < 0.0) {
-					if (Ll_cmd < 0.0) Ll_cmd = 0.0, Lr_cmd += Lmin;
-					else              Lr_cmd = 0.0, Ll_cmd += Lmin;
-				}
-				if (Lmax > 1.0) {
-					if (Ll_cmd > 1.0) Ll_cmd = 1.0, Lr_cmd += Lmax-1.0;
-					else              Lr_cmd = 1.0, Ll_cmd += Lmax-1.0;
-				}
-				SetThrusterLevel (th_hover[0], Lf_cmd);
-				SetThrusterLevel (th_hover[1], Ll_cmd);
-				SetThrusterLevel (th_hover[2], Lr_cmd);
-			}
-		} else {
-			double L_cmd = 2.0*Tm / (1.0 + fb_scale);
-			for (int i = 0; i < 3; i++)
-				SetThrusterLevel (th_hover[i], L_cmd);
-		}
-	} else {
-		phover = rhover = phover_cmd = rhover_cmd = 0.0;
-	}
-	oapiTriggerRedrawArea (0, 0, AID_HBALANCEDISP);
 }
 
 bool DeltaGlider::GetBeaconState (int which)
@@ -2322,8 +2206,8 @@ void DeltaGlider::InitVCMesh()
 		oapiEditMeshGroup (vcmesh, GRP_PILOT_HEAD_VC, &ges);
 		oapiEditMeshGroup (vcmesh, GRP_PILOT_VISOR_VC, &ges);
 
-		for (DWORD i = 0; i < ninstr; i++) instr[i]->ResetVC (vcmesh);
-		for (DWORD i = 0; i < nssys; i++) ssys[i]->clbkResetVC (vcmesh);
+		for (DWORD i = 0; i < ninstr; i++) if (instr[i]) instr[i]->ResetVC (vcmesh);
+		for (DWORD i = 0; i < nssys; i++) ssys[i]->clbkResetVC (0, vcmesh);
 	}
 }
 
@@ -2661,7 +2545,9 @@ void DeltaGlider::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 		} else if (!_strnicmp (line, "MGIMBALMODE", 11)) {
 			sscanf (line+11, "%d", &main_gimbal_mode);
 		} else if (!_strnicmp (line, "HOVERMODE", 9)) {
-			sscanf (line+9, "%d", &hover_mode);
+			int hovermode;
+			sscanf (line+9, "%d", &hovermode);
+			ssys_hoverbalance->SetMode (hovermode);
 		} else if (!_strnicmp (line, "TANKCONFIG", 10)) {
 			if (scramjet) sscanf (line+10, "%d", &tankconfig);
 		} else if (!_strnicmp (line, "PSNGR", 5)) {
@@ -2770,8 +2656,8 @@ void DeltaGlider::clbkSaveState (FILEHANDLE scn)
 		sprintf (cbuf, "%d", main_gimbal_mode);
 		oapiWriteScenario_string (scn, "MGIMBALMODE", cbuf);
 	}
-	if (hover_mode) {
-		sprintf (cbuf, "%d", hover_mode);
+	if (i = ssys_hoverbalance->Mode()) {
+		sprintf (cbuf, "%d", i);
 		oapiWriteScenario_string (scn, "HOVERMODE", cbuf);
 	}
 	for (i = 0; i < 4; i++)
@@ -2897,10 +2783,11 @@ void DeltaGlider::clbkVisualCreated (VISHANDLE vis, int refcount)
 
 	ApplySkin();
 
-	// set VC state
-	UpdateStatusIndicators();
-	//SetVC_HUDMode();
-	InitVCMesh();
+	//if (oapiCameraInternal()) {
+		UpdateStatusIndicators();
+		//if (oapiCockpitMode() == COCKPIT_VIRTUAL)
+			InitVCMesh();
+	//}
 }
 
 // --------------------------------------------------------------
@@ -2994,9 +2881,6 @@ void DeltaGlider::clbkPostStep (double simt, double simdt, double mjd)
 	if (main_gimbal_mode == 1)
 		AutoMainGimbal();
 	TrackMainGimbal();
-	if (hover_mode == 1)
-		AutoHoverAtt();
-	TrackHoverAtt();
 
 	// animate landing gear
 	if (gear_status >= DOOR_CLOSING) {
@@ -3299,6 +3183,10 @@ bool DeltaGlider::clbkLoadGenericCockpit ()
 
 bool DeltaGlider::clbkLoadPanel2D (int id, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
 {
+	// set up subsystem panel elements
+	for (int i = 0; i < nssys; i++)
+		ssys[i]->clbkLoadPanel2D (id, hPanel, viewW, viewH);
+
 	switch (id) {
 	case 0:
 		DefinePanelMain (hPanel);
@@ -3372,12 +3260,6 @@ void DeltaGlider::DefinePanelMain (PANELHANDLE hPanel)
 	RegisterPanelArea (hPanel, AID_MAINGIMBALDISP, _R( 0,  0,   0,  0), PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, instr[16]);
 	RegisterPanelArea (hPanel, AID_PGIMBALMAIN,  _R(  61,190,  96,234), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, instr[17]);
 	RegisterPanelArea (hPanel, AID_YGIMBALMAIN,  _R(   9,194,  53,229), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, instr[18]);
-	RegisterPanelArea (hPanel, AID_HOVERDIAL,    _R(  32,280,  72,324), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, panel2dtex, instr[19]);
-	RegisterPanelArea (hPanel, AID_HBALANCEDISP, _R(   0,  0,   0,  0), PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, instr[20]);
-	RegisterPanelArea (hPanel, AID_PHOVER,       _R(  69, 402, 85,446), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, instr[21]);
-	((DGSwitch2*)instr[21])->DefineAnimation2D (DGSwitch2::VERT, GRP_INSTRUMENTS_ABOVE_P0, 192);
-	RegisterPanelArea (hPanel, AID_RHOVER,       _R(   9, 415, 53,431), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, instr[22]);
-	((DGSwitch2*)instr[22])->DefineAnimation2D (DGSwitch2::HORZ, GRP_INSTRUMENTS_ABOVE_P0, 196);
 	RegisterPanelArea (hPanel, AID_GEARINDICATOR, _R(0,0,0,0),          PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, instr[37]);
 	RegisterPanelArea (hPanel, AID_NOSECONELEVER, _R(1141,327,1180,421), PANEL_REDRAW_USER,  PANEL_MOUSE_LBDOWN, panel2dtex, instr[23]);
 	RegisterPanelArea (hPanel, AID_NOSECONEINDICATOR, _R(0,0,0,0),      PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, instr[24]);
@@ -3686,22 +3568,6 @@ bool DeltaGlider::clbkLoadVC (int id)
 		// Gimbal status display
 		oapiVCRegisterArea (AID_MAINGIMBALDISP, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
 
-		// Hover control dial
-		oapiVCRegisterArea (AID_HOVERDIAL, PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_HOVERDIAL, VC_HOVER_DIAL_mousearea[0], VC_HOVER_DIAL_mousearea[1], VC_HOVER_DIAL_mousearea[2], VC_HOVER_DIAL_mousearea[3]);
-		((DGDial1*)instr[19])->DefineAnimationVC (VC_HOVER_DIAL_ref, VC_HOVER_DIAL_axis, GRP_DIAL1_VC, VC_HOVER_DIAL_vofs);
-
-		// Hover manual switches
-		oapiVCRegisterArea (AID_PHOVER, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_PHOVER, VC_HOVER_PSWITCH_mousearea[0], VC_HOVER_PSWITCH_mousearea[1], VC_HOVER_PSWITCH_mousearea[2], VC_HOVER_PSWITCH_mousearea[3]);
-		((DGSwitch2*)instr[21])->DefineAnimationVC (VC_HOVER_PSWITCH_ref, VC_HOVER_PSWITCH_axis, GRP_SWITCH2_VC, VC_HOVER_PSWITCH_vofs);
-		oapiVCRegisterArea (AID_RHOVER, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_RHOVER, VC_HOVER_RSWITCH_mousearea[0], VC_HOVER_RSWITCH_mousearea[1], VC_HOVER_RSWITCH_mousearea[2], VC_HOVER_RSWITCH_mousearea[3]);
-		((DGSwitch2*)instr[22])->DefineAnimationVC (VC_HOVER_RSWITCH_ref, VC_HOVER_RSWITCH_axis, GRP_SWITCH2_VC, VC_HOVER_RSWITCH_vofs);
-
-		// Hover status display
-		oapiVCRegisterArea (AID_HBALANCEDISP, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
-
 		// Elevator trim wheel
 		oapiVCRegisterArea (AID_ELEVATORTRIM, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_ELEVATORTRIM, vc_etrimwheel_mousearea[0], vc_etrimwheel_mousearea[1], vc_etrimwheel_mousearea[2], vc_etrimwheel_mousearea[3]);
@@ -3790,12 +3656,12 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 	static int ctrl = 0, mode = 0;
 	static double py = 0;
 
-	// subsystem id?
-	int subsys = (id/1000)-1;
+	// distribute to subsystem
+	int subsys, localid;
+	localid = SubSystem::LocalElId (id, subsys);
 	if (subsys >= 0) {
 		if (subsys >= nssys) return false; // subsystem id out of range
-		id = id%1000;                      // map from global to subsystem-local element id
-		return ssys[subsys]->clbkVCMouseEvent (id, event, p);
+		return ssys[subsys]->clbkVCMouseEvent (localid, event, p);
 	}
 
 	// standalone id
@@ -3909,8 +3775,8 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 		return instr[11]->ProcessMouseVC (event, p);
 	case AID_MAINGIMBALDIAL:
 		return instr[15]->ProcessMouseVC (event, p);
-	case AID_HOVERDIAL:
-		return instr[19]->ProcessMouseVC (event, p);
+//	case AID_HOVERDIAL:
+//		return instr[19]->ProcessMouseVC (event, p);
 	case AID_ELEVATORTRIM:
 		return instr[6]->ProcessMouseVC (event, p);
 	case AID_GEARLEVER:
@@ -3937,10 +3803,6 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 		return instr[17]->ProcessMouseVC (event, p);
 	case AID_YGIMBALMAIN:
 		return instr[18]->ProcessMouseVC (event, p);
-	case AID_PHOVER:
-		return instr[21]->ProcessMouseVC (event, p);
-	case AID_RHOVER:
-		return instr[22]->ProcessMouseVC (event, p);
 	case AID_MWS:
 		bMWSActive = bMWSOn = false;
 		return true;
@@ -3956,12 +3818,12 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 {
 	if (!vcmesh) return false;
 
-	// subsystem id?
-	int subsys = (id/1000)-1;
+	// distribute to subsystem
+	int subsys, localid;
+	localid = SubSystem::LocalElId (id, subsys);
 	if (subsys >= 0) {
 		if (subsys >= nssys) return false; // subsystem id out of range
-		id = id%1000;                      // map from global to subsystem-local element id
-		return ssys[subsys]->clbkVCRedrawEvent (id, event, vcmesh, surf);
+		return ssys[subsys]->clbkVCRedrawEvent (localid, event, vcmesh, surf);
 	}
 
 	// standalone id
@@ -3996,14 +3858,6 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 		return instr[17]->RedrawVC (vcmesh, 0);
 	case AID_YGIMBALMAIN:
 		return instr[18]->RedrawVC (vcmesh, 0);
-	case AID_HOVERDIAL:
-		return instr[19]->RedrawVC (vcmesh, 0);
-	case AID_HBALANCEDISP:
-		return instr[20]->RedrawVC (vcmesh, 0);
-	case AID_PHOVER:
-		return instr[21]->RedrawVC (vcmesh, 0);
-	case AID_RHOVER:
-		return instr[22]->RedrawVC (vcmesh, 0);
 	case AID_MAINPROP:
 		return instr[4]->RedrawVC (vcmesh, intex);
 	case AID_RCSPROP:
@@ -4110,6 +3964,11 @@ int DeltaGlider::clbkConsumeBufferedKey (DWORD key, bool down, char *kstate)
 	if (Playback()) return 0; // don't allow manual user input during a playback
 
 	if (KEYMOD_ALT (kstate)) {
+		switch (key) {
+		case OAPI_KEY_B:
+			ActivateAirbrake (DOOR_CLOSING);
+			return 1;
+		}
 	} else if (KEYMOD_SHIFT (kstate)) {
 	} else if (KEYMOD_CONTROL (kstate)) {
 		switch (key) {
@@ -4117,7 +3976,7 @@ int DeltaGlider::clbkConsumeBufferedKey (DWORD key, bool down, char *kstate)
 			oapiOpenDialogEx (g_Param.hDLL, IDD_CTRL, Ctrl_DlgProc, DLG_CAPTIONCLOSE, this);
 			return 1;
 		case OAPI_KEY_B:
-			RevertAirbrake ();
+			ActivateAirbrake (DOOR_OPENING);
 			return 1;
 		case OAPI_KEY_H:
 			RevertHud ();

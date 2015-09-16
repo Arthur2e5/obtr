@@ -168,6 +168,7 @@ const DWORD INSTR3_TEXH   =  188;
 
 // DG subsystems
 class DGSubSystem;
+class HoverBalanceControl;
 class HoverHoldAltControl;
 
 // ==========================================================
@@ -199,8 +200,6 @@ public:
 	void SetHUDMode (int mode);
 	int GetMainGimbalMode () { return main_gimbal_mode; }
 	void SetMainGimbalMode (int mode) { main_gimbal_mode = mode; }
-	int GetHoverMode () { return hover_mode; }
-	void SetHoverMode (int mode) { hover_mode = mode; }
 	void ModHUDBrightness (bool increase);
 	void SetPassengerVisuals ();
 	void SetDamageVisuals ();
@@ -236,6 +235,8 @@ public:
 	void SetMainRetroLevel (int which, double lmain, double lretro);
 	void SetScramLevel (int which, double level);
 	void EnableRetroThrusters (bool state);
+	double GetHoverThrusterLevel (int th) const { return GetThrusterLevel(th_hover[th]); }
+	void   SetHoverThrusterLevel (int th, double lvl) { SetThrusterLevel(th_hover[th], lvl); }
 	inline double MainPGimbal (int which, bool actual=true) const
 	{ return actual ? mpgimbal[which]: mpgimbal_cmd[which]; }  // return main engine gimbal pitch
 	inline double MainYGimbal (int which, bool actual=true) const
@@ -246,14 +247,6 @@ public:
 	void TrackMainGimbal ();                                   // follow gimbals to commanded values
 	bool IncMainPGimbal (int which, int mode);                 // manually change gimbal pitch command
 	bool IncMainYGimbal (int which, int mode);                 // manually change gimbal yaw command
-	inline double PHover (bool actual=true) const
-	{ return actual ? phover : phover_cmd; }
-	inline double RHover (bool actual=true) const
-	{ return actual ? rhover : rhover_cmd; }
-	bool IncPHover (int mode);                                 // manually change hover pitch command
-	bool IncRHover (int mode);                                 // manually change hover roll command
-	void AutoHoverAtt ();                                      // set hover pitch/roll commands from user input
-	void TrackHoverAtt ();                                     // follow hover-induced attitude to commanded values
 	void TestDamage ();
 	void ApplyDamage ();
 	void RepairDamage ();
@@ -324,7 +317,6 @@ public:
 	void RevertOuterAirlock ();
 	void RevertInnerAirlock ();
 	void RevertHatch ();
-	void RevertAirbrake ();
 	void RevertRadiator ();
 	void RevertHud ();
 	void SetPressureValve (int id, DoorStatus action);
@@ -367,7 +359,6 @@ public:
 	UINT anim_scramthrottle[2]; // VC scram throttle levers (left and right)
 	UINT anim_gearlever;        // VC gear lever
 	UINT anim_airbrakelever;    // VC airbrake lever
-	//UINT anim_hoverdial;        // VC hover dial animation
 	UINT anim_retroswitch;      // VC retro cover switch animation
 	UINT anim_ladderswitch;     // VC ladder switch animation
 	UINT anim_radiatorswitch;   // VC radiator switch animation
@@ -414,6 +405,7 @@ private:
 	void ScramjetThrust ();                      // scramjet thrust calculation
 
 	// Vessel subsystems -------------------------------------------------------------
+	HoverBalanceControl *ssys_hoverbalance;      // hover balance control system
 	HoverHoldAltControl *ssys_hoverhold;         // hover hold alt system
 	PressureControl     *ssys_pressurectrl;      // pressure control system
 	DGSubSystem **ssys;                          // list subsystems
@@ -460,9 +452,6 @@ private:
 	int main_gimbal_mode;                        // setting of gimbal mode dial
 	double mpgimbal[2], mpgimbal_cmd[2];         // current/commanded main engine pitch gimbal angle (tan)
 	double mygimbal[2], mygimbal_cmd[2];         // current/commanded main engine yaw gimbal angle (tan)
-	double phover, phover_cmd;                   // current/commanded hover pitch angle (tan)
-	double rhover, rhover_cmd;                   // current/commanded hover roll angle (tan)
-	int hover_mode;                              // setting of hover mode dial
 
 	UINT engsliderpos[5];    // throttle settings for main,hover,scram engines
 	double scram_intensity[2];
@@ -559,11 +548,6 @@ typedef struct {
 #define AID_RCSPROPMASS         41
 #define AID_SCRAMPROP           42
 #define AID_SCRAMPROPMASS       43
-#define AID_HOVERDIAL           44
-#define AID_HBALANCEDISP        45
-#define AID_PHOVER              46
-#define AID_RHOVER              47
-//#define AID_HOVERALTBTN         48
 #define AID_RADIATORSWITCH      49
 #define AID_RETRODOORSWITCH     50
 #define AID_HATCHSWITCH         51

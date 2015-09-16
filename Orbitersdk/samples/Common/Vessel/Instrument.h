@@ -50,28 +50,135 @@ protected:
 
 // ==============================================================
 
+/**
+ * \brief Base class for a vessel subsystem
+ *
+ * This class can be used to represent a logical "subsystem" for a vessel (engine
+ * management, autopilots, electrical, thermal, pressure, payload management, etc.
+ * Defining subsystems in separate classes rather than directly in the vessel class
+ * helps stucturing the code logically and de-clutters the vessel class.
+ * SubSystem also acts as a container for the PanelElement objects that provide the
+ * user interface for that subsystem. It provides mouse and redraw callback functions
+ * that can be called from the corresponding vessel class callback function, and
+ * passes the call on to the appropriate subsystem panel element.
+ */
 class SubSystem {
 public:
+	/**
+	 * \brief Create a new subsystem.
+	 * \param v Vessel instance
+	 * \param ident subsystem identifier
+	 * \note Usually called from the vessel constructor
+	 */
 	SubSystem (VESSEL3 *v, int ident);
-	// create a new subsystem for vessel 'v' with identifier 'ident'
 
+	/**
+	 * \brief Subsystem destructor
+	 * \note Usually called from the vessel destructor
+	 */
 	virtual ~SubSystem ();
+
+	/**
+	 * \brief Returns pointer to the associated vessel instance
+	 */
 	inline VESSEL3 *Vessel() const { return vessel; }
+
+	/**
+	 * \brief Returns panel identifier
+	 */
 	inline int Id() const { return id; }
-	inline int Global(int elementid) const { return elementid + (id+1)*1000; } // map a local element id to global id
+
+	/**
+	 * \brief Add a PanelElement instance to the subsystem.
+	 * \param el Pointer to panel element instance
+	 * \return Local panel element identifier
+	 * \note The panel element instance is managed by the subsystem and destroyed
+	 *   together with the subsystem. The calling function must not delete the instance.
+	 */
+	int AddElement (PanelElement *el);
+
+
+	PanelElement *Element (DWORD i) const { return (i < nelement ? element[i]:0); }
+
+	/**
+	 * \brief Return the number of panel elements associated with the subsystem
+	 */
+	inline int NumElements() const { return nelement; }
+
+	/**
+	 * \brief Maps a subsystem-local panel element identifier to a global identfier.
+	 * \param elementid Local element identifier
+	 * \return Global identifier
+	 * \note Mapping between local and global identifiers allows the subsystem to define
+	 *   its own IDs for panel elements, and associating it with the global ID used by
+	 *   Orbiter for vessel-wide communication.
+	 */
+	inline int GlobalElId (int elementid) const { return elementid + (id+1)*1000; }
+
+	/**
+	 * \brief Maps a global panel element identifier to a subsystem-local ID
+	 * \param [in] globalid Global panel element identifier
+	 * \param [out] subsysid Identifier of the subsystem responsible for the element
+	 * \return Local element ID
+	 * \note Splits a global element ID into a subsystem ID and a local element ID.
+	 *   This method can be used by the vessel class to distribute incoming element
+	 *   events to the appropriate subsystem.
+	 */
+	static int LocalElId (int globalid, int &subsysid);
+
+	/**
+	 * \brief Per-frame notification
+	 * \param simt Session logical runtime [s]
+	 * \param simdt last step interval [s]
+	 * \param mjd absolute time in MJD format [days]
+	 * \note This method should be called by VESSEL2::clbkPostStep for all defined
+	 *   subsystems.
+	 */
 	virtual void clbkPostStep (double simt, double simdt, double mjd) {}
-	virtual bool clbkLoadVC (int vcid);  // create the VC elements for the subsystem
-	virtual void clbkResetVC (DEVMESHHANDLE hMesh);
+
+	/**
+	 * \brief Set up the 2D instrument panel for the subsystem
+	 * \param panelid Panel ID, as passed to VESSEL3::clbkLoadPanel2D
+	 * \param hPanel Panel handle, as passed to VESSEL3::clbkLoadPanel2D
+	 * \param viewW viewport width, as passed to VESSEL3::clbkLoadPanel2D
+	 * \param viewH viewport height, as passed to VESSEL3::clbkLoadPanel2D
+	 * \return true if the subsystem supports 2D panel cockpit mode
+     */
+	virtual bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH) { return false; }
+
+	/**
+	 * \brief Set up the virtual panel elements for the subsystem
+	 * \param vcid Virtual cockpit position ID (>= 0)
+	 * \return true if the subsystem supports a virtual cockpit mode
+	 * \note This method should be called by the vessel clbkLoadVC method
+	 *   for all defined subsystems.
+	 */
+	virtual bool clbkLoadVC (int vcid) { return false; }
+
+	virtual void clbkReset2D (int panelid, MESHHANDLE hMesh);
+
+	virtual void clbkResetVC (int vcid, DEVMESHHANDLE hMesh);
+
+	/**
+	 * \brief Redraw event for a subsystem panel element
+	 * \param id Subsystem-local panel element ID
+	 * \param event event type, as passed to VESSEL2::clbkVCRedrawEvent
+	 * \param hMesh VC mesh handle, as passed to VESSEL2::clbkVCRedrawEvent
+	 * \param hSurf texture surface mesh handle, as passed to VESSEL2::clbkVCRedrawEvent
+	 * \return The function should return true if it processes the event,
+	 *   false otherwise.
+	 * \note This method should be called by the vessel clbkVCRedrawEvent method
+	 *   after splitting the global element ID into subsystem and local element IDs
+	 */
 	virtual bool clbkVCRedrawEvent (int id, int event, DEVMESHHANDLE hMesh, SURFHANDLE hSurf);
+
 	virtual bool clbkVCMouseEvent (int id, int event, VECTOR3 &p);
 
-protected:
-	PanelElement **element;
-	DWORD nelement;
-
 private:
-	VESSEL3 *vessel;
-	int id;
+	VESSEL3 *vessel;         ///< associated vessel object
+	int id;                  ///< subsystem ID
+	PanelElement **element;  ///< list of panel elements
+	DWORD nelement;          ///< number of panel elements
 };
 
 #endif // !__INSTRUMENT_H

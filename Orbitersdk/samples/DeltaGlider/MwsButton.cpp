@@ -60,6 +60,7 @@ void MWSButton::Reset2D ()
 
 bool MWSButton::Redraw2D (SURFHANDLE surf)
 {
+#ifdef UNDEF
 	bool light;
 	if (dg->MWSActive()) {
 		double di, simt = oapiGetSimTime();
@@ -73,6 +74,7 @@ bool MWSButton::Redraw2D (SURFHANDLE surf)
 			grp->Vtx[vtxofs+i].tv = tv;
 		islit = light;
 	}
+#endif
 	return false;
 }
 

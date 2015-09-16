@@ -5,7 +5,7 @@
 //                   All rights reserved
 //
 // PressureCtrl.cpp
-// Cabin and airlock pressure control module
+// Cabin and airlock pressure control subsystem
 // ==============================================================
 
 #include "PressureCtrl.h"
@@ -19,13 +19,6 @@ double PressureControl::v_cabin = 24.0;
 double PressureControl::v_airlock = 4.0;
 double PressureControl::p_target = 100e3;
 
-const int PressureControl::AID_PVALVE0_SWITCH = 0;
-const int PressureControl::AID_PVALVE1_SWITCH = 1;
-const int PressureControl::AID_PVALVE2_SWITCH = 2;
-const int PressureControl::AID_PVALVE3_SWITCH = 3;
-const int PressureControl::AID_PVALVE4_SWITCH = 4;
-const int PressureControl::AID_PRESSUREDISP = 5;
-
 // --------------------------------------------------------------
 
 PressureControl::PressureControl (DeltaGlider *vessel, int ident)
@@ -37,13 +30,11 @@ PressureControl::PressureControl (DeltaGlider *vessel, int ident)
 	p_ext_hatch = p_ext_lock = 0.0;
 	docked = false;
 
-	nelement = 6;
-	element = new PanelElement*[nelement];
 	for (int i = 0; i < 5; i++) {
-		element[i] = valve_switch[i] = new PValveSwitch (this, i);
+		ELID_PVALVESWITCH[i] = AddElement (valve_switch[i] = new PValveSwitch (this, i));
 		valve_status[i] = 0;
 	}
-	element[5] = pind = new PressureIndicator (this, g_Param.surf);
+	ELID_DISPLAY = AddElement (pind = new PressureIndicator (this, g_Param.surf));
 }
 
 // --------------------------------------------------------------
@@ -148,27 +139,27 @@ bool PressureControl::clbkLoadVC (int id)
 	switch (id) {
 	case 0:
 		// Pressure indicator display
-		oapiVCRegisterArea (Global(AID_PRESSUREDISP), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
+		oapiVCRegisterArea (GlobalElId(ELID_DISPLAY), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
 
 		// Pressure valve switches
-		oapiVCRegisterArea (Global(AID_PVALVE0_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (Global(AID_PVALVE0_SWITCH), VC_CABIN_O2_SWITCH_mousearea[0], VC_CABIN_O2_SWITCH_mousearea[1], VC_CABIN_O2_SWITCH_mousearea[2], VC_CABIN_O2_SWITCH_mousearea[3]);
+		oapiVCRegisterArea (GlobalElId(ELID_PVALVESWITCH[0]), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_PVALVESWITCH[0]), VC_CABIN_O2_SWITCH_mousearea[0], VC_CABIN_O2_SWITCH_mousearea[1], VC_CABIN_O2_SWITCH_mousearea[2], VC_CABIN_O2_SWITCH_mousearea[3]);
 		valve_switch[0]->DefineAnimationVC (VC_CABIN_O2_SWITCH_ref, VC_CABIN_O2_SWITCH_axis, GRP_SWITCH1_VC, VC_CABIN_O2_SWITCH_vofs);
 
-		oapiVCRegisterArea (Global(AID_PVALVE1_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (Global(AID_PVALVE1_SWITCH), VC_VALVE1_SWITCH_mousearea[0], VC_VALVE1_SWITCH_mousearea[1], VC_VALVE1_SWITCH_mousearea[2], VC_VALVE1_SWITCH_mousearea[3]);
+		oapiVCRegisterArea (GlobalElId(ELID_PVALVESWITCH[1]), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_PVALVESWITCH[1]), VC_VALVE1_SWITCH_mousearea[0], VC_VALVE1_SWITCH_mousearea[1], VC_VALVE1_SWITCH_mousearea[2], VC_VALVE1_SWITCH_mousearea[3]);
 		valve_switch[1]->DefineAnimationVC (VC_VALVE1_SWITCH_ref, VC_VALVE1_SWITCH_axis, GRP_SWITCH1_VC, VC_VALVE1_SWITCH_vofs);
 
-		oapiVCRegisterArea (Global(AID_PVALVE2_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (Global(AID_PVALVE2_SWITCH), VC_VALVE2_SWITCH_mousearea[0], VC_VALVE2_SWITCH_mousearea[1], VC_VALVE2_SWITCH_mousearea[2], VC_VALVE2_SWITCH_mousearea[3]);
+		oapiVCRegisterArea (GlobalElId(ELID_PVALVESWITCH[2]), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_PVALVESWITCH[2]), VC_VALVE2_SWITCH_mousearea[0], VC_VALVE2_SWITCH_mousearea[1], VC_VALVE2_SWITCH_mousearea[2], VC_VALVE2_SWITCH_mousearea[3]);
 		valve_switch[2]->DefineAnimationVC (VC_VALVE2_SWITCH_ref, VC_VALVE2_SWITCH_axis, GRP_SWITCH1_VC, VC_VALVE2_SWITCH_vofs);
 
-		oapiVCRegisterArea (Global(AID_PVALVE3_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (Global(AID_PVALVE3_SWITCH), VC_VALVE3_SWITCH_mousearea[0], VC_VALVE3_SWITCH_mousearea[1], VC_VALVE3_SWITCH_mousearea[2], VC_VALVE3_SWITCH_mousearea[3]);
+		oapiVCRegisterArea (GlobalElId(ELID_PVALVESWITCH[3]), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_PVALVESWITCH[3]), VC_VALVE3_SWITCH_mousearea[0], VC_VALVE3_SWITCH_mousearea[1], VC_VALVE3_SWITCH_mousearea[2], VC_VALVE3_SWITCH_mousearea[3]);
 		valve_switch[3]->DefineAnimationVC (VC_VALVE3_SWITCH_ref, VC_VALVE3_SWITCH_axis, GRP_SWITCH1_VC, VC_VALVE3_SWITCH_vofs);
 
-		oapiVCRegisterArea (Global(AID_PVALVE4_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (Global(AID_PVALVE4_SWITCH), VC_LOCK_O2_SWITCH_mousearea[0], VC_LOCK_O2_SWITCH_mousearea[1], VC_LOCK_O2_SWITCH_mousearea[2], VC_LOCK_O2_SWITCH_mousearea[3]);
+		oapiVCRegisterArea (GlobalElId(ELID_PVALVESWITCH[4]), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_PVALVESWITCH[4]), VC_LOCK_O2_SWITCH_mousearea[0], VC_LOCK_O2_SWITCH_mousearea[1], VC_LOCK_O2_SWITCH_mousearea[2], VC_LOCK_O2_SWITCH_mousearea[3]);
 		valve_switch[4]->DefineAnimationVC (VC_LOCK_O2_SWITCH_ref, VC_LOCK_O2_SWITCH_axis, GRP_SWITCH1_VC, VC_LOCK_O2_SWITCH_vofs);
 		break;
 	}

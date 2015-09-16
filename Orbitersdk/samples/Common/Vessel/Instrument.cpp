@@ -131,14 +131,37 @@ SubSystem::~SubSystem ()
 
 // --------------------------------------------------------------
 
-bool SubSystem::clbkLoadVC (int vcid)
+int SubSystem::LocalElId (int globalid, int &subsysid)
 {
-	return true;
+	subsysid = (globalid/1000)-1;
+	return globalid%1000;
 }
 
 // --------------------------------------------------------------
 
-void SubSystem::clbkResetVC (DEVMESHHANDLE hMesh)
+int SubSystem::AddElement (PanelElement *el)
+{
+	PanelElement **tmp = new PanelElement*[nelement+1];
+	if (nelement) {
+		memcpy (tmp, element, nelement*sizeof(PanelElement*));
+		delete []element;
+	}
+	element = tmp;
+	element[nelement] = el;
+	return nelement++;
+}
+
+// --------------------------------------------------------------
+
+void SubSystem::clbkReset2D (int panelid, MESHHANDLE hMesh)
+{
+	for (DWORD i = 0; i < nelement; i++)
+		element[i]->Reset2D (hMesh);
+}
+
+// --------------------------------------------------------------
+
+void SubSystem::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
 {
 	for (DWORD i = 0; i < nelement; i++)
 		element[i]->ResetVC (hMesh);

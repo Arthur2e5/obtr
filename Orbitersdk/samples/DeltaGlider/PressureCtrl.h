@@ -5,7 +5,7 @@
 //                   All rights reserved
 //
 // PressureCtrl.h
-// Cabin and airlock pressure control module
+// Cabin and airlock pressure control subsystem
 // ==============================================================
 
 #ifndef __PRESSURECTRL_H
@@ -22,6 +22,7 @@ class PressureIndicator;
 
 // ==============================================================
 // Pressure control module
+// ==============================================================
 
 class PressureControl: public DGSubSystem {
 public:
@@ -49,12 +50,8 @@ private:
 	PressureIndicator *pind;
 
 	// local panel element identifiers
-	static const int AID_PVALVE0_SWITCH;
-	static const int AID_PVALVE1_SWITCH;
-	static const int AID_PVALVE2_SWITCH;
-	static const int AID_PVALVE3_SWITCH;
-	static const int AID_PVALVE4_SWITCH;
-	static const int AID_PRESSUREDISP;
+	int ELID_PVALVESWITCH[5];
+	int ELID_DISPLAY;
 };
 
 // ==============================================================

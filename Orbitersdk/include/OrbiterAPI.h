@@ -3429,6 +3429,12 @@ OAPIFUNC int oapiCockpitMode ();
 OAPIFUNC OBJHANDLE oapiCameraTarget ();
 
 	/**
+	* \brief Returns the current virtual cockpit position
+	* \return VC position (>= 0, or -1 if camera is not in VC mode)
+    */
+OAPIFUNC int oapiVCPosition ();
+
+	/**
 	* \brief Returns celestial body whose surface is closest to the camera.
 	*/
 OAPIFUNC OBJHANDLE oapiCameraProxyGbody();

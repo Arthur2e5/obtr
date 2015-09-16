@@ -5,7 +5,7 @@
 //                   All rights reserved
 //
 // HoverCtrl.h
-// Hover controls and displays
+// Classes for Hover balance control and Hover altitude subsystems
 // ==============================================================
 
 #ifndef __HOVERCTRL_H
@@ -15,22 +15,68 @@
 #include "DGSwitches.h"
 
 // ==============================================================
+// Hover balance control subsystem
+// ==============================================================
+
+class HoverCtrlDial;
+class PHoverCtrl;
+class RHoverCtrl;
+class HoverDisp;
+
+class HoverBalanceControl: public DGSubSystem {
+
+public:
+	HoverBalanceControl (DeltaGlider *vessel, int ident);
+	inline int Mode() const { return mode; }
+	inline void SetMode (int newmode) { mode = newmode; }
+	inline double PHover (bool actual=true) const { return actual ? phover : phover_cmd; }
+	inline double RHover (bool actual=true) const { return actual ? rhover : rhover_cmd; }
+	bool IncPHover (int dir);     // manually change hover pitch command
+	bool IncRHover (int dir);     // manually change hover roll command
+	void AutoHoverAtt ();         // set hover pitch/roll commands from user input
+	void TrackHoverAtt ();
+	void clbkPostStep (double simt, double simdt, double mjd);
+	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
+	void clbkReset2D (int panelid, MESHHANDLE hMesh);
+	bool clbkLoadVC (int vcid);
+	void clbkResetVC (int vcid, DEVMESHHANDLE hMesh);
+
+private:
+	int mode;                     // balance mode: 0=off, 1=auto, 2=manual
+	double phover, phover_cmd;    // current/commanded hover pitch angle (tan)
+	double rhover, rhover_cmd;    // current/commanded hover roll angle (tan)
+
+	HoverCtrlDial *modedial;      // mode dial object
+	PHoverCtrl    *phoverswitch;  // pitch hover balance switch object
+	RHoverCtrl    *rhoverswitch;  // roll hover balance switch object
+	HoverDisp     *hoverdisp;     // hover balance display object
+
+	int ELID_MODEDIAL;            // element ID: mode dial
+	int ELID_PHOVERSWITCH;        // element ID: pitch hover balance switch
+	int ELID_RHOVERSWITCH;        // element ID: roll hover balance switch
+	int ELID_DISPLAY;             // element ID: balance display
+};
+
+// ==============================================================
 
 class HoverCtrlDial: public DGDial1 {
 public:
-	HoverCtrlDial (VESSEL3 *v);
+	HoverCtrlDial (HoverBalanceControl *hbc);
 	void Reset2D (MESHHANDLE hMesh);
 	void ResetVC (DEVMESHHANDLE hMesh);
 	bool Redraw2D (SURFHANDLE surf);
 	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
+
+private:
+	HoverBalanceControl *ctrl;
 };
 
 // ==============================================================
 
 class HoverDisp: public PanelElement {
 public:
-	HoverDisp (VESSEL3 *v);
+	HoverDisp (HoverBalanceControl *hbc);
 	~HoverDisp ();
 	void Reset2D (MESHHANDLE hMesh);
 	void ResetVC (DEVMESHHANDLE hMesh);
@@ -38,6 +84,7 @@ public:
 	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
 
 private:
+	HoverBalanceControl *ctrl;
 	int pofs_cur, pofs_cmd;
 	int rofs_cur, rofs_cmd;
 	GROUPREQUESTSPEC vc_grp; ///< Buffered VC vertex data
@@ -48,27 +95,34 @@ private:
 
 class PHoverCtrl: public DGSwitch2 {
 public:
-	PHoverCtrl (VESSEL3 *v);
-	//void Reset2D (MESHHANDLE hMesh);
-	//bool Redraw2D (SURFHANDLE surf);
+	PHoverCtrl (HoverBalanceControl *hbc);
 	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
+
+private:
+	HoverBalanceControl *ctrl;
 };
 
 // ==============================================================
 
 class RHoverCtrl: public DGSwitch2 {
 public:
-	RHoverCtrl (VESSEL3 *v);
-	//void Reset2D (MESHHANDLE hMesh);
-	//bool Redraw2D (SURFHANDLE surf);
+	RHoverCtrl (HoverBalanceControl *hbc);
 	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
+
+private:
+	HoverBalanceControl *ctrl;
 };
 
-// ==============================================================
+
 // ==============================================================
 // Hover hold altitude control subsystem
+// ==============================================================
+
+class HoverAltBtn;
+class HoverAltSwitch;
+class HoverAltCurBtn;
 
 class HoverHoldAltControl: public DGSubSystem {
 	friend class HoverHoldAltIndicator;
@@ -88,10 +142,13 @@ private:
 	bool active;      // hover hold altitude active?
 	VESSEL::AltitudeMode altmode;
 	HoldMode holdmode;
-	static const int AID_HOLDALT_DISP;
-	static const int AID_HOLDALT_BTN;
-	static const int AID_HOLDALT_SELECT;
-	static const int AID_HOLDALT_SETCUR;
+	HoverAltBtn *holdbtn;
+	HoverAltSwitch *altset;
+	HoverAltCurBtn *altcur;
+	int ELID_DISPLAY;
+	int ELID_HOLDBTN;
+	int ELID_ALTSET;
+	int ELID_ALTCURRENT;
 };
 
 // ==============================================================
