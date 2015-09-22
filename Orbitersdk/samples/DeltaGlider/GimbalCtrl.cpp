@@ -30,13 +30,237 @@ static const float sc_y0 = 431.5f;
 
 
 // ==============================================================
+// Main engine gimbal control subsystem
+// ==============================================================
 
-MainGimbalDial::MainGimbalDial (VESSEL3 *v)
-: DGDial1 (v, 3, -50*RAD, 50*RAD)
+GimbalControl::GimbalControl (DeltaGlider *vessel, int ident)
+: DGSubSystem (vessel, ident)
 {
+	mode = 0;
+	mpmode = mymode = 0;
+	for (int i = 0; i < 2; i++) {
+		mpgimbal[i] = mpgimbal_cmd[i] = 0.0;
+		mygimbal[i] = mygimbal_cmd[i] = 0.0;
+		mpswitch[i] = myswitch[i] = 0;
+	}
+	ELID_MODEDIAL      = AddElement (modedial      = new MainGimbalDial (this));
+	ELID_PGIMBALSWITCH = AddElement (pgimbalswitch = new PMainGimbalCtrl (this));
+	ELID_YGIMBALSWITCH = AddElement (ygimbalswitch = new YMainGimbalCtrl (this));
+	ELID_DISPLAY       = AddElement (gimbaldisp    = new MainGimbalDisp (this));
+}
+
+// --------------------------------------------------------------
+
+void GimbalControl::SetMainPGimbal (int which, double lvl)
+{
+	VECTOR3 dir;
+	DG()->GetMainThrusterDir (which, dir);
+	dir /= dir.z;
+	mpgimbal[which] = dir.y = MAIN_PGIMBAL_RANGE*lvl;
+	DG()->SetMainThrusterDir (which, unit(dir));
+}
+
+// --------------------------------------------------------------
+
+void GimbalControl::SetMainYGimbal (int which, double lvl)
+{
+	VECTOR3 dir;
+	DG()->GetMainThrusterDir (which, dir);
+	dir /= dir.z;
+	mygimbal[which] = dir.x = MAIN_YGIMBAL_RANGE*lvl;
+	DG()->SetMainThrusterDir (which, unit(dir));
+}
+
+// --------------------------------------------------------------
+
+bool GimbalControl::IncMainPGimbal (int which, int dir)
+{
+	const double cmd_speed = 0.5;
+	double dcmd = oapiGetSimStep() * cmd_speed * MAIN_PGIMBAL_RANGE * (dir == 1 ? -1.0:1.0);
+	for (int i = 0; i < 2; i++) {
+		if (dir && which & (1 << i)) {
+			if (mode == 2)
+				mpgimbal_cmd[i] = min (MAIN_PGIMBAL_RANGE, max (-MAIN_PGIMBAL_RANGE, mpgimbal_cmd[i]+dcmd));
+			mpswitch[i] = 3-dir;
+		} else
+			mpswitch[i] = 0;
+	}
+	return true;
+}
+
+// --------------------------------------------------------------
+
+bool GimbalControl::IncMainYGimbal (int which, int dir)
+{
+	const double cmd_speed = 0.5;
+	double dcmd = oapiGetSimStep() * cmd_speed * MAIN_YGIMBAL_RANGE * (dir == 1 ? 1.0:-1.0);
+	for (int i = 0; i < 2; i++) {
+		if (dir && which & (1 << i)) {
+			if (mode == 2)
+				mygimbal_cmd[i] = min (MAIN_YGIMBAL_RANGE, max (-MAIN_YGIMBAL_RANGE, mygimbal_cmd[i]+dcmd));
+			myswitch[i] = 3-dir;
+		} else
+			myswitch[i] = 0;
+	}
+	return true;
+}
+
+// --------------------------------------------------------------
+
+void GimbalControl::AutoMainGimbal ()
+{
+	int i;
+	double lvl, mlvl, plvl[2];
+
+	// Pitch gimbal
+	// a) pitch command
+	lvl = DG()->GetManualControlLevel(THGROUP_ATT_PITCHDOWN, MANCTRL_ROTMODE);
+	if (!lvl) lvl = -DG()->GetManualControlLevel(THGROUP_ATT_PITCHUP, MANCTRL_ROTMODE);
+	plvl[0] = plvl[1] = lvl;
+
+	// b) roll command
+	lvl = DG()->GetManualControlLevel(THGROUP_ATT_BANKRIGHT, MANCTRL_ROTMODE);
+	if (!lvl) lvl = -DG()->GetManualControlLevel(THGROUP_ATT_BANKLEFT, MANCTRL_ROTMODE);
+	plvl[0] += lvl;
+	plvl[1] -= lvl;
+
+	// scale to range and apply
+	mlvl = max(fabs(plvl[0]), fabs(plvl[1]));
+	if (mlvl > 1.0) 
+		for (i = 0; i < 2; i++) plvl[i] /= mlvl;
+	for (i = 0; i < 2; i++)
+		mpgimbal_cmd[i] = plvl[i]*MAIN_PGIMBAL_RANGE;
+
+	// Yaw gimbal
+	// a) compensate for main thrust differences
+	double t0 = DG()->GetMainThrusterLevel (0);
+	double t1 = DG()->GetMainThrusterLevel (1);
+	double tt = t0+t1;
+	mlvl = (tt ? (t0-t1)/tt : 0.0);
+	
+	// b) yaw command
+	lvl = DG()->GetManualControlLevel(THGROUP_ATT_YAWLEFT, MANCTRL_ROTMODE);
+	if (!lvl) lvl = -DG()->GetManualControlLevel(THGROUP_ATT_YAWRIGHT, MANCTRL_ROTMODE);
+	mlvl += lvl;
+
+	// scale to range and apply
+	mlvl = min (1.0, max (-1.0, mlvl));
+	for (i = 0; i < 2; i++)
+		mygimbal_cmd[i] = mlvl*MAIN_YGIMBAL_RANGE;
+}
+
+// --------------------------------------------------------------
+
+void GimbalControl::TrackMainGimbal ()
+{
+	VECTOR3 dir;
+	bool update = false;
+	int i;
+	double dphi = oapiGetSimStep()*MAIN_GIMBAL_SPEED;
+	for (i = 0; i < 2; i++) {
+		if (mpgimbal[i] != mpgimbal_cmd[i]) {
+			update = true;
+			if (mpgimbal[i] < mpgimbal_cmd[i])
+				mpgimbal[i] = min (mpgimbal[i]+dphi, mpgimbal_cmd[i]);
+			else
+				mpgimbal[i] = max (mpgimbal[i]-dphi, mpgimbal_cmd[i]);
+		}
+		if (mygimbal[i] != mygimbal_cmd[i]) {
+			update = true;
+			if (mygimbal[i] < mygimbal_cmd[i])
+				mygimbal[i] = min (mygimbal[i]+dphi, mygimbal_cmd[i]);
+			else
+				mygimbal[i] = max (mygimbal[i]-dphi, mygimbal_cmd[i]);
+		}
+	}
+	if (update) {
+		for (i = 0; i < 2; i++) {
+			DG()->GetMainThrusterDir (i, dir);
+			dir /= dir.z;
+			dir.y = mpgimbal[i];
+			dir.x = mygimbal[i];
+			DG()->SetMainThrusterDir (i, unit(dir));
+		}
+		oapiTriggerRedrawArea (0, 0, GlobalElId (ELID_DISPLAY));
+	}
+}
+
+// --------------------------------------------------------------
+
+void GimbalControl::clbkPostStep (double simt, double simdt, double mjd)
+{
+	if (mode == 1) AutoMainGimbal();
+	TrackMainGimbal();
+}
+
+// --------------------------------------------------------------
+
+bool GimbalControl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
+{
+	if (panelid != 0) return false;
+
+	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
+
+	// Gimbal control dial
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_MODEDIAL),      _R(32, 69,  72,113), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, panel2dtex, modedial);
+
+	// Gimbal manual switches
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_PGIMBALSWITCH), _R(  61,190,  96,234), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, pgimbalswitch);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_YGIMBALSWITCH), _R(   9,194,  53,229), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, ygimbalswitch);
+
+	// Gimbal display
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_DISPLAY),       _R( 0,  0,   0,  0), PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, gimbaldisp);
+
+	return true;
+}
+
+// --------------------------------------------------------------
+
+bool GimbalControl::clbkLoadVC (int vcid)
+{
+	if (vcid != 0) return false;
+
+	// Gimbal control dial
+	oapiVCRegisterArea (GlobalElId(ELID_MODEDIAL), PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_MODEDIAL), VC_GIMBAL_DIAL_mousearea[0], VC_GIMBAL_DIAL_mousearea[1], VC_GIMBAL_DIAL_mousearea[2], VC_GIMBAL_DIAL_mousearea[3]);
+	modedial->DefineAnimationVC (VC_GIMBAL_DIAL_ref, VC_GIMBAL_DIAL_axis, GRP_DIAL1_VC, VC_GIMBAL_DIAL_vofs);
+
+	// Gimbal manual switches
+	oapiVCRegisterArea (GlobalElId(ELID_PGIMBALSWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
+	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_PGIMBALSWITCH), VC_GIMBAL_PSWITCH_mousearea[0], VC_GIMBAL_PSWITCH_mousearea[1], VC_GIMBAL_PSWITCH_mousearea[2], VC_GIMBAL_PSWITCH_mousearea[3]);
+	oapiVCRegisterArea (GlobalElId(ELID_YGIMBALSWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
+	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_YGIMBALSWITCH), VC_GIMBAL_YSWITCH_mousearea[0], VC_GIMBAL_YSWITCH_mousearea[1], VC_GIMBAL_YSWITCH_mousearea[2], VC_GIMBAL_YSWITCH_mousearea[3]);
+
+	// Gimbal status display
+	oapiVCRegisterArea (GlobalElId(ELID_DISPLAY), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
+
+	return true;
+}
+
+// --------------------------------------------------------------
+
+void GimbalControl::clbkReset2D (int panelid, MESHHANDLE hMesh)
+{
+	if (panelid != 0) return;
+	DGSubSystem::clbkReset2D (panelid, hMesh);
+}
+
+// --------------------------------------------------------------
+
+void GimbalControl::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
+{
+	if (vcid != 0) return;
+	DGSubSystem::clbkResetVC (vcid, hMesh);
 }
 
 // ==============================================================
+
+MainGimbalDial::MainGimbalDial (GimbalControl *gc)
+: DGDial1 (gc->DG(), 3, -50*RAD, 50*RAD), ctrl(gc)
+{
+}
+
+// --------------------------------------------------------------
 
 void MainGimbalDial::Reset2D (MESHHANDLE hMesh)
 {
@@ -44,15 +268,15 @@ void MainGimbalDial::Reset2D (MESHHANDLE hMesh)
 	vtxofs = 144;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 void MainGimbalDial::ResetVC (DEVMESHHANDLE hMesh)
 {
-	int mode = ((DeltaGlider*)vessel)->GetMainGimbalMode();
+	int mode = ctrl->Mode();
 	SetPosition (mode);
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool MainGimbalDial::Redraw2D (SURFHANDLE surf)
 {
@@ -65,50 +289,48 @@ bool MainGimbalDial::Redraw2D (SURFHANDLE surf)
 	static const float tx_dy = 43.0f;              // texture block height
 	static float tu[4] = {tx_x0/texw,(tx_x0+tx_dx)/texw,tx_x0/texw,(tx_x0+tx_dx)/texw};
 
-	DeltaGlider *dg = (DeltaGlider*)vessel;
-	float dtu = (float)(dg->GetMainGimbalMode()*40.0)/texw;
+	float dtu = (float)(ctrl->Mode()*40.0)/texw;
 	for (int i = 0; i < 4; i++)
 		grp->Vtx[vtxofs+i].tu = tu[i]+dtu;
 	return false;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool MainGimbalDial::ProcessMouse2D (int event, int mx, int my)
 {
-	DeltaGlider *dg = (DeltaGlider*)vessel;
-	int mode = dg->GetMainGimbalMode();
+	int mode = ctrl->Mode();
 
 	if (mx < 20) { // dial turn left
 		if (mode > 0) {
-			dg->SetMainGimbalMode (mode-1);
+			ctrl->SetMode (mode-1);
 			return true;
 		}
 	} else { // dial turn right
 		if (mode < 2) {
-			dg->SetMainGimbalMode (mode+1);
+			ctrl->SetMode (mode+1);
 			return true;
 		}
 	}
 	return false;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool MainGimbalDial::ProcessMouseVC (int event, VECTOR3 &p)
 {
 	if (DGDial1::ProcessMouseVC (event, p)) {
 		int pos = GetPosition();
-		((DeltaGlider*)vessel)->SetMainGimbalMode (pos);
+		ctrl->SetMode (pos);
 		return true;
 	}
 	return false;
 }
 
 // ==============================================================
-// ==============================================================
 
-MainGimbalDisp::MainGimbalDisp (VESSEL3 *v): PanelElement (v)
+MainGimbalDisp::MainGimbalDisp (GimbalControl *gc)
+: PanelElement (gc->DG()), ctrl(gc)
 {
 	for (int i = 0; i < 2; i++) {
 		pofs_cur[i] = yofs_cur[i] = 0;
@@ -117,14 +339,14 @@ MainGimbalDisp::MainGimbalDisp (VESSEL3 *v): PanelElement (v)
 	memset (&vc_grp, 0, sizeof(GROUPREQUESTSPEC));
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 MainGimbalDisp::~MainGimbalDisp ()
 {
 	if (vc_grp.Vtx) delete []vc_grp.Vtx;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 void MainGimbalDisp::Reset2D (MESHHANDLE hMesh)
 {
@@ -132,7 +354,7 @@ void MainGimbalDisp::Reset2D (MESHHANDLE hMesh)
 	vtxofs = 148;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 void MainGimbalDisp::ResetVC (DEVMESHHANDLE hMesh)
 {
@@ -144,7 +366,7 @@ void MainGimbalDisp::ResetVC (DEVMESHHANDLE hMesh)
 	}
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool MainGimbalDisp::Redraw2D (SURFHANDLE surf)
 {
@@ -158,14 +380,14 @@ bool MainGimbalDisp::Redraw2D (SURFHANDLE surf)
 	const float dy =  10.0f;
 
 	for (i = 0; i < 2; i++) {
-		g = dg->MainPGimbal(i);
+		g = ctrl->MainPGimbal(i);
 		ofs = (int)floor((g/MAIN_PGIMBAL_RANGE)*18+0.5);
 		if (ofs != pofs_cur[i]) {
 			for (j = 0; j < 4; j++)
 				grp->Vtx[vtxofs+4*i+j].y = y0 + dy*(j/2) + ofs;
 			pofs_cur[i] = ofs;
 		}
-		g = dg->MainYGimbal(i);
+		g = ctrl->MainYGimbal(i);
 		ofs = (int)floor((g/MAIN_YGIMBAL_RANGE)*18+0.5);
 		if (ofs != yofs_cur[i]) {
 			for (j = 0; j < 4; j++)
@@ -175,14 +397,14 @@ bool MainGimbalDisp::Redraw2D (SURFHANDLE surf)
 	}
 
 	for (i = 0; i < 2; i++) {
-		g = dg->MainPGimbal(i, false);
+		g = ctrl->MainPGimbal(i, false);
 		ofs = (int)floor((g/MAIN_PGIMBAL_RANGE)*18+0.5);
 		if (ofs != pofs_cmd[i]) {
 			for (j = 0; j < 4; j++)
 				grp->Vtx[vtxofs+8+4*i+j].y = y0 + dy*(j/2) + ofs;
 			pofs_cmd[i] = ofs;
 		}
-		g = dg->MainYGimbal(i, false);
+		g = ctrl->MainYGimbal(i, false);
 		ofs = (int)floor((g/MAIN_YGIMBAL_RANGE)*18+0.5);
 		if (ofs != yofs_cmd[i]) {
 			for (j = 0; j < 4; j++)
@@ -194,7 +416,7 @@ bool MainGimbalDisp::Redraw2D (SURFHANDLE surf)
 	return false;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool MainGimbalDisp::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 {
@@ -212,14 +434,14 @@ bool MainGimbalDisp::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 		double dx, dy;
 		float y, z;
 		for (i = 0; i < 2; i++) {
-			dx = -dg->MainYGimbal(i)*xrange;
-			dy = -dg->MainPGimbal(i)*yrange;
+			dx = -ctrl->MainYGimbal(i)*xrange;
+			dy = -ctrl->MainPGimbal(i)*yrange;
 			for (j = 0; j < 4; j++) {
 				Vtx[4+i*8+j].x = cnt[i].x + dx + indsize*(j%2 ? 1:-1);
 				Vtx[4+i*8+j].y = dy + indsize*(j/2 ? 1:-1);
 			}
-			dx = -dg->MainYGimbal(i,false)*xrange;
-			dy = -dg->MainPGimbal(i,false)*yrange;
+			dx = -ctrl->MainYGimbal(i,false)*xrange;
+			dy = -ctrl->MainPGimbal(i,false)*yrange;
 			for (j = 0; j < 4; j++) {
 				Vtx[i*8+j].x = cnt[i].x + dx + indsize*(j%2 ? 1:-1);
 				Vtx[i*8+j].y = dy + indsize*(j/2 ? 1:-1);
@@ -243,15 +465,15 @@ bool MainGimbalDisp::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 }
 
 // ==============================================================
-// ==============================================================
 
-PMainGimbalCtrl::PMainGimbalCtrl (VESSEL3 *v): PanelElement (v)
+PMainGimbalCtrl::PMainGimbalCtrl (GimbalControl *gc)
+: PanelElement (gc->DG()), ctrl(gc)
 {
 	for (int i = 0; i < 2; i++)
 		vc_state[i] = 0;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 void PMainGimbalCtrl::Reset2D (MESHHANDLE hMesh)
 {
@@ -259,7 +481,7 @@ void PMainGimbalCtrl::Reset2D (MESHHANDLE hMesh)
 	vtxofs = 164;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 void PMainGimbalCtrl::ResetVC (DEVMESHHANDLE hMesh)
 {
@@ -270,32 +492,30 @@ void PMainGimbalCtrl::ResetVC (DEVMESHHANDLE hMesh)
 	oapiGetMeshGroup (hMesh, GRP_SWITCH2_VC, &grs);
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool PMainGimbalCtrl::Redraw2D (SURFHANDLE surf)
 {
 	int i, j, state;
 	for (i = 0; i < 2; i++) {
-		state = ((DeltaGlider*)vessel)->mpswitch[i];
+		state = ctrl->mpswitch[i];
 		for (j = 0; j < 4; j++)
 			grp->Vtx[vtxofs+i*4+j].tu = (1053.5f+state*16+(j%2)*15)/texw;
 	}
 	return false;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool PMainGimbalCtrl::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 {
-	return false; // DEBUG
-
 	const VECTOR3 &ref = VC_GIMBAL_PSWITCH_ref;
 	static const double tilt[3] = {0,15*RAD,-15*RAD};
 
 	int i, j, ofs, state;
 	bool redraw = false;
 	for (i = 0; i < 2; i++) {
-		state = ((DeltaGlider*)vessel)->mpswitch[i];
+		state = ctrl->mpswitch[i];
 		if (state != vc_state[i]) {
 			vc_state[i] = state;
 			redraw = true;
@@ -331,45 +551,45 @@ bool PMainGimbalCtrl::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 	return false;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool PMainGimbalCtrl::ProcessMouse2D (int event, int mx, int my)
 {
-	static int ctrl = 0, mode = 0;
+	static int state = 0, mode = 0;
 	if (event & PANEL_MOUSE_LBDOWN) {
-		if      (mx <  10) ctrl = 1;
-		else if (mx >= 25) ctrl = 2;
-		else               ctrl = 3;
+		if      (mx <  10) state = 1;
+		else if (mx >= 25) state = 2;
+		else               state = 3;
 		if      (my <  22) mode = 2;
 		else               mode = 1;
 	} else if (event & PANEL_MOUSE_LBUP) {
-		ctrl = 0;
+		state = 0;
 	}
-	return ((DeltaGlider*)vessel)->IncMainPGimbal (ctrl, mode);
+	return ctrl->IncMainPGimbal (state, mode);
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool PMainGimbalCtrl::ProcessMouseVC (int event, VECTOR3 &p)
 {
-	static int ctrl = 0, mode = 0;
+	static int state = 0, mode = 0;
 	if (event & PANEL_MOUSE_LBDOWN) {
-		if      (p.x < 0.25) ctrl = 1;
-		else if (p.x > 0.75) ctrl = 2;
-		else                 ctrl = 3;
+		if      (p.x < 0.25) state = 1;
+		else if (p.x > 0.75) state = 2;
+		else                 state = 3;
 		if      (p.y < 0.5 ) mode = 1;
 		else                 mode = 2;
 	} else if (event & PANEL_MOUSE_LBUP) {
-		ctrl = 0;
+		state = 0;
 	}
-	((DeltaGlider*)vessel)->IncMainPGimbal (ctrl, mode);
+	ctrl->IncMainPGimbal (state, mode);
 	return (event & (PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP));
 }
 
 // ==============================================================
-// ==============================================================
 
-YMainGimbalCtrl::YMainGimbalCtrl (VESSEL3 *v): PanelElement (v)
+YMainGimbalCtrl::YMainGimbalCtrl (GimbalControl *gc)
+: PanelElement (gc->DG()), ctrl(gc)
 {
 	int i;
 	for (i = 0; i < 2; i++)
@@ -378,7 +598,7 @@ YMainGimbalCtrl::YMainGimbalCtrl (VESSEL3 *v): PanelElement (v)
 		vperm[i] = (WORD)(i+VC_GIMBAL_YSWITCH_vofs);
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 void YMainGimbalCtrl::Reset2D (MESHHANDLE hMesh)
 {
@@ -386,7 +606,7 @@ void YMainGimbalCtrl::Reset2D (MESHHANDLE hMesh)
 	vtxofs = 172;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 void YMainGimbalCtrl::ResetVC (DEVMESHHANDLE hMesh)
 {
@@ -398,32 +618,30 @@ void YMainGimbalCtrl::ResetVC (DEVMESHHANDLE hMesh)
 	oapiGetMeshGroup (hMesh, GRP_SWITCH2_VC, &grs);
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool YMainGimbalCtrl::Redraw2D (SURFHANDLE surf)
 {
 	int i, j, state;
 	for (i = 0; i < 2; i++) {
-		state = ((DeltaGlider*)vessel)->myswitch[i];
+		state = ctrl->myswitch[i];
 		for (j = 0; j < 4; j++)
 			grp->Vtx[vtxofs+i*4+j].tu = (1053.5+state*16+(j%2)*15)/texw;
 	}
 	return false;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool YMainGimbalCtrl::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 {
-	return false; // DEBUG
-
 	const VECTOR3 &ref = VC_GIMBAL_YSWITCH_ref;
 	static const double tilt[3] = {0,15*RAD,-15*RAD};
 
 	int i, j, ofs, state;
 	bool redraw = false;
 	for (i = 0; i < 2; i++) {
-		state = ((DeltaGlider*)vessel)->myswitch[i];
+		state = ctrl->myswitch[i];
 		if (state != vc_state[i]) {
 			vc_state[i] = state;
 			redraw = true;
@@ -459,37 +677,37 @@ bool YMainGimbalCtrl::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 	return false;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool YMainGimbalCtrl::ProcessMouse2D (int event, int mx, int my)
 {
-	static int ctrl = 0, mode = 0;
+	static int state = 0, mode = 0;
 	if (event & PANEL_MOUSE_LBDOWN) {
-		if      (my <  10) ctrl = 1;
-		else if (my >= 25) ctrl = 2;
-		else               ctrl = 3;
+		if      (my <  10) state = 1;
+		else if (my >= 25) state = 2;
+		else               state = 3;
 		if      (mx <  22) mode = 1;
 		else               mode = 2;
 	} else if (event & PANEL_MOUSE_LBUP) {
-		ctrl = 0;
+		state = 0;
 	}
-	return ((DeltaGlider*)vessel)->IncMainYGimbal (ctrl, mode);
+	return ctrl->IncMainYGimbal (state, mode);
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
 bool YMainGimbalCtrl::ProcessMouseVC (int event, VECTOR3 &p)
 {
-	static int ctrl = 0, mode = 0;
+	static int state = 0, mode = 0;
 	if (event & PANEL_MOUSE_LBDOWN) {
-		if      (p.x < 0.25) ctrl = 1;
-		else if (p.x > 0.75) ctrl = 2;
-		else                 ctrl = 3;
+		if      (p.x < 0.25) state = 1;
+		else if (p.x > 0.75) state = 2;
+		else                 state = 3;
 		if      (p.y < 0.5 ) mode = 1;
 		else                 mode = 2;
 	} else if (event & PANEL_MOUSE_LBUP) {
-		ctrl = 0;
+		state = 0;
 	}
-	((DeltaGlider*)vessel)->IncMainYGimbal (ctrl, mode);
+	ctrl->IncMainYGimbal (state, mode);
 	return (event & (PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP));
 }

@@ -160,11 +160,12 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	modelidx = (fmodel ? 1 : 0);
 
 	// Subsystem definitions
-	nssys = 3;                      // number of subsystems
+	nssys = 4;                      // number of subsystems
 	ssys = new DGSubSystem*[nssys]; // list of subsystems
 	ssys[0] = ssys_hoverhold = new HoverHoldAltControl (this, 0); // hover hold altitude controls
 	ssys[1] = ssys_pressurectrl = new PressureControl (this, 1);  // cabin/airlock pressure controls
 	ssys[2] = ssys_hoverbalance = new HoverBalanceControl (this, 2); // hover balance controls
+	ssys[3] = ssys_gimbal       = new GimbalControl (this, 3); // main engine gimbal controls
 
 	aoa_ind = PI;
 	slip_ind = PI*0.5;
@@ -219,7 +220,6 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	nav_light_on      = false;
 	instr_brightness  = 0.5;
 	flood_brightness  = 0.7;
-	main_gimbal_mode  = 0;
 	for (i = 0; i < 2; i++)
 		panelcol[i]   = 0;
 	skinpath[0] = '\0';
@@ -232,18 +232,15 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 		scram_intensity[i] = 0.0;
 	}
 	for (i = 0; i < 2; i++) {
-		mpgimbal[i] = mpgimbal_cmd[i] = 0.0;
-		mygimbal[i] = mygimbal_cmd[i] = 0.0;
 		scflowidx[i] = 0;
 		mainflowidx[i] = retroflowidx[i] = -1;
 		scTSFCidx[i] = -1;
 		mainpropidx[i] = rcspropidx[i] = scrampropidx[i] = -1;
-		mpswitch[i] = myswitch[i] = 0;
 	}
 	for (i = 0; i < 3; i++)
 		for (j = 0; j < 3; j++) rotidx[i][j] = 0;
 
-	mpmode = mymode = hbmode = hbswitch = 0;
+	hbmode = hbswitch = 0;
 	mainpropmass = rcspropmass = scrampropmass = -1;
 	mainTSFCidx = hoverflowidx = -1;
 	hbalanceidx = 28;
@@ -333,10 +330,10 @@ void DeltaGlider::CreatePanelElements ()
 	instr[12] = new UndockButton (this);
 	instr[13] = new HUDModeButtons (this);
 	instr[14] = new GearLever (this);
-	instr[15] = new MainGimbalDial (this);
-	instr[16] = new MainGimbalDisp (this);
-	instr[17] = new PMainGimbalCtrl (this);
-	instr[18] = new YMainGimbalCtrl (this);
+	instr[15] = 0;
+	instr[16] = 0;
+	instr[17] = 0;
+	instr[18] = 0;
 	instr[19] = 0;
 	instr[20] = 0;
 	instr[21] = 0;
@@ -1496,130 +1493,6 @@ void DeltaGlider::EnableRetroThrusters (bool state)
 		SetThrusterResource (th_retro[i], state ? ph_main : NULL);
 }
 
-void DeltaGlider::SetMainPGimbal (int which, double lvl)
-{
-	VECTOR3 dir;
-	GetThrusterDir (th_main[which], dir);
-	dir /= dir.z;
-	mpgimbal[which] = dir.y = MAIN_PGIMBAL_RANGE*lvl;
-	SetThrusterDir (th_main[which], unit(dir));
-}
-
-void DeltaGlider::SetMainYGimbal (int which, double lvl)
-{
-	VECTOR3 dir;
-	GetThrusterDir (th_main[which], dir);
-	dir /= dir.z;
-	mygimbal[which] = dir.x = MAIN_YGIMBAL_RANGE*lvl;
-	SetThrusterDir (th_main[which], unit(dir));
-}
-
-void DeltaGlider::AutoMainGimbal ()
-{
-	int i;
-	double lvl, mlvl, plvl[2];
-
-	// Pitch gimbal
-	// a) pitch command
-	lvl = GetManualControlLevel(THGROUP_ATT_PITCHDOWN, MANCTRL_ROTMODE);
-	if (!lvl) lvl = -GetManualControlLevel(THGROUP_ATT_PITCHUP, MANCTRL_ROTMODE);
-	plvl[0] = plvl[1] = lvl;
-
-	// b) roll command
-	lvl = GetManualControlLevel(THGROUP_ATT_BANKRIGHT, MANCTRL_ROTMODE);
-	if (!lvl) lvl = -GetManualControlLevel(THGROUP_ATT_BANKLEFT, MANCTRL_ROTMODE);
-	plvl[0] += lvl;
-	plvl[1] -= lvl;
-
-	// scale to range and apply
-	mlvl = max(fabs(plvl[0]), fabs(plvl[1]));
-	if (mlvl > 1.0) 
-		for (i = 0; i < 2; i++) plvl[i] /= mlvl;
-	for (i = 0; i < 2; i++)
-		mpgimbal_cmd[i] = plvl[i]*MAIN_PGIMBAL_RANGE;
-
-	// Yaw gimbal
-	// a) compensate for main thrust differences
-	double t0 = GetThrusterLevel (th_main[0]);
-	double t1 = GetThrusterLevel (th_main[1]);
-	double tt = t0+t1;
-	mlvl = (tt ? (t0-t1)/tt : 0.0);
-	
-	// b) yaw command
-	lvl = GetManualControlLevel(THGROUP_ATT_YAWLEFT, MANCTRL_ROTMODE);
-	if (!lvl) lvl = -GetManualControlLevel(THGROUP_ATT_YAWRIGHT, MANCTRL_ROTMODE);
-	mlvl += lvl;
-
-	// scale to range and apply
-	mlvl = min (1.0, max (-1.0, mlvl));
-	for (i = 0; i < 2; i++)
-		mygimbal_cmd[i] = mlvl*MAIN_YGIMBAL_RANGE;
-}
-
-void DeltaGlider::TrackMainGimbal ()
-{
-	VECTOR3 dir;
-	bool update = false;
-	int i;
-	double dphi = oapiGetSimStep()*MAIN_GIMBAL_SPEED;
-	for (i = 0; i < 2; i++) {
-		if (mpgimbal[i] != mpgimbal_cmd[i]) {
-			update = true;
-			if (mpgimbal[i] < mpgimbal_cmd[i])
-				mpgimbal[i] = min (mpgimbal[i]+dphi, mpgimbal_cmd[i]);
-			else
-				mpgimbal[i] = max (mpgimbal[i]-dphi, mpgimbal_cmd[i]);
-		}
-		if (mygimbal[i] != mygimbal_cmd[i]) {
-			update = true;
-			if (mygimbal[i] < mygimbal_cmd[i])
-				mygimbal[i] = min (mygimbal[i]+dphi, mygimbal_cmd[i]);
-			else
-				mygimbal[i] = max (mygimbal[i]-dphi, mygimbal_cmd[i]);
-		}
-	}
-	if (update) {
-		for (i = 0; i < 2; i++) {
-			GetThrusterDir (th_main[i], dir);
-			dir /= dir.z;
-			dir.y = mpgimbal[i];
-			dir.x = mygimbal[i];
-			SetThrusterDir (th_main[i], unit(dir));
-		}
-		oapiTriggerRedrawArea (0, 0, AID_MAINGIMBALDISP);
-	}
-}
-
-bool DeltaGlider::IncMainPGimbal (int which, int mode)
-{
-	const double cmd_speed = 0.5;
-	double dcmd = oapiGetSimStep() * cmd_speed * MAIN_PGIMBAL_RANGE * (mode == 1 ? -1.0:1.0);
-	for (int i = 0; i < 2; i++) {
-		if (mode && which & (1 << i)) {
-			if (main_gimbal_mode == 2)
-				mpgimbal_cmd[i] = min (MAIN_PGIMBAL_RANGE, max (-MAIN_PGIMBAL_RANGE, mpgimbal_cmd[i]+dcmd));
-			mpswitch[i] = 3-mode;
-		} else
-			mpswitch[i] = 0;
-	}
-	return true;
-}
-
-bool DeltaGlider::IncMainYGimbal (int which, int mode)
-{
-	const double cmd_speed = 0.5;
-	double dcmd = oapiGetSimStep() * cmd_speed * MAIN_YGIMBAL_RANGE * (mode == 1 ? 1.0:-1.0);
-	for (int i = 0; i < 2; i++) {
-		if (mode && which & (1 << i)) {
-			if (main_gimbal_mode == 2)
-				mygimbal_cmd[i] = min (MAIN_YGIMBAL_RANGE, max (-MAIN_YGIMBAL_RANGE, mygimbal_cmd[i]+dcmd));
-			myswitch[i] = 3-mode;
-		} else
-			myswitch[i] = 0;
-	}
-	return true;
-}
-
 bool DeltaGlider::GetBeaconState (int which)
 {
 	switch (which) {
@@ -2543,7 +2416,9 @@ void DeltaGlider::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 			sscanf (line+4, "%lf", &trim);
 			SetControlSurfaceLevel (AIRCTRL_ELEVATORTRIM, trim, true);
 		} else if (!_strnicmp (line, "MGIMBALMODE", 11)) {
-			sscanf (line+11, "%d", &main_gimbal_mode);
+			int gimbalmode;
+			sscanf (line+11, "%d", &gimbalmode);
+			ssys_gimbal->SetMode (gimbalmode);
 		} else if (!_strnicmp (line, "HOVERMODE", 9)) {
 			int hovermode;
 			sscanf (line+9, "%d", &hovermode);
@@ -2652,8 +2527,8 @@ void DeltaGlider::clbkSaveState (FILEHANDLE scn)
 		sprintf (cbuf, "%d %0.4lf", hatch_status, hatch_proc);
 		oapiWriteScenario_string (scn, "HATCH", cbuf);
 	}
-	if (main_gimbal_mode) {
-		sprintf (cbuf, "%d", main_gimbal_mode);
+	if (i = ssys_gimbal->Mode()) {
+		sprintf (cbuf, "%d", i);
 		oapiWriteScenario_string (scn, "MGIMBALMODE", cbuf);
 	}
 	if (i = ssys_hoverbalance->Mode()) {
@@ -2876,11 +2751,6 @@ void DeltaGlider::clbkPostStep (double simt, double simdt, double mjd)
 	if (scramjet) ScramjetThrust ();
 
 	th_main_level = GetThrusterGroupLevel (THGROUP_MAIN);
-
-	// apply gimbals
-	if (main_gimbal_mode == 1)
-		AutoMainGimbal();
-	TrackMainGimbal();
 
 	// animate landing gear
 	if (gear_status >= DOOR_CLOSING) {
@@ -3256,10 +3126,6 @@ void DeltaGlider::DefinePanelMain (PANELHANDLE hPanel)
 	RegisterPanelArea (hPanel, AID_DOCKRELEASE,  _R(1141,474,1172,504), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, instr[12]);
 	RegisterPanelArea (hPanel, AID_HUDMODE,      _R(  15, 18, 122, 33), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY, panel2dtex, instr[13]);
 	RegisterPanelArea (hPanel, AID_GEARLEVER,    _R(1230,286,1262,511), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN, panel2dtex, instr[14]);
-	RegisterPanelArea (hPanel, AID_MAINGIMBALDIAL, _R(32, 69,  72,113), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, panel2dtex, instr[15]);
-	RegisterPanelArea (hPanel, AID_MAINGIMBALDISP, _R( 0,  0,   0,  0), PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, instr[16]);
-	RegisterPanelArea (hPanel, AID_PGIMBALMAIN,  _R(  61,190,  96,234), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, instr[17]);
-	RegisterPanelArea (hPanel, AID_YGIMBALMAIN,  _R(   9,194,  53,229), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, instr[18]);
 	RegisterPanelArea (hPanel, AID_GEARINDICATOR, _R(0,0,0,0),          PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, instr[37]);
 	RegisterPanelArea (hPanel, AID_NOSECONELEVER, _R(1141,327,1180,421), PANEL_REDRAW_USER,  PANEL_MOUSE_LBDOWN, panel2dtex, instr[23]);
 	RegisterPanelArea (hPanel, AID_NOSECONEINDICATOR, _R(0,0,0,0),      PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, instr[24]);
@@ -3554,20 +3420,6 @@ bool DeltaGlider::clbkLoadVC (int id)
 		oapiVCSetAreaClickmode_Quadrilateral (AID_ADCTRLMODE, VC_AF_DIAL_mousearea[0], VC_AF_DIAL_mousearea[1], VC_AF_DIAL_mousearea[2], VC_AF_DIAL_mousearea[3]);
 		((DGDial1*)instr[11])->DefineAnimationVC (VC_AF_DIAL_ref, VC_AF_DIAL_axis, GRP_DIAL1_VC, VC_AF_DIAL_vofs);
 
-		// Gimbal control dial
-		oapiVCRegisterArea (AID_MAINGIMBALDIAL, PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_MAINGIMBALDIAL, VC_GIMBAL_DIAL_mousearea[0], VC_GIMBAL_DIAL_mousearea[1], VC_GIMBAL_DIAL_mousearea[2], VC_GIMBAL_DIAL_mousearea[3]);
-		((DGDial1*)instr[15])->DefineAnimationVC (VC_GIMBAL_DIAL_ref, VC_GIMBAL_DIAL_axis, GRP_DIAL1_VC, VC_GIMBAL_DIAL_vofs);
-
-		// Gimbal manual switches
-		oapiVCRegisterArea (AID_PGIMBALMAIN, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_PGIMBALMAIN, VC_GIMBAL_PSWITCH_mousearea[0], VC_GIMBAL_PSWITCH_mousearea[1], VC_GIMBAL_PSWITCH_mousearea[2], VC_GIMBAL_PSWITCH_mousearea[3]);
-		oapiVCRegisterArea (AID_YGIMBALMAIN, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_YGIMBALMAIN, VC_GIMBAL_YSWITCH_mousearea[0], VC_GIMBAL_YSWITCH_mousearea[1], VC_GIMBAL_YSWITCH_mousearea[2], VC_GIMBAL_YSWITCH_mousearea[3]);
-
-		// Gimbal status display
-		oapiVCRegisterArea (AID_MAINGIMBALDISP, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
-
 		// Elevator trim wheel
 		oapiVCRegisterArea (AID_ELEVATORTRIM, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_ELEVATORTRIM, vc_etrimwheel_mousearea[0], vc_etrimwheel_mousearea[1], vc_etrimwheel_mousearea[2], vc_etrimwheel_mousearea[3]);
@@ -3773,10 +3625,6 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 		return instr[10]->ProcessMouseVC (event, p);
 	case AID_ADCTRLMODE:
 		return instr[11]->ProcessMouseVC (event, p);
-	case AID_MAINGIMBALDIAL:
-		return instr[15]->ProcessMouseVC (event, p);
-//	case AID_HOVERDIAL:
-//		return instr[19]->ProcessMouseVC (event, p);
 	case AID_ELEVATORTRIM:
 		return instr[6]->ProcessMouseVC (event, p);
 	case AID_GEARLEVER:
@@ -3799,10 +3647,6 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 	case AID_LADDERIN:
 		ActivateLadder (DOOR_CLOSING);
 		return true;
-	case AID_PGIMBALMAIN:
-		return instr[17]->ProcessMouseVC (event, p);
-	case AID_YGIMBALMAIN:
-		return instr[18]->ProcessMouseVC (event, p);
 	case AID_MWS:
 		bMWSActive = bMWSOn = false;
 		return true;
@@ -3850,14 +3694,6 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 		return instr[10]->RedrawVC (vcmesh, 0);
 	case AID_ADCTRLMODE:
 		return instr[11]->RedrawVC (vcmesh, 0);
-	case AID_MAINGIMBALDIAL:
-		return instr[15]->RedrawVC (vcmesh, 0);
-	case AID_MAINGIMBALDISP:
-		return instr[16]->RedrawVC (vcmesh, 0);
-	case AID_PGIMBALMAIN:
-		return instr[17]->RedrawVC (vcmesh, 0);
-	case AID_YGIMBALMAIN:
-		return instr[18]->RedrawVC (vcmesh, 0);
 	case AID_MAINPROP:
 		return instr[4]->RedrawVC (vcmesh, intex);
 	case AID_RCSPROP:

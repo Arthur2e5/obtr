@@ -267,7 +267,6 @@ bool HoverCtrlDial::Redraw2D (SURFHANDLE surf)
 
 bool HoverCtrlDial::ProcessMouse2D (int event, int mx, int my)
 {
-	DeltaGlider *dg = (DeltaGlider*)vessel;
 	int mode = ctrl->Mode();
 
 	if (mx < 20) { // dial turn left

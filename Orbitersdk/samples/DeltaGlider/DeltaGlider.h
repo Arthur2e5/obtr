@@ -168,6 +168,7 @@ const DWORD INSTR3_TEXH   =  188;
 
 // DG subsystems
 class DGSubSystem;
+class GimbalControl;
 class HoverBalanceControl;
 class HoverHoldAltControl;
 
@@ -198,8 +199,6 @@ public:
 	void UpdateStatusIndicators();
 	int GetHUDMode () const;
 	void SetHUDMode (int mode);
-	int GetMainGimbalMode () { return main_gimbal_mode; }
-	void SetMainGimbalMode (int mode) { main_gimbal_mode = mode; }
 	void ModHUDBrightness (bool increase);
 	void SetPassengerVisuals ();
 	void SetDamageVisuals ();
@@ -232,21 +231,16 @@ public:
 	bool IncAttMode ();
 	bool DecADCMode ();
 	bool IncADCMode ();
-	void SetMainRetroLevel (int which, double lmain, double lretro);
-	void SetScramLevel (int which, double level);
-	void EnableRetroThrusters (bool state);
+
+	double GetMainThrusterLevel (int which) const { return GetThrusterLevel (th_main[which]); }
+	void   SetMainRetroLevel (int which, double lmain, double lretro);
+	void   SetScramLevel (int which, double level);
+	void   EnableRetroThrusters (bool state);
+	void   GetMainThrusterDir (int which, VECTOR3 &dir) const { GetThrusterDir(th_main[which], dir); }
+	void   SetMainThrusterDir (int which, const VECTOR3 &dir) { SetThrusterDir(th_main[which], dir); }
 	double GetHoverThrusterLevel (int th) const { return GetThrusterLevel(th_hover[th]); }
 	void   SetHoverThrusterLevel (int th, double lvl) { SetThrusterLevel(th_hover[th], lvl); }
-	inline double MainPGimbal (int which, bool actual=true) const
-	{ return actual ? mpgimbal[which]: mpgimbal_cmd[which]; }  // return main engine gimbal pitch
-	inline double MainYGimbal (int which, bool actual=true) const
-	{ return actual ? mygimbal[which] : mygimbal_cmd[which]; } // return main engine gimbal yaw
-	void SetMainPGimbal (int which, double lvl);               // command a pitch gimbal value
-	void SetMainYGimbal (int which, double lvl);               // command a yaw gimbal value
-	void AutoMainGimbal ();                                    // apply automatic main engine gimbal setting
-	void TrackMainGimbal ();                                   // follow gimbals to commanded values
-	bool IncMainPGimbal (int which, int mode);                 // manually change gimbal pitch command
-	bool IncMainYGimbal (int which, int mode);                 // manually change gimbal yaw command
+
 	void TestDamage ();
 	void ApplyDamage ();
 	void RepairDamage ();
@@ -285,8 +279,6 @@ public:
 	double aoa_ind;   // angle of AOA needle (NOT AOA!)
 	double slip_ind;  // angle of slip indicator needle
 	double load_ind;  // angle of load indicator needle
-	int mpswitch[2], mpmode; // main gimbal pitch button states
-	int myswitch[2], mymode; // main gimbal yaw button states
 	int hbalanceidx, hbswitch, hbmode;       // hover balance slider position
 	bool psngr[4];                           // passengers?
 	bool bDamageEnabled;                     // damage/failure testing?
@@ -405,6 +397,7 @@ private:
 	void ScramjetThrust ();                      // scramjet thrust calculation
 
 	// Vessel subsystems -------------------------------------------------------------
+	GimbalControl       *ssys_gimbal;            // main engine gimbal control system
 	HoverBalanceControl *ssys_hoverbalance;      // hover balance control system
 	HoverHoldAltControl *ssys_hoverhold;         // hover hold alt system
 	PressureControl     *ssys_pressurectrl;      // pressure control system
@@ -449,9 +442,6 @@ private:
 	bool strobe_light_on;                        // false=off, true=on
 	bool nav_light_on;                           // false=off, true=on
 	int last_hudmode;
-	int main_gimbal_mode;                        // setting of gimbal mode dial
-	double mpgimbal[2], mpgimbal_cmd[2];         // current/commanded main engine pitch gimbal angle (tan)
-	double mygimbal[2], mygimbal_cmd[2];         // current/commanded main engine yaw gimbal angle (tan)
 
 	UINT engsliderpos[5];    // throttle settings for main,hover,scram engines
 	double scram_intensity[2];
@@ -531,11 +521,7 @@ typedef struct {
 #define AID_MFD2_BBUTTONS       18
 #define AID_MFD2_LBUTTONS       19
 #define AID_MFD2_RBUTTONS       20
-#define AID_PGIMBALMAIN         22
-#define AID_YGIMBALMAIN         24
 #define AID_ELEVATORTRIM        28
-#define AID_MAINGIMBALDIAL      29
-#define AID_MAINGIMBALDISP      30
 #define AID_MAINDISP1           32
 #define AID_MAINDISP2           33
 #define AID_MAINDISP3           34

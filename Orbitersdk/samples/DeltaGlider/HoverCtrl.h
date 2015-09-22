@@ -24,7 +24,6 @@ class RHoverCtrl;
 class HoverDisp;
 
 class HoverBalanceControl: public DGSubSystem {
-
 public:
 	HoverBalanceControl (DeltaGlider *vessel, int ident);
 	inline int Mode() const { return mode; }
