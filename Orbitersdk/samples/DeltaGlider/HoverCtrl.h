@@ -122,32 +122,48 @@ private:
 class HoverAltBtn;
 class HoverAltSwitch;
 class HoverAltCurBtn;
+class HoverAltModeButtons;
 
 class HoverHoldAltControl: public DGSubSystem {
 	friend class HoverHoldAltIndicator;
 
 public:
+	enum HoverMode { HOLD_NONE, HOLD_ALT, HOLD_VSPD };
+
 	HoverHoldAltControl (DeltaGlider *vessel, int ident);
 	void Activate (bool ison);
 	double TargetAlt() const { return holdalt; }
 	void SetTargetAlt (double alt);
 	void SetTargetAltCurrent ();
+	double TargetVspd() const { return holdvspd; }
+	void SetTargetVspd (double vspd);
+	double TargetPrm() const { return (hovermode == HOLD_ALT ? holdalt : holdvspd); }
+	void SetTargetPrm (double prm);
+	void SetHoverMode (HoverMode mode);
+	HoverMode GetHoverMode () const { return hovermode; }
+	void HoverHoldVspd (double vspd);
 	void clbkPostStep (double simt, double simdt, double mjd);
 	bool clbkLoadVC (int vcid);
-	enum HoldMode { HOLDMODE_NONE, HOLDMODE_ALT, HOLDMODE_RATE };
 
 private:
 	double holdalt;   // current hold altitude
+	double holdvspd;  // current hold vertical speed
+	double holdT;     // for time interval
+	double pvh;       // previous vertical speed
 	bool active;      // hover hold altitude active?
 	VESSEL::AltitudeMode altmode;
-	HoldMode holdmode;
+	HoverMode hovermode;
+
 	HoverAltBtn *holdbtn;
 	HoverAltSwitch *altset;
 	HoverAltCurBtn *altcur;
+	HoverAltModeButtons *modebuttons;
+
 	int ELID_DISPLAY;
 	int ELID_HOLDBTN;
 	int ELID_ALTSET;
 	int ELID_ALTCURRENT;
+	int ELID_MODEBUTTONS;
 };
 
 // ==============================================================
@@ -160,6 +176,25 @@ public:
 
 private:
 	HoverHoldAltControl *ctrl;
+};
+
+// ==============================================================
+// Hover mode buttons
+
+class HoverAltModeButtons: public PanelElement {
+public:
+	HoverAltModeButtons (HoverHoldAltControl *hhac);
+	~HoverAltModeButtons();
+	void DefineAnimationsVC (const VECTOR3 &axis, DWORD meshgrp, DWORD meshgrp_label,
+		DWORD vofs[2], DWORD vofs_label[2]);
+	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
+	bool ProcessMouseVC (int event, VECTOR3 &p);
+	void ResetVC (DEVMESHHANDLE hMesh);
+
+private:
+	HoverHoldAltControl *ctrl;
+	DGButton3 *btn[2];
+	HoverHoldAltControl::HoverMode vmode; // currently displayed hover mode
 };
 
 // ==============================================================
@@ -199,7 +234,7 @@ private:
 	void UpdateReadout (const char *tgtstr, char *curstr);
 	HoverHoldAltControl *ctrl;
 	SURFHANDLE btgt, bsrc;
-	HoverHoldAltControl::HoldMode holdmode_disp;
+	HoverHoldAltControl::HoverMode holdmode_disp;
 	bool hold_disp;
 	char holdstr[10];   // current hold altitude readout
 };

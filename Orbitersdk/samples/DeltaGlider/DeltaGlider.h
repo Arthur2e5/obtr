@@ -92,8 +92,6 @@ const double HATCH_OPERATING_SPEED = 0.15;
 const double RCOVER_OPERATING_SPEED = 0.3;
 // Retro cover opening/closing speed
 
-const double HUD_OPERATING_SPEED = 0.15;
-
 // ========= Main engine parameters ============
 
 const double MAIN_PGIMBAL_RANGE = tan (5.0*RAD);
@@ -168,6 +166,7 @@ const DWORD INSTR3_TEXH   =  188;
 
 // DG subsystems
 class DGSubSystem;
+class HUDControl;
 class GimbalControl;
 class HoverBalanceControl;
 class HoverHoldAltControl;
@@ -197,9 +196,6 @@ public:
 	void DrawHUD (int mode, const HUDPAINTSPEC *hps, HDC hDC);
 	void DrawNeedle (HDC hDC, int x, int w, double rad, double angle, double *pangle = 0, double speed = PI);
 	void UpdateStatusIndicators();
-	int GetHUDMode () const;
-	void SetHUDMode (int mode);
-	void ModHUDBrightness (bool increase);
 	void SetPassengerVisuals ();
 	void SetDamageVisuals ();
 	void SetPanelScale (PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
@@ -240,6 +236,7 @@ public:
 	void   SetMainThrusterDir (int which, const VECTOR3 &dir) { SetThrusterDir(th_main[which], dir); }
 	double GetHoverThrusterLevel (int th) const { return GetThrusterLevel(th_hover[th]); }
 	void   SetHoverThrusterLevel (int th, double lvl) { SetThrusterLevel(th_hover[th], lvl); }
+	double GetMaxHoverThrust () const;
 
 	void TestDamage ();
 	void ApplyDamage ();
@@ -291,7 +288,7 @@ public:
 
 	enum DoorStatus { DOOR_CLOSED, DOOR_OPEN, DOOR_CLOSING, DOOR_OPENING }
 		nose_status, noselever_status, ladder_status, gear_status, gearlever_status, rcover_status, olock_status, ilock_status,
-		hatch_status, radiator_status, brake_status, hud_status, undock_status, airbrakelever_status;
+		hatch_status, radiator_status, brake_status, undock_status, airbrakelever_status;
 	void ActivateLandingGear (DoorStatus action);
 	void ActivateRCover (DoorStatus action);
 	void ActivateDockingPort (DoorStatus action);
@@ -302,7 +299,6 @@ public:
 	void ActivateHatch (DoorStatus action);
 	void ActivateAirbrake (DoorStatus action, bool half_step = false);
 	void ActivateRadiator (DoorStatus action);
-	void ActivateHud (DoorStatus action);
 	void RevertLandingGear ();
 	void RevertDockingPort ();
 	void RevertLadder ();
@@ -310,7 +306,6 @@ public:
 	void RevertInnerAirlock ();
 	void RevertHatch ();
 	void RevertRadiator ();
-	void RevertHud ();
 	void SetPressureValve (int id, DoorStatus action);
 	void SetInstrLight (bool on, bool force=false);
 	inline bool GetInstrLight () const { return instr_light_on; }
@@ -324,7 +319,7 @@ public:
 	void ModFloodBrightness (bool up);
 	void SetGearParameters (double state);
 	double nose_proc, noselever_proc, ladder_proc, gear_proc, gearlever_proc, rcover_proc, olock_proc, ilock_proc,
-		hatch_proc, radiator_proc, brake_proc, hud_proc, undock_proc, airbrakelever_proc;     // logical status
+		hatch_proc, radiator_proc, brake_proc, undock_proc, airbrakelever_proc;     // logical status
 
 	// Animation handles
 	UINT anim_gear;             // handle for landing gear animation
@@ -343,9 +338,7 @@ public:
 	UINT anim_laileron;         // handle for left aileron animation
 	UINT anim_raileron;         // handle for right aileron animation
 	UINT anim_brake;            // handle for airbrake animation
-	UINT anim_vc_hudbdial;      // VC HUD brightness dial
 	UINT anim_vc_trimwheel;     // VC elevator trim wheel
-	UINT anim_vc_hud;           // VC HUD folding away
 	UINT anim_mainthrottle[2];  // VC main/retro throttle levers (left and right)
 	UINT anim_hoverthrottle;    // VC hover throttle
 	UINT anim_scramthrottle[2]; // VC scram throttle levers (left and right)
@@ -397,6 +390,7 @@ private:
 	void ScramjetThrust ();                      // scramjet thrust calculation
 
 	// Vessel subsystems -------------------------------------------------------------
+	HUDControl          *ssys_hud;               // HUD control system
 	GimbalControl       *ssys_gimbal;            // main engine gimbal control system
 	HoverBalanceControl *ssys_hoverbalance;      // hover balance control system
 	HoverHoldAltControl *ssys_hoverhold;         // hover hold alt system
@@ -441,7 +435,6 @@ private:
 	int landdock_light_mode;                     // 0=off, 1=docking, 2=landing
 	bool strobe_light_on;                        // false=off, true=on
 	bool nav_light_on;                           // false=off, true=on
-	int last_hudmode;
 
 	UINT engsliderpos[5];    // throttle settings for main,hover,scram engines
 	double scram_intensity[2];
@@ -508,7 +501,6 @@ typedef struct {
 #define AID_ATTITUDEMODE         5
 #define AID_ADCTRLMODE           6
 #define AID_NAVMODE              7
-#define AID_HUDMODE              8
 #define AID_AOAINSTR             9
 #define AID_VSINSTR             10
 #define AID_SLIPINSTR           11
@@ -547,7 +539,6 @@ typedef struct {
 #define AID_FLOODLIGHT_SWITCH   59
 #define AID_FLOODBRIGHT_DIAL    60
 #define AID_ANGRATEINDICATOR    61
-#define AID_HUDRETRACT          62
 #define AID_LANDDOCKLIGHT       63
 #define AID_STROBE_SWITCH       64
 #define AID_NAVLIGHT_SWITCH     65
@@ -582,8 +573,6 @@ typedef struct {
 // Virtual cockpit-specific area identifiers:
 #define AID_MFD1_PWR           300
 #define AID_MFD2_PWR           301
-#define AID_HUDCOLOUR          302
-#define AID_HUDBRIGHT          303
 #define AID_BUTTONROW1         304
 #define AID_RADIATOREX         305
 #define AID_RADIATORIN         306

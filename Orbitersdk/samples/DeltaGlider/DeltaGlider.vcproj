@@ -538,11 +538,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\HudBtn.cpp"
+					RelativePath=".\HudCtrl.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\HudBtn.h"
+					RelativePath=".\HudCtrl.h"
 					>
 				</File>
 				<File

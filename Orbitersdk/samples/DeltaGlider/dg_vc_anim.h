@@ -1,4 +1,4 @@
-// Created by deltaglider_vc.m 15-Sep-2015
+// Created by deltaglider_vc.m 25-Sep-2015
 
 #ifndef __DG_VC_ANIM_H
 #define __DG_VC_ANIM_H
@@ -101,6 +101,27 @@ const VECTOR3 VC_BTN_HOVER_HOLDALT_CUR_ref = {-0.06060,0.99811,7.19130};
 
 // BTN_HOVER_HOLDALT_CUR (VC): rotation axis
 const VECTOR3 VC_BTN_HOVER_HOLDALT_CUR_axis = {0.00000,-0.58280,0.81262};
+
+// HOVERMODE_BUTTONS (VC): mouse catch area
+const VECTOR3 VC_HOVERMODE_BUTTONS_mousearea[4] = {{-0.08945,0.97649,7.17580},{-0.06060,0.97649,7.17580},{-0.08945,0.98821,7.18420},{-0.06060,0.98821,7.18420}};
+
+// BTN_HOVERMODE_1 (VC): mouse catch radius
+const double VC_BTN_HOVERMODE_1_mouserad = 0.013524;
+
+// BTN_HOVERMODE_1 (VC): rotation reference
+const VECTOR3 VC_BTN_HOVERMODE_1_ref = {-0.08246,0.98272,7.18026};
+
+// BTN_HOVERMODE_1 (VC): rotation axis
+const VECTOR3 VC_BTN_HOVERMODE_1_axis = {0.00000,-0.58280,0.81262};
+
+// BTN_HOVERMODE_2 (VC): mouse catch radius
+const double VC_BTN_HOVERMODE_2_mouserad = 0.013524;
+
+// BTN_HOVERMODE_2 (VC): rotation reference
+const VECTOR3 VC_BTN_HOVERMODE_2_ref = {-0.06759,0.98272,7.18026};
+
+// BTN_HOVERMODE_2 (VC): rotation axis
+const VECTOR3 VC_BTN_HOVERMODE_2_axis = {0.00000,-0.58280,0.81262};
 
 // RCS_DIAL (VC): mouse catch area
 const VECTOR3 VC_RCS_DIAL_mousearea[4] = {{0.05000,1.26200,7.26800},{0.08000,1.26200,7.26800},{0.05000,1.29200,7.26800},{0.08000,1.29200,7.26800}};
@@ -451,45 +472,53 @@ const int VC_BTN_HOVER_HOLDALT_LABEL_vofs = 0;
 
 const int VC_BTN_HOVER_HOLDALT_CUR_vofs = 0;
 
+const int VC_BTN_HOVERMODE_1_vofs = 20;
+
+const int VC_BTN_HOVERMODE_1_LABEL_vofs = 8;
+
+const int VC_BTN_HOVERMODE_2_vofs = 40;
+
+const int VC_BTN_HOVERMODE_2_LABEL_vofs = 16;
+
 const int VC_RCS_DIAL_vofs = 228;
 
-const int VC_BTN_HUDMODE_1_vofs = 20;
+const int VC_BTN_HUDMODE_1_vofs = 60;
 
-const int VC_BTN_HUDMODE_1_LABEL_vofs = 8;
+const int VC_BTN_HUDMODE_1_LABEL_vofs = 24;
 
-const int VC_BTN_HUDMODE_2_vofs = 40;
+const int VC_BTN_HUDMODE_2_vofs = 80;
 
-const int VC_BTN_HUDMODE_2_LABEL_vofs = 16;
+const int VC_BTN_HUDMODE_2_LABEL_vofs = 32;
 
-const int VC_BTN_HUDMODE_3_vofs = 60;
+const int VC_BTN_HUDMODE_3_vofs = 100;
 
-const int VC_BTN_HUDMODE_3_LABEL_vofs = 24;
+const int VC_BTN_HUDMODE_3_LABEL_vofs = 40;
 
 const int VC_HUD_COLBUTTON_vofs = 20;
 
-const int VC_BTN_NAVMODE_1_vofs = 80;
+const int VC_BTN_NAVMODE_1_vofs = 120;
 
-const int VC_BTN_NAVMODE_1_LABEL_vofs = 32;
+const int VC_BTN_NAVMODE_1_LABEL_vofs = 48;
 
-const int VC_BTN_NAVMODE_2_vofs = 100;
+const int VC_BTN_NAVMODE_2_vofs = 140;
 
-const int VC_BTN_NAVMODE_2_LABEL_vofs = 40;
+const int VC_BTN_NAVMODE_2_LABEL_vofs = 56;
 
-const int VC_BTN_NAVMODE_3_vofs = 120;
+const int VC_BTN_NAVMODE_3_vofs = 160;
 
-const int VC_BTN_NAVMODE_3_LABEL_vofs = 48;
+const int VC_BTN_NAVMODE_3_LABEL_vofs = 64;
 
-const int VC_BTN_NAVMODE_4_vofs = 140;
+const int VC_BTN_NAVMODE_4_vofs = 180;
 
-const int VC_BTN_NAVMODE_4_LABEL_vofs = 56;
+const int VC_BTN_NAVMODE_4_LABEL_vofs = 72;
 
-const int VC_BTN_NAVMODE_5_vofs = 160;
+const int VC_BTN_NAVMODE_5_vofs = 200;
 
-const int VC_BTN_NAVMODE_5_LABEL_vofs = 64;
+const int VC_BTN_NAVMODE_5_LABEL_vofs = 80;
 
-const int VC_BTN_NAVMODE_6_vofs = 180;
+const int VC_BTN_NAVMODE_6_vofs = 220;
 
-const int VC_BTN_NAVMODE_6_LABEL_vofs = 72;
+const int VC_BTN_NAVMODE_6_LABEL_vofs = 88;
 
 const int VC_INSTRLIGHT_SWITCH_vofs = 0;
 

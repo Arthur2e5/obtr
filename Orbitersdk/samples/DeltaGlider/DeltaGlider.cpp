@@ -23,7 +23,7 @@
 #include "ElevTrim.h"
 #include "Airbrake.h"
 #include "UndockBtn.h"
-#include "HudBtn.h"
+#include "HudCtrl.h"
 #include "GearLever.h"
 #include "NconeLever.h"
 #include "FuelMfd.h"
@@ -160,12 +160,13 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	modelidx = (fmodel ? 1 : 0);
 
 	// Subsystem definitions
-	nssys = 4;                      // number of subsystems
+	nssys = 5;                      // number of subsystems
 	ssys = new DGSubSystem*[nssys]; // list of subsystems
-	ssys[0] = ssys_hoverhold = new HoverHoldAltControl (this, 0); // hover hold altitude controls
+	ssys[0] = ssys_hoverhold    = new HoverHoldAltControl (this, 0); // hover hold altitude controls
 	ssys[1] = ssys_pressurectrl = new PressureControl (this, 1);  // cabin/airlock pressure controls
 	ssys[2] = ssys_hoverbalance = new HoverBalanceControl (this, 2); // hover balance controls
 	ssys[3] = ssys_gimbal       = new GimbalControl (this, 3); // main engine gimbal controls
+	ssys[4] = ssys_hud          = new HUDControl (this, 4); // HUD controls
 
 	aoa_ind = PI;
 	slip_ind = PI*0.5;
@@ -197,8 +198,6 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	airbrake_tgt         = 0;
 	radiator_status   = DOOR_CLOSED;
 	radiator_proc     = 0.0;
-	hud_status        = DOOR_CLOSED;
-	hud_proc          = 0.0;
 	visual            = NULL;
 	exmesh            = NULL;
 	vcmesh            = NULL;
@@ -210,7 +209,6 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	hPanelMesh        = NULL;
 	campos            = CAM_GENERIC;
 	th_main_level     = 0.0;
-	last_hudmode      = HUD_NONE;
 	cockpit_light     = NULL;
 	docking_light     = NULL;
 	instr_light_on    = false;
@@ -328,7 +326,7 @@ void DeltaGlider::CreatePanelElements ()
 	instr[10] = new RCSDial (this);
 	instr[11] = new ATCtrlDial (this);
 	instr[12] = new UndockButton (this);
-	instr[13] = new HUDModeButtons (this);
+	instr[13] = 0;
 	instr[14] = new GearLever (this);
 	instr[15] = 0;
 	instr[16] = 0;
@@ -348,8 +346,8 @@ void DeltaGlider::CreatePanelElements ()
 		for (j = 0; j < 2; j++)
 			instr[29+i*3+j] = new MFDButtonCol (this, i, j);
 	}
-	instr[34] = new HUDBrightnessDial (this);
-	instr[35] = new HUDColourButton (this);
+	instr[34] = 0;
+	instr[35] = 0;
 	instr[36] = new RCoverSwitch (this);
 	instr[37] = new GearIndicator (this);
 	instr[38] = new InstrLightSwitch (this);
@@ -357,7 +355,7 @@ void DeltaGlider::CreatePanelElements ()
 	instr[40] = new FloodLightSwitch (this);
 	instr[41] = new FloodLightBrightnessDial (this);
 	instr[42] = new AngRateIndicator (this, g_Param.surf);
-	instr[43] = new HUDUpDownSwitch (this);
+	instr[43] = 0;
 	instr[44] = new LandDockLightSwitch (this);
 	instr[45] = new StrobeLightSwitch (this);
 	instr[46] = new NavLightSwitch (this);
@@ -625,30 +623,12 @@ void DeltaGlider::DefineAnimations ()
 	// VC animation definitions
 	// ======================================================
 
-	// HUD brightness dial
-	static UINT HudBDialGrp = GRP_HUD_BRIGHTNESS_VC;
-	static MGROUP_ROTATE HudBDialTransform (1, &HudBDialGrp, 1,
-		VC_HUD_BRIGHTNESS_ref, VC_HUD_BRIGHTNESS_axis, (float)(-280*RAD));
-	anim_vc_hudbdial = CreateAnimation (0.5);
-	AddAnimationComponent (anim_vc_hudbdial, 0, 1, &HudBDialTransform);
-
 	// Elevator trim wheel
 	static UINT TrimWheelGrp = GRP_ETRIM_WHEEL_VC;
 	static MGROUP_ROTATE TrimWheelTransform (1, &TrimWheelGrp, 1,
 		etrim_wheel_ref, etrim_wheel_axis, (float)(PI*0.06));
 	anim_vc_trimwheel = CreateAnimation (0.5);
 	AddAnimationComponent (anim_vc_trimwheel, 0, 1, &TrimWheelTransform);
-
-	// Fold up HUD
-	static UINT HudGrp1[2] = {GRP_HUD_FRAME_VC, GRP_HUD_PANE_VC};
-	static UINT HudGrp2[3] = {GRP_HUD_FRAME_VC, GRP_HUD_PANE_VC, GRP_HUD_RAIL_VC};
-	static MGROUP_ROTATE HudTransform1 (1, HudGrp1, 2,
-		_V(0,1.5836,7.1280), _V(1,0,0), (float)(-62*RAD));
-	static MGROUP_ROTATE HudTransform2 (1, HudGrp2, 3,
-		_V(0,0.99,6.53), _V(1,0,0), (float)(-26*RAD));
-	anim_vc_hud = CreateAnimation (0);
-	AddAnimationComponent (anim_vc_hud, 0, 0.4, &HudTransform1);
-	AddAnimationComponent (anim_vc_hud, 0.4, 1, &HudTransform2);
 
 	// Main throttle left engine
 	static UINT MainThrottleLGrp[2] = {GRP_THROTTLE_MAIN_L1_VC,GRP_THROTTLE_MAIN_L2_VC};
@@ -904,7 +884,6 @@ void DeltaGlider::InitVC (int vc)
 		memset (&p_engdisp, 0, sizeof(p_engdisp));
 		memset (&p_rngdisp, 0, sizeof(p_rngdisp));
 
-		SetAnimation (anim_vc_hudbdial, oapiGetHUDIntensity());
 		break;
 	}
 }
@@ -1281,26 +1260,6 @@ void DeltaGlider::ActivateAirbrake (DoorStatus action, bool half_step)
 	RecordEvent ("AIRBRAKE", action == DOOR_CLOSING ? "CLOSE" : "OPEN");
 }
 
-void DeltaGlider::ActivateHud (DoorStatus action)
-{
-	hud_status = action;
-	if (action == DOOR_OPENING) {
-		int hudmode = oapiGetHUDMode();
-		if (hudmode != HUD_NONE) {
-			last_hudmode = hudmode;
-			oapiSetHUDMode (HUD_NONE);
-		}
-	}
-	//oapiTriggerPanelRedrawArea (0, AID_AIRBRAKE);
-	RecordEvent ("HUD", action == DOOR_CLOSING ? "CLOSE" : "OPEN");
-}
-
-void DeltaGlider::RevertHud (void)
-{
-	ActivateHud (hud_status == DOOR_CLOSED || hud_status == DOOR_CLOSING ?
-		DOOR_OPENING : DOOR_CLOSING);
-}
-
 void DeltaGlider::SetInstrLight (bool on, bool force)
 {
 	if (on == instr_light_on && !force) return; // nothing to do
@@ -1491,6 +1450,14 @@ void DeltaGlider::EnableRetroThrusters (bool state)
 {
 	for (int i = 0; i < 2; i++)
 		SetThrusterResource (th_retro[i], state ? ph_main : NULL);
+}
+
+double DeltaGlider::GetMaxHoverThrust () const
+{
+	double th0 = 0.0;
+	for (int i = 0; i < 3; i++)
+		th0 += GetThrusterMax (th_hover[i]);
+	return th0;
 }
 
 bool DeltaGlider::GetBeaconState (int which)
@@ -1971,41 +1938,6 @@ void DeltaGlider::SetPassengerVisuals ()
 		oapiEditMeshGroup (vcmesh, vcpsngridx[i], &ges);
 		oapiEditMeshGroup (vcmesh, vcvisoridx[i], &ges);
 	}
-}
-
-int DeltaGlider::GetHUDMode () const {
-	return last_hudmode;
-}
-
-void DeltaGlider::SetHUDMode (int mode)
-{
-	if (mode != HUD_NONE) {
-		last_hudmode = mode;
-		if (oapiCockpitMode() != COCKPIT_VIRTUAL || hud_status == DOOR_CLOSED)
-			oapiSetHUDMode (mode);
-		oapiTriggerRedrawArea (0, 0, AID_HUDMODE);
-		((HUDModeButtons*)instr[13])->SetMode (mode);
-	}
-}
-
-void DeltaGlider::ModHUDBrightness (bool increase)
-{
-	if (increase) oapiIncHUDIntensity();
-	else          oapiDecHUDIntensity();
-
-	double brt = oapiGetHUDIntensity();
-	int mode = oapiGetHUDMode();
-	if (brt == 0) {
-		if (mode != HUD_NONE) {
-			last_hudmode = mode;
-			oapiSetHUDMode (HUD_NONE);
-		}
-	} else {
-		if (mode == HUD_NONE && hud_status == DOOR_CLOSED)
-			oapiSetHUDMode (last_hudmode);
-	}
-	if (oapiCockpitMode() == COCKPIT_VIRTUAL)
-		SetAnimation (anim_vc_hudbdial, brt);
 }
 
 static UINT AileronGrp[8] = {29,51,30,52,35,55,36,54};
@@ -2713,7 +2645,7 @@ void DeltaGlider::clbkADCtrlMode (DWORD mode)
 // --------------------------------------------------------------
 void DeltaGlider::clbkHUDMode (int mode)
 {
-	SetHUDMode (mode);
+	ssys_hud->SetHUDMode (mode);
 }
 
 // --------------------------------------------------------------
@@ -3002,22 +2934,6 @@ void DeltaGlider::clbkPostStep (double simt, double simdt, double mjd)
 		SetAnimation (anim_airbrakelever, airbrakelever_proc);
 	}
 
-	// animate HUD
-	if (hud_status >= DOOR_CLOSING) {
-		double da = simdt * HUD_OPERATING_SPEED;
-		if (hud_status == DOOR_CLOSING) { // fold up HUD
-			if (hud_proc > 0.0) hud_proc = max (0.0, hud_proc-da);
-			else {
-				hud_status = DOOR_CLOSED;
-				oapiSetHUDMode (last_hudmode);
-			}
-		} else {
-			if (hud_proc < 1.0) hud_proc = min (1.0, hud_proc+da);
-			else                hud_status = DOOR_OPEN;
-		}
-		SetAnimation (anim_vc_hud, hud_proc);
-	}
-
 	if (hatch_vent && simt > hatch_vent_t + 1.0) {
 		DelExhaustStream (hatch_vent);
 		hatch_vent = NULL;
@@ -3124,7 +3040,6 @@ void DeltaGlider::DefinePanelMain (PANELHANDLE hPanel)
 	RegisterPanelArea (hPanel, AID_ATTITUDEMODE, _R(1136, 69,1176,113), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, 0, instr[10]);
 	RegisterPanelArea (hPanel, AID_ADCTRLMODE,   _R(1217, 69,1257,113), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, panel2dtex, instr[11]);
 	RegisterPanelArea (hPanel, AID_DOCKRELEASE,  _R(1141,474,1172,504), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, instr[12]);
-	RegisterPanelArea (hPanel, AID_HUDMODE,      _R(  15, 18, 122, 33), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY, panel2dtex, instr[13]);
 	RegisterPanelArea (hPanel, AID_GEARLEVER,    _R(1230,286,1262,511), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN, panel2dtex, instr[14]);
 	RegisterPanelArea (hPanel, AID_GEARINDICATOR, _R(0,0,0,0),          PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, instr[37]);
 	RegisterPanelArea (hPanel, AID_NOSECONELEVER, _R(1141,327,1180,421), PANEL_REDRAW_USER,  PANEL_MOUSE_LBDOWN, panel2dtex, instr[23]);
@@ -3320,29 +3235,6 @@ bool DeltaGlider::clbkLoadVC (int id)
 			oapiVCRegisterArea (AID_ENGINESCRAM, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED);
 			oapiVCSetAreaClickmode_Quadrilateral (AID_ENGINESCRAM, _V(-0.45,0.98,6.94), _V(-0.39,0.98,6.94), _V(-0.45,0.95,7.07), _V(-0.39,0.95,7.07));
 		}
-
-		// HUD mode indicator/selector buttons on the dash panel
-		oapiVCRegisterArea (AID_HUDMODE, PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_HUDMODE, VC_HUD_BUTTONS_mousearea[0], VC_HUD_BUTTONS_mousearea[1], VC_HUD_BUTTONS_mousearea[2], VC_HUD_BUTTONS_mousearea[3]);
-		{
-			static DWORD hudbtn_vofs[3] = {VC_BTN_HUDMODE_1_vofs,VC_BTN_HUDMODE_2_vofs,VC_BTN_HUDMODE_3_vofs};
-			static DWORD hudbtn_label_vofs[3] = {VC_BTN_HUDMODE_1_LABEL_vofs, VC_BTN_HUDMODE_2_LABEL_vofs, VC_BTN_HUDMODE_3_LABEL_vofs};
-			((HUDModeButtons*)instr[13])->DefineAnimationsVC (VC_BTN_HUDMODE_1_axis, GRP_BUTTON3_VC, GRP_LIT_SURF_VC, hudbtn_vofs, hudbtn_label_vofs);
-		}
-
-		// HUD brightness dial
-		oapiVCRegisterArea (AID_HUDBRIGHT, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_HUDBRIGHT, VC_HUD_BRIGHTNESS_mousearea[0], VC_HUD_BRIGHTNESS_mousearea[1], VC_HUD_BRIGHTNESS_mousearea[2], VC_HUD_BRIGHTNESS_mousearea[3]);
-
-		// HUD colour selector button
-		oapiVCRegisterArea (AID_HUDCOLOUR, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Spherical (AID_HUDCOLOUR, VC_HUD_COLBUTTON_ref, VC_HUD_COLBUTTON_mouserad);
-		((DGButton2*)instr[35])->DefineAnimationVC (VC_HUD_COLBUTTON_axis, GRP_BUTTON2_VC, VC_HUD_COLBUTTON_vofs);
-
-		// HUD extend/retract switch
-		oapiVCRegisterArea (AID_HUDRETRACT, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_HUDRETRACT, VC_HUDRETRACT_SWITCH_mousearea[0], VC_HUDRETRACT_SWITCH_mousearea[1], VC_HUDRETRACT_SWITCH_mousearea[2], VC_HUDRETRACT_SWITCH_mousearea[3]);
-		((DGSwitch1*)instr[43])->DefineAnimationVC (VC_HUDRETRACT_SWITCH_ref, VC_HUDRETRACT_SWITCH_axis, GRP_SWITCH1_VC, VC_HUDRETRACT_SWITCH_vofs);
 
 		// Landing/docking light switch
 		oapiVCRegisterArea (AID_LANDDOCKLIGHT, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
@@ -3599,14 +3491,6 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 			py = p.y;
 		}
 		return true;
-	case AID_HUDMODE:
-		return instr[13]->ProcessMouseVC (event, p);
-	case AID_HUDBRIGHT:
-		return instr[34]->ProcessMouseVC (event, p);
-	case AID_HUDCOLOUR:
-		return instr[35]->ProcessMouseVC (event, p);
-	case AID_HUDRETRACT:
-		return instr[43]->ProcessMouseVC (event, p);
 	case AID_LANDDOCKLIGHT:
 		return instr[44]->ProcessMouseVC (event, p);
 	case AID_STROBE_SWITCH:
@@ -3679,8 +3563,6 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 	case AID_MFD2_RBUTTONS:
 	case AID_MFD2_BBUTTONS:
 		return (vcmesh ? instr[13+id]->RedrawVC(vcmesh, vctex) : false);
-	case AID_HUDCOLOUR:
-		return (vcmesh ? instr[35]->RedrawVC (vcmesh, surf) : false);
 	case AID_ENGINEMAIN:
 		RedrawVC_ThMain();
 		return false;
@@ -3730,10 +3612,6 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 		return (vcmesh ? instr[0]->RedrawVC (vcmesh, surf) : false);
 	case AID_HSIINSTR:
 		return instr[1]->RedrawVC (vcmesh, surf);
-	case AID_HUDMODE:
-		return (vcmesh ? instr[13]->RedrawVC (vcmesh, surf) : false);
-	case AID_HUDRETRACT:
-		return (vcmesh ? instr[43]->RedrawVC (vcmesh, surf) : false);
 	case AID_LANDDOCKLIGHT:
 		return (vcmesh ? instr[44]->RedrawVC (vcmesh, surf) : false);
 	case AID_STROBE_SWITCH:
@@ -3815,7 +3693,7 @@ int DeltaGlider::clbkConsumeBufferedKey (DWORD key, bool down, char *kstate)
 			ActivateAirbrake (DOOR_OPENING);
 			return 1;
 		case OAPI_KEY_H:
-			RevertHud ();
+			ssys_hud->RevertHud ();
 			return 1;
 		}
 	} else {
@@ -3827,7 +3705,7 @@ int DeltaGlider::clbkConsumeBufferedKey (DWORD key, bool down, char *kstate)
 			RevertLandingGear ();
 			return 1;
 		case OAPI_KEY_H:  // trap HUD change
-			SetHUDMode (last_hudmode == 3 ? 1:last_hudmode+1);
+			ssys_hud->ToggleHUDMode ();
 			return true;
 		case OAPI_KEY_K:  // "operate docking port"
 			RevertDockingPort ();

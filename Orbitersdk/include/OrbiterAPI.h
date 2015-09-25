@@ -3792,6 +3792,18 @@ OAPIFUNC double oapiGetPlanetJCoeff (OBJHANDLE hPlanet, DWORD n);
  * \return elevation query handle (or 0 if planet doesn't support elevation data)
  */
 OAPIFUNC ELEVHANDLE oapiElevationManager (OBJHANDLE hPlanet);
+
+/**
+ * \brief Returns the elevation of a point on a planet surface
+ * \param hPlanet planet object handle
+ * \param lng longitude [rad]
+ * \param lat latitude [rad]
+ * \return Surface elevation above planet mean radius
+ * \note The OBJHANDLE passed to this function must be a handle for a planetary body
+ * \note The return value may be negative if the specified point is below the mean planet radius.
+ * \note If no elevation data are available for the specified body, the function returns 0.
+ */
+OAPIFUNC double oapiSurfaceElevation (OBJHANDLE hPlanet, double lng, double lat);
 //@}
 
 // =============================================================================================
