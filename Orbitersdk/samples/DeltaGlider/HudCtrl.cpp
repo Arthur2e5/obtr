@@ -194,6 +194,9 @@ bool HUDControl::clbkLoadVC (int vcid)
 void HUDControl::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
 {
 	DG()->SetAnimation (anim_vc_hudbdial, oapiGetHUDIntensity());
+	int hudmode = oapiGetHUDMode();
+	if (hudmode != HUD_NONE && hud_status != DeltaGlider::DOOR_CLOSED)
+		hud_status = DeltaGlider::DOOR_CLOSING, hud_proc = 0.0;
 }
 
 // ==============================================================

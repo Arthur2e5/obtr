@@ -441,6 +441,14 @@ DGButton3::DGButton3 (VESSEL3 *v)
 
 // --------------------------------------------------------------
 
+void DGButton3::DefineAnimation2D (DWORD meshgrp, DWORD vofs)
+{
+	mgrp = meshgrp;
+	vtxofs = vofs;
+}
+
+// --------------------------------------------------------------
+
 void DGButton3::DefineAnimationVC (const VECTOR3 &axis, DWORD meshgrp, DWORD meshgrp_label,
 	DWORD vofs, DWORD vofs_label)
 {
@@ -449,6 +457,25 @@ void DGButton3::DefineAnimationVC (const VECTOR3 &axis, DWORD meshgrp, DWORD mes
 	vtxofs = vofs;
 	vtxofs_lbl = vofs_label;
 	ax = axis;
+}
+
+// --------------------------------------------------------------
+
+void DGButton3::Reset2D (MESHHANDLE hMesh)
+{
+	grp = oapiMeshGroup (hMesh, mgrp);
+}
+
+// --------------------------------------------------------------
+
+bool DGButton3::ProcessMouse2D (int event, int mx, int my)
+{
+	if (event & PANEL_MOUSE_LBDOWN) {
+		state = (state == OFF ? PRESSED_FROM_OFF : PRESSED_FROM_ON);
+	} else if (event & PANEL_MOUSE_LBUP) {
+		state = (state == PRESSED_FROM_OFF ? ON : OFF);
+	}
+	return (state != vstate);
 }
 
 // --------------------------------------------------------------

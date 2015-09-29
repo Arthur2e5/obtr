@@ -5,7 +5,7 @@
 //                   All rights reserved
 //
 // HoverCtrl.cpp
-// Classes for Hover balance control and Hover altitude subsystems
+// Hover engine control subsystem: manual input and automatic modes
 // ==============================================================
 
 #define STRICT 1
@@ -18,12 +18,136 @@
 static const float texw = (float)PANEL2D_TEXW; // texture width
 
 // ==============================================================
+// Hover control subsystem
 // ==============================================================
 
-HoverBalanceControl::HoverBalanceControl (DeltaGlider *vessel, int ident)
+HoverControl::HoverControl (DeltaGlider *vessel, int ident)
 : DGSubSystem (vessel, ident)
 {
+	// create submode instances
+	submode.push_back (attctrl = new HoverAttitudeSubmode (this));
+	submode.push_back (holdctrl = new HoverHoldAltVspdSubmode (this));
+	submode.push_back (manctrl = new HoverManualSubmode (this));
+
+	for (int i = 0; i < 3; i++)
+		hoverlevel[i] = 0.0;
+}
+
+// --------------------------------------------------------------
+
+HoverControl::~HoverControl ()
+{
+	for (int i = 0; i < submode.size(); i++)
+		delete submode[i];
+}
+
+// --------------------------------------------------------------
+
+void HoverControl::IncGroupLevel (double dlvl)
+{
+	for (int i = 0; i < 3; i++)
+		hoverlevel[i] = max (0.0, min (1.0, hoverlevel[i]+dlvl));
+}
+
+// --------------------------------------------------------------
+
+void HoverControl::SetAttitudeMode (int mode)
+{
+	attctrl->SetMode (mode);
+}
+
+// --------------------------------------------------------------
+
+int HoverControl::GetAttitudeMode () const
+{
+	return attctrl->Mode();
+}
+
+// --------------------------------------------------------------
+
+void HoverControl::ActivateHold (bool active)
+{
+	holdctrl->Activate (active);
+}
+
+// --------------------------------------------------------------
+
+void HoverControl::clbkPostStep (double simt, double simdt, double mjd)
+{
+	int i;
+	double hoverlevel_cur[3];
+
+	for (i = 0; i < 3; i++)
+		hoverlevel[i] = hoverlevel_cur[i] = DG()->GetHoverThrusterLevel (i);
+
+	for (i = 0; i < submode.size(); i++)
+		submode[i]->clbkPostStep (simt, simdt, mjd);
+
+	for (i = 0; i < 3; i++)
+		if (hoverlevel[i] != hoverlevel_cur[i])
+			DG()->SetHoverThrusterLevel (i, hoverlevel[i]);
+}
+
+// --------------------------------------------------------------
+
+bool HoverControl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
+{
+	bool b = false;
+	for (int i = 0; i < submode.size(); i++) {
+		bool bi = submode[i]->clbkLoadPanel2D (panelid, hPanel, viewW, viewH);
+		b = b || bi;
+	}
+	return b;
+}
+
+// --------------------------------------------------------------
+
+bool HoverControl::clbkLoadVC (int vcid)
+{
+	bool b = false;
+	for (int i = 0; i < submode.size(); i++) {
+		bool bi = submode[i]->clbkLoadVC (vcid);
+		b = b || bi;
+	}
+	return b;
+}
+
+// --------------------------------------------------------------
+
+void HoverControl::clbkReset2D (int panelid, MESHHANDLE hMesh)
+{
+	if (panelid != 0) return;
+	DGSubSystem::clbkReset2D (panelid, hMesh);
+}
+
+// --------------------------------------------------------------
+
+void HoverControl::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
+{
+	if (vcid != 0) return;
+	DGSubSystem::clbkResetVC (vcid, hMesh);
+}
+
+
+// ==============================================================
+// Base class for hover submodes
+// ==============================================================
+
+HoverSubmode::HoverSubmode (HoverControl *_ctrl)
+: ctrl(_ctrl)
+{
+}
+
+
+// ==============================================================
+// Automatic hover attitude balance submode
+// ==============================================================
+
+HoverAttitudeSubmode::HoverAttitudeSubmode (HoverControl *_ctrl)
+: HoverSubmode(_ctrl)
+{
 	mode = 0;
+
 	phover = phover_cmd = 0.0;
 	rhover = rhover_cmd = 0.0;
 
@@ -35,7 +159,7 @@ HoverBalanceControl::HoverBalanceControl (DeltaGlider *vessel, int ident)
 
 // --------------------------------------------------------------
 
-bool HoverBalanceControl::IncPHover (int dir)
+bool HoverAttitudeSubmode::IncPHover (int dir)
 {
 	if (dir && mode == 2) {
 		const double cmd_speed = 0.5;
@@ -47,7 +171,7 @@ bool HoverBalanceControl::IncPHover (int dir)
 
 // --------------------------------------------------------------
 
-bool HoverBalanceControl::IncRHover (int dir)
+bool HoverAttitudeSubmode::IncRHover (int dir)
 {
 	if (dir && mode == 2) {
 		const double cmd_speed = 0.5;
@@ -59,7 +183,7 @@ bool HoverBalanceControl::IncRHover (int dir)
 
 // --------------------------------------------------------------
 
-void HoverBalanceControl::AutoHoverAtt ()
+void HoverAttitudeSubmode::AutoHoverAtt ()
 {
 	double lvl;
 
@@ -76,15 +200,15 @@ void HoverBalanceControl::AutoHoverAtt ()
 
 // --------------------------------------------------------------
 
-void HoverBalanceControl::TrackHoverAtt ()
+void HoverAttitudeSubmode::TrackHoverAtt ()
 {
 	if (mode) {
 		phover = DG()->GetPitch();
 		rhover = DG()->GetBank();
 		const double fb_scale = 3.0/4.55; // scaling between front and back hovers (distance from CG)
-		double Lf = DG()->GetHoverThrusterLevel(0);
-		double Ll = DG()->GetHoverThrusterLevel(1);
-		double Lr = DG()->GetHoverThrusterLevel(2);
+		double Lf = Ctrl()->GetThrusterLevel(0);
+		double Ll = Ctrl()->GetThrusterLevel(1);
+		double Lr = Ctrl()->GetThrusterLevel(2);
 		double Lb = (Ll+Lr)*0.5;
 		double Lm = (Lf+Lb)*0.5;
 		double Tf = Lf;
@@ -134,14 +258,14 @@ void HoverBalanceControl::TrackHoverAtt ()
 					if (Ll_cmd > 1.0) Ll_cmd = 1.0, Lr_cmd += Lmax-1.0;
 					else              Lr_cmd = 1.0, Ll_cmd += Lmax-1.0;
 				}
-				DG()->SetHoverThrusterLevel (0, Lf_cmd);
-				DG()->SetHoverThrusterLevel (1, Ll_cmd);
-				DG()->SetHoverThrusterLevel (2, Lr_cmd);
+				Ctrl()->SetThrusterLevel (0, Lf_cmd);
+				Ctrl()->SetThrusterLevel (1, Ll_cmd);
+				Ctrl()->SetThrusterLevel (2, Lr_cmd);
 			}
 		} else {
 			double L_cmd = 2.0*Tm / (1.0 + fb_scale);
 			for (int i = 0; i < 3; i++)
-				DG()->SetHoverThrusterLevel (i, L_cmd);
+				Ctrl()->SetThrusterLevel (i, L_cmd);
 		}
 	} else {
 		phover = rhover = phover_cmd = rhover_cmd = 0.0;
@@ -151,7 +275,7 @@ void HoverBalanceControl::TrackHoverAtt ()
 
 // --------------------------------------------------------------
 
-void HoverBalanceControl::clbkPostStep (double simt, double simdt, double mjd)
+void HoverAttitudeSubmode::clbkPostStep (double simt, double simdt, double mjd)
 {
 	if (mode == 1) AutoHoverAtt();
 	TrackHoverAtt();
@@ -159,20 +283,20 @@ void HoverBalanceControl::clbkPostStep (double simt, double simdt, double mjd)
 
 // --------------------------------------------------------------
 
-bool HoverBalanceControl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
+bool HoverAttitudeSubmode::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
 {
 	if (panelid != 0) return false;
 
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
 
 	// Hover control dial
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_MODEDIAL),     _R(32,280,72,324), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, panel2dtex, modedial);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_MODEDIAL),     _R(356,426,396,470), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, panel2dtex, modedial);
 
 	// Hover manual switches
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_PHOVERSWITCH), _R(69,402,85,446), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, phoverswitch);
-	phoverswitch->DefineAnimation2D (DGSwitch2::VERT, GRP_INSTRUMENTS_ABOVE_P0, 192);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_RHOVERSWITCH), _R( 9,415,53,431), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, rhoverswitch);
-	rhoverswitch->DefineAnimation2D (DGSwitch2::HORZ, GRP_INSTRUMENTS_ABOVE_P0, 196);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_PHOVERSWITCH), _R(436,434,452,478), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, phoverswitch);
+	phoverswitch->DefineAnimation2D (DGSwitch2::VERT, GRP_INSTRUMENTS_ABOVE_P0, 160);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_RHOVERSWITCH), _R(423,513,467,529), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, rhoverswitch);
+	rhoverswitch->DefineAnimation2D (DGSwitch2::HORZ, GRP_INSTRUMENTS_ABOVE_P0, 164);
 
 	// Hover balance display
 	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_DISPLAY),      _R( 0,  0, 0,  0), PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, hoverdisp);
@@ -182,7 +306,7 @@ bool HoverBalanceControl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWOR
 
 // --------------------------------------------------------------
 
-bool HoverBalanceControl::clbkLoadVC (int vcid)
+bool HoverAttitudeSubmode::clbkLoadVC (int vcid)
 {
 	if (vcid != 0) return false;
 
@@ -205,26 +329,264 @@ bool HoverBalanceControl::clbkLoadVC (int vcid)
 	return true;
 }
 
-// --------------------------------------------------------------
 
-void HoverBalanceControl::clbkReset2D (int panelid, MESHHANDLE hMesh)
+// ==============================================================
+// Automatic hover hold altitude/vspeed submode
+// ==============================================================
+
+HoverHoldAltVspdSubmode::HoverHoldAltVspdSubmode (HoverControl *_ctrl)
+: HoverSubmode(_ctrl)
 {
-	if (panelid != 0) return;
-	DGSubSystem::clbkReset2D (panelid, hMesh);
+	extern GDIParams g_Param;
+
+	holdalt   = 0.0;
+	holdvspd  = 0.0;
+	active = false;
+	altmode = VESSEL::ALTMODE_MEANRAD;
+	hovermode = HOLD_ALT;
+
+	ELID_DISPLAY     = AddElement (holddisp = new HoverHoldAltIndicator(this, g_Param.surf));
+	ELID_HOLDBTN     = AddElement (holdbtn  = new HoverAltBtn (this));
+	ELID_ALTSET      = AddElement (altset   = new HoverAltSwitch (this));
+	ELID_ALTRESET    = AddElement (altreset = new HoverAltResetBtn (this));
+	ELID_MODEBUTTONS = AddElement (modebuttons = new HoverAltModeButtons (this));
 }
 
 // --------------------------------------------------------------
 
-void HoverBalanceControl::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
+void HoverHoldAltVspdSubmode::Activate (bool ison)
 {
-	if (vcid != 0) return;
-	DGSubSystem::clbkResetVC (vcid, hMesh);
+	if (ison != active) {
+		active = ison;
+
+		holdbtn->SetState(active ? DGButton3::ON : DGButton3::OFF);
+		oapiTriggerRedrawArea (0, 0, GlobalElId(ELID_HOLDBTN));
+
+		if (hovermode == HOLD_ALT) {  // use default VESSEL method for altitude hold
+			if (active) DG()->SetHoverHoldAltitude (holdalt, altmode);
+			else        DG()->DeactivateNavmode (NAVMODE_HOLDALT);
+		} else {
+			// vspd hold is implemented below
+			if (active) { // initial conditions
+				holdT = oapiGetSimTime();
+				VECTOR3 v;
+				DG()->GetHorizonAirspeedVector(v);
+				pvh = v.y;
+			}
+		}
+	}
 }
+
+// --------------------------------------------------------------
+
+void HoverHoldAltVspdSubmode::SetTargetAlt (double alt)
+{
+	holdalt = alt;
+	if (active) DG()->SetHoverHoldAltitude (holdalt, altmode);
+}
+
+// --------------------------------------------------------------
+
+void HoverHoldAltVspdSubmode::SetTargetVspd (double vspd)
+{
+	holdvspd = vspd;
+}
+
+// --------------------------------------------------------------
+
+void HoverHoldAltVspdSubmode::SetTargetPrm (double prm)
+{
+	if (hovermode == HOLD_ALT)
+		SetTargetAlt (prm);
+	else
+		SetTargetVspd (prm);
+}
+
+// --------------------------------------------------------------
+
+void HoverHoldAltVspdSubmode::SetTargetAltCurrent ()
+{
+	SetTargetAlt (DG()->GetAltitude (altmode));
+}
+
+// --------------------------------------------------------------
+
+void HoverHoldAltVspdSubmode::SetHoverMode (HoverMode mode)
+{
+	if (mode != hovermode) {
+		if (active) {
+			Activate (false);
+			if (mode == HOLD_ALT) {
+				// if switching directly from active VSPD to active ALT mode,
+				// set current altitude as target
+				SetTargetAltCurrent();
+			} else if (mode == HOLD_VSPD) {
+				// if switching directly from active ALT to active VSPD mode,
+				// set target vspd to current vspd
+				VECTOR3 v;
+				DG()->GetHorizonAirspeedVector(v);
+				SetTargetVspd (v.y);
+			}
+			hovermode = mode;
+			Activate (true);
+		} else
+			hovermode = mode;
+	}
+}
+
+// --------------------------------------------------------------
+
+void HoverHoldAltVspdSubmode::HoverHoldVspd (double vh_tgt)
+{
+	double t = oapiGetSimTime();
+	double dt = t - holdT;
+	if (!dt) return;
+	holdT = t;
+
+	VECTOR3 v;
+	DG()->GetHorizonAirspeedVector(v);
+	double vh = v.y;
+	double ah = (vh-pvh)/dt;
+	pvh = vh;
+
+	double dvh = vh_tgt-vh;
+	double a_tgt = dvh;
+	double da = a_tgt - ah;
+	double a_max = DG()->GetMaxHoverThrust()/DG()->GetMass();
+	double dlvl = da/a_max;
+	double dlvl_max = dt;
+	if (fabs(dlvl) > dlvl_max)
+		dlvl = (dlvl > 0.0 ? dlvl_max : -dlvl_max);
+
+	Ctrl()->IncGroupLevel (dlvl);
+}
+
+// --------------------------------------------------------------
+
+void HoverHoldAltVspdSubmode::clbkPostStep (double simt, double simdt, double mjd)
+{
+	// vertical speed hover autopilot
+	if (active && hovermode == HOLD_VSPD)
+		HoverHoldVspd (holdvspd);
+}
+
+// --------------------------------------------------------------
+
+bool HoverHoldAltVspdSubmode::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
+{
+	if (panelid != 0) return false;
+
+	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
+
+	// readouts
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_DISPLAY), _R(486,442,543,466), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, holddisp);
+
+	// Hover hold activate button
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_HOLDBTN), _R(491,415,533,445), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP, panel2dtex, holdbtn);
+	holdbtn->DefineAnimation2D (GRP_INSTRUMENTS_ABOVE_P0, 172);
+
+	// Hover hold select switch
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_ALTSET), _R(484,491,528,507), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, altset);
+	altset->DefineAnimation2D (DGSwitch2::HORZ, GRP_INSTRUMENTS_ABOVE_P0, 168);
+
+	// Hover hold reset button
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_ALTRESET), _R(532,492,546,506), PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP, panel2dtex, altreset);
+
+	// Hover hold mode selector buttons
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_MODEBUTTONS), _R(487,520,541,544), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN, panel2dtex, modebuttons);
+	modebuttons->DefineAnimation2D (GRP_INSTRUMENTS_ABOVE_P0, 176);
+
+	return true;
+}
+
+// --------------------------------------------------------------
+
+bool HoverHoldAltVspdSubmode::clbkLoadVC (int vcid)
+{
+	switch (vcid) {
+	case 0: // VC pilot position
+		// readouts
+		oapiVCRegisterArea (GlobalElId(ELID_DISPLAY), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
+
+		// Hover hold activate button
+		oapiVCRegisterArea (GlobalElId(ELID_HOLDBTN), PANEL_REDRAW_MOUSE | PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
+		oapiVCSetAreaClickmode_Spherical (GlobalElId(ELID_HOLDBTN), VC_BTN_HOVER_HOLDALT_ref, VC_BTN_HOVER_HOLDALT_mouserad);
+		holdbtn->DefineAnimationVC (VC_BTN_HOVER_HOLDALT_axis, GRP_BUTTON3_VC, GRP_LIT_SURF_VC, VC_BTN_HOVER_HOLDALT_vofs, VC_BTN_HOVER_HOLDALT_LABEL_vofs);
+
+		// Hover hold select switch
+		oapiVCRegisterArea (GlobalElId(ELID_ALTSET), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
+		oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_ALTSET), VC_HOVER_HOLDALT_SWITCH_mousearea[0], VC_HOVER_HOLDALT_SWITCH_mousearea[1], VC_HOVER_HOLDALT_SWITCH_mousearea[2], VC_HOVER_HOLDALT_SWITCH_mousearea[3]);
+		altset->DefineAnimationVC (VC_HOVER_HOLDALT_SWITCH_ref, VC_HOVER_HOLDALT_SWITCH_axis, GRP_SWITCH2_VC, VC_HOVER_HOLDALT_SWITCH_vofs);
+
+		// Hover hold reset button
+		oapiVCRegisterArea (GlobalElId(ELID_ALTRESET), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
+		oapiVCSetAreaClickmode_Spherical (GlobalElId(ELID_ALTRESET), VC_BTN_HOVER_HOLDALT_CUR_ref, VC_BTN_HOVER_HOLDALT_CUR_mouserad);
+		altreset->DefineAnimationVC (VC_BTN_HOVER_HOLDALT_CUR_axis, GRP_BUTTON2_VC, VC_BTN_HOVER_HOLDALT_CUR_vofs);
+
+		// Hover mode selector buttons
+		oapiVCRegisterArea (GlobalElId(ELID_MODEBUTTONS), PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
+		oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_MODEBUTTONS), VC_HOVERMODE_BUTTONS_mousearea[0], VC_HOVERMODE_BUTTONS_mousearea[1], VC_HOVERMODE_BUTTONS_mousearea[2], VC_HOVERMODE_BUTTONS_mousearea[3]);
+		{
+			static DWORD hoverbtn_vofs[2] = {VC_BTN_HOVERMODE_1_vofs,VC_BTN_HOVERMODE_2_vofs};
+			static DWORD hoverbtn_label_vofs[2] = {VC_BTN_HOVERMODE_1_LABEL_vofs, VC_BTN_HOVERMODE_2_LABEL_vofs};
+			modebuttons->DefineAnimationsVC (VC_BTN_HOVERMODE_1_axis, GRP_BUTTON3_VC, GRP_LIT_SURF_VC, hoverbtn_vofs, hoverbtn_label_vofs);
+		}
+
+		break;
+	}
+	return true;
+}
+
+
+// ==============================================================
+// Manual hover control submode
+// ==============================================================
+
+HoverManualSubmode::HoverManualSubmode (HoverControl *_ctrl)
+: HoverSubmode(_ctrl)
+{
+	ELID_THROTTLE = AddElement (throttle = new HoverThrottle (this));
+
+	// Hover throttle VC animation
+	static UINT HoverThrottleGrp[2] = {GRP_THROTTLE_HOVER_1_VC,GRP_THROTTLE_HOVER_2_VC};
+	static MGROUP_ROTATE HoverThrottle (1, HoverThrottleGrp, 2,
+		_V(-0.41,0.85,6.9226), _V(1,0,0), (float)(50*RAD));
+	anim_hoverthrottle = DG()->CreateAnimation (0);
+	DG()->AddAnimationComponent (anim_hoverthrottle, 0, 1, &HoverThrottle);
+
+}
+
+// --------------------------------------------------------------
+
+bool HoverManualSubmode::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
+{
+	if (panelid != 0) return false;
+
+	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
+
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_THROTTLE),  _R( 108,234, 161,374), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBPRESSED, panel2dtex, throttle);
+
+	return true;
+}
+
+// --------------------------------------------------------------
+
+bool HoverManualSubmode::clbkLoadVC (int vcid)
+{
+	if (vcid != 0) return false;
+
+	// Hover throttle
+	oapiVCRegisterArea (GlobalElId(ELID_THROTTLE), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED);
+	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_THROTTLE), _V(-0.44,0.87,6.81), _V(-0.35,0.87,6.81), _V(-0.44,0.95,6.91), _V(-0.35,0.95,6.91));
+
+	return true;
+}
+
 
 // ==============================================================
 
-HoverCtrlDial::HoverCtrlDial (HoverBalanceControl *hbc)
-: DGDial1 (hbc->DG(), 3, -50*RAD, 50*RAD), ctrl(hbc)
+HoverCtrlDial::HoverCtrlDial (HoverAttitudeSubmode *_ctrl)
+: DGDial1 (_ctrl->DG(), 3, -50*RAD, 50*RAD), ctrl(_ctrl)
 {
 }
 
@@ -233,7 +595,7 @@ HoverCtrlDial::HoverCtrlDial (HoverBalanceControl *hbc)
 void HoverCtrlDial::Reset2D (MESHHANDLE hMesh)
 {
 	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
-	vtxofs = 180;
+	vtxofs = 148;
 }
 
 // --------------------------------------------------------------
@@ -298,8 +660,8 @@ bool HoverCtrlDial::ProcessMouseVC (int event, VECTOR3 &p)
 
 // ==============================================================
 
-HoverDisp::HoverDisp (HoverBalanceControl *hbc)
-: PanelElement(hbc->DG()), ctrl(hbc)
+HoverDisp::HoverDisp (HoverAttitudeSubmode *_ctrl)
+: PanelElement(_ctrl->DG()), ctrl(_ctrl)
 {
 	pofs_cur = rofs_cur = 0;
 	pofs_cmd = rofs_cmd = 0;
@@ -320,7 +682,7 @@ HoverDisp::~HoverDisp ()
 void HoverDisp::Reset2D (MESHHANDLE hMesh)
 {
 	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
-	vtxofs = 184;
+	vtxofs = 152;
 }
 
 // --------------------------------------------------------------
@@ -342,8 +704,8 @@ bool HoverDisp::Redraw2D (SURFHANDLE surf)
 	DeltaGlider *dg = (DeltaGlider*)vessel;
 	int j, ofs;
 	double g;
-	const float x0 =  47.5f;
-	const float y0 = 346.5f;
+	const float x0 = 371.5f;
+	const float y0 = 515.5f;
 	const float dx =  10.0f;
 	const float dy =  10.0f;
 
@@ -425,8 +787,8 @@ bool HoverDisp::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 
 // ==============================================================
 
-PHoverCtrl::PHoverCtrl (HoverBalanceControl *hbc)
-: DGSwitch2(hbc->DG()), ctrl(hbc)
+PHoverCtrl::PHoverCtrl (HoverAttitudeSubmode *_ctrl)
+: DGSwitch2(_ctrl->DG()), ctrl(_ctrl)
 {
 }
 
@@ -455,8 +817,8 @@ bool PHoverCtrl::ProcessMouseVC (int event, VECTOR3 &p)
 
 // ==============================================================
 
-RHoverCtrl::RHoverCtrl (HoverBalanceControl *hbc)
-: DGSwitch2(hbc->DG()), ctrl(hbc)
+RHoverCtrl::RHoverCtrl (HoverAttitudeSubmode *_ctrl)
+: DGSwitch2(_ctrl->DG()), ctrl(_ctrl)
 {
 }
 
@@ -484,166 +846,36 @@ bool RHoverCtrl::ProcessMouseVC (int event, VECTOR3 &p)
 
 
 // ==============================================================
-// ==============================================================
 
-HoverHoldAltControl::HoverHoldAltControl (DeltaGlider *vessel, int ident)
-: DGSubSystem(vessel, ident)
-{
-	extern GDIParams g_Param;
-
-	holdalt   = 0.0;
-	holdvspd  = 0.0;
-	active = false;
-	altmode = VESSEL::ALTMODE_MEANRAD;
-	hovermode = HOLD_ALT;
-
-	ELID_DISPLAY     = AddElement (new HoverHoldAltIndicator(this, g_Param.surf));
-	ELID_HOLDBTN     = AddElement (holdbtn = new HoverAltBtn (this));
-	ELID_ALTSET      = AddElement (altset  = new HoverAltSwitch (this));
-	ELID_ALTCURRENT  = AddElement (altcur  = new HoverAltCurBtn (this));
-	ELID_MODEBUTTONS = AddElement (modebuttons = new HoverAltModeButtons (this));
-}
-
-// --------------------------------------------------------------
-
-void HoverHoldAltControl::Activate (bool ison)
-{
-	if (ison != active) {
-		active = ison;
-
-		holdbtn->SetState(active ? DGButton3::ON : DGButton3::OFF);
-		oapiTriggerRedrawArea (0, 0, GlobalElId(ELID_HOLDBTN));
-
-		if (hovermode == HOLD_ALT) {  // use default VESSEL method for altitude hold
-			if (active) DG()->SetHoverHoldAltitude (holdalt, altmode);
-			else        DG()->DeactivateNavmode (NAVMODE_HOLDALT);
-		} else {
-			// vspd hold is implemented below
-			if (active) { // initial conditions
-				holdT = oapiGetSimTime();
-				VECTOR3 v;
-				DG()->GetHorizonAirspeedVector(v);
-				pvh = v.y;
-			}
-		}
-	}
-}
-
-// --------------------------------------------------------------
-
-void HoverHoldAltControl::SetTargetAlt (double alt)
-{
-	holdalt = alt;
-	if (active) DG()->SetHoverHoldAltitude (holdalt, altmode);
-}
-
-// --------------------------------------------------------------
-
-void HoverHoldAltControl::SetTargetVspd (double vspd)
-{
-	holdvspd = vspd;
-}
-
-// --------------------------------------------------------------
-
-void HoverHoldAltControl::SetTargetPrm (double prm)
-{
-	if (hovermode == HOLD_ALT)
-		SetTargetAlt (prm);
-	else
-		SetTargetVspd (prm);
-}
-
-// --------------------------------------------------------------
-
-void HoverHoldAltControl::SetTargetAltCurrent ()
-{
-	SetTargetAlt (DG()->GetAltitude (altmode));
-}
-
-// --------------------------------------------------------------
-
-void HoverHoldAltControl::SetHoverMode (HoverMode mode)
-{
-	hovermode = mode;
-}
-
-// --------------------------------------------------------------
-
-void HoverHoldAltControl::HoverHoldVspd (double vh_tgt)
-{
-	double t = oapiGetSimTime();
-	double dt = t - holdT;
-	if (!dt) return;
-	holdT = t;
-
-	VECTOR3 v;
-	DG()->GetHorizonAirspeedVector(v);
-	double vh = v.y;
-	double ah = (vh-pvh)/dt;
-	pvh = vh;
-
-	double dvh = vh_tgt-vh;
-	double a_tgt = dvh;
-	double da = a_tgt - ah;
-	double a_max = DG()->GetMaxHoverThrust()/DG()->GetMass();
-	double dlvl = da/a_max;
-
-	DG()->IncThrusterGroupLevel_SingleStep (THGROUP_HOVER, dlvl);
-}
-
-// --------------------------------------------------------------
-
-void HoverHoldAltControl::clbkPostStep (double simt, double simdt, double mjd)
-{
-	// vertical speed hover autopilot
-	if (active && hovermode == HOLD_VSPD)
-		HoverHoldVspd (holdvspd);
-}
-
-// --------------------------------------------------------------
-
-bool HoverHoldAltControl::clbkLoadVC (int vcid)
-{
-	switch (vcid) {
-	case 0: // VC pilot position
-		// readouts
-		oapiVCRegisterArea (GlobalElId(ELID_DISPLAY), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
-
-		// Hover hold alt button
-		oapiVCRegisterArea (GlobalElId(ELID_HOLDBTN), PANEL_REDRAW_MOUSE | PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Spherical (GlobalElId(ELID_HOLDBTN), VC_BTN_HOVER_HOLDALT_ref, VC_BTN_HOVER_HOLDALT_mouserad);
-		holdbtn->DefineAnimationVC (VC_BTN_HOVER_HOLDALT_axis, GRP_BUTTON3_VC, GRP_LIT_SURF_VC, VC_BTN_HOVER_HOLDALT_vofs, VC_BTN_HOVER_HOLDALT_LABEL_vofs);
-
-		// Hover hold alt select switch
-		oapiVCRegisterArea (GlobalElId(ELID_ALTSET), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_ALTSET), VC_HOVER_HOLDALT_SWITCH_mousearea[0], VC_HOVER_HOLDALT_SWITCH_mousearea[1], VC_HOVER_HOLDALT_SWITCH_mousearea[2], VC_HOVER_HOLDALT_SWITCH_mousearea[3]);
-		altset->DefineAnimationVC (VC_HOVER_HOLDALT_SWITCH_ref, VC_HOVER_HOLDALT_SWITCH_axis, GRP_SWITCH2_VC, VC_HOVER_HOLDALT_SWITCH_vofs);
-
-		// Hover hold alt set current button
-		oapiVCRegisterArea (GlobalElId(ELID_ALTCURRENT), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Spherical (GlobalElId(ELID_ALTCURRENT), VC_BTN_HOVER_HOLDALT_CUR_ref, VC_BTN_HOVER_HOLDALT_CUR_mouserad);
-		altcur->DefineAnimationVC (VC_BTN_HOVER_HOLDALT_CUR_axis, GRP_BUTTON2_VC, VC_BTN_HOVER_HOLDALT_CUR_vofs);
-
-		// Hover mode selector buttons
-		oapiVCRegisterArea (GlobalElId(ELID_MODEBUTTONS), PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_MODEBUTTONS), VC_HOVERMODE_BUTTONS_mousearea[0], VC_HOVERMODE_BUTTONS_mousearea[1], VC_HOVERMODE_BUTTONS_mousearea[2], VC_HOVERMODE_BUTTONS_mousearea[3]);
-		{
-			static DWORD hoverbtn_vofs[2] = {VC_BTN_HOVERMODE_1_vofs,VC_BTN_HOVERMODE_2_vofs};
-			static DWORD hoverbtn_label_vofs[2] = {VC_BTN_HOVERMODE_1_LABEL_vofs, VC_BTN_HOVERMODE_2_LABEL_vofs};
-			modebuttons->DefineAnimationsVC (VC_BTN_HOVERMODE_1_axis, GRP_BUTTON3_VC, GRP_LIT_SURF_VC, hoverbtn_vofs, hoverbtn_label_vofs);
-		}
-
-		break;
-	}
-	return true;
-}
-
-// ==============================================================
-
-HoverAltBtn::HoverAltBtn (HoverHoldAltControl *hhac)
+HoverAltBtn::HoverAltBtn (HoverHoldAltVspdSubmode *hhac)
 : DGButton3 (hhac->DG()), ctrl(hhac)
 {
+}
+
+// --------------------------------------------------------------
+
+bool HoverAltBtn::ProcessMouse2D (int event, int mx, int my)
+{
+	if (DGButton3::ProcessMouse2D (event, mx, my)) {
+		DGButton3::State state = GetState();
+		if      (state == DGButton3::OFF) ctrl->Activate (false);
+		else if (state == DGButton3::ON)  ctrl->Activate (true);
+	}
+	return (event & (PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP));
+}
+
+// --------------------------------------------------------------
+
+bool HoverAltBtn::Redraw2D (SURFHANDLE hSurf)
+{
+	static const float texh = (float)PANEL2D_TEXH;
+	if (state != vstate) {
+		int ofs = (state == DGButton3::OFF ? 0 : 30);
+		for (int i = 0; i < 4; i++)
+			grp->Vtx[vtxofs+i].tv = (391+ofs+(i/2)*30)/texh;
+		vstate = state;
+	}
+	return false;
 }
 
 // --------------------------------------------------------------
@@ -660,10 +892,10 @@ bool HoverAltBtn::ProcessMouseVC (int event, VECTOR3 &p)
 
 // ==============================================================
 
-HoverAltModeButtons::HoverAltModeButtons (HoverHoldAltControl *hhac)
+HoverAltModeButtons::HoverAltModeButtons (HoverHoldAltVspdSubmode *hhac)
 : PanelElement (hhac->DG()), ctrl(hhac)
 {
-	vmode = HoverHoldAltControl::HOLD_NONE;
+	vmode = HoverHoldAltVspdSubmode::HOLD_NONE;
 	for (int i = 0; i < 2; i++)
 		btn[i] = new DGButton3 (vessel);
 }
@@ -674,6 +906,21 @@ HoverAltModeButtons::~HoverAltModeButtons ()
 {
 	for (int i = 0; i < 2; i++)
 		delete btn[i];
+}
+
+// --------------------------------------------------------------
+
+void HoverAltModeButtons::DefineAnimation2D (int meshgrp, int vofs)
+{
+	gidx = meshgrp;
+	vtxofs = vofs;
+}
+
+// --------------------------------------------------------------
+
+void HoverAltModeButtons::Reset2D (MESHHANDLE hMesh)
+{
+	grp = oapiMeshGroup (hMesh, gidx);
 }
 
 // --------------------------------------------------------------
@@ -696,6 +943,29 @@ bool HoverAltModeButtons::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 
 // --------------------------------------------------------------
 
+bool HoverAltModeButtons::ProcessMouse2D (int event, int mx, int my)
+{
+	if (event & PANEL_MOUSE_LBDOWN) {
+		ctrl->SetHoverMode (mx < 27 ? HoverHoldAltVspdSubmode::HOLD_ALT :
+									  HoverHoldAltVspdSubmode::HOLD_VSPD);
+		return true;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
+bool HoverAltModeButtons::Redraw2D (SURFHANDLE hSurf)
+{
+	static const float texh = (float)PANEL2D_TEXH;
+	int ofs = (ctrl->GetHoverMode() == HoverHoldAltVspdSubmode::HOLD_ALT ? 0 : 30);
+	for (int i = 0; i < 4; i++)
+		grp->Vtx[vtxofs+i].tv = (391+ofs+(i/2)*30)/texh;
+	return false;
+}
+
+// --------------------------------------------------------------
+
 bool HoverAltModeButtons::ProcessMouseVC (int event, VECTOR3 &p)
 {
 	int i;
@@ -707,7 +977,7 @@ bool HoverAltModeButtons::ProcessMouseVC (int event, VECTOR3 &p)
 		for (i = 0; i < 2; i++)
 			btn[i]->SetState (i==b ? DGButton3::PRESSED_FROM_OFF : DGButton3::OFF);
 		DeltaGlider *dg = (DeltaGlider*)vessel;
-		vmode = (HoverHoldAltControl::HoverMode)(b+1);
+		vmode = (HoverHoldAltVspdSubmode::HoverMode)(b+1);
 		ctrl->SetHoverMode (vmode);
 	} else if (event & PANEL_MOUSE_LBUP) {
 		btn[b]->SetState (DGButton3::ON);
@@ -728,9 +998,42 @@ void HoverAltModeButtons::ResetVC (DEVMESHHANDLE hMesh)
 
 // ==============================================================
 
-HoverAltSwitch::HoverAltSwitch (HoverHoldAltControl *hhac)
+HoverAltSwitch::HoverAltSwitch (HoverHoldAltVspdSubmode *hhac)
 : DGSwitch2(hhac->DG()), ctrl(hhac)
 {
+}
+
+// --------------------------------------------------------------
+
+void HoverAltSwitch::Set (int state, double refT)
+{
+	if (state) {
+		double prm = ctrl->TargetPrm();
+		double t = oapiGetSysTime();
+		double dt = oapiGetSysStep();
+		double downt = t-refT;
+		double dprm = dt * max(fabs(prm),1.0);
+		if (downt < 10.0) dprm *= 1e-6 + downt*(1.0-1e-6)/10.0;
+		if (state == 1) dprm = -dprm;
+		ctrl->SetTargetPrm (prm + dprm);
+	}
+}
+
+// --------------------------------------------------------------
+
+bool HoverAltSwitch::ProcessMouse2D (int event, int mx, int my)
+{
+	static int state = 0;
+	static double refT = 0.0;
+	if (event & PANEL_MOUSE_LBDOWN)
+		refT = oapiGetSysTime();
+
+	if (DGSwitch2::ProcessMouse2D (event, mx, my))
+		state = (int)GetState();
+	
+	Set (state, refT);
+
+	return (event & (PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP));
 }
 
 // --------------------------------------------------------------
@@ -745,43 +1048,59 @@ bool HoverAltSwitch::ProcessMouseVC (int event, VECTOR3 &p)
 	if (DGSwitch2::ProcessMouseVC (event, p))
 		state = (int)GetState();
 
-	if (state) {
-		double prm = ctrl->TargetPrm();
-		double t = oapiGetSysTime();
-		double dt = oapiGetSysStep();
-		double downt = t-refT;
-		double dprm = dt * max(fabs(prm),1.0);
-		if (downt < 10.0) dprm *= 1e-6 + downt*(1.0-1e-6)/10.0;
-		if (state == 1) dprm = -dprm;
-		ctrl->SetTargetPrm (prm + dprm);
-	}
+	Set (state, refT);
 
 	return (event & (PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP));
 }
 
 // ==============================================================
 
-HoverAltCurBtn::HoverAltCurBtn (HoverHoldAltControl *hhac)
+HoverAltResetBtn::HoverAltResetBtn (HoverHoldAltVspdSubmode *hhac)
 : DGButton2(hhac->DG()), ctrl(hhac)
 {
 }
 
 // --------------------------------------------------------------
 
-bool HoverAltCurBtn::ProcessMouseVC (int event, VECTOR3 &p)
+bool HoverAltResetBtn::ProcessMouse2D (int event, int mx, int my)
+{
+	DGButton2::ProcessMouse2D (event, mx, my);
+	if (event & PANEL_MOUSE_LBDOWN) {
+		if (ctrl->GetHoverMode() == HoverHoldAltVspdSubmode::HOLD_ALT)
+			ctrl->SetTargetAltCurrent ();
+		else
+			ctrl->SetTargetVspd (0.0);
+	}
+	return false; // no animation
+}
+
+// --------------------------------------------------------------
+
+bool HoverAltResetBtn::ProcessMouseVC (int event, VECTOR3 &p)
 {
 	DGButton2::ProcessMouseVC (event, p);
-	if (event & PANEL_MOUSE_LBDOWN)
-		ctrl->SetTargetAltCurrent ();
+	if (event & PANEL_MOUSE_LBDOWN) {
+		if (ctrl->GetHoverMode() == HoverHoldAltVspdSubmode::HOLD_ALT)
+			ctrl->SetTargetAltCurrent ();
+		else
+			ctrl->SetTargetVspd (0.0);
+	}
 	return (event & (PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP));
 }
 
 // ==============================================================
 
-HoverHoldAltIndicator::HoverHoldAltIndicator (HoverHoldAltControl *hhac, SURFHANDLE blitsrc)
+HoverHoldAltIndicator::HoverHoldAltIndicator (HoverHoldAltVspdSubmode *hhac, SURFHANDLE blitsrc)
 : PanelElement (hhac->DG()), ctrl(hhac), bsrc(blitsrc)
 {
 	btgt = 0;
+}
+
+// --------------------------------------------------------------
+
+void HoverHoldAltIndicator::Reset2D (MESHHANDLE hMesh)
+{
+	btgt = oapiGetTextureHandle (hMesh, 3);
 }
 
 // --------------------------------------------------------------
@@ -790,13 +1109,27 @@ void HoverHoldAltIndicator::ResetVC (DEVMESHHANDLE hMesh)
 {
 	btgt = oapiGetTextureHandle (ctrl->DG()->vcmesh_tpl, 14);
 	strcpy (holdstr, "         ");
-	holdmode_disp = HoverHoldAltControl::HOLD_NONE;
+	holdmode_disp = HoverHoldAltVspdSubmode::HOLD_NONE;
 	hold_disp = false;
 }
 
 // --------------------------------------------------------------
 
+bool HoverHoldAltIndicator::Redraw2D (SURFHANDLE surf)
+{
+	return Redraw();
+}
+
+// --------------------------------------------------------------
+
 bool HoverHoldAltIndicator::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE hSurf)
+{
+	return Redraw();
+}
+
+// --------------------------------------------------------------
+
+bool HoverHoldAltIndicator::Redraw ()
 {
 	bool refresh = false;
 	if (!btgt) return refresh;
@@ -814,7 +1147,7 @@ bool HoverHoldAltIndicator::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE hSurf)
 	}
 
 	char cbuf[10];
-	FormatValue (cbuf, 10, holdmode_disp == HoverHoldAltControl::HOLD_ALT ? ctrl->holdalt : ctrl->holdvspd, 4);
+	FormatValue (cbuf, 10, holdmode_disp == HoverHoldAltVspdSubmode::HOLD_ALT ? ctrl->holdalt : ctrl->holdvspd, 4);
 	if (strncmp (cbuf, holdstr, 10)) {
 		UpdateReadout (cbuf, holdstr);
 		refresh = true;
@@ -856,4 +1189,93 @@ void HoverHoldAltIndicator::UpdateReadout (const char *tgtstr, char *curstr)
 		tgtx += w;
 	}
 	if (i < 10) curstr[i] = '\0';
+}
+
+// ==============================================================
+// Panel elements for manual control submode
+// ==============================================================
+
+HoverThrottle::HoverThrottle (HoverManualSubmode *_ctrl)
+: PanelElement(_ctrl->DG()), ctrl(_ctrl)
+{
+	ppos = 0.0f;
+}
+
+// --------------------------------------------------------------
+
+void HoverThrottle::Reset2D (MESHHANDLE hMesh)
+{
+	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
+	vtxofs = 56;
+}
+
+// --------------------------------------------------------------
+
+void HoverThrottle::ResetVC (DEVMESHHANDLE hMesh)
+{
+	sliderpos = (UINT)-1;
+}
+
+// --------------------------------------------------------------
+
+bool HoverThrottle::Redraw2D (SURFHANDLE surf)
+{
+	// constants for texture coordinates
+	static const float tx_dy = 18.0f;
+	static const float bb_y0 = 358.5f;
+
+	int j;
+	float pos;
+	static const float sy[4] = {bb_y0,bb_y0,bb_y0+tx_dy,bb_y0+tx_dy};
+
+	DeltaGlider *dg = ctrl->DG();
+	double level = dg->GetHoverThrusterLevel (0);
+	pos = (float)(-level*116.0);
+	if (pos != ppos) {
+		for (j = 0; j < 4; j++) grp->Vtx[vtxofs+j].y = sy[j]+pos;
+		ppos = pos;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
+bool HoverThrottle::ProcessMouse2D (int event, int mx, int my)
+{
+	DeltaGlider *dg = ctrl->DG();
+	my = max (0, min (116, my-9));
+	dg->SetThrusterGroupLevel (dg->thg_hover, 1.0-my/116.0);
+	return true;
+}
+
+// --------------------------------------------------------------
+
+bool HoverThrottle::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	static double py = 0.0;
+
+	if (event & PANEL_MOUSE_LBDOWN) { // record which slider to operate
+		py = p.y;
+	} else {
+		DeltaGlider *dg = ctrl->DG();
+		double lvl = max (0.0, min (1.0, dg->GetHoverThrusterLevel (0) + (p.y-py)));
+		if (lvl < 0.01) lvl = 0.0;
+		for (int i = 0; i < 3; i++) dg->SetHoverThrusterLevel (i, lvl);
+		py = p.y;
+	}
+	return true;
+}
+
+// --------------------------------------------------------------
+
+bool HoverThrottle::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
+{
+	DeltaGlider *dg = ctrl->DG();
+	double level = dg->GetHoverThrusterLevel (0);
+	UINT pos = (UINT)(level*500.0);
+	if (pos != sliderpos) {
+		dg->SetAnimation (ctrl->anim_hoverthrottle, level);
+		sliderpos = pos;
+	}
+	return false;
 }

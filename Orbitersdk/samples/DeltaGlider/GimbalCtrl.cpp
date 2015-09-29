@@ -202,14 +202,14 @@ bool GimbalControl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD view
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
 
 	// Gimbal control dial
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_MODEDIAL),      _R(32, 69,  72,113), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, panel2dtex, modedial);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_MODEDIAL),      _R(203,426,243,470), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, panel2dtex, modedial);
 
 	// Gimbal manual switches
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_PGIMBALSWITCH), _R(  61,190,  96,234), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, pgimbalswitch);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_YGIMBALSWITCH), _R(   9,194,  53,229), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, ygimbalswitch);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_PGIMBALSWITCH), _R(285,433,320,477), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, pgimbalswitch);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_YGIMBALSWITCH), _R(280,502,324,537), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, ygimbalswitch);
 
 	// Gimbal display
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_DISPLAY),       _R( 0,  0,   0,  0), PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, gimbaldisp);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_DISPLAY),       _R(  0,  0,  0,  0), PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, gimbaldisp);
 
 	return true;
 }
@@ -265,7 +265,7 @@ MainGimbalDial::MainGimbalDial (GimbalControl *gc)
 void MainGimbalDial::Reset2D (MESHHANDLE hMesh)
 {
 	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
-	vtxofs = 144;
+	vtxofs = 112;
 }
 
 // --------------------------------------------------------------
@@ -351,7 +351,7 @@ MainGimbalDisp::~MainGimbalDisp ()
 void MainGimbalDisp::Reset2D (MESHHANDLE hMesh)
 {
 	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
-	vtxofs = 148;
+	vtxofs = 116;
 }
 
 // --------------------------------------------------------------
@@ -373,9 +373,9 @@ bool MainGimbalDisp::Redraw2D (SURFHANDLE surf)
 	DeltaGlider *dg = (DeltaGlider*)vessel;
 	int i, j, ofs;
 	double g;
-	const float x0 =  28.5f;
+	const float x0 = 197.5f;
 	const float xx =  42.0f;
-	const float y0 = 135.5f;
+	const float y0 = 515.5f;
 	const float dx =  10.0f;
 	const float dy =  10.0f;
 
@@ -478,7 +478,7 @@ PMainGimbalCtrl::PMainGimbalCtrl (GimbalControl *gc)
 void PMainGimbalCtrl::Reset2D (MESHHANDLE hMesh)
 {
 	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
-	vtxofs = 164;
+	vtxofs = 132;
 }
 
 // --------------------------------------------------------------
@@ -603,7 +603,7 @@ YMainGimbalCtrl::YMainGimbalCtrl (GimbalControl *gc)
 void YMainGimbalCtrl::Reset2D (MESHHANDLE hMesh)
 {
 	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
-	vtxofs = 172;
+	vtxofs = 140;
 }
 
 // --------------------------------------------------------------

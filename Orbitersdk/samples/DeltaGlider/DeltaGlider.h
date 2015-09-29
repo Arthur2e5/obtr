@@ -168,8 +168,7 @@ const DWORD INSTR3_TEXH   =  188;
 class DGSubSystem;
 class HUDControl;
 class GimbalControl;
-class HoverBalanceControl;
-class HoverHoldAltControl;
+class HoverControl;
 
 // ==========================================================
 // Interface for derived vessel class: DeltaGlider
@@ -180,7 +179,6 @@ class DeltaGlider: public VESSEL4 {
 	friend class FuelMFD;
 	friend class PressureControl;
 	friend class ThrottleMain;
-	friend class ThrottleHover;
 	friend class ThrottleScram;
 
 public:
@@ -217,9 +215,7 @@ public:
 	bool RedrawPanel_RCSPropMass (SURFHANDLE surf);
 	bool RedrawPanel_ScramProp (SURFHANDLE surf);
 	bool RedrawPanel_ScramPropMass (SURFHANDLE surf);
-	bool RedrawPanel_HoverBalanceDisp (SURFHANDLE surf);
 	void RedrawVC_ThMain ();
-	void RedrawVC_ThHover ();
 	void RedrawVC_ThScram ();
 	void InitVCMesh ();
 
@@ -340,7 +336,6 @@ public:
 	UINT anim_brake;            // handle for airbrake animation
 	UINT anim_vc_trimwheel;     // VC elevator trim wheel
 	UINT anim_mainthrottle[2];  // VC main/retro throttle levers (left and right)
-	UINT anim_hoverthrottle;    // VC hover throttle
 	UINT anim_scramthrottle[2]; // VC scram throttle levers (left and right)
 	UINT anim_gearlever;        // VC gear lever
 	UINT anim_airbrakelever;    // VC airbrake lever
@@ -384,7 +379,6 @@ private:
 	bool RedrawPanel_Number (SURFHANDLE surf, int x, int y, char *num);
 	void ApplySkin();                            // apply custom skin
 	void PaintMarkings (SURFHANDLE tex);         // paint individual vessel markings
-	void ProcessHoverHoldalt();                  // hover mode: hold altitude
 
 	Ramjet *scramjet;                            // scramjet module (NULL = none)
 	void ScramjetThrust ();                      // scramjet thrust calculation
@@ -392,8 +386,7 @@ private:
 	// Vessel subsystems -------------------------------------------------------------
 	HUDControl          *ssys_hud;               // HUD control system
 	GimbalControl       *ssys_gimbal;            // main engine gimbal control system
-	HoverBalanceControl *ssys_hoverbalance;      // hover balance control system
-	HoverHoldAltControl *ssys_hoverhold;         // hover hold alt system
+	HoverControl        *ssys_hoverctrl;         // hover engine control system
 	PressureControl     *ssys_pressurectrl;      // pressure control system
 	DGSubSystem **ssys;                          // list subsystems
 	DWORD nssys;                                 // number of subsystems
@@ -496,7 +489,6 @@ typedef struct {
 // Panel 0
 #define AID_PROPELLANTSTATUS     0
 #define AID_ENGINEMAIN           2
-#define AID_ENGINEHOVER          3
 #define AID_ENGINESCRAM          4
 #define AID_ATTITUDEMODE         5
 #define AID_ADCTRLMODE           6

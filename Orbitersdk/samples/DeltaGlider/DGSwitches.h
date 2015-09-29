@@ -132,19 +132,24 @@ class DGButton3: public PanelElement {
 public:
 	enum State { OFF, ON, PRESSED_FROM_OFF, PRESSED_FROM_ON };
 	DGButton3 (VESSEL3 *v);
+	void DefineAnimation2D (DWORD meshgrp, DWORD vofs);
 	void DefineAnimationVC (const VECTOR3 &axis, DWORD meshgrp, DWORD meshgrp_label,
 		DWORD vofs, DWORD vofs_label);
+	void Reset2D (MESHHANDLE hMesh);
+	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
 	inline State GetState() const { return state; }
 	void SetState (State newstate);
+
+protected:
+	State state, vstate;     // logical, visual button state
 
 private:
 	DWORD mgrp;              // group index for button
 	DWORD mgrp_lbl;          // group index for label
 	DWORD vtxofs_lbl;        // vertex offset for label
 	VECTOR3 ax;              // push down direction
-	State state, vstate;     // logical, visual button state
 	const static int nvtx;   // number of vertices in button
 	const static int nvtx_lbl; // number of vertices in label
 };
