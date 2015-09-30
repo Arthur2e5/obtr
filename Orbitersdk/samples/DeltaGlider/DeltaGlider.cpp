@@ -27,9 +27,8 @@
 #include "GearLever.h"
 #include "NconeLever.h"
 #include "FuelMfd.h"
-#include "ThrottleMain.h"
 #include "ThrottleScram.h"
-#include "GimbalCtrl.h"
+#include "MainRetroSubsys.h"
 #include "HoverCtrl.h"
 #include "SwitchArray.h"
 #include "RCoverSwitch.h"
@@ -163,7 +162,7 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	ssys = new DGSubSystem*[nssys]; // list of subsystems
 	ssys[0] = ssys_hoverctrl    = new HoverControl (this, 0); // hover balance controls
 	ssys[1] = ssys_pressurectrl = new PressureControl (this, 1);  // cabin/airlock pressure controls
-	ssys[2] = ssys_gimbal       = new GimbalControl (this, 2); // main engine gimbal controls
+	ssys[2] = ssys_mainretro    = new MainRetroSubSystem (this, 2); // main engine gimbal controls
 	ssys[3] = ssys_hud          = new HUDControl (this, 3); // HUD controls
 
 	aoa_ind = PI;
@@ -319,7 +318,7 @@ void DeltaGlider::CreatePanelElements ()
 	instr[5]  = new NavButtons (this);
 	instr[6]  = new ElevatorTrim (this);
 	instr[7]  = new Airbrake (this);
-	instr[8]  = new ThrottleMain (this);
+	instr[8]  = 0; //new ThrottleMain (this);
 	instr[9]  = 0;
 	instr[10] = new RCSDial (this);
 	instr[11] = new ATCtrlDial (this);
@@ -627,20 +626,6 @@ void DeltaGlider::DefineAnimations ()
 		etrim_wheel_ref, etrim_wheel_axis, (float)(PI*0.06));
 	anim_vc_trimwheel = CreateAnimation (0.5);
 	AddAnimationComponent (anim_vc_trimwheel, 0, 1, &TrimWheelTransform);
-
-	// Main throttle left engine
-	static UINT MainThrottleLGrp[2] = {GRP_THROTTLE_MAIN_L1_VC,GRP_THROTTLE_MAIN_L2_VC};
-	static MGROUP_ROTATE MainThrottleL (1, MainThrottleLGrp, 2,
-		_V(0,0.72,6.9856), _V(1,0,0), (float)(50*RAD));
-	anim_mainthrottle[0] = CreateAnimation (0.4);
-	AddAnimationComponent (anim_mainthrottle[0], 0, 1, &MainThrottleL);
-
-	// Main throttle right engine
-	static UINT MainThrottleRGrp[2] = {GRP_THROTTLE_MAIN_R1_VC,GRP_THROTTLE_MAIN_R2_VC};
-	static MGROUP_ROTATE MainThrottleR (1, MainThrottleRGrp, 2,
-		_V(0,0.72,6.9856), _V(1,0,0), (float)(50*RAD));
-	anim_mainthrottle[1] = CreateAnimation (0.4);
-	AddAnimationComponent (anim_mainthrottle[1], 0, 1, &MainThrottleR);
 
 	// Scram throttle left engine
 	static UINT ScramThrottleLGrp[2] = {GRP_THROTTLE_SCRAM_L1_VC,GRP_THROTTLE_SCRAM_L2_VC};
@@ -1600,23 +1585,6 @@ bool DeltaGlider::RedrawPanel_Wingload (SURFHANDLE surf, bool force)
 	} else return false;
 }
 
-void DeltaGlider::RedrawVC_ThMain ()
-{
-	UINT i, pos;
-
-	for (i = 0; i < 2; i++) {
-		double level = GetThrusterLevel (th_main[i]);
-		if (level > 0) pos = 150 + (UINT)(level*300.0);
-		else {
-			level = GetThrusterLevel (th_retro[i]);
-			pos = 150 - (UINT)(level*150.0);
-		}
-		if (pos != engsliderpos[i]) {
-			SetAnimation (anim_mainthrottle[i], (engsliderpos[i] = pos)/450.0);
-		}
-	}
-}
-
 void DeltaGlider::RedrawVC_ThScram ()
 {
 	for (int i = 0; i < 2; i++) {
@@ -2321,7 +2289,7 @@ void DeltaGlider::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 		} else if (!_strnicmp (line, "MGIMBALMODE", 11)) {
 			int gimbalmode;
 			sscanf (line+11, "%d", &gimbalmode);
-			ssys_gimbal->SetMode (gimbalmode);
+			ssys_mainretro->SetGimbalMode (gimbalmode);
 		} else if (!_strnicmp (line, "HOVERMODE", 9)) {
 			int hovermode;
 			sscanf (line+9, "%d", &hovermode);
@@ -2430,7 +2398,7 @@ void DeltaGlider::clbkSaveState (FILEHANDLE scn)
 		sprintf (cbuf, "%d %0.4lf", hatch_status, hatch_proc);
 		oapiWriteScenario_string (scn, "HATCH", cbuf);
 	}
-	if (i = ssys_gimbal->Mode()) {
+	if (i = ssys_mainretro->GetGimbalMode()) {
 		sprintf (cbuf, "%d", i);
 		oapiWriteScenario_string (scn, "MGIMBALMODE", cbuf);
 	}
@@ -3005,7 +2973,6 @@ void DeltaGlider::DefinePanelMain (PANELHANDLE hPanel)
 	RegisterPanelArea (hPanel, AID_NAVMODE,      _R(1121,119,1197,273), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN, 0, instr[5]);
 	RegisterPanelArea (hPanel, AID_ELEVATORTRIM, _R(1242,135,1262,195), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, instr[6]);
 	RegisterPanelArea (hPanel, AID_AIRBRAKE,     _R(1242,215,1262,275), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN, panel2dtex, instr[7]);
-	RegisterPanelArea (hPanel, AID_ENGINEMAIN,   _R( 108, 52, 161,227), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, instr[8]);
 	RegisterPanelArea (hPanel, AID_ATTITUDEMODE, _R(1136, 69,1176,113), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, 0, instr[10]);
 	RegisterPanelArea (hPanel, AID_ADCTRLMODE,   _R(1217, 69,1257,113), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, panel2dtex, instr[11]);
 	RegisterPanelArea (hPanel, AID_DOCKRELEASE,  _R(1141,474,1172,504), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, instr[12]);
@@ -3160,10 +3127,6 @@ bool DeltaGlider::clbkLoadVC (int id)
 
 		//oapiVCRegisterArea (AID_MFD2_PWR, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_ONREPLAY);
 		//oapiVCSetAreaClickmode_Spherical (AID_MFD2_PWR, _V(0.0483,1.009,7.2775), 0.01);
-
-		// Throttle lever animations
-		oapiVCRegisterArea (AID_ENGINEMAIN, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_ENGINEMAIN, _V(-0.372,0.918,6.905), _V(-0.279,0.918,6.905), _V(-0.372,0.885,7.11), _V(-0.279,0.885,7.11));
 
 		// artificial horizon
 		oapiVCRegisterArea (AID_HORIZON, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
@@ -3402,35 +3365,6 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 		return instr[41]->ProcessMouseVC (event, p);
 	case AID_RETRODOORSWITCH:
 		return instr[36]->ProcessMouseVC (event, p);
-	case AID_ENGINEMAIN:
-		if (event & PANEL_MOUSE_LBDOWN) { // record which slider to operate
-			if      (p.x < 0.3) ctrl = 0; // left engine
-			else if (p.x > 0.7) ctrl = 1; // right engine
-			else                ctrl = 2; // both
-			mode = 2;
-			py = p.y;
-		} else {
-			for (int i = 0; i < 2; i++) {
-				if (ctrl == i || ctrl == 2) {
-					double lvl = GetThrusterLevel (th_main[i]) - GetThrusterLevel (th_retro[i]);
-					if      (lvl > 0.0) mode = 0;
-					else if (lvl < 0.0) mode = 1;
-					double lmin = (mode == 0 ? 0.0 : -1.0); // prevent direct crossover from main to retro
-					double lmax = (mode == 1 ? 0.0 :  1.0); // prevent direct crossover from retro to main
-					lvl = max (lmin, min (lmax, lvl + 2.0*(p.y-py)));
-					if (fabs (lvl) < 0.01) lvl = 0.0;
-					if (lvl >= 0.0) {
-						SetThrusterLevel (th_main[i], lvl);
-						SetThrusterLevel (th_retro[i], 0.0);
-					} else {
-						SetThrusterLevel (th_main[i], 0.0);
-						SetThrusterLevel (th_retro[i], -lvl);
-					}
-				}
-			}
-			py = p.y;
-		}
-		return true;
 	case AID_ENGINESCRAM:
 		if (event & PANEL_MOUSE_LBDOWN) { // record which slider to operate
 			if      (p.x < 0.3) ctrl = 0; // left engine
@@ -3520,9 +3454,6 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 	case AID_MFD2_RBUTTONS:
 	case AID_MFD2_BBUTTONS:
 		return (vcmesh ? instr[13+id]->RedrawVC(vcmesh, vctex) : false);
-	case AID_ENGINEMAIN:
-		RedrawVC_ThMain();
-		return false;
 	case AID_ENGINESCRAM:
 		RedrawVC_ThScram();
 		return false;
@@ -3548,8 +3479,8 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 		return RedrawPanel_HoverFlow (surf);
 	case AID_MAINDISP4:
 		return RedrawPanel_MainTSFC (surf);
-	case AID_AOAINSTR:
-		return RedrawPanel_AOA (surf, event == PANEL_REDRAW_INIT);
+	//case AID_AOAINSTR:
+	//	return RedrawPanel_AOA (surf, event == PANEL_REDRAW_INIT);
 	case AID_SLIPINSTR:
 		return RedrawPanel_Slip (surf, event == PANEL_REDRAW_INIT);
 	case AID_LOADINSTR:
@@ -3685,6 +3616,7 @@ int DeltaGlider::clbkGeneric (int msgid, int prm, void *context)
 	}
 	return 0;
 }
+
 
 // ==============================================================
 // API callback interface

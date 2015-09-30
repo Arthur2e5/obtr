@@ -12,6 +12,7 @@
 #define __HOVERCTRL_H
 
 #include "DeltaGlider.h"
+#include "DGSubsys.h"
 #include "DGSwitches.h"
 #include <vector>
 
@@ -179,7 +180,6 @@ private:
 // Manual hover control submode
 // ==============================================================
 
-
 class HoverManualSubmode: public HoverSubmode {
 	friend class HoverThrottle;
 
@@ -190,7 +190,6 @@ public:
 
 private:
 	HoverThrottle *throttle;
-
 	int ELID_THROTTLE;          // hover throttle panel ID
 	UINT anim_hoverthrottle;    // VC hover throttle animation ID
 };

@@ -22,8 +22,8 @@
 #define __AAP_H
 
 #include "Orbitersdk.h"
-#include "..\Common\Vessel\Instrument.h"
 #include "DeltaGlider.h"
+#include "DGSubsys.h"
 
 class InstrHSI;
 

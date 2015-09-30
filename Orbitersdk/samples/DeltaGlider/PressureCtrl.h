@@ -12,6 +12,7 @@
 #define __PRESSURECTRL_H
 
 #include "DeltaGlider.h"
+#include "DGSubsys.h"
 #include "DGSwitches.h"
 
 // ==============================================================

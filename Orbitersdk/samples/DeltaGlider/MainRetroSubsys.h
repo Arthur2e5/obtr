@@ -4,18 +4,90 @@
 //          Copyright (C) 2001-2015 Martin Schweiger
 //                   All rights reserved
 //
-// GimbalCtrl.h
-// Class for main engine gimbal control subsystem
+// MainRetroSubsys.h
+// Subsystem for main and retro engine control
 // ==============================================================
 
-#ifndef __GIMBALCTRL_H
-#define __GIMBALCTRL_H
+#ifndef __MAINRETROSUBSYS_H
+#define __MAINRETROSUBSYS_H
 
 #include "DeltaGlider.h"
+#include "DGSubsys.h"
 #include "DGSwitches.h"
+#include <vector>
 
 // ==============================================================
-// Main engine gimbal control subsystem
+// Main and retro engine control subsystem
+// ==============================================================
+
+class MainRetroSubsystemComponent;
+class MainRetroThrottle;
+class GimbalControl;
+
+class MainRetroSubSystem: public DGSubSystem {
+public:
+	MainRetroSubSystem (DeltaGlider *v, int ident);
+	void SetGimbalMode (int mode);
+	int  GetGimbalMode () const;
+
+	void clbkReset2D (int panelid, MESHHANDLE hMesh);
+	void clbkResetVC (int vcid, DEVMESHHANDLE hMesh);
+
+private:
+	MainRetroThrottle *throttle;
+	GimbalControl *gimbalctrl;
+};
+
+
+// ==============================================================
+// Base class for MainRetro subsystem components
+// ==============================================================
+
+class MainRetroSubSystemComponent: public DGSubSystemComponent {
+public:
+	MainRetroSubSystemComponent (MainRetroSubSystem *_subsys);
+};
+
+
+// ==============================================================
+// Main/retro engine throttle
+// ==============================================================
+
+class MainRetroThrottle: public MainRetroSubSystemComponent {
+	friend class MainRetroThrottleLevers;
+
+public:
+	MainRetroThrottle (MainRetroSubSystem *_subsys);
+	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
+	bool clbkLoadVC (int vcid);
+
+private:
+	MainRetroThrottleLevers *levers; 
+	int ELID_LEVERS;
+	UINT anim_lever[2];    // VC main/retro throttle lever animation ID
+};
+
+// ==============================================================
+
+class MainRetroThrottleLevers: public PanelElement {
+public:
+	MainRetroThrottleLevers (MainRetroThrottle *comp);
+	void Reset2D (MESHHANDLE hMesh);
+	void ResetVC (DEVMESHHANDLE hMesh);
+	bool Redraw2D (SURFHANDLE surf);
+	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE hSurf);
+	bool ProcessMouse2D (int event, int mx, int my);
+	bool ProcessMouseVC (int event, VECTOR3 &p);
+
+private:
+	MainRetroThrottle *component;
+	float ppos[2];
+	UINT sliderpos[2];
+};
+
+
+// ==============================================================
+// Main engine gimbal control
 // ==============================================================
 
 class MainGimbalDial;
@@ -23,12 +95,12 @@ class PMainGimbalCtrl;
 class YMainGimbalCtrl;
 class MainGimbalDisp;
 
-class GimbalControl: public DGSubSystem {
+class GimbalControl: public MainRetroSubSystemComponent {
 	friend class PMainGimbalCtrl;
 	friend class YMainGimbalCtrl;
 
 public:
-	GimbalControl (DeltaGlider *vessel, int ident);
+	GimbalControl (MainRetroSubSystem *_subsys);
 	int Mode() const { return mode; }
 	void SetMode (int newmode) { mode = newmode; }
 	inline double MainPGimbal (int which, bool actual=true) const
@@ -43,9 +115,7 @@ public:
 	void TrackMainGimbal ();                                   // follow gimbals to commanded values
 	void clbkPostStep (double simt, double simdt, double mjd);
 	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
-	void clbkReset2D (int panelid, MESHHANDLE hMesh);
 	bool clbkLoadVC (int vcid);
-	void clbkResetVC (int vcid, DEVMESHHANDLE hMesh);
 
 private:
 	int mode;                     // gimbal mode: 0=off, 1=auto, 2=manual
@@ -137,4 +207,4 @@ private:
 	WORD vperm[nvtx_per_switch*2];
 };
 
-#endif // !__GIMBALCTRL_H
+#endif // !__MAINRETROSUBSYS_H

@@ -4,12 +4,12 @@
 //          Copyright (C) 2001-2015 Martin Schweiger
 //                   All rights reserved
 //
-// GimbalCtrl.cpp
-// Gimbal controls and displays
+// MainRetroSubsys.cpp
+// Subsystem for main and retro engine control
 // ==============================================================
 
 #define STRICT 1
-#include "GimbalCtrl.h"
+#include "MainRetroSubsys.h"
 #include "meshres_p0.h"
 #include "meshres_vc.h"
 #include "dg_vc_anim.h"
@@ -30,11 +30,243 @@ static const float sc_y0 = 431.5f;
 
 
 // ==============================================================
-// Main engine gimbal control subsystem
+// Main and retro engine control subsystem
 // ==============================================================
 
-GimbalControl::GimbalControl (DeltaGlider *vessel, int ident)
-: DGSubSystem (vessel, ident)
+MainRetroSubSystem::MainRetroSubSystem (DeltaGlider *v, int ident)
+: DGSubSystem (v, ident)
+{
+	// create component instances
+	AddComponent (throttle = new MainRetroThrottle (this));
+	AddComponent (gimbalctrl = new GimbalControl (this));
+}
+
+// --------------------------------------------------------------
+
+void MainRetroSubSystem::SetGimbalMode (int mode)
+{
+	gimbalctrl->SetMode (mode);
+}
+
+// --------------------------------------------------------------
+
+int MainRetroSubSystem::GetGimbalMode () const
+{
+	return gimbalctrl->Mode();
+}
+
+// --------------------------------------------------------------
+
+void MainRetroSubSystem::clbkReset2D (int panelid, MESHHANDLE hMesh)
+{
+	if (panelid != 0) return;
+	DGSubSystem::clbkReset2D (panelid, hMesh);
+}
+
+// --------------------------------------------------------------
+
+void MainRetroSubSystem::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
+{
+	if (vcid != 0) return;
+	DGSubSystem::clbkResetVC (vcid, hMesh);
+}
+
+
+// ==============================================================
+// Base class for MainRetro subsystem components
+// ==============================================================
+
+MainRetroSubSystemComponent::MainRetroSubSystemComponent (MainRetroSubSystem *_subsys)
+: DGSubSystemComponent(_subsys)
+{
+}
+
+
+// ==============================================================
+// Main/retro engine throttle
+// ==============================================================
+
+MainRetroThrottle::MainRetroThrottle (MainRetroSubSystem *_subsys)
+: MainRetroSubSystemComponent(_subsys)
+{
+	ELID_LEVERS = AddElement (levers = new MainRetroThrottleLevers (this));
+
+	// VC animation: Left main engine throttle
+	static UINT MainThrottleLGrp[2] = {GRP_THROTTLE_MAIN_L1_VC,GRP_THROTTLE_MAIN_L2_VC};
+	static MGROUP_ROTATE MainThrottleL (1, MainThrottleLGrp, 2,
+		_V(0,0.72,6.9856), _V(1,0,0), (float)(50*RAD));
+	anim_lever[0] = DG()->CreateAnimation (0.4);
+	DG()->AddAnimationComponent (anim_lever[0], 0, 1, &MainThrottleL);
+
+	// VC animation: Right main engine throttle
+	static UINT MainThrottleRGrp[2] = {GRP_THROTTLE_MAIN_R1_VC,GRP_THROTTLE_MAIN_R2_VC};
+	static MGROUP_ROTATE MainThrottleR (1, MainThrottleRGrp, 2,
+		_V(0,0.72,6.9856), _V(1,0,0), (float)(50*RAD));
+	anim_lever[1] = DG()->CreateAnimation (0.4);
+	DG()->AddAnimationComponent (anim_lever[1], 0, 1, &MainThrottleR);
+
+}
+
+// --------------------------------------------------------------
+
+bool MainRetroThrottle::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
+{
+	if (panelid != 0) return false;
+
+	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_LEVERS), _R(108,52,161,227), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, levers);
+
+	return true;
+}
+
+// --------------------------------------------------------------
+
+bool MainRetroThrottle::clbkLoadVC (int vcid)
+{
+	if (vcid != 0) return false;
+
+	// Throttle lever animations
+	oapiVCRegisterArea (GlobalElId(ELID_LEVERS), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED);
+	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_LEVERS), _V(-0.372,0.918,6.905), _V(-0.279,0.918,6.905), _V(-0.372,0.885,7.11), _V(-0.279,0.885,7.11));
+
+	return true;
+}
+
+
+// ==============================================================
+
+MainRetroThrottleLevers::MainRetroThrottleLevers (MainRetroThrottle *comp)
+: PanelElement(comp->DG()), component(comp)
+{
+	for (int i = 0; i < 2; i++)
+		ppos[i] = 0.0f;
+}
+
+// --------------------------------------------------------------
+
+void MainRetroThrottleLevers::Reset2D (MESHHANDLE hMesh)
+{
+	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
+	vtxofs = 48;
+}
+
+// --------------------------------------------------------------
+
+void MainRetroThrottleLevers::ResetVC (DEVMESHHANDLE hMesh)
+{
+	for (int i = 0; i < 2; i++)
+		sliderpos[i] = (UINT)-1;
+}
+
+// --------------------------------------------------------------
+
+bool MainRetroThrottleLevers::Redraw2D (SURFHANDLE surf)
+{
+	// constants for texture coordinates
+	static const float tx_dy = 18.0f;
+	static const float bb_y0 = 171.5f;
+
+	int i, j, vofs;
+	float pos;
+	static const float sy[4] = {bb_y0,bb_y0,bb_y0+tx_dy,bb_y0+tx_dy};
+
+	DeltaGlider *dg = component->DG();
+	for (i = 0; i < 2; i++) {
+		double level = dg->GetMainThrusterLevel (i);
+		if (level > 0) pos = (float)(-8.0-level*108.0);
+		else {
+			level = dg->GetRetroThrusterLevel (i);
+			if (level > 0) pos = (float)(8.0+level*30.0);
+			else           pos = 0.0f;
+		}
+		if (pos != ppos[i]) {
+			vofs = vtxofs+i*4;
+			for (j = 0; j < 4; j++) grp->Vtx[vofs+j].y = sy[j]+pos;
+			ppos[i] = pos;
+		}
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
+bool MainRetroThrottleLevers::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE hSurf)
+{
+	UINT i, pos;
+
+	DeltaGlider *dg = component->DG();
+	for (i = 0; i < 2; i++) {
+		double level = dg->GetMainThrusterLevel(i);
+		if (level > 0) pos = 150 + (UINT)(level*300.0);
+		else {
+			level = dg->GetRetroThrusterLevel(i);
+			pos = 150 - (UINT)(level*150.0);
+		}
+		if (pos != sliderpos[i]) {
+			dg->SetAnimation (component->anim_lever[i], (sliderpos[i] = pos)/450.0);
+		}
+	}
+	return true;
+}
+
+// --------------------------------------------------------------
+
+bool MainRetroThrottleLevers::ProcessMouse2D (int event, int mx, int my)
+{
+	DeltaGlider *dg = component->DG();
+	static int ctrl = 0;
+	if (event & PANEL_MOUSE_LBDOWN) { // record which slider to operate
+		if      (mx <  12) ctrl = 0; // left engine
+		else if (mx >= 37) ctrl = 1; // right engine
+		else               ctrl = 2; // both
+	}
+	if ((my -= 9) < 0) my = 0;
+	else if (my > 157) my = 157;
+	dg->SetMainRetroLevel (ctrl, my <= 108 ? 1.0-my/108.0  : 0.0,   // main thruster level
+			                     my >= 125 ? (my-125)/32.0 : 0.0);  // retro thruster level
+	return true;
+}
+
+// --------------------------------------------------------------
+
+bool MainRetroThrottleLevers::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	static int ctrl = 0, mode = 0;
+	static double py = 0.0;
+
+	if (event & PANEL_MOUSE_LBDOWN) { // record which slider to operate
+		if      (p.x < 0.3) ctrl = 0; // left engine
+		else if (p.x > 0.7) ctrl = 1; // right engine
+		else                ctrl = 2; // both
+		mode = 2;
+		py = p.y;
+	} else {
+		for (int i = 0; i < 2; i++) {
+			if (ctrl == i || ctrl == 2) {
+				DeltaGlider *dg = component->DG();
+				double lvl = dg->GetMainThrusterLevel(i) - dg->GetRetroThrusterLevel(i);
+				if      (lvl > 0.0) mode = 0;
+				else if (lvl < 0.0) mode = 1;
+				double lmin = (mode == 0 ? 0.0 : -1.0); // prevent direct crossover from main to retro
+				double lmax = (mode == 1 ? 0.0 :  1.0); // prevent direct crossover from retro to main
+				lvl = max (lmin, min (lmax, lvl + 2.0*(p.y-py)));
+				if (fabs (lvl) < 0.01) lvl = 0.0;
+				if (lvl >= 0.0) dg->SetMainRetroLevel (i, lvl, 0.0);
+				else            dg->SetMainRetroLevel (i, 0.0, -lvl);
+			}
+		}
+		py = p.y;
+	}
+	return true;
+}
+
+
+// ==============================================================
+// Main engine gimbal control
+// ==============================================================
+
+GimbalControl::GimbalControl (MainRetroSubSystem *_subsys)
+: MainRetroSubSystemComponent(_subsys)
 {
 	mode = 0;
 	mpmode = mymode = 0;
@@ -235,22 +467,6 @@ bool GimbalControl::clbkLoadVC (int vcid)
 	oapiVCRegisterArea (GlobalElId(ELID_DISPLAY), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
 
 	return true;
-}
-
-// --------------------------------------------------------------
-
-void GimbalControl::clbkReset2D (int panelid, MESHHANDLE hMesh)
-{
-	if (panelid != 0) return;
-	DGSubSystem::clbkReset2D (panelid, hMesh);
-}
-
-// --------------------------------------------------------------
-
-void GimbalControl::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
-{
-	if (vcid != 0) return;
-	DGSubSystem::clbkResetVC (vcid, hMesh);
 }
 
 // ==============================================================

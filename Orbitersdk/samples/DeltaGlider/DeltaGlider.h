@@ -24,6 +24,7 @@
 #include "Ramjet.h"
 #include "..\Common\Vessel\Instrument.h"
 #include "resource.h"
+#include <vector>
 
 #define LOADBMP(id) (LoadBitmap (g_Param.hDLL, MAKEINTRESOURCE (id)))
 
@@ -167,7 +168,7 @@ const DWORD INSTR3_TEXH   =  188;
 // DG subsystems
 class DGSubSystem;
 class HUDControl;
-class GimbalControl;
+class MainRetroSubSystem;
 class HoverControl;
 
 // ==========================================================
@@ -215,7 +216,6 @@ public:
 	bool RedrawPanel_RCSPropMass (SURFHANDLE surf);
 	bool RedrawPanel_ScramProp (SURFHANDLE surf);
 	bool RedrawPanel_ScramPropMass (SURFHANDLE surf);
-	void RedrawVC_ThMain ();
 	void RedrawVC_ThScram ();
 	void InitVCMesh ();
 
@@ -225,6 +225,7 @@ public:
 	bool IncADCMode ();
 
 	double GetMainThrusterLevel (int which) const { return GetThrusterLevel (th_main[which]); }
+	double GetRetroThrusterLevel (int which) const { return GetThrusterLevel (th_retro[which]); }
 	void   SetMainRetroLevel (int which, double lmain, double lretro);
 	void   SetScramLevel (int which, double level);
 	void   EnableRetroThrusters (bool state);
@@ -335,7 +336,6 @@ public:
 	UINT anim_raileron;         // handle for right aileron animation
 	UINT anim_brake;            // handle for airbrake animation
 	UINT anim_vc_trimwheel;     // VC elevator trim wheel
-	UINT anim_mainthrottle[2];  // VC main/retro throttle levers (left and right)
 	UINT anim_scramthrottle[2]; // VC scram throttle levers (left and right)
 	UINT anim_gearlever;        // VC gear lever
 	UINT anim_airbrakelever;    // VC airbrake lever
@@ -385,7 +385,7 @@ private:
 
 	// Vessel subsystems -------------------------------------------------------------
 	HUDControl          *ssys_hud;               // HUD control system
-	GimbalControl       *ssys_gimbal;            // main engine gimbal control system
+	MainRetroSubSystem  *ssys_mainretro;         // main engine gimbal control system
 	HoverControl        *ssys_hoverctrl;         // hover engine control system
 	PressureControl     *ssys_pressurectrl;      // pressure control system
 	DGSubSystem **ssys;                          // list subsystems
@@ -458,24 +458,6 @@ private:
 
 // ==============================================================
 
-class DGSubSystem: public SubSystem {
-public:
-	DGSubSystem (DeltaGlider *v, int ident): SubSystem (v, ident) {}
-	inline DeltaGlider *DG() { return (DeltaGlider*)Vessel(); }
-};
-
-// ==============================================================
-
-class DGPanelElement: public PanelElement {
-public:
-	DGPanelElement (DeltaGlider *_dg): PanelElement (dg), dg(_dg) {}
-
-protected:
-	DeltaGlider *dg;
-};
-
-// ==============================================================
-
 typedef struct {
 	HINSTANCE hDLL;
 	HFONT font[2];
@@ -488,7 +470,6 @@ typedef struct {
 // Panel area identifiers:
 // Panel 0
 #define AID_PROPELLANTSTATUS     0
-#define AID_ENGINEMAIN           2
 #define AID_ENGINESCRAM          4
 #define AID_ATTITUDEMODE         5
 #define AID_ADCTRLMODE           6

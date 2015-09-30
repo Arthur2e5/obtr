@@ -383,14 +383,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\PressureCtrl.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\PressureCtrl.h"
-				>
-			</File>
-			<File
 				RelativePath="Ramjet.cpp"
 				>
 				<FileConfiguration
@@ -496,14 +488,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\GimbalCtrl.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\GimbalCtrl.h"
-					>
-				</File>
-				<File
 					RelativePath="Horizon.cpp"
 					>
 					<FileConfiguration
@@ -527,22 +511,6 @@
 				</File>
 				<File
 					RelativePath=".\Horizon.h"
-					>
-				</File>
-				<File
-					RelativePath=".\HoverCtrl.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\HoverCtrl.h"
-					>
-				</File>
-				<File
-					RelativePath=".\HudCtrl.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\HudCtrl.h"
 					>
 				</File>
 				<File
@@ -642,14 +610,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\ThrottleMain.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\ThrottleMain.h"
-					>
-				</File>
-				<File
 					RelativePath=".\ThrottleScram.cpp"
 					>
 				</File>
@@ -671,6 +631,50 @@
 				</File>
 				<File
 					RelativePath=".\WheelBrake.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Subsystems"
+				>
+				<File
+					RelativePath=".\DGSubsys.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\DGSubsys.h"
+					>
+				</File>
+				<File
+					RelativePath=".\HoverCtrl.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\HoverCtrl.h"
+					>
+				</File>
+				<File
+					RelativePath=".\HudCtrl.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\HudCtrl.h"
+					>
+				</File>
+				<File
+					RelativePath=".\MainRetroSubsys.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\MainRetroSubsys.h"
+					>
+				</File>
+				<File
+					RelativePath=".\PressureCtrl.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\PressureCtrl.h"
 					>
 				</File>
 			</Filter>
