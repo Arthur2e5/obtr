@@ -29,7 +29,7 @@ class HUDBrightnessDial;
 class HUDColourButton;
 class HUDUpDownSwitch;
 
-class HUDControl: public DGSubSystem {
+class HUDControl: public DGSubsystem {
 public:
 	HUDControl (DeltaGlider *vessel, int ident);
 	int GetHUDMode () const;

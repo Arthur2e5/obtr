@@ -10,6 +10,7 @@
 
 #define STRICT 1
 #include "MainRetroSubsys.h"
+#include "meshres.h"
 #include "meshres_p0.h"
 #include "meshres_vc.h"
 #include "dg_vc_anim.h"
@@ -33,42 +34,50 @@ static const float sc_y0 = 431.5f;
 // Main and retro engine control subsystem
 // ==============================================================
 
-MainRetroSubSystem::MainRetroSubSystem (DeltaGlider *v, int ident)
-: DGSubSystem (v, ident)
+MainRetroSubsystem::MainRetroSubsystem (DeltaGlider *v, int ident)
+: DGSubsystem (v, ident)
 {
 	// create component instances
 	AddComponent (throttle = new MainRetroThrottle (this));
 	AddComponent (gimbalctrl = new GimbalControl (this));
+	AddComponent (retrocover = new RetroCoverControl (this));
 }
 
 // --------------------------------------------------------------
 
-void MainRetroSubSystem::SetGimbalMode (int mode)
+void MainRetroSubsystem::ActivateRCover (DeltaGlider::DoorStatus action)
 {
-	gimbalctrl->SetMode (mode);
+	retrocover->Activate (action);
 }
 
 // --------------------------------------------------------------
 
-int MainRetroSubSystem::GetGimbalMode () const
+DeltaGlider::DoorStatus MainRetroSubsystem::RCoverStatus() const
 {
-	return gimbalctrl->Mode();
+	return retrocover->Status();
 }
 
 // --------------------------------------------------------------
 
-void MainRetroSubSystem::clbkReset2D (int panelid, MESHHANDLE hMesh)
+double *MainRetroSubsystem::RCoverPosition()
+{
+	return retrocover->RCoverPosition();
+}
+
+// --------------------------------------------------------------
+
+void MainRetroSubsystem::clbkReset2D (int panelid, MESHHANDLE hMesh)
 {
 	if (panelid != 0) return;
-	DGSubSystem::clbkReset2D (panelid, hMesh);
+	DGSubsystem::clbkReset2D (panelid, hMesh);
 }
 
 // --------------------------------------------------------------
 
-void MainRetroSubSystem::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
+void MainRetroSubsystem::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
 {
 	if (vcid != 0) return;
-	DGSubSystem::clbkResetVC (vcid, hMesh);
+	DGSubsystem::clbkResetVC (vcid, hMesh);
 }
 
 
@@ -76,8 +85,8 @@ void MainRetroSubSystem::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
 // Base class for MainRetro subsystem components
 // ==============================================================
 
-MainRetroSubSystemComponent::MainRetroSubSystemComponent (MainRetroSubSystem *_subsys)
-: DGSubSystemComponent(_subsys)
+MainRetroSubsystemComponent::MainRetroSubsystemComponent (MainRetroSubsystem *_subsys)
+: DGSubsystemComponent(_subsys)
 {
 }
 
@@ -86,8 +95,8 @@ MainRetroSubSystemComponent::MainRetroSubSystemComponent (MainRetroSubSystem *_s
 // Main/retro engine throttle
 // ==============================================================
 
-MainRetroThrottle::MainRetroThrottle (MainRetroSubSystem *_subsys)
-: MainRetroSubSystemComponent(_subsys)
+MainRetroThrottle::MainRetroThrottle (MainRetroSubsystem *_subsys)
+: MainRetroSubsystemComponent(_subsys)
 {
 	ELID_LEVERS = AddElement (levers = new MainRetroThrottleLevers (this));
 
@@ -265,8 +274,8 @@ bool MainRetroThrottleLevers::ProcessMouseVC (int event, VECTOR3 &p)
 // Main engine gimbal control
 // ==============================================================
 
-GimbalControl::GimbalControl (MainRetroSubSystem *_subsys)
-: MainRetroSubSystemComponent(_subsys)
+GimbalControl::GimbalControl (MainRetroSubsystem *_subsys)
+: MainRetroSubsystemComponent(_subsys)
 {
 	mode = 0;
 	mpmode = mymode = 0;
@@ -415,6 +424,37 @@ void GimbalControl::TrackMainGimbal ()
 		}
 		oapiTriggerRedrawArea (0, 0, GlobalElId (ELID_DISPLAY));
 	}
+}
+
+// --------------------------------------------------------------
+
+void GimbalControl::clbkSaveState (FILEHANDLE scn)
+{
+	if (mode) {
+		if (mode == 1) { // auto
+			oapiWriteScenario_int (scn, "MGIMBALMODE", mode);
+		} else { // manual
+			char cbuf[256];
+			sprintf (cbuf, "%d %0.3lf %0.3lf %0.3lf %0.3lf",
+				mode, mpgimbal_cmd[0], mpgimbal_cmd[1], mygimbal_cmd[0], mygimbal_cmd[1]);
+			oapiWriteScenario_string (scn, "MGIMBALMODE", cbuf);
+		}
+	}
+}
+
+// --------------------------------------------------------------
+
+bool GimbalControl::clbkParseScenarioLine (const char *line)
+{
+	if (!_strnicmp (line, "MGIMBALMODE", 11)) {
+		double pg[2], yg[2];
+		int n = sscanf (line+11, "%d%lf%lf%lf%lf", &mode, pg+0, pg+1, yg+0, yg+1);
+		if (mode ==2 && n == 5) // copy manual settings
+			for (int i = 0; i < 2; i++)
+				mpgimbal_cmd[i] = pg[i], mygimbal_cmd[i] = yg[i];
+		return true;
+	}
+	return false;
 }
 
 // --------------------------------------------------------------
@@ -926,4 +966,160 @@ bool YMainGimbalCtrl::ProcessMouseVC (int event, VECTOR3 &p)
 	}
 	ctrl->IncMainYGimbal (state, mode);
 	return (event & (PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP));
+}
+
+
+// ==============================================================
+// Retro cover control
+// ==============================================================
+
+RetroCoverControl::RetroCoverControl (MainRetroSubsystem *_subsys)
+: MainRetroSubsystemComponent(_subsys)
+{
+	rcover_status = DeltaGlider::DOOR_CLOSED;
+	rcover_proc   = 0.0;
+
+	ELID_SWITCH = AddElement  (sw = new RetroCoverSwitch (this));
+
+	// Retro engine cover switch
+	static UINT RetroSwitchGrp = GRP_RETRO_COVER_SWITCH_VC;
+	static MGROUP_ROTATE RetroSwitchTransform (1, &RetroSwitchGrp, 1,
+		vc_rcoverswitch_ref, vc_rcoverswitch_axis, (float)(-50*RAD));
+	anim_retroswitch = DG()->CreateAnimation (0.5);
+	DG()->AddAnimationComponent (anim_retroswitch, 0, 1, &RetroSwitchTransform);
+
+	// Retro cover animation
+	static UINT RCoverTLGrp[2] = {GRP_RCoverTL1,GRP_RCoverTL2};
+	static MGROUP_ROTATE RCoverTL (0, RCoverTLGrp, 2,
+		_V(-2.156,-0.49,6.886), _V(-0.423,0.23,-0.877), (float)( 70*RAD));
+	static UINT RCoverBLGrp[2] = {GRP_RCoverBL1,GRP_RCoverBL2};
+	static MGROUP_ROTATE RCoverBL (0, RCoverBLGrp, 2,
+		_V(-2.156,-0.49,6.886), _V(-0.434,-0.037,-0.9), (float)(-70*RAD));
+	static UINT RCoverTRGrp[2] = {GRP_RCoverTR1,GRP_RCoverTR2};
+	static MGROUP_ROTATE RCoverTR (0, RCoverTRGrp, 2,
+		_V( 2.156,-0.49,6.886), _V( 0.423,0.23,-0.877), (float)(-70*RAD));
+	static UINT RCoverBRGrp[2] = {GRP_RCoverBR1,GRP_RCoverBR2};
+	static MGROUP_ROTATE RCoverBR (0, RCoverBRGrp, 2,
+		_V( 2.156,-0.49,6.886), _V( 0.434,-0.037,-0.9), (float)( 70*RAD));
+	anim_rcover = DG()->CreateAnimation (0);
+	DG()->AddAnimationComponent (anim_rcover, 0, 1, &RCoverTL);
+	DG()->AddAnimationComponent (anim_rcover, 0, 1, &RCoverBL);
+	DG()->AddAnimationComponent (anim_rcover, 0, 1, &RCoverTR);
+	DG()->AddAnimationComponent (anim_rcover, 0, 1, &RCoverBR);
+
+}
+
+// --------------------------------------------------------------
+
+void RetroCoverControl::Activate (DeltaGlider::DoorStatus action)
+{
+	void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd = 0);
+
+	bool close = (action == DeltaGlider::DOOR_CLOSED || action == DeltaGlider::DOOR_CLOSING);
+	rcover_status = action;
+	if (action <= DeltaGlider::DOOR_OPEN) {
+		rcover_proc = (action == DeltaGlider::DOOR_CLOSED ? 0.0 : 1.0);
+		DG()->SetAnimation (anim_rcover, rcover_proc);
+		DG()->UpdateStatusIndicators();
+	}
+	DG()->EnableRetroThrusters (action == DeltaGlider::DOOR_OPEN);
+	oapiTriggerPanelRedrawArea (1, AID_SWITCHARRAY);
+	DG()->SetAnimation (anim_retroswitch, close ? 0:1);
+	UpdateCtrlDialog (DG());
+	DG()->RecordEvent ("RCOVER", close ? "CLOSE" : "OPEN");
+}
+
+// --------------------------------------------------------------
+
+void RetroCoverControl::clbkPostCreation ()
+{
+	DG()->EnableRetroThrusters (rcover_status == DeltaGlider::DOOR_OPEN);
+	DG()->SetAnimation (anim_rcover, rcover_proc);
+}
+
+// --------------------------------------------------------------
+
+void RetroCoverControl::clbkSaveState (FILEHANDLE scn)
+{
+	char cbuf[256];
+
+	if (rcover_status) {
+		sprintf (cbuf, "%d %0.4f", rcover_status, rcover_proc);
+		oapiWriteScenario_string (scn, "RCOVER", cbuf);
+	}
+}
+
+// --------------------------------------------------------------
+
+bool RetroCoverControl::clbkParseScenarioLine (const char *line)
+{
+	if (!_strnicmp (line, "RCOVER", 6)) {
+		sscanf (line+6, "%d%lf", &rcover_status, &rcover_proc);
+		return true;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
+void RetroCoverControl::clbkPostStep (double simt, double simdt, double mjd)
+{
+	// animate retro covers
+	if (rcover_status >= DeltaGlider::DOOR_CLOSING) {
+		double da = simdt * RCOVER_OPERATING_SPEED;
+		if (rcover_status == DeltaGlider::DOOR_CLOSING) {
+			if (rcover_proc > 0.0)
+				rcover_proc = max (0.0, rcover_proc-da);
+			else {
+				rcover_status = DeltaGlider::DOOR_CLOSED;
+			}
+		} else {
+			if (rcover_proc < 1.0)
+				rcover_proc = min (1.0, rcover_proc+da);
+			else {
+				rcover_status = DeltaGlider::DOOR_OPEN;
+				DG()->EnableRetroThrusters (true);
+			}
+		}
+		DG()->SetAnimation (anim_rcover, rcover_proc);
+		DG()->UpdateStatusIndicators();
+	}
+
+}
+
+// --------------------------------------------------------------
+
+bool RetroCoverControl::clbkLoadVC (int vcid)
+{
+	if (vcid != 0) return false;
+
+	// Retro engine cover switch
+	oapiVCRegisterArea (GlobalElId(ELID_SWITCH), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP);
+	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_SWITCH), vc_rcoverswitch_mousearea[0], vc_rcoverswitch_mousearea[1], vc_rcoverswitch_mousearea[2], vc_rcoverswitch_mousearea[3]);
+
+	return true;
+}
+
+// --------------------------------------------------------------
+
+void RetroCoverControl::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
+{
+	DG()->SetAnimation (anim_retroswitch, rcover_status & 1);
+}
+
+// ==============================================================
+
+RetroCoverSwitch::RetroCoverSwitch (RetroCoverControl *comp)
+: PanelElement (comp->DG()), component(comp)
+{
+}
+
+// --------------------------------------------------------------
+
+bool RetroCoverSwitch::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	DeltaGlider *dg = component->DG();
+	int pos = max(0, min (1, (int)(p.y*2.0)));
+	component->Activate (pos ? DeltaGlider::DOOR_CLOSING:DeltaGlider::DOOR_OPENING);
+	return false;
 }

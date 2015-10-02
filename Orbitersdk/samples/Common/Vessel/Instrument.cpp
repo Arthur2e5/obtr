@@ -111,7 +111,7 @@ char *PanelElement::DispStr (double dist, int precision)
 
 // ==============================================================
 
-SubSystem::SubSystem (VESSEL3 *v, int ident)
+Subsystem::Subsystem (VESSEL3 *v, int ident)
 : vessel(v), id(ident)
 {
 	element = 0;
@@ -120,7 +120,7 @@ SubSystem::SubSystem (VESSEL3 *v, int ident)
 
 // --------------------------------------------------------------
 
-SubSystem::~SubSystem ()
+Subsystem::~Subsystem ()
 {
 	if (nelement) {
 		for (DWORD i = 0; i < nelement; i++)
@@ -131,7 +131,7 @@ SubSystem::~SubSystem ()
 
 // --------------------------------------------------------------
 
-int SubSystem::LocalElId (int globalid, int &subsysid)
+int Subsystem::LocalElId (int globalid, int &subsysid)
 {
 	subsysid = (globalid/1000)-1;
 	return globalid%1000;
@@ -139,7 +139,7 @@ int SubSystem::LocalElId (int globalid, int &subsysid)
 
 // --------------------------------------------------------------
 
-int SubSystem::AddElement (PanelElement *el)
+int Subsystem::AddElement (PanelElement *el)
 {
 	PanelElement **tmp = new PanelElement*[nelement+1];
 	if (nelement) {
@@ -153,7 +153,7 @@ int SubSystem::AddElement (PanelElement *el)
 
 // --------------------------------------------------------------
 
-void SubSystem::clbkReset2D (int panelid, MESHHANDLE hMesh)
+void Subsystem::clbkReset2D (int panelid, MESHHANDLE hMesh)
 {
 	for (DWORD i = 0; i < nelement; i++)
 		element[i]->Reset2D (hMesh);
@@ -161,7 +161,7 @@ void SubSystem::clbkReset2D (int panelid, MESHHANDLE hMesh)
 
 // --------------------------------------------------------------
 
-void SubSystem::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
+void Subsystem::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
 {
 	for (DWORD i = 0; i < nelement; i++)
 		element[i]->ResetVC (hMesh);
@@ -169,14 +169,14 @@ void SubSystem::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
 
 // --------------------------------------------------------------
 
-bool SubSystem::clbkVCRedrawEvent (int id, int event, DEVMESHHANDLE hMesh, SURFHANDLE hSurf)
+bool Subsystem::clbkVCRedrawEvent (int id, int event, DEVMESHHANDLE hMesh, SURFHANDLE hSurf)
 {
 	return (id < nelement ? element[id]->RedrawVC (hMesh, hSurf) : false);
 }
 
 // --------------------------------------------------------------
 
-bool SubSystem::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
+bool Subsystem::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 {
 	return (id < nelement ? element[id]->ProcessMouseVC (event, p) : false);
 }

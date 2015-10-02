@@ -12,17 +12,43 @@
 #include "DGSubsys.h"
 
 // ==============================================================
-// DGSubSystem
+// DGSubsystem
 // ==============================================================
 
-void DGSubSystem::AddComponent (DGSubSystemComponent *comp)
+void DGSubsystem::AddComponent (DGSubsystemComponent *comp)
 {
 	component.push_back (comp);
 }
 
 // --------------------------------------------------------------
 
-void DGSubSystem::clbkPostStep (double simt, double simdt, double mjd)
+void DGSubsystem::clbkPostCreation ()
+{
+	for (int i = 0; i < component.size(); i++)
+		component[i]->clbkPostCreation ();
+}
+
+// --------------------------------------------------------------
+
+void DGSubsystem::clbkSaveState (FILEHANDLE scn)
+{
+	for (int i = 0; i < component.size(); i++)
+		component[i]->clbkSaveState (scn);
+}
+
+// --------------------------------------------------------------
+
+bool DGSubsystem::clbkParseScenarioLine (const char *line)
+{
+	for (int i = 0; i < component.size(); i++)
+		if (component[i]->clbkParseScenarioLine (line))
+			return true;
+	return false;
+}
+
+// --------------------------------------------------------------
+
+void DGSubsystem::clbkPostStep (double simt, double simdt, double mjd)
 {
 	for (int i = 0; i < component.size(); i++)
 		component[i]->clbkPostStep (simt, simdt, mjd);
@@ -30,7 +56,7 @@ void DGSubSystem::clbkPostStep (double simt, double simdt, double mjd)
 
 // --------------------------------------------------------------
 
-bool DGSubSystem::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
+bool DGSubsystem::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
 {
 	bool b = false;
 	for (int i = 0; i < component.size(); i++) {
@@ -42,7 +68,7 @@ bool DGSubSystem::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW,
 
 // --------------------------------------------------------------
 
-bool DGSubSystem::clbkLoadVC (int vcid)
+bool DGSubsystem::clbkLoadVC (int vcid)
 {
 	bool b = false;
 	for (int i = 0; i < component.size(); i++) {
@@ -52,9 +78,29 @@ bool DGSubSystem::clbkLoadVC (int vcid)
 	return b;
 }
 
+// --------------------------------------------------------------
+
+void DGSubsystem::clbkReset2D (int panelid, MESHHANDLE hMesh)
+{
+	Subsystem::clbkReset2D (panelid, hMesh);
+
+	for (int i = 0; i < component.size(); i++)
+		component[i]->clbkReset2D (panelid, hMesh);
+}
+
+// --------------------------------------------------------------
+
+void DGSubsystem::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
+{
+	Subsystem::clbkResetVC (vcid, hMesh);
+
+	for (int i = 0; i < component.size(); i++)
+		component[i]->clbkResetVC (vcid, hMesh);
+}
+
 // ==============================================================
 
-DGSubSystemComponent::DGSubSystemComponent (DGSubSystem *_subsys)
+DGSubsystemComponent::DGSubsystemComponent (DGSubsystem *_subsys)
 : subsys(_subsys)
 {}
 

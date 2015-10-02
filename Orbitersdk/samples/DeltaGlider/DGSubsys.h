@@ -18,39 +18,49 @@
 
 // ==============================================================
 
-class DGSubSystemComponent;
+class DGSubsystemComponent;
 
-class DGSubSystem: public SubSystem {
+class DGSubsystem: public Subsystem {
 public:
-	DGSubSystem (DeltaGlider *v, int ident): SubSystem (v, ident) {}
+	DGSubsystem (DeltaGlider *v, int ident): Subsystem (v, ident) {}
 	inline DeltaGlider *DG() { return (DeltaGlider*)Vessel(); }
-	void AddComponent (DGSubSystemComponent *comp);
+	void AddComponent (DGSubsystemComponent *comp);
+	virtual void clbkPostCreation ();
+	virtual void clbkSaveState (FILEHANDLE scn);
+	virtual bool clbkParseScenarioLine (const char *line);
 	virtual void clbkPostStep (double simt, double simdt, double mjd);
-	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
-	bool clbkLoadVC (int vcid);
+	virtual bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
+	virtual bool clbkLoadVC (int vcid);
+	virtual void clbkReset2D (int panelid, MESHHANDLE hMesh);
+	virtual void clbkResetVC (int vcid, DEVMESHHANDLE hMesh);
 
 protected:
-	std::vector<DGSubSystemComponent*> component;
+	std::vector<DGSubsystemComponent*> component;
 };
 
 // ==============================================================
 
-class DGSubSystemComponent {
+class DGSubsystemComponent {
 public:
-	DGSubSystemComponent (DGSubSystem *_subsys);
-	virtual ~DGSubSystemComponent() {}
+	DGSubsystemComponent (DGSubsystem *_subsys);
+	virtual ~DGSubsystemComponent() {}
 	inline DeltaGlider *DG() { return subsys->DG(); }
+	virtual void clbkPostCreation () {}
+	virtual void clbkSaveState (FILEHANDLE scn) {}
+	virtual bool clbkParseScenarioLine (const char *line) { return false; }
 	virtual void clbkPostStep (double simt, double simdt, double mjd) {}
 	virtual bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH) { return false; }
 	virtual bool clbkLoadVC (int vcid) { return false; }
+	virtual void clbkReset2D (int panelid, MESHHANDLE hMesh) {}
+	virtual void clbkResetVC (int vcid, DEVMESHHANDLE hMesh) {}
 
 protected:
-	inline DGSubSystem *Subsys() { return subsys; }
+	inline DGSubsystem *Subsys() { return subsys; }
 	inline int AddElement (PanelElement *el) { return subsys->AddElement (el); }
 	inline int GlobalElId (int localid) const { return subsys->GlobalElId (localid); }
 
 private:
-	DGSubSystem *subsys;
+	DGSubsystem *subsys;
 };
 
 // ==============================================================

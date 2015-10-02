@@ -7,7 +7,7 @@
 // Instrument.h
 // Interface for class PanelElement:
 //   Base class for panel and VC instrument visualisations
-// Interface for class SubSystem:
+// Interface for class Subsystem:
 //   Base class for a vessel subsystem: acts as a container for
 //   a group of panel elements and underlying system logic
 // ==============================================================
@@ -57,12 +57,12 @@ protected:
  * management, autopilots, electrical, thermal, pressure, payload management, etc.
  * Defining subsystems in separate classes rather than directly in the vessel class
  * helps stucturing the code logically and de-clutters the vessel class.
- * SubSystem also acts as a container for the PanelElement objects that provide the
+ * Subsystem also acts as a container for the PanelElement objects that provide the
  * user interface for that subsystem. It provides mouse and redraw callback functions
  * that can be called from the corresponding vessel class callback function, and
  * passes the call on to the appropriate subsystem panel element.
  */
-class SubSystem {
+class Subsystem {
 public:
 	/**
 	 * \brief Create a new subsystem.
@@ -70,13 +70,13 @@ public:
 	 * \param ident subsystem identifier
 	 * \note Usually called from the vessel constructor
 	 */
-	SubSystem (VESSEL3 *v, int ident);
+	Subsystem (VESSEL3 *v, int ident);
 
 	/**
 	 * \brief Subsystem destructor
 	 * \note Usually called from the vessel destructor
 	 */
-	virtual ~SubSystem ();
+	virtual ~Subsystem ();
 
 	/**
 	 * \brief Returns pointer to the associated vessel instance
@@ -135,6 +135,12 @@ public:
 	 *   subsystems.
 	 */
 	virtual void clbkPostStep (double simt, double simdt, double mjd) {}
+
+	virtual void clbkPostCreation () {}
+
+	virtual void clbkSaveState (FILEHANDLE scn) {}
+
+	virtual bool clbkParseScenarioLine (const char *line) { return false; }
 
 	/**
 	 * \brief Set up the 2D instrument panel for the subsystem

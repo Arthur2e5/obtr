@@ -20,7 +20,7 @@
 // ==============================================================
 
 HUDControl::HUDControl (DeltaGlider *vessel, int ident)
-: DGSubSystem (vessel, ident)
+: DGSubsystem (vessel, ident)
 {
 	last_mode  = HUD_NONE;
 	hud_status = DeltaGlider::DOOR_CLOSED;

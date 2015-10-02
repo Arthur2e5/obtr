@@ -22,7 +22,7 @@ double PressureControl::p_target = 100e3;
 // --------------------------------------------------------------
 
 PressureControl::PressureControl (DeltaGlider *vessel, int ident)
-: DGSubSystem(vessel, ident)
+: DGSubsystem(vessel, ident)
 {
 	extern GDIParams g_Param;
 

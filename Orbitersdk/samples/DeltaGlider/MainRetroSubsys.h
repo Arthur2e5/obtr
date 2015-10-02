@@ -23,19 +23,21 @@
 class MainRetroSubsystemComponent;
 class MainRetroThrottle;
 class GimbalControl;
+class RetroCoverControl;
 
-class MainRetroSubSystem: public DGSubSystem {
+class MainRetroSubsystem: public DGSubsystem {
 public:
-	MainRetroSubSystem (DeltaGlider *v, int ident);
-	void SetGimbalMode (int mode);
-	int  GetGimbalMode () const;
-
+	MainRetroSubsystem (DeltaGlider *v, int ident);
+	void ActivateRCover (DeltaGlider::DoorStatus action);
+	DeltaGlider::DoorStatus RCoverStatus() const;
+	double *RCoverPosition();
 	void clbkReset2D (int panelid, MESHHANDLE hMesh);
 	void clbkResetVC (int vcid, DEVMESHHANDLE hMesh);
 
 private:
 	MainRetroThrottle *throttle;
 	GimbalControl *gimbalctrl;
+	RetroCoverControl *retrocover;
 };
 
 
@@ -43,9 +45,9 @@ private:
 // Base class for MainRetro subsystem components
 // ==============================================================
 
-class MainRetroSubSystemComponent: public DGSubSystemComponent {
+class MainRetroSubsystemComponent: public DGSubsystemComponent {
 public:
-	MainRetroSubSystemComponent (MainRetroSubSystem *_subsys);
+	MainRetroSubsystemComponent (MainRetroSubsystem *_subsys);
 };
 
 
@@ -53,11 +55,11 @@ public:
 // Main/retro engine throttle
 // ==============================================================
 
-class MainRetroThrottle: public MainRetroSubSystemComponent {
+class MainRetroThrottle: public MainRetroSubsystemComponent {
 	friend class MainRetroThrottleLevers;
 
 public:
-	MainRetroThrottle (MainRetroSubSystem *_subsys);
+	MainRetroThrottle (MainRetroSubsystem *_subsys);
 	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);
 
@@ -95,12 +97,12 @@ class PMainGimbalCtrl;
 class YMainGimbalCtrl;
 class MainGimbalDisp;
 
-class GimbalControl: public MainRetroSubSystemComponent {
+class GimbalControl: public MainRetroSubsystemComponent {
 	friend class PMainGimbalCtrl;
 	friend class YMainGimbalCtrl;
 
 public:
-	GimbalControl (MainRetroSubSystem *_subsys);
+	GimbalControl (MainRetroSubsystem *_subsys);
 	int Mode() const { return mode; }
 	void SetMode (int newmode) { mode = newmode; }
 	inline double MainPGimbal (int which, bool actual=true) const
@@ -113,6 +115,8 @@ public:
 	bool IncMainYGimbal (int which, int mode);                 // manually change gimbal yaw command
 	void AutoMainGimbal ();                                    // apply automatic main engine gimbal setting
 	void TrackMainGimbal ();                                   // follow gimbals to commanded values
+	void clbkSaveState (FILEHANDLE scn);
+	bool clbkParseScenarioLine (const char *line);
 	void clbkPostStep (double simt, double simdt, double mjd);
 	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);
@@ -205,6 +209,46 @@ private:
 	static const int nvtx_per_switch = 28;
 	NTVERTEX vtx0[nvtx_per_switch*2];
 	WORD vperm[nvtx_per_switch*2];
+};
+
+
+// ==============================================================
+// Retro cover control
+// ==============================================================
+
+class RetroCoverControl: public MainRetroSubsystemComponent {
+	friend class RetroCoverSwitch;
+
+public:
+	RetroCoverControl (MainRetroSubsystem *_subsys);
+	void Activate (DeltaGlider::DoorStatus action);
+	inline DeltaGlider::DoorStatus Status() const { return rcover_status; }
+	inline double *RCoverPosition() { return &rcover_proc; }
+	void clbkPostCreation();
+	void clbkSaveState (FILEHANDLE scn);
+	bool clbkParseScenarioLine (const char *line);
+	void clbkPostStep (double simt, double simdt, double mjd);
+	bool clbkLoadVC (int vcid);
+	void clbkResetVC (int vcid, DEVMESHHANDLE hMesh);
+
+private:
+	RetroCoverSwitch *sw;
+	int ELID_SWITCH;
+	DeltaGlider::DoorStatus rcover_status;
+	double rcover_proc;
+	UINT anim_rcover;           // handle for retro cover animation
+	UINT anim_retroswitch;      // VC retro cover switch animation
+};
+
+// ==============================================================
+
+class RetroCoverSwitch: public PanelElement {
+public:
+	RetroCoverSwitch (RetroCoverControl *comp);
+	bool ProcessMouseVC (int event, VECTOR3 &p);
+
+private:
+	RetroCoverControl *component;
 };
 
 #endif // !__MAINRETROSUBSYS_H

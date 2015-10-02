@@ -586,22 +586,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\RCoverSwitch.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\RCoverSwitch.h"
-					>
-				</File>
-				<File
-					RelativePath=".\RcsDial.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\RcsDial.h"
-					>
-				</File>
-				<File
 					RelativePath=".\SwitchArray.cpp"
 					>
 				</File>
@@ -646,11 +630,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\HoverCtrl.cpp"
+					RelativePath=".\HoverSubsys.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\HoverCtrl.h"
+					RelativePath=".\HoverSubsys.h"
 					>
 				</File>
 				<File
@@ -675,6 +659,14 @@
 				</File>
 				<File
 					RelativePath=".\PressureCtrl.h"
+					>
+				</File>
+				<File
+					RelativePath=".\RcsSubsys.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\RcsSubsys.h"
 					>
 				</File>
 			</Filter>

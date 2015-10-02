@@ -4,12 +4,12 @@
 //          Copyright (C) 2001-2015 Martin Schweiger
 //                   All rights reserved
 //
-// HoverCtrl.h
+// HoverSubsys.h
 // Hover engine control subsystem: manual input and automatic modes
 // ==============================================================
 
-#ifndef __HOVERCTRL_H
-#define __HOVERCTRL_H
+#ifndef __HOVERSUBSYS_H
+#define __HOVERSUBSYS_H
 
 #include "DeltaGlider.h"
 #include "DGSubsys.h"
@@ -20,38 +20,31 @@
 // Hover control subsystem
 // ==============================================================
 
-class HoverSubmode;
-class HoverAttitudeSubmode;
-class HoverHoldAltVspdSubmode;
-class HoverManualSubmode;
+class HoverAttitudeComponent;
+class HoverHoldComponent;
+class HoverManualComponent;
 
-class HoverControl: public DGSubSystem {
+class HoverSubsystem: public DGSubsystem {
 public:
-	HoverControl (DeltaGlider *vessel, int ident);
-	~HoverControl();
+	HoverSubsystem (DeltaGlider *dg, int ident);
+	~HoverSubsystem();
 
 	inline double GetThrusterLevel (int i) const { return hoverlevel[i]; }
 	inline void   SetThrusterLevel (int i, double lvl) { hoverlevel[i] = lvl; }
 	void IncGroupLevel (double dlvl);
 
-	void SetAttitudeMode (int mode);
-	int  GetAttitudeMode () const;
-
 	void ActivateHold (bool active);
 
 	void clbkPostStep (double simt, double simdt, double mjd);
-	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
-	bool clbkLoadVC (int vcid);
 	void clbkReset2D (int panelid, MESHHANDLE hMesh);
 	void clbkResetVC (int vcid, DEVMESHHANDLE hMesh);
 
 private:
-	std::vector<HoverSubmode*> submode; // submodes
-	HoverAttitudeSubmode *attctrl;      // attitude control submode
-	HoverHoldAltVspdSubmode *holdctrl;  // altitude/vspd control submode
-	HoverManualSubmode *manctrl;        // manual hover control
+	HoverAttitudeComponent *attctrl;      // attitude control submode
+	HoverHoldComponent *holdctrl;         // altitude/vspd control submode
+	HoverManualComponent *manctrl;        // manual hover control
 
-	double hoverlevel[3];               // current hover engine levels
+	double hoverlevel[3];                 // current hover engine levels
 };
 
 
@@ -59,23 +52,10 @@ private:
 // Base class for hover submodes
 // ==============================================================
 
-class HoverSubmode {
+class HoverSubsystemComponent: public DGSubsystemComponent {
 public:
-	HoverSubmode (HoverControl *_ctrl);
-	virtual ~HoverSubmode() {}
-
-	inline DeltaGlider *DG() { return ctrl->DG(); }
-	virtual void clbkPostStep (double simt, double simdt, double mjd) {}
-	virtual bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH) { return false; }
-	virtual bool clbkLoadVC (int vcid) { return false; }
-
-protected:
-	inline HoverControl *Ctrl() { return ctrl; }
-	inline int AddElement (PanelElement *el) { return ctrl->AddElement (el); }
-	inline int GlobalElId (int localid) const { return ctrl->GlobalElId (localid); }
-
-private:
-	HoverControl *ctrl;
+	HoverSubsystemComponent (HoverSubsystem *_subsys);
+	inline HoverSubsystem *HoverSubsys() { return (HoverSubsystem*)Subsys(); }
 };
 
 // ==============================================================
@@ -87,9 +67,9 @@ class PHoverCtrl;
 class RHoverCtrl;
 class HoverDisp;
 
-class HoverAttitudeSubmode: public HoverSubmode {
+class HoverAttitudeComponent: public HoverSubsystemComponent {
 public:
-	HoverAttitudeSubmode (HoverControl *_ctrl);
+	HoverAttitudeComponent (HoverSubsystem *_subsys);
 	inline int Mode() const { return mode; }
 	inline void SetMode (int newmode) { mode = newmode; }
 	inline double PHover (bool actual=true) const { return actual ? phover : phover_cmd; }
@@ -98,6 +78,8 @@ public:
 	bool IncRHover (int dir);     // manually change hover roll command
 	void AutoHoverAtt ();         // set hover pitch/roll commands from user input
 	void TrackHoverAtt ();
+	void clbkSaveState (FILEHANDLE scn);
+	bool clbkParseScenarioLine (const char *line);
 	void clbkPostStep (double simt, double simdt, double mjd);
 	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);
@@ -129,13 +111,13 @@ class HoverAltSwitch;
 class HoverAltResetBtn;
 class HoverAltModeButtons;
 
-class HoverHoldAltVspdSubmode: public HoverSubmode {
+class HoverHoldComponent: public HoverSubsystemComponent {
 	friend class HoverHoldAltIndicator;
 
 public:
 	enum HoverMode { HOLD_NONE, HOLD_ALT, HOLD_VSPD };
 
-	HoverHoldAltVspdSubmode (HoverControl *_ctrl);
+	HoverHoldComponent (HoverSubsystem *_subsys);
 	void Activate (bool ison);
 	double TargetAlt() const { return holdalt; }
 	void SetTargetAlt (double alt);
@@ -146,6 +128,8 @@ public:
 	void SetTargetPrm (double prm);
 	void SetHoverMode (HoverMode mode);
 	HoverMode GetHoverMode () const { return hovermode; }
+	void clbkSaveState (FILEHANDLE scn);
+	bool clbkParseScenarioLine (const char *line);
 	void clbkPostStep (double simt, double simdt, double mjd);
 	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);
@@ -180,11 +164,11 @@ private:
 // Manual hover control submode
 // ==============================================================
 
-class HoverManualSubmode: public HoverSubmode {
+class HoverManualComponent: public HoverSubsystemComponent {
 	friend class HoverThrottle;
 
 public:
-	HoverManualSubmode (HoverControl *_ctrl);
+	HoverManualComponent (HoverSubsystem *_subsys);
 	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);
 
@@ -201,7 +185,7 @@ private:
 
 class HoverCtrlDial: public DGDial1 {
 public:
-	HoverCtrlDial (HoverAttitudeSubmode *_ctrl);
+	HoverCtrlDial (HoverAttitudeComponent *_ctrl);
 	void Reset2D (MESHHANDLE hMesh);
 	void ResetVC (DEVMESHHANDLE hMesh);
 	bool Redraw2D (SURFHANDLE surf);
@@ -209,14 +193,14 @@ public:
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 
 private:
-	HoverAttitudeSubmode *ctrl;
+	HoverAttitudeComponent *ctrl;
 };
 
 // ==============================================================
 
 class HoverDisp: public PanelElement {
 public:
-	HoverDisp (HoverAttitudeSubmode *_ctrl);
+	HoverDisp (HoverAttitudeComponent *_ctrl);
 	~HoverDisp ();
 	void Reset2D (MESHHANDLE hMesh);
 	void ResetVC (DEVMESHHANDLE hMesh);
@@ -224,7 +208,7 @@ public:
 	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
 
 private:
-	HoverAttitudeSubmode *ctrl;
+	HoverAttitudeComponent *ctrl;
 	int pofs_cur, pofs_cmd;
 	int rofs_cur, rofs_cmd;
 	GROUPREQUESTSPEC vc_grp; ///< Buffered VC vertex data
@@ -235,24 +219,24 @@ private:
 
 class PHoverCtrl: public DGSwitch2 {
 public:
-	PHoverCtrl (HoverAttitudeSubmode *_ctrl);
+	PHoverCtrl (HoverAttitudeComponent *_ctrl);
 	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 
 private:
-	HoverAttitudeSubmode *ctrl;
+	HoverAttitudeComponent *ctrl;
 };
 
 // ==============================================================
 
 class RHoverCtrl: public DGSwitch2 {
 public:
-	RHoverCtrl (HoverAttitudeSubmode *_ctrl);
+	RHoverCtrl (HoverAttitudeComponent *_ctrl);
 	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 
 private:
-	HoverAttitudeSubmode *ctrl;
+	HoverAttitudeComponent *ctrl;
 };
 
 
@@ -265,13 +249,13 @@ private:
 
 class HoverAltBtn: public DGButton3 {
 public:
-	HoverAltBtn (HoverHoldAltVspdSubmode *hhac);
+	HoverAltBtn (HoverHoldComponent *hhac);
 	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 	bool Redraw2D (SURFHANDLE hSurf);
 
 private:
-	HoverHoldAltVspdSubmode *ctrl;
+	HoverHoldComponent *ctrl;
 	SURFHANDLE bsrc;
 };
 
@@ -280,7 +264,7 @@ private:
 
 class HoverAltModeButtons: public PanelElement {
 public:
-	HoverAltModeButtons (HoverHoldAltVspdSubmode *hhac);
+	HoverAltModeButtons (HoverHoldComponent *hhac);
 	~HoverAltModeButtons();
 	void DefineAnimation2D (int meshgrp, int vofs);
 	void DefineAnimationsVC (const VECTOR3 &axis, DWORD meshgrp, DWORD meshgrp_label,
@@ -293,9 +277,9 @@ public:
 	void ResetVC (DEVMESHHANDLE hMesh);
 
 private:
-	HoverHoldAltVspdSubmode *ctrl;
+	HoverHoldComponent *ctrl;
 	DGButton3 *btn[2];
-	HoverHoldAltVspdSubmode::HoverMode vmode; // currently displayed hover mode
+	HoverHoldComponent::HoverMode vmode; // currently displayed hover mode
 };
 
 // ==============================================================
@@ -303,13 +287,13 @@ private:
 
 class HoverAltSwitch: public DGSwitch2 {
 public:
-	HoverAltSwitch (HoverHoldAltVspdSubmode *hhac);
+	HoverAltSwitch (HoverHoldComponent *hhac);
 	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 
 private:
 	void Set (int state, double refT);
-	HoverHoldAltVspdSubmode *ctrl;
+	HoverHoldComponent *ctrl;
 };
 
 // ==============================================================
@@ -317,12 +301,12 @@ private:
 
 class HoverAltResetBtn: public DGButton2 {
 public:
-	HoverAltResetBtn (HoverHoldAltVspdSubmode *hhac);
+	HoverAltResetBtn (HoverHoldComponent *hhac);
 	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 
 private:
-	HoverHoldAltVspdSubmode *ctrl;
+	HoverHoldComponent *ctrl;
 };
 
 // ==============================================================
@@ -330,7 +314,7 @@ private:
 
 class HoverHoldAltIndicator: public PanelElement {
 public:
-	HoverHoldAltIndicator (HoverHoldAltVspdSubmode *hhac, SURFHANDLE blitsrc);
+	HoverHoldAltIndicator (HoverHoldComponent *hhac, SURFHANDLE blitsrc);
 	void Reset2D (MESHHANDLE hMesh);
 	void ResetVC (DEVMESHHANDLE hMesh);
 	bool Redraw2D (SURFHANDLE surf);
@@ -339,9 +323,9 @@ public:
 private:
 	bool Redraw ();
 	void UpdateReadout (const char *tgtstr, char *curstr);
-	HoverHoldAltVspdSubmode *ctrl;
+	HoverHoldComponent *ctrl;
 	SURFHANDLE btgt, bsrc;
-	HoverHoldAltVspdSubmode::HoverMode holdmode_disp;
+	HoverHoldComponent::HoverMode holdmode_disp;
 	bool hold_disp;
 	char holdstr[10];   // current hold altitude readout
 };
@@ -356,7 +340,7 @@ private:
 
 class HoverThrottle: public PanelElement {
 public:
-	HoverThrottle (HoverManualSubmode *_ctrl);
+	HoverThrottle (HoverManualComponent *_ctrl);
 	void Reset2D (MESHHANDLE hMesh);
 	void ResetVC (DEVMESHHANDLE hMesh);
 	bool Redraw2D (SURFHANDLE surf);
@@ -365,9 +349,9 @@ public:
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 
 private:
-	HoverManualSubmode *ctrl;
+	HoverManualComponent *ctrl;
 	float ppos;
 	UINT sliderpos;
 };
 
-#endif // !__HOVERCTRL_H
+#endif // !__HOVERSUBSYS_H

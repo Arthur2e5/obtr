@@ -1,4 +1,5 @@
 #include "DeltaGlider.h"
+#include "MainRetroSubsys.h"
 #include <stdio.h>
 
 extern "C" {
@@ -132,7 +133,7 @@ static int dgRetro (lua_State *L)
 	DeltaGlider *dg = lua_toDG (L, 1);
 	int action = lua_tointeger (L, 2);
 	if (dg && action >= 0 && action < 2)
-		dg->ActivateRCover (DGaction[action]);
+		dg->SubsysMainRetro()->ActivateRCover (DGaction[action]);
 	return 0;
 }
 

@@ -17,7 +17,6 @@
 #include "InstrHsi.h"
 #include "InstrAoa.h"
 #include "InstrVs.h"
-#include "RcsDial.h"
 #include "AtctrlDial.h"
 #include "NavButton.h"
 #include "ElevTrim.h"
@@ -29,9 +28,9 @@
 #include "FuelMfd.h"
 #include "ThrottleScram.h"
 #include "MainRetroSubsys.h"
-#include "HoverCtrl.h"
+#include "HoverSubsys.h"
+#include "RcsSubsys.h"
 #include "SwitchArray.h"
-#include "RCoverSwitch.h"
 #include "AirlockSwitch.h"
 #include "Wheelbrake.h"
 #include "MwsButton.h"
@@ -158,12 +157,12 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	modelidx = (fmodel ? 1 : 0);
 
 	// Subsystem definitions
-	nssys = 4;                      // number of subsystems
-	ssys = new DGSubSystem*[nssys]; // list of subsystems
-	ssys[0] = ssys_hoverctrl    = new HoverControl (this, 0); // hover balance controls
-	ssys[1] = ssys_pressurectrl = new PressureControl (this, 1);  // cabin/airlock pressure controls
-	ssys[2] = ssys_mainretro    = new MainRetroSubSystem (this, 2); // main engine gimbal controls
-	ssys[3] = ssys_hud          = new HUDControl (this, 3); // HUD controls
+	int ssys_id = 0;
+	ssys.push_back (ssys_mainretro = new MainRetroSubsystem (this, ssys_id++));
+	ssys.push_back (ssys_hoverctrl = new HoverSubsystem (this, ssys_id++));
+	ssys.push_back (ssys_rcs       = new RcsSubsystem (this, ssys_id++));
+	ssys.push_back (ssys_hud       = new HUDControl (this, ssys_id++));
+	ssys.push_back (ssys_pressurectrl = new PressureControl (this, ssys_id++));
 
 	aoa_ind = PI;
 	slip_ind = PI*0.5;
@@ -172,8 +171,6 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	gear_proc         = 0.0;
 	gearlever_status  = DOOR_CLOSED;
 	gearlever_proc    = 0.0;
-	rcover_status     = DOOR_CLOSED;
-	rcover_proc       = 0.0;
 	nose_status       = DOOR_CLOSED;
 	nose_proc         = 0.0;
 	noselever_status  = DOOR_CLOSED;
@@ -262,9 +259,8 @@ DeltaGlider::~DeltaGlider ()
 
 	if (scramjet) delete scramjet;
 
-	for (i = 0; i < nssys; i++)
-		delete ssys[i];
-	delete []ssys;
+	for (std::vector<DGSubsystem*>::iterator it = ssys.begin(); it != ssys.end(); ++it)
+		delete *it;
 
 	for (i = 0; i < ninstr; i++)
 		if (instr[i]) delete instr[i];
@@ -318,9 +314,9 @@ void DeltaGlider::CreatePanelElements ()
 	instr[5]  = new NavButtons (this);
 	instr[6]  = new ElevatorTrim (this);
 	instr[7]  = new Airbrake (this);
-	instr[8]  = 0; //new ThrottleMain (this);
+	instr[8]  = 0;
 	instr[9]  = 0;
-	instr[10] = new RCSDial (this);
+	instr[10] = 0;
 	instr[11] = new ATCtrlDial (this);
 	instr[12] = new UndockButton (this);
 	instr[13] = 0;
@@ -345,7 +341,7 @@ void DeltaGlider::CreatePanelElements ()
 	}
 	instr[34] = 0;
 	instr[35] = 0;
-	instr[36] = new RCoverSwitch (this);
+	instr[36] = 0;
 	instr[37] = new GearIndicator (this);
 	instr[38] = new InstrLightSwitch (this);
 	instr[39] = new InstrLightBrightnessDial (this);
@@ -433,25 +429,6 @@ void DeltaGlider::DefineAnimations ()
 	AddAnimationComponent (anim_gear, 0, 1, &RWheelOCover);
 	AddAnimationComponent (anim_gear, 0, 0.3, &RWheelICover1);
 	AddAnimationComponent (anim_gear, 0.7, 1, &RWheelICover2);
-
-	// ***** Retro cover animation *****
-	static UINT RCoverTLGrp[2] = {GRP_RCoverTL1,GRP_RCoverTL2};
-	static MGROUP_ROTATE RCoverTL (0, RCoverTLGrp, 2,
-		_V(-2.156,-0.49,6.886), _V(-0.423,0.23,-0.877), (float)( 70*RAD));
-	static UINT RCoverBLGrp[2] = {GRP_RCoverBL1,GRP_RCoverBL2};
-	static MGROUP_ROTATE RCoverBL (0, RCoverBLGrp, 2,
-		_V(-2.156,-0.49,6.886), _V(-0.434,-0.037,-0.9), (float)(-70*RAD));
-	static UINT RCoverTRGrp[2] = {GRP_RCoverTR1,GRP_RCoverTR2};
-	static MGROUP_ROTATE RCoverTR (0, RCoverTRGrp, 2,
-		_V( 2.156,-0.49,6.886), _V( 0.423,0.23,-0.877), (float)(-70*RAD));
-	static UINT RCoverBRGrp[2] = {GRP_RCoverBR1,GRP_RCoverBR2};
-	static MGROUP_ROTATE RCoverBR (0, RCoverBRGrp, 2,
-		_V( 2.156,-0.49,6.886), _V( 0.434,-0.037,-0.9), (float)( 70*RAD));
-	anim_rcover = CreateAnimation (0);
-	AddAnimationComponent (anim_rcover, 0, 1, &RCoverTL);
-	AddAnimationComponent (anim_rcover, 0, 1, &RCoverBL);
-	AddAnimationComponent (anim_rcover, 0, 1, &RCoverTR);
-	AddAnimationComponent (anim_rcover, 0, 1, &RCoverBR);
 
 	// ***** Nose cone animation *****
 	static UINT NConeTLGrp[2] = {GRP_NConeTL1,GRP_NConeTL2};
@@ -683,20 +660,6 @@ void DeltaGlider::DefineAnimations ()
 	anim_floodbdial = CreateAnimation (0.5);
 	AddAnimationComponent (anim_floodbdial, 0, 1, &FloodBDialTransform);
 
-	// Hover control dial
-	//static UINT HoverDialGrp = GRP_HOVER_CTRL_VC;
-	//static MGROUP_ROTATE HoverDial (1, &HoverDialGrp, 1,
-	//	vc_hvrdial_ref, vc_hrvdial_axis, (float)(100*RAD));
-	//anim_hoverdial = CreateAnimation (0.5);
-	//AddAnimationComponent (anim_hoverdial, 0, 1, &HoverDial);
-
-	// Retro engine cover switch
-	static UINT RetroSwitchGrp = GRP_RETRO_COVER_SWITCH_VC;
-	static MGROUP_ROTATE RetroSwitchTransform (1, &RetroSwitchGrp, 1,
-		vc_rcoverswitch_ref, vc_rcoverswitch_axis, (float)(-50*RAD));
-	anim_retroswitch = CreateAnimation (0.5);
-	AddAnimationComponent (anim_retroswitch, 0, 1, &RetroSwitchTransform);
-
 	static UINT LadderSwitchGrp = GRP_LADDER_SWITCH_VC;
 	static MGROUP_ROTATE LadderSwitch (1, &LadderSwitchGrp, 1,
 		_V(0.2889,1.0622,7.2388), _V(-0.7590,-0.231,0.6087), (float)(31*RAD));
@@ -780,9 +743,10 @@ void DeltaGlider::ReleaseSurfaces ()
 // --------------------------------------------------------------
 void DeltaGlider::InitPanel (int panel)
 {
+	for (std::vector<DGSubsystem*>::iterator it = ssys.begin(); it != ssys.end(); ++it)
+		(*it)->clbkReset2D (panel, hPanelMesh);
+
 	DWORD i;
-	for (i = 0; i < nssys; i++)
-		ssys[i]->clbkReset2D (panel, hPanelMesh);
 
 	switch (panel) {
 	case 0: // main panel
@@ -1073,22 +1037,6 @@ void DeltaGlider::SetGearParameters (double state)
 			bGearIsDown = false;
 		}
 	}
-}
-
-void DeltaGlider::ActivateRCover (DoorStatus action)
-{
-	bool close = (action == DOOR_CLOSED || action == DOOR_CLOSING);
-	rcover_status = action;
-	if (action <= DOOR_OPEN) {
-		rcover_proc = (action == DOOR_CLOSED ? 0.0 : 1.0);
-		SetAnimation (anim_rcover, rcover_proc);
-		UpdateStatusIndicators();
-	}
-	EnableRetroThrusters (action == DOOR_OPEN);
-	oapiTriggerPanelRedrawArea (1, AID_SWITCHARRAY);
-	SetAnimation (anim_retroswitch, close ? 0:1);
-	UpdateCtrlDialog (this);
-	RecordEvent ("RCOVER", close ? "CLOSE" : "OPEN");
 }
 
 void DeltaGlider::ActivateDockingPort (DoorStatus action)
@@ -1828,7 +1776,7 @@ void DeltaGlider::UpdateStatusIndicators ()
 	vtx[0].tu = vtx[1].tu = x;
 
 	// retro cover indicator
-	x = (rcover_status == DOOR_CLOSED ? xoff : rcover_status == DOOR_OPEN ? xon : modf (oapiGetSimTime(), &d) < 0.5 ? xon : xoff);
+	x = (ssys_mainretro->RCoverStatus() == DOOR_CLOSED ? xoff : ssys_mainretro->RCoverStatus() == DOOR_OPEN ? xon : modf (oapiGetSimTime(), &d) < 0.5 ? xon : xoff);
 	vtx[2].tu = vtx[3].tu = x;
 
 	// airbrake indicator
@@ -1951,7 +1899,9 @@ void DeltaGlider::InitVCMesh()
 		oapiEditMeshGroup (vcmesh, GRP_PILOT_VISOR_VC, &ges);
 
 		for (DWORD i = 0; i < ninstr; i++) if (instr[i]) instr[i]->ResetVC (vcmesh);
-		for (DWORD i = 0; i < nssys; i++) ssys[i]->clbkResetVC (0, vcmesh);
+
+		for (std::vector<DGSubsystem*>::iterator it = ssys.begin(); it != ssys.end(); ++it)
+			(*it)->clbkResetVC (0, vcmesh);
 	}
 }
 
@@ -2181,7 +2131,7 @@ void DeltaGlider::clbkSetClassCaps (FILEHANDLE cfg)
 	CreateControlSurface3 (AIRCTRL_ELEVATORTRIM, 0.3, 1.7, _V(   0,0,-7.2), AIRCTRL_AXIS_XPOS, 1.0, anim_elevatortrim);
 
 	CreateVariableDragElement (&gear_proc, 0.8, _V(0, -1, 0));     // landing gear
-	CreateVariableDragElement (&rcover_proc, 0.2, _V(0,-0.5,6.5)); // retro covers
+	CreateVariableDragElement (ssys_mainretro->RCoverPosition(), 0.2, _V(0,-0.5,6.5)); // retro covers
 	CreateVariableDragElement (&nose_proc, 3, _V(0, 0, 8));        // nose cone
 	CreateVariableDragElement (&radiator_proc, 1, _V(0,1.5,-4));   // radiator
 	CreateVariableDragElement (&brake_proc, 4, _V(0,0,-8));        // airbrake
@@ -2258,8 +2208,6 @@ void DeltaGlider::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 			} else {
 				gearlever_status = DOOR_CLOSED; gearlever_proc = 0.0;
 			}
-		} else if (!_strnicmp (line, "RCOVER", 6)) {
-			sscanf (line+6, "%d%lf", &rcover_status, &rcover_proc);
 		} else if (!_strnicmp (line, "AIRLOCK", 7)) {
 			sscanf (line+7, "%d%lf", &olock_status, &olock_proc);
 		} else if (!_strnicmp (line, "IAIRLOCK", 8)) {
@@ -2286,14 +2234,6 @@ void DeltaGlider::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 			double trim;
 			sscanf (line+4, "%lf", &trim);
 			SetControlSurfaceLevel (AIRCTRL_ELEVATORTRIM, trim, true);
-		} else if (!_strnicmp (line, "MGIMBALMODE", 11)) {
-			int gimbalmode;
-			sscanf (line+11, "%d", &gimbalmode);
-			ssys_mainretro->SetGimbalMode (gimbalmode);
-		} else if (!_strnicmp (line, "HOVERMODE", 9)) {
-			int hovermode;
-			sscanf (line+9, "%d", &hovermode);
-			ssys_hoverctrl->SetAttitudeMode (hovermode);
 		} else if (!_strnicmp (line, "TANKCONFIG", 10)) {
 			if (scramjet) sscanf (line+10, "%d", &tankconfig);
 		} else if (!_strnicmp (line, "PSNGR", 5)) {
@@ -2327,8 +2267,17 @@ void DeltaGlider::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 		} else if (!_strnicmp (line, "AAP", 3)) {
 			aap->SetState (line);
         } else {
-            ParseScenarioLineEx (line, vs);
+			int i;
+			bool found = false;
+
+			// offer the line to all subsystems
+			for (std::vector<DGSubsystem*>::iterator it = ssys.begin(); it != ssys.end(); ++it)
+				if (found = (*it)->clbkParseScenarioLine (line))
+					break;
+
 			// unrecognised option - pass to Orbiter's generic parser
+			if (!found)
+	            ParseScenarioLineEx (line, vs);
         }
     }
 
@@ -2361,14 +2310,13 @@ void DeltaGlider::clbkSaveState (FILEHANDLE scn)
 	// Write default vessel parameters
 	VESSEL4::clbkSaveState (scn);
 
+	for (std::vector<DGSubsystem*>::iterator it = ssys.begin(); it != ssys.end(); ++it)
+		(*it)->clbkSaveState (scn);
+
 	// Write custom parameters
 	if (gear_status) {
 		sprintf (cbuf, "%d %0.4f", gear_status, gear_proc);
 		oapiWriteScenario_string (scn, "GEAR", cbuf);
-	}
-	if (rcover_status) {
-		sprintf (cbuf, "%d %0.4f", rcover_status, rcover_proc);
-		oapiWriteScenario_string (scn, "RCOVER", cbuf);
 	}
 	if (nose_status) {
 		sprintf (cbuf, "%d %0.4f", nose_status, nose_proc);
@@ -2397,14 +2345,6 @@ void DeltaGlider::clbkSaveState (FILEHANDLE scn)
 	if (hatch_status) {
 		sprintf (cbuf, "%d %0.4lf", hatch_status, hatch_proc);
 		oapiWriteScenario_string (scn, "HATCH", cbuf);
-	}
-	if (i = ssys_mainretro->GetGimbalMode()) {
-		sprintf (cbuf, "%d", i);
-		oapiWriteScenario_string (scn, "MGIMBALMODE", cbuf);
-	}
-	if (i = ssys_hoverctrl->GetAttitudeMode()) {
-		sprintf (cbuf, "%d", i);
-		oapiWriteScenario_string (scn, "HOVERMODE", cbuf);
 	}
 	for (i = 0; i < 4; i++)
 		if (psngr[i]) {
@@ -2442,12 +2382,13 @@ void DeltaGlider::clbkSaveState (FILEHANDLE scn)
 // --------------------------------------------------------------
 void DeltaGlider::clbkPostCreation ()
 {
-	EnableRetroThrusters (rcover_status == DOOR_OPEN);
+	for (std::vector<DGSubsystem*>::iterator it = ssys.begin(); it != ssys.end(); ++it)
+		(*it)->clbkPostCreation ();
+
 	SetEmptyMass ();
 
 	// update animation states
 	SetAnimation (anim_gear, gear_proc);
-	SetAnimation (anim_rcover, rcover_proc);
 	SetAnimation (anim_nose, nose_proc);
 	SetAnimation (anim_ladder, ladder_proc);
 	SetAnimation (anim_olock, olock_proc);
@@ -2458,7 +2399,6 @@ void DeltaGlider::clbkPostCreation ()
 	SetAnimation (anim_gearlever, gear_status & 1);
 	SetAnimation (anim_airbrakelever, airbrakelever_status & 1);
 	SetAnimation (anim_noselever, nose_status & 1);
-	SetAnimation (anim_retroswitch, rcover_status & 1);
 	SetAnimation (anim_radiatorswitch, radiator_status & 1);
 	SetAnimation (anim_ladderswitch, ladder_status & 1);
 
@@ -2478,7 +2418,7 @@ bool DeltaGlider::clbkPlaybackEvent (double simt, double event_t, const char *ev
 		ActivateDockingPort (!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
 		return true;
 	} else if (!_stricmp (event_type, "RCOVER")) {
-		ActivateRCover (!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
+		ssys_mainretro->ActivateRCover (!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
 		return true;
 	} else if (!_stricmp (event_type, "RADIATOR")) {
 		ActivateRadiator (!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
@@ -2568,7 +2508,7 @@ void DeltaGlider::clbkMFDMode (int mfd, int mode)
 // --------------------------------------------------------------
 void DeltaGlider::clbkRCSMode (int mode)
 {
-	oapiTriggerRedrawArea (0, 0, AID_ATTITUDEMODE);
+	ssys_rcs->SetMode (mode);
 }
 
 // --------------------------------------------------------------
@@ -2661,27 +2601,6 @@ void DeltaGlider::clbkPostStep (double simt, double simdt, double mjd)
 			}
 		}
 		SetAnimation (anim_gearlever, gearlever_proc);
-	}
-
-	// animate retro covers
-	if (rcover_status >= DOOR_CLOSING) {
-		double da = simdt * RCOVER_OPERATING_SPEED;
-		if (rcover_status == DOOR_CLOSING) {
-			if (rcover_proc > 0.0)
-				rcover_proc = max (0.0, rcover_proc-da);
-			else {
-				rcover_status = DOOR_CLOSED;
-			}
-		} else {
-			if (rcover_proc < 1.0)
-				rcover_proc = min (1.0, rcover_proc+da);
-			else {
-				rcover_status = DOOR_OPEN;
-				EnableRetroThrusters (true);
-			}
-		}
-		SetAnimation (anim_rcover, rcover_proc);
-		UpdateStatusIndicators();
 	}
 
 	// animate nose cone
@@ -2888,8 +2807,8 @@ void DeltaGlider::clbkPostStep (double simt, double simdt, double mjd)
 		}
 	}
 
-	for (DWORD i = 0; i < nssys; i++)
-		ssys[i]->clbkPostStep (simt, simdt, mjd);
+	for (std::vector<DGSubsystem*>::iterator it = ssys.begin(); it != ssys.end(); ++it)
+		(*it)->clbkPostStep (simt, simdt, mjd);
 }
 
 bool DeltaGlider::clbkLoadGenericCockpit ()
@@ -2908,8 +2827,8 @@ bool DeltaGlider::clbkLoadGenericCockpit ()
 bool DeltaGlider::clbkLoadPanel2D (int id, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
 {
 	// set up subsystem panel elements
-	for (int i = 0; i < nssys; i++)
-		ssys[i]->clbkLoadPanel2D (id, hPanel, viewW, viewH);
+	for (std::vector<DGSubsystem*>::iterator it = ssys.begin(); it != ssys.end(); ++it)
+		(*it)->clbkLoadPanel2D (id, hPanel, viewW, viewH);
 
 	switch (id) {
 	case 0:
@@ -2973,7 +2892,6 @@ void DeltaGlider::DefinePanelMain (PANELHANDLE hPanel)
 	RegisterPanelArea (hPanel, AID_NAVMODE,      _R(1121,119,1197,273), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN, 0, instr[5]);
 	RegisterPanelArea (hPanel, AID_ELEVATORTRIM, _R(1242,135,1262,195), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, instr[6]);
 	RegisterPanelArea (hPanel, AID_AIRBRAKE,     _R(1242,215,1262,275), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN, panel2dtex, instr[7]);
-	RegisterPanelArea (hPanel, AID_ATTITUDEMODE, _R(1136, 69,1176,113), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, 0, instr[10]);
 	RegisterPanelArea (hPanel, AID_ADCTRLMODE,   _R(1217, 69,1257,113), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, panel2dtex, instr[11]);
 	RegisterPanelArea (hPanel, AID_DOCKRELEASE,  _R(1141,474,1172,504), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, instr[12]);
 	RegisterPanelArea (hPanel, AID_GEARLEVER,    _R(1230,286,1262,511), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN, panel2dtex, instr[14]);
@@ -3210,11 +3128,6 @@ bool DeltaGlider::clbkLoadVC (int id)
 			((NavButtons*)instr[5])->DefineAnimationsVC (VC_BTN_NAVMODE_1_axis, GRP_BUTTON3_VC, GRP_LIT_SURF_VC, navbtn_vofs, navlbl_vofs);
 		}
 
-		// RCS mode dial
-		oapiVCRegisterArea (AID_ATTITUDEMODE, PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_ATTITUDEMODE, VC_RCS_DIAL_mousearea[0], VC_RCS_DIAL_mousearea[1], VC_RCS_DIAL_mousearea[2], VC_RCS_DIAL_mousearea[3]);
-		((DGDial1*)instr[10])->DefineAnimationVC (VC_RCS_DIAL_ref, VC_RCS_DIAL_axis, GRP_DIAL1_VC, VC_RCS_DIAL_vofs);
-
 		// Button row 1
 		oapiVCRegisterArea (AID_BUTTONROW1, PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_BUTTONROW1, _V(0.3014,0.8519,6.9562), _V(0.3679,0.8519,6.9562), _V(0.3014,0.8520,7.0163), _V(0.3679,0.8520,7.0163));
@@ -3261,10 +3174,6 @@ bool DeltaGlider::clbkLoadVC (int id)
 		// Undock lever
 		oapiVCRegisterArea (AID_DOCKRELEASE, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_DOCKRELEASE, vc_undocklever_mousearea[0], vc_undocklever_mousearea[1], vc_undocklever_mousearea[2], vc_undocklever_mousearea[3]);
-
-		// Retro engine door switch
-		oapiVCRegisterArea (AID_RETRODOORSWITCH, PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_RETRODOORSWITCH, vc_rcoverswitch_mousearea[0], vc_rcoverswitch_mousearea[1], vc_rcoverswitch_mousearea[2], vc_rcoverswitch_mousearea[3]);
 
 		oapiVCRegisterArea (AID_RADIATOREX, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Spherical (AID_RADIATOREX, _V(0.2582,0.9448,7.22),0.01);
@@ -3314,8 +3223,8 @@ bool DeltaGlider::clbkLoadVC (int id)
 		return false;
 	}
 
-	for (DWORD i = 0; i < nssys; i++)
-		ssys[i]->clbkLoadVC (id);
+	for (std::vector<DGSubsystem*>::iterator it = ssys.begin(); it != ssys.end(); ++it)
+		(*it)->clbkLoadVC (id);
 
 	InitVCMesh();
 
@@ -3332,9 +3241,9 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 
 	// distribute to subsystem
 	int subsys, localid;
-	localid = SubSystem::LocalElId (id, subsys);
+	localid = Subsystem::LocalElId (id, subsys);
 	if (subsys >= 0) {
-		if (subsys >= nssys) return false; // subsystem id out of range
+		if (subsys >= ssys.size()) return false; // subsystem id out of range
 		return ssys[subsys]->clbkVCMouseEvent (localid, event, p);
 	}
 
@@ -3363,8 +3272,6 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 		return instr[39]->ProcessMouseVC (event, p);
 	case AID_FLOODBRIGHT_DIAL:
 		return instr[41]->ProcessMouseVC (event, p);
-	case AID_RETRODOORSWITCH:
-		return instr[36]->ProcessMouseVC (event, p);
 	case AID_ENGINESCRAM:
 		if (event & PANEL_MOUSE_LBDOWN) { // record which slider to operate
 			if      (p.x < 0.3) ctrl = 0; // left engine
@@ -3396,8 +3303,6 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 		return instr[49]->ProcessMouseVC (event, p);
 	case AID_NAVMODE:
 		return instr[5]->ProcessMouseVC (event, p);
-	case AID_ATTITUDEMODE:
-		return instr[10]->ProcessMouseVC (event, p);
 	case AID_ADCTRLMODE:
 		return instr[11]->ProcessMouseVC (event, p);
 	case AID_ELEVATORTRIM:
@@ -3439,9 +3344,9 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 
 	// distribute to subsystem
 	int subsys, localid;
-	localid = SubSystem::LocalElId (id, subsys);
+	localid = Subsystem::LocalElId (id, subsys);
 	if (subsys >= 0) {
-		if (subsys >= nssys) return false; // subsystem id out of range
+		if (subsys >= ssys.size()) return false; // subsystem id out of range
 		return ssys[subsys]->clbkVCRedrawEvent (localid, event, vcmesh, surf);
 	}
 
@@ -3457,8 +3362,6 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 	case AID_ENGINESCRAM:
 		RedrawVC_ThScram();
 		return false;
-	case AID_ATTITUDEMODE:
-		return instr[10]->RedrawVC (vcmesh, 0);
 	case AID_ADCTRLMODE:
 		return instr[11]->RedrawVC (vcmesh, 0);
 	case AID_MAINPROP:
@@ -3724,10 +3627,10 @@ BOOL CALLBACK EdPg1Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			GetDG(hTab)->ActivateLandingGear (DeltaGlider::DOOR_OPEN);
 			return TRUE;
 		case IDC_RETRO_CLOSE:
-			GetDG(hTab)->ActivateRCover (DeltaGlider::DOOR_CLOSED);
+			GetDG(hTab)->SubsysMainRetro()->ActivateRCover (DeltaGlider::DOOR_CLOSED);
 			return TRUE;
 		case IDC_RETRO_OPEN:
-			GetDG(hTab)->ActivateRCover (DeltaGlider::DOOR_OPEN);
+			GetDG(hTab)->SubsysMainRetro()->ActivateRCover (DeltaGlider::DOOR_OPEN);
 			return TRUE;
 		case IDC_OLOCK_CLOSE:
 			GetDG(hTab)->ActivateOuterAirlock (DeltaGlider::DOOR_CLOSED);
@@ -3900,10 +3803,10 @@ BOOL CALLBACK Ctrl_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			dg->ActivateLandingGear (DeltaGlider::DOOR_OPENING);
 			return 0;
 		case IDC_RETRO_CLOSE:
-			dg->ActivateRCover (DeltaGlider::DOOR_CLOSING);
+			dg->SubsysMainRetro()->ActivateRCover (DeltaGlider::DOOR_CLOSING);
 			return 0;
 		case IDC_RETRO_OPEN:
-			dg->ActivateRCover (DeltaGlider::DOOR_OPENING);
+			dg->SubsysMainRetro()->ActivateRCover (DeltaGlider::DOOR_OPENING);
 			return 0;
 		case IDC_NCONE_CLOSE:
 			dg->ActivateDockingPort (DeltaGlider::DOOR_CLOSING);
@@ -3975,7 +3878,7 @@ void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd)
 	SendDlgItemMessage (hWnd, IDC_GEAR_DOWN, BM_SETCHECK, bstatus[op], 0);
 	SendDlgItemMessage (hWnd, IDC_GEAR_UP, BM_SETCHECK, bstatus[1-op], 0);
 
-	op = dg->rcover_status & 1;
+	op = dg->SubsysMainRetro()->RCoverStatus() & 1;
 	SendDlgItemMessage (hWnd, IDC_RETRO_OPEN, BM_SETCHECK, bstatus[op], 0);
 	SendDlgItemMessage (hWnd, IDC_RETRO_CLOSE, BM_SETCHECK, bstatus[1-op], 0);
 

@@ -166,10 +166,11 @@ const DWORD INSTR3_TEXH   =  188;
 // ==========================================================
 
 // DG subsystems
-class DGSubSystem;
+class DGSubsystem;
 class HUDControl;
-class MainRetroSubSystem;
-class HoverControl;
+class MainRetroSubsystem;
+class HoverSubsystem;
+class RcsSubsystem;
 
 // ==========================================================
 // Interface for derived vessel class: DeltaGlider
@@ -284,10 +285,9 @@ public:
 	int airbrake_tgt;
 
 	enum DoorStatus { DOOR_CLOSED, DOOR_OPEN, DOOR_CLOSING, DOOR_OPENING }
-		nose_status, noselever_status, ladder_status, gear_status, gearlever_status, rcover_status, olock_status, ilock_status,
+		nose_status, noselever_status, ladder_status, gear_status, gearlever_status, olock_status, ilock_status,
 		hatch_status, radiator_status, brake_status, undock_status, airbrakelever_status;
 	void ActivateLandingGear (DoorStatus action);
-	void ActivateRCover (DoorStatus action);
 	void ActivateDockingPort (DoorStatus action);
 	void ActivateUndocking (DoorStatus action);
 	void ActivateLadder (DoorStatus action);
@@ -315,12 +315,11 @@ public:
 	void ModInstrBrightness (bool up);
 	void ModFloodBrightness (bool up);
 	void SetGearParameters (double state);
-	double nose_proc, noselever_proc, ladder_proc, gear_proc, gearlever_proc, rcover_proc, olock_proc, ilock_proc,
+	double nose_proc, noselever_proc, ladder_proc, gear_proc, gearlever_proc, olock_proc, ilock_proc,
 		hatch_proc, radiator_proc, brake_proc, undock_proc, airbrakelever_proc;     // logical status
 
 	// Animation handles
 	UINT anim_gear;             // handle for landing gear animation
-	UINT anim_rcover;           // handle for retro cover animation
 	UINT anim_nose;             // handle for nose cone animation
 	UINT anim_noselever;        // handle for nose cone lever animation
 	UINT anim_undocklever;      // handle for undock lever animation
@@ -339,7 +338,6 @@ public:
 	UINT anim_scramthrottle[2]; // VC scram throttle levers (left and right)
 	UINT anim_gearlever;        // VC gear lever
 	UINT anim_airbrakelever;    // VC airbrake lever
-	UINT anim_retroswitch;      // VC retro cover switch animation
 	UINT anim_ladderswitch;     // VC ladder switch animation
 	UINT anim_radiatorswitch;   // VC radiator switch animation
 	UINT anim_instrbdial;       // VC instrument brightness dial
@@ -370,6 +368,8 @@ public:
 
 	double GetThrusterFlowRate(THRUSTER_HANDLE th);  // D. Beachy: get thruster flow rate in kg/s
 
+	inline MainRetroSubsystem *SubsysMainRetro() { return ssys_mainretro; }
+
 	// script interface-related methods
 	int Lua_InitInterpreter (void *context);
 	int Lua_InitInstance (void *context);
@@ -385,11 +385,11 @@ private:
 
 	// Vessel subsystems -------------------------------------------------------------
 	HUDControl          *ssys_hud;               // HUD control system
-	MainRetroSubSystem  *ssys_mainretro;         // main engine gimbal control system
-	HoverControl        *ssys_hoverctrl;         // hover engine control system
+	MainRetroSubsystem  *ssys_mainretro;         // main engine gimbal control system
+	HoverSubsystem      *ssys_hoverctrl;         // hover engine control system
+	RcsSubsystem        *ssys_rcs;               // reaction control subsystem
 	PressureControl     *ssys_pressurectrl;      // pressure control system
-	DGSubSystem **ssys;                          // list subsystems
-	DWORD nssys;                                 // number of subsystems
+	std::vector<DGSubsystem*> ssys;              // list of subsystems
 
 	AAP *aap;                                    // atmospheric autopilot
 
@@ -471,7 +471,6 @@ typedef struct {
 // Panel 0
 #define AID_PROPELLANTSTATUS     0
 #define AID_ENGINESCRAM          4
-#define AID_ATTITUDEMODE         5
 #define AID_ADCTRLMODE           6
 #define AID_NAVMODE              7
 #define AID_AOAINSTR             9
@@ -500,7 +499,6 @@ typedef struct {
 #define AID_SCRAMPROP           42
 #define AID_SCRAMPROPMASS       43
 #define AID_RADIATORSWITCH      49
-#define AID_RETRODOORSWITCH     50
 #define AID_HATCHSWITCH         51
 #define AID_LADDERSWITCH        52
 #define AID_MWS                 53

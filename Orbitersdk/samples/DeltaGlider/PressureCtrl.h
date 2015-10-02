@@ -25,7 +25,7 @@ class PressureIndicator;
 // Pressure control module
 // ==============================================================
 
-class PressureControl: public DGSubSystem {
+class PressureControl: public DGSubsystem {
 public:
 	PressureControl (DeltaGlider *vessel, int ident);
 	void clbkPostStep (double simt, double simdt, double mjd);
