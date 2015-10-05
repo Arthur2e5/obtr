@@ -33,6 +33,8 @@ public:
 	virtual bool clbkLoadVC (int vcid);
 	virtual void clbkReset2D (int panelid, MESHHANDLE hMesh);
 	virtual void clbkResetVC (int vcid, DEVMESHHANDLE hMesh);
+	virtual bool clbkDrawHUD (int mode, const HUDPAINTSPEC *hps, oapi::Sketchpad *skp);
+	virtual void clbkRenderHUD (int mode, const HUDPAINTSPEC *hps, SURFHANDLE hTex);
 
 protected:
 	std::vector<DGSubsystemComponent*> component;
@@ -53,6 +55,8 @@ public:
 	virtual bool clbkLoadVC (int vcid) { return false; }
 	virtual void clbkReset2D (int panelid, MESHHANDLE hMesh) {}
 	virtual void clbkResetVC (int vcid, DEVMESHHANDLE hMesh) {}
+	virtual bool clbkDrawHUD (int mode, const HUDPAINTSPEC *hps, oapi::Sketchpad *skp) { return false; }
+	virtual void clbkRenderHUD (int mode, const HUDPAINTSPEC *hps, SURFHANDLE hTex) {}
 
 protected:
 	inline DGSubsystem *Subsys() { return subsys; }

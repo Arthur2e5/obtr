@@ -45,6 +45,16 @@ MainRetroSubsystem::MainRetroSubsystem (DeltaGlider *v, int ident)
 
 // --------------------------------------------------------------
 
+MainRetroSubsystem::~MainRetroSubsystem ()
+{
+	// delete components
+	delete throttle;
+	delete gimbalctrl;
+	delete retrocover;
+}
+
+// --------------------------------------------------------------
+
 void MainRetroSubsystem::ActivateRCover (DeltaGlider::DoorStatus action)
 {
 	retrocover->Activate (action);
@@ -59,9 +69,9 @@ DeltaGlider::DoorStatus MainRetroSubsystem::RCoverStatus() const
 
 // --------------------------------------------------------------
 
-double *MainRetroSubsystem::RCoverPosition()
+double *MainRetroSubsystem::RCoverPositionPtr()
 {
-	return retrocover->RCoverPosition();
+	return retrocover->RCoverPositionPtr();
 }
 
 // --------------------------------------------------------------
@@ -82,21 +92,11 @@ void MainRetroSubsystem::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
 
 
 // ==============================================================
-// Base class for MainRetro subsystem components
-// ==============================================================
-
-MainRetroSubsystemComponent::MainRetroSubsystemComponent (MainRetroSubsystem *_subsys)
-: DGSubsystemComponent(_subsys)
-{
-}
-
-
-// ==============================================================
 // Main/retro engine throttle
 // ==============================================================
 
 MainRetroThrottle::MainRetroThrottle (MainRetroSubsystem *_subsys)
-: MainRetroSubsystemComponent(_subsys)
+: DGSubsystemComponent(_subsys)
 {
 	ELID_LEVERS = AddElement (levers = new MainRetroThrottleLevers (this));
 
@@ -123,7 +123,7 @@ bool MainRetroThrottle::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD 
 	if (panelid != 0) return false;
 
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_LEVERS), _R(108,52,161,227), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, levers);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_LEVERS), _R(4,52,57,227), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, levers);
 
 	return true;
 }
@@ -275,7 +275,7 @@ bool MainRetroThrottleLevers::ProcessMouseVC (int event, VECTOR3 &p)
 // ==============================================================
 
 GimbalControl::GimbalControl (MainRetroSubsystem *_subsys)
-: MainRetroSubsystemComponent(_subsys)
+: DGSubsystemComponent(_subsys)
 {
 	mode = 0;
 	mpmode = mymode = 0;
@@ -974,7 +974,7 @@ bool YMainGimbalCtrl::ProcessMouseVC (int event, VECTOR3 &p)
 // ==============================================================
 
 RetroCoverControl::RetroCoverControl (MainRetroSubsystem *_subsys)
-: MainRetroSubsystemComponent(_subsys)
+: DGSubsystemComponent(_subsys)
 {
 	rcover_status = DeltaGlider::DOOR_CLOSED;
 	rcover_proc   = 0.0;

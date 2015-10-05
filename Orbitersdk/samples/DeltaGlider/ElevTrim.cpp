@@ -23,8 +23,7 @@ static const float texh = (float)PANEL2D_TEXH; // texture height
 static const float tx_x0 = 1138.0f;
 static const float tx_y0 = texh-580.0f;
 // constants for panel coordinates
-static const float bb_x0 = 1242.5f;
-static const float bb_y0 =  161.5f;
+static const float bb_y0 =  284.5f;
 static const float bb_dx =   21.0f;
 static const float bb_dy =    7.0f;
 

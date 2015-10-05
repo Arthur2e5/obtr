@@ -180,6 +180,10 @@ public:
 
 	virtual bool clbkVCMouseEvent (int id, int event, VECTOR3 &p);
 
+	virtual bool clbkDrawHUD (int mode, const HUDPAINTSPEC *hps, oapi::Sketchpad *skp) { return false; }
+
+	virtual void clbkRenderHUD (int mode, const HUDPAINTSPEC *hps, SURFHANDLE hTex) {}
+
 private:
 	VESSEL3 *vessel;         ///< associated vessel object
 	int id;                  ///< subsystem ID

@@ -28,9 +28,10 @@ class RetroCoverControl;
 class MainRetroSubsystem: public DGSubsystem {
 public:
 	MainRetroSubsystem (DeltaGlider *v, int ident);
+	~MainRetroSubsystem ();
 	void ActivateRCover (DeltaGlider::DoorStatus action);
 	DeltaGlider::DoorStatus RCoverStatus() const;
-	double *RCoverPosition();
+	double *RCoverPositionPtr();
 	void clbkReset2D (int panelid, MESHHANDLE hMesh);
 	void clbkResetVC (int vcid, DEVMESHHANDLE hMesh);
 
@@ -42,20 +43,10 @@ private:
 
 
 // ==============================================================
-// Base class for MainRetro subsystem components
-// ==============================================================
-
-class MainRetroSubsystemComponent: public DGSubsystemComponent {
-public:
-	MainRetroSubsystemComponent (MainRetroSubsystem *_subsys);
-};
-
-
-// ==============================================================
 // Main/retro engine throttle
 // ==============================================================
 
-class MainRetroThrottle: public MainRetroSubsystemComponent {
+class MainRetroThrottle: public DGSubsystemComponent {
 	friend class MainRetroThrottleLevers;
 
 public:
@@ -97,7 +88,7 @@ class PMainGimbalCtrl;
 class YMainGimbalCtrl;
 class MainGimbalDisp;
 
-class GimbalControl: public MainRetroSubsystemComponent {
+class GimbalControl: public DGSubsystemComponent {
 	friend class PMainGimbalCtrl;
 	friend class YMainGimbalCtrl;
 
@@ -216,14 +207,14 @@ private:
 // Retro cover control
 // ==============================================================
 
-class RetroCoverControl: public MainRetroSubsystemComponent {
+class RetroCoverControl: public DGSubsystemComponent {
 	friend class RetroCoverSwitch;
 
 public:
 	RetroCoverControl (MainRetroSubsystem *_subsys);
 	void Activate (DeltaGlider::DoorStatus action);
 	inline DeltaGlider::DoorStatus Status() const { return rcover_status; }
-	inline double *RCoverPosition() { return &rcover_proc; }
+	inline double *RCoverPositionPtr() { return &rcover_proc; }
 	void clbkPostCreation();
 	void clbkSaveState (FILEHANDLE scn);
 	bool clbkParseScenarioLine (const char *line);

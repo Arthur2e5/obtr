@@ -171,6 +171,7 @@ class HUDControl;
 class MainRetroSubsystem;
 class HoverSubsystem;
 class RcsSubsystem;
+class GearSubsystem;
 
 // ==========================================================
 // Interface for derived vessel class: DeltaGlider
@@ -285,9 +286,8 @@ public:
 	int airbrake_tgt;
 
 	enum DoorStatus { DOOR_CLOSED, DOOR_OPEN, DOOR_CLOSING, DOOR_OPENING }
-		nose_status, noselever_status, ladder_status, gear_status, gearlever_status, olock_status, ilock_status,
+		nose_status, noselever_status, ladder_status, olock_status, ilock_status,
 		hatch_status, radiator_status, brake_status, undock_status, airbrakelever_status;
-	void ActivateLandingGear (DoorStatus action);
 	void ActivateDockingPort (DoorStatus action);
 	void ActivateUndocking (DoorStatus action);
 	void ActivateLadder (DoorStatus action);
@@ -296,7 +296,6 @@ public:
 	void ActivateHatch (DoorStatus action);
 	void ActivateAirbrake (DoorStatus action, bool half_step = false);
 	void ActivateRadiator (DoorStatus action);
-	void RevertLandingGear ();
 	void RevertDockingPort ();
 	void RevertLadder ();
 	void RevertOuterAirlock ();
@@ -315,11 +314,10 @@ public:
 	void ModInstrBrightness (bool up);
 	void ModFloodBrightness (bool up);
 	void SetGearParameters (double state);
-	double nose_proc, noselever_proc, ladder_proc, gear_proc, gearlever_proc, olock_proc, ilock_proc,
+	double nose_proc, noselever_proc, ladder_proc, olock_proc, ilock_proc,
 		hatch_proc, radiator_proc, brake_proc, undock_proc, airbrakelever_proc;     // logical status
 
 	// Animation handles
-	UINT anim_gear;             // handle for landing gear animation
 	UINT anim_nose;             // handle for nose cone animation
 	UINT anim_noselever;        // handle for nose cone lever animation
 	UINT anim_undocklever;      // handle for undock lever animation
@@ -336,7 +334,6 @@ public:
 	UINT anim_brake;            // handle for airbrake animation
 	UINT anim_vc_trimwheel;     // VC elevator trim wheel
 	UINT anim_scramthrottle[2]; // VC scram throttle levers (left and right)
-	UINT anim_gearlever;        // VC gear lever
 	UINT anim_airbrakelever;    // VC airbrake lever
 	UINT anim_ladderswitch;     // VC ladder switch animation
 	UINT anim_radiatorswitch;   // VC radiator switch animation
@@ -369,6 +366,7 @@ public:
 	double GetThrusterFlowRate(THRUSTER_HANDLE th);  // D. Beachy: get thruster flow rate in kg/s
 
 	inline MainRetroSubsystem *SubsysMainRetro() { return ssys_mainretro; }
+	inline GearSubsystem *SubsysGear() { return ssys_gear; }
 
 	// script interface-related methods
 	int Lua_InitInterpreter (void *context);
@@ -388,6 +386,7 @@ private:
 	MainRetroSubsystem  *ssys_mainretro;         // main engine gimbal control system
 	HoverSubsystem      *ssys_hoverctrl;         // hover engine control system
 	RcsSubsystem        *ssys_rcs;               // reaction control subsystem
+	GearSubsystem       *ssys_gear;              // landing gear control subsystem
 	PressureControl     *ssys_pressurectrl;      // pressure control system
 	std::vector<DGSubsystem*> ssys;              // list of subsystems
 
@@ -472,7 +471,6 @@ typedef struct {
 #define AID_PROPELLANTSTATUS     0
 #define AID_ENGINESCRAM          4
 #define AID_ADCTRLMODE           6
-#define AID_NAVMODE              7
 #define AID_AOAINSTR             9
 #define AID_VSINSTR             10
 #define AID_SLIPINSTR           11
@@ -535,9 +533,7 @@ typedef struct {
 #define AID_WBRAKE_BOTH        200
 #define AID_WBRAKE_LEFT        201
 #define AID_WBRAKE_RIGHT       202
-#define AID_GEARLEVER          203
 #define AID_NOSECONELEVER      204
-#define AID_GEARINDICATOR      205
 #define AID_NOSECONEINDICATOR  206
 #define AID_DOCKRELEASE        207
 

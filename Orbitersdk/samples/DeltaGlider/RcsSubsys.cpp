@@ -21,7 +21,8 @@
 RcsSubsystem::RcsSubsystem (DeltaGlider *dg, int ident)
 : DGSubsystem (dg, ident)
 {
-	ELID_MODEDIAL = AddElement (modedial = new RcsModeDial(this));
+	ELID_MODEDIAL    = AddElement (modedial = new RcsModeDial(this));
+	ELID_PROGBUTTONS = AddElement (progbuttons = new RcsProgButtons(this));
 }
 
 // --------------------------------------------------------------
@@ -33,12 +34,24 @@ void RcsSubsystem::SetMode (int mode)
 
 // --------------------------------------------------------------
 
+void RcsSubsystem::SetProg (int prog, bool active)
+{
+	progbuttons->SetMode (prog, active);
+	oapiTriggerRedrawArea (0, 0, GlobalElId(ELID_PROGBUTTONS));
+}
+
+// --------------------------------------------------------------
+
 bool RcsSubsystem::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
 {
 	if (panelid != 0) return false;
 
+	// RCS mode dial
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_MODEDIAL), _R(1136, 69,1176,113), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, 0, modedial);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_MODEDIAL), _R(1142, 69,1182,113), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, 0, modedial);
+
+	// RCS program buttons
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_PROGBUTTONS), _R(1121,119,1197,273), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN, 0, progbuttons);
 
 	return true;
 }
@@ -53,6 +66,17 @@ bool RcsSubsystem::clbkLoadVC (int vcid)
 	oapiVCRegisterArea (GlobalElId(ELID_MODEDIAL), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN);
 	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_MODEDIAL), VC_RCS_DIAL_mousearea[0], VC_RCS_DIAL_mousearea[1], VC_RCS_DIAL_mousearea[2], VC_RCS_DIAL_mousearea[3]);
 	modedial->DefineAnimationVC (VC_RCS_DIAL_ref, VC_RCS_DIAL_axis, GRP_DIAL1_VC, VC_RCS_DIAL_vofs);
+
+	// Navmode indicator/selector on the top right of the front panel
+	oapiVCRegisterArea (GlobalElId(ELID_PROGBUTTONS), PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
+	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_PROGBUTTONS), VC_NAV_BUTTONS_mousearea[0], VC_NAV_BUTTONS_mousearea[1], VC_NAV_BUTTONS_mousearea[2], VC_NAV_BUTTONS_mousearea[3]);
+	{
+		static DWORD navbtn_vofs[6] = {VC_BTN_NAVMODE_1_vofs, VC_BTN_NAVMODE_2_vofs, VC_BTN_NAVMODE_3_vofs,
+			                           VC_BTN_NAVMODE_4_vofs, VC_BTN_NAVMODE_5_vofs, VC_BTN_NAVMODE_6_vofs}; 
+		static DWORD navlbl_vofs[6] = {VC_BTN_NAVMODE_1_LABEL_vofs, VC_BTN_NAVMODE_2_LABEL_vofs, VC_BTN_NAVMODE_3_LABEL_vofs,
+			                           VC_BTN_NAVMODE_4_LABEL_vofs, VC_BTN_NAVMODE_5_LABEL_vofs, VC_BTN_NAVMODE_6_LABEL_vofs};
+		progbuttons->DefineAnimationsVC (VC_BTN_NAVMODE_1_axis, GRP_BUTTON3_VC, GRP_LIT_SURF_VC, navbtn_vofs, navlbl_vofs);
+	}
 
 	return true;
 }
@@ -129,3 +153,140 @@ bool RcsModeDial::ProcessMouseVC (int event, VECTOR3 &p)
 	}
 	return false;
 }
+
+
+// ==============================================================
+// RCS program buttons
+// ==============================================================
+
+RcsProgButtons::RcsProgButtons (RcsSubsystem *_subsys)
+: PanelElement (_subsys->DG()), subsys(_subsys)
+{
+	for (int i = 0; i < 6; i++)
+		btn[i] = new DGButton3 (subsys->DG());
+}
+
+// --------------------------------------------------------------
+
+RcsProgButtons::~RcsProgButtons ()
+{
+	for (int i = 0; i < 6; i++)
+		delete btn[i];
+}
+
+// --------------------------------------------------------------
+
+void RcsProgButtons::SetMode (int mode, bool active)
+{
+	static int modebtn[6] = {0,5,2,1,4,3};
+	int b = modebtn[mode-1];
+	if (active) {
+		if (btn[b]->GetState () == DGButton3::OFF)
+			btn[b]->SetState (DGButton3::ON);
+	} else {
+		btn[b]->SetState (DGButton3::OFF);
+	}
+}
+// --------------------------------------------------------------
+
+void RcsProgButtons::DefineAnimationsVC (const VECTOR3 &axis, DWORD meshgrp, DWORD meshgrp_label,
+	DWORD vofs[6], DWORD vofs_label[6])
+{
+	for (int i = 0; i < 6; i++) 
+		btn[i]->DefineAnimationVC (axis, meshgrp, meshgrp_label, vofs[i], vofs_label[i]);
+}
+
+// --------------------------------------------------------------
+
+void RcsProgButtons::Reset2D (MESHHANDLE hMesh)
+{
+	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
+	vtxofs = 20;
+}
+
+// --------------------------------------------------------------
+
+bool RcsProgButtons::Redraw2D (SURFHANDLE)
+{
+	// constants for texture coordinates
+	static const float texh = (float)PANEL2D_TEXH; // texture height
+	static const float tx_y0 = texh-655.0f;        // top edge of texture block
+	static const float tx_dy = 37.0f;              // texture block height
+	static const float tv0_active = (tx_y0)/texh, tv1_active = (tx_y0+tx_dy)/texh;
+	static const float tv0_idle = (tx_y0+tx_dy+0.5f)/texh, tv1_idle = (tx_y0+tx_dy+0.5f)/texh;
+	float tv0, tv1;
+	int vofs;
+
+	for (DWORD i = NAVMODE_KILLROT; i <= NAVMODE_HOLDALT; i++) {
+		if (subsys->DG()->GetNavmodeState (i)) tv0 = tv0_active, tv1 = tv1_active;
+		else                             tv0 = tv0_idle,   tv1 = tv1_idle;
+		vofs = vtxofs+(i-NAVMODE_KILLROT)*4;
+		grp->Vtx[vofs+0].tv = grp->Vtx[vofs+1].tv = tv0;
+		grp->Vtx[vofs+2].tv = grp->Vtx[vofs+3].tv = tv1;
+	}
+		
+	return false;
+}
+
+// --------------------------------------------------------------
+
+bool RcsProgButtons::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
+{
+	for (int i = 0; i < 6; i++)
+		btn[i]->RedrawVC (hMesh, surf);
+	return false;
+}
+
+// --------------------------------------------------------------
+
+bool RcsProgButtons::ProcessMouse2D (int event, int mx, int my)
+{
+	int mode = 0;
+	if (my < 39) {
+		if (mx >= 20 && mx < 59) mode = NAVMODE_KILLROT;
+	} else {
+		static int navmode[6] = {
+			NAVMODE_PROGRADE, NAVMODE_RETROGRADE,
+			NAVMODE_NORMAL, NAVMODE_ANTINORMAL,
+			NAVMODE_HLEVEL, NAVMODE_HOLDALT
+		};
+		mode = navmode[mx/39 + ((my-39)/39)*2];
+	}
+	if (mode) subsys->DG()->ToggleNavmode (mode);
+	return (mode != 0);
+}
+
+// --------------------------------------------------------------
+
+bool RcsProgButtons::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	static int modemap[2][4] = {{1,4,6,2},{0,3,5,0}};
+	static int btnmode[6] = {1,4,3,6,5,2};
+	static int modebtn[6] = {0,5,2,1,4,3};
+	int ix = (int)(p.x*169.0);
+	int iy = (int)(p.y*63);
+	int br = ix/43;
+	int bc = iy/33;
+	if (ix-br*43 >= 40) return false;
+	if (iy-bc*33 >= 30) return false;
+	int mode = modemap[bc][br];
+	if (!mode) return false;
+	int b = modebtn[mode-1];
+	int i;
+
+	if (event & PANEL_MOUSE_LBDOWN) {
+		for (i = 0; i < 6; i++) {
+			if (i==b) {
+				btn[i]->SetState (btn[i]->GetState() == DGButton3::OFF ? DGButton3::PRESSED_FROM_OFF : DGButton3::PRESSED_FROM_ON);
+			} else {
+				bool ison = subsys->DG()->GetNavmodeState (btnmode[i]);
+				btn[i]->SetState (ison ? DGButton3::ON : DGButton3::OFF);
+			}
+		}
+		subsys->DG()->ToggleNavmode (mode);
+	} else if (event & PANEL_MOUSE_LBUP) {
+		btn[b]->SetState (btn[b]->GetState() == DGButton3::PRESSED_FROM_OFF ? DGButton3::ON : DGButton3::OFF);
+	}
+	return true;
+}
+

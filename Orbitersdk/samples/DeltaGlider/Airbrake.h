@@ -16,7 +16,6 @@
 class Airbrake: public PanelElement {
 public:
 	Airbrake (VESSEL3 *v);
-	//void AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx);
 	void Reset2D (MESHHANDLE hMesh);
 	void ResetVC (DEVMESHHANDLE hMesh);
 	bool Redraw2D (SURFHANDLE surf);

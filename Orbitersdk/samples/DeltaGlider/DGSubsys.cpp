@@ -98,6 +98,26 @@ void DGSubsystem::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
 		component[i]->clbkResetVC (vcid, hMesh);
 }
 
+// --------------------------------------------------------------
+
+bool DGSubsystem::clbkDrawHUD (int mode, const HUDPAINTSPEC *hps, oapi::Sketchpad *skp)
+{
+	bool b = false;
+	for (int i = 0; i < component.size(); i++) {
+		bool bi = component[i]->clbkDrawHUD (mode, hps, skp);
+		b = b || bi;
+	}
+	return b;
+}
+
+// --------------------------------------------------------------
+
+void DGSubsystem::clbkRenderHUD (int mode, const HUDPAINTSPEC *hps, SURFHANDLE hTex)
+{
+	for (int i = 0; i < component.size(); i++)
+		component[i]->clbkRenderHUD (mode, hps, hTex);
+}
+
 // ==============================================================
 
 DGSubsystemComponent::DGSubsystemComponent (DGSubsystem *_subsys)

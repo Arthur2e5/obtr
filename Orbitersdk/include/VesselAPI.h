@@ -1760,7 +1760,7 @@ public:
 	 *   torque in addition to linear force.
 	 * \sa ClearVariableDragElements
 	 */
-	void CreateVariableDragElement (double *drag, double factor, const VECTOR3 &ref) const;
+	void CreateVariableDragElement (const double *drag, double factor, const VECTOR3 &ref) const;
 
 	/**
 	 * \brief Removes all drag elements defined with CreateVariableDragElement.
@@ -5227,6 +5227,13 @@ public:
 	 * \sa ParseScenarioLineEx, VESSELSTATUS
 	 */
 	void ParseScenarioLine (char *line, VESSELSTATUS *status) const;
+
+	/**
+	 * \brief Add a variable drag element
+	 * \deprecated This method has been replaced with
+	 *   \ref CreateVariableDragElement(const double*,double,const VECTOR3&)const.
+	 */
+	void CreateVariableDragElement (double *drag, double factor, const VECTOR3 &ref) const;
 
 	/**
 	 * \brief Vessel creation

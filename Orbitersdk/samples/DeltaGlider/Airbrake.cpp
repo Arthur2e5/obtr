@@ -21,8 +21,7 @@ static const float texh = (float)PANEL2D_TEXH; // texture height
 static const float tx_x0 = 1138.0f;
 static const float tx_y0 = texh-580.0f;
 // constants for panel coordinates
-static const float bb_x0 = 1242.5f;
-static const float bb_y0 =  217.5f;
+static const float bb_y0 =  155.5f;
 static const float bb_dx =   21.0f;
 static const float bb_dy =    7.0f;
 
@@ -33,25 +32,6 @@ Airbrake::Airbrake (VESSEL3 *v): PanelElement (v)
 //	Reset2D();
 }
 
-// ==============================================================
-#ifdef UNDEF
-void Airbrake::AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx)
-{
-	static const DWORD NVTX = 4;
-	static const DWORD NIDX = 6;
-	static const NTVERTEX VTX[NVTX] = {
-		{bb_x0,      bb_y0,      0,  0,0,0,  tx_x0/texw,         tx_y0/texh},
-		{bb_x0+bb_dx,bb_y0,      0,  0,0,0,  (tx_x0+bb_dx)/texw, tx_y0/texh},
-		{bb_x0,      bb_y0+bb_dy,0,  0,0,0,  tx_x0/texw,         (tx_y0+bb_dy)/texh},
-		{bb_x0+bb_dx,bb_y0+bb_dy,0,  0,0,0,  (tx_x0+bb_dx)/texw, (tx_y0+bb_dy)/texh}
-	};
-	static const WORD IDX[NIDX] = {
-		0,1,2, 3,2,1
-	};
-
-	AddGeometry (hMesh, grpidx, VTX, NVTX, IDX, NIDX);
-}
-#endif
 // ==============================================================
 
 void Airbrake::Reset2D (MESHHANDLE hMesh)

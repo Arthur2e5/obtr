@@ -480,14 +480,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\GearLever.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\GearLever.h"
-					>
-				</File>
-				<File
 					RelativePath="Horizon.cpp"
 					>
 					<FileConfiguration
@@ -570,14 +562,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\NavButton.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\NavButton.h"
-					>
-				</File>
-				<File
 					RelativePath=".\NconeLever.cpp"
 					>
 				</File>
@@ -627,6 +611,14 @@
 				</File>
 				<File
 					RelativePath=".\DGSubsys.h"
+					>
+				</File>
+				<File
+					RelativePath=".\GearSubsys.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\GearSubsys.h"
 					>
 				</File>
 				<File

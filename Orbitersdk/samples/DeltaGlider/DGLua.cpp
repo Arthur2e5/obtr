@@ -1,5 +1,6 @@
 #include "DeltaGlider.h"
 #include "MainRetroSubsys.h"
+#include "GearSubsys.h"
 #include <stdio.h>
 
 extern "C" {
@@ -106,7 +107,7 @@ static int dgGear (lua_State *L)
 	DeltaGlider *dg = lua_toDG (L, 1);
 	int action = lua_tointeger (L, 2);
 	if (dg && action >= 2 && action < 4)
-		dg->ActivateLandingGear (DGaction[action]);
+		dg->SubsysGear()->ActivateGear (DGaction[action]);
 	return 0;
 }
 
