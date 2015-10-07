@@ -1297,14 +1297,22 @@ public:
 	// @}
 
 	/**
-	 * \brief Retrieve a grid of elevation data corresponding to the nodes of
-	 *   a surface patch
+	 * \brief Constructs a synthetic elevation grid for a tile by interpolating 
+	 *   ancestor elevation data
 	 * \param emgr elevation manager handle (retrieve with oapiElevationManager)
 	 * \param [in] ilat patch latitude index
 	 * \param [in] ilng patch longitude index
 	 * \param [in] lvl patch resolution level
-	 * \param [out] elev pointer to array receiving elevation grid data
+	 * \param [in] pilat ancestor latitude index
+	 * \param [in] pilng ancestor longitude index
+	 * \param [in] plvl ancestor resolution level
+	 * \param [in] pelev pointer to ancestor elevation grid data
+	 * \param [out] elev pointer to array receiving interplated elevation grid data
 	 * \param [out] emean pointer to variable receiving mean elevation data
+	 * \note This function is used by the surface managers to construct an elevation
+	 *   grid for a tile for which no native elevation data are available.
+	 * \note The specified ancestor must be an actual ancestor of the destination tile,
+	 *   i.e. the area of the destination tile must be contained in the ancestor area.
 	 */
 	bool ElevationGrid (ELEVHANDLE emgr, int ilat, int ilng, int lvl,
 		int pilat, int pilng, int plvl, INT16 *pelev, INT16 *elev, double *emean=0) const;

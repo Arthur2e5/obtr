@@ -31,7 +31,6 @@
 #include "GearSubsys.h"
 #include "SwitchArray.h"
 #include "AirlockSwitch.h"
-#include "Wheelbrake.h"
 #include "MwsButton.h"
 #include "MomentInd.h"
 #include "CockpitLight.h"
@@ -328,7 +327,7 @@ void DeltaGlider::CreatePanelElements ()
 	instr[23] = new NoseconeLever (this);
 	instr[24] = new NoseconeIndicator (this);
 	instr[25] = new SwitchArray (this);
-	instr[26] = new WheelBrakeLever (this);
+	instr[26] = 0;
 	instr[27] = new MWSButton (this);
 	for (i = MFD_LEFT; i <= MFD_RIGHT; i++) {
 		instr[28+i*3] = new MFDButtonRow (this, i);
@@ -2757,7 +2756,6 @@ void DeltaGlider::DefinePanelMain (PANELHANDLE hPanel)
 	RegisterPanelArea (hPanel, AID_DOCKRELEASE,  _R(1141,474,1172,504), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, instr[12]);
 	RegisterPanelArea (hPanel, AID_NOSECONELEVER, _R(1141,327,1180,421), PANEL_REDRAW_USER,  PANEL_MOUSE_LBDOWN, panel2dtex, instr[23]);
 	RegisterPanelArea (hPanel, AID_NOSECONEINDICATOR, _R(0,0,0,0),      PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, instr[24]);
-	RegisterPanelArea (hPanel, AID_WBRAKE_BOTH,  _R(1221,494,1273,557), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP, panel2dtex, instr[26]);
 	RegisterPanelArea (hPanel, AID_MWS,          _R(1071,  6,1098, 32), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN, panel2dtex, instr[27]);
 
 	if (ScramVersion()) {

@@ -21,6 +21,7 @@
 // ==============================================================
 
 class GearControl;
+class Wheelbrake;
 
 class GearSubsystem: public DGSubsystem {
 public:
@@ -32,6 +33,7 @@ public:
 
 private:
 	GearControl *gearctrl;
+	Wheelbrake *wheelbrake;
 };
 
 // ==============================================================
@@ -95,6 +97,36 @@ private:
 	GearControl *component;
 	double tofs;
 	bool light;
+};
+
+// ==============================================================
+// Wheelbrake
+// ==============================================================
+
+class WheelbrakeLever;
+
+class Wheelbrake: public DGSubsystemComponent {
+public:
+	Wheelbrake (GearSubsystem *_subsys);
+	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
+
+private:
+	WheelbrakeLever *lever;
+	int ELID_LEVER;
+};
+
+// ==============================================================
+
+class WheelbrakeLever: public PanelElement {
+public:
+	WheelbrakeLever (Wheelbrake *comp);
+	void Reset2D (MESHHANDLE hMesh);
+	bool Redraw2D (SURFHANDLE surf);
+	bool ProcessMouse2D (int event, int mx, int my);
+
+private:
+	Wheelbrake *component;
+	bool isdown[2];
 };
 
 #endif // !__GEARSUBSYS_H

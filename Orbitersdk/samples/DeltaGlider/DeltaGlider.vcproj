@@ -593,14 +593,6 @@
 					RelativePath=".\UndockBtn.h"
 					>
 				</File>
-				<File
-					RelativePath=".\WheelBrake.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\WheelBrake.h"
-					>
-				</File>
 			</Filter>
 			<Filter
 				Name="Subsystems"

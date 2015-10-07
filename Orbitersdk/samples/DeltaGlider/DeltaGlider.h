@@ -530,9 +530,6 @@ typedef struct {
 #define AID_SCRAMTEMPDISP      114
 
 // Panel 2
-#define AID_WBRAKE_BOTH        200
-#define AID_WBRAKE_LEFT        201
-#define AID_WBRAKE_RIGHT       202
 #define AID_NOSECONELEVER      204
 #define AID_NOSECONEINDICATOR  206
 #define AID_DOCKRELEASE        207

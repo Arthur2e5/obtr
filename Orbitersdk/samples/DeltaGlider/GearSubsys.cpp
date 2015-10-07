@@ -25,6 +25,7 @@ GearSubsystem::GearSubsystem (DeltaGlider *v, int ident)
 {
 	// create component instances
 	AddComponent (gearctrl = new GearControl (this));
+	AddComponent (wheelbrake = new Wheelbrake (this));
 }
 
 // --------------------------------------------------------------
@@ -396,5 +397,76 @@ bool GearIndicator::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 		oapiEditMeshGroup (hMesh, GRP_LIT_SURFACES_VC, &ges);
 		light = showlights;
 	}
+	return false;
+}
+
+
+// ==============================================================
+// Wheelbrake
+// ==============================================================
+
+Wheelbrake::Wheelbrake (GearSubsystem *_subsys)
+: DGSubsystemComponent(_subsys)
+{
+	ELID_LEVER = AddElement (lever = new WheelbrakeLever (this));
+}
+
+// --------------------------------------------------------------
+
+bool Wheelbrake::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
+{
+	if (panelid != 0) return false;
+
+	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_LEVER), _R(1221,494,1273,557), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP, panel2dtex, lever);
+
+	return true;
+}
+
+// ==============================================================
+
+WheelbrakeLever::WheelbrakeLever (Wheelbrake *comp)
+: PanelElement(comp->DG()), component(comp)
+{
+	for (int i = 0; i < 2; i++)
+		isdown[i] = false;
+}
+
+// --------------------------------------------------------------
+
+void WheelbrakeLever::Reset2D (MESHHANDLE hMesh)
+{
+	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
+	vtxofs = 104;
+}
+
+// --------------------------------------------------------------
+
+bool WheelbrakeLever::Redraw2D (SURFHANDLE surf)
+{
+	static const float texh = (float)PANEL2D_TEXH; // texture height
+	static const float tx_y0 = texh-650.0f;
+	static const float tx_dy = 77.0f;
+	int i, j;
+	for (i = 0; i < 2; i++) {
+		double lvl = vessel->GetWheelbrakeLevel (i+1);
+		bool down = (lvl > 0.5);
+		if (down != isdown[i]) {
+			float tv = (down ? tx_y0+tx_dy : tx_y0)/texh;
+			for (j = 2; j < 4; j++)
+				grp->Vtx[vtxofs+i*4+j].tv = tv;
+			isdown[i] = down;
+		}
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
+bool WheelbrakeLever::ProcessMouse2D (int event, int mx, int my)
+{
+	int which = (mx < 15 ? 1 : mx > 37 ? 2 : 0);
+	bool press = (event == PANEL_MOUSE_LBDOWN);
+	vessel->SetWheelbrakeLevel (press ? 1.0:0.0, which);
 	return false;
 }

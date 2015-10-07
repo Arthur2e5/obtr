@@ -273,11 +273,14 @@ public:
 	};
 
 	/**
-	 * \brief Set the background mode for text output.
+	 * \brief Set the background mode for text and drawing operations.
 	 * \param mode background mode (see \ref BkgMode)
 	 * \default None.
-	 * \note In opaque background mode, the text background is drawn
-	 *   in the current background colour (see SetBackgroundColor).
+	 * \note This function affects text output and dashed line drawing.
+	 * \note In opaque background mode, text background and the gaps
+	 *   between dashed lines are drawn in the current background colour
+	 *   (see SetBackgroundColor). In transparent mode, text background
+	 *   and line gaps are not modified.
 	 * \note The default background mode (before the first call of
 	 *   SetBackgroundMode) should be transparent.
 	 * \sa SetBackgroundColor, SetTextColor
