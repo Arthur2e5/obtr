@@ -172,6 +172,7 @@ class MainRetroSubsystem;
 class HoverSubsystem;
 class RcsSubsystem;
 class GearSubsystem;
+class MfdSubsystem;
 
 // ==========================================================
 // Interface for derived vessel class: DeltaGlider
@@ -181,7 +182,6 @@ class DeltaGlider: public VESSEL4 {
 	friend class AAP;
 	friend class FuelMFD;
 	friend class PressureControl;
-	friend class ThrottleMain;
 	friend class ThrottleScram;
 
 public:
@@ -388,6 +388,7 @@ private:
 	RcsSubsystem        *ssys_rcs;               // reaction control subsystem
 	GearSubsystem       *ssys_gear;              // landing gear control subsystem
 	PressureControl     *ssys_pressurectrl;      // pressure control system
+	MfdSubsystem        *ssys_mfd[2];            // MFD instruments
 	std::vector<DGSubsystem*> ssys;              // list of subsystems
 
 	AAP *aap;                                    // atmospheric autopilot
@@ -477,12 +478,6 @@ typedef struct {
 #define AID_LOADINSTR           12
 #define AID_HSIINSTR            13
 #define AID_HORIZON             14
-#define AID_MFD1_BBUTTONS       15
-#define AID_MFD1_LBUTTONS       16
-#define AID_MFD1_RBUTTONS       17
-#define AID_MFD2_BBUTTONS       18
-#define AID_MFD2_LBUTTONS       19
-#define AID_MFD2_RBUTTONS       20
 #define AID_ELEVATORTRIM        28
 #define AID_MAINDISP1           32
 #define AID_MAINDISP2           33

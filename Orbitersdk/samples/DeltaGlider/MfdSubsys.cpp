@@ -1,16 +1,21 @@
 // ==============================================================
 //                ORBITER MODULE: DeltaGlider
 //                  Part of the ORBITER SDK
-//          Copyright (C) 2001-2009 Martin Schweiger
+//          Copyright (C) 2001-2015 Martin Schweiger
 //                   All rights reserved
 //
-// MFDButton.cpp
-// User interface for MFD buttons
+// MfdSubsys.cpp
+// Subsystem for MFD instruments
 // ==============================================================
 
 #define STRICT 1
-#include "MFDButton.h"
+
+#include "MfdSubsys.h"
 #include "meshres_vc.h"
+
+// ==============================================================
+// Constants for button labels
+// ==============================================================
 
 // constants for texture coordinates
 static const int texw = PANEL2D_TEXW; // texture width
@@ -71,10 +76,68 @@ const int lblx[2][2] = {{185,533},{748,1095}};
 const int lbly[6] = {texh-467,texh-426,texh-385,texh-344,texh-303,texh-262};
 
 // ==============================================================
+// MFD subsystem
 // ==============================================================
 
-MFDButtonGroup::MFDButtonGroup (VESSEL3 *v, DWORD _mfdid, DWORD _nbtn)
-: PanelElement (v), mfdid(_mfdid), nbtn(_nbtn)
+MfdSubsystem::MfdSubsystem (DeltaGlider *v, int ident, int mfdident)
+: DGSubsystem(v, ident), mfdid(mfdident)
+{
+	ELID_BTNROW = AddElement (btnrow = new MfdButtonRow (this));
+	for (int i = 0; i < 2; i++)
+		ELID_BTNCOL[i] = AddElement (btncol[i] = new MfdButtonCol (this, i));
+}
+
+// --------------------------------------------------------------
+
+void MfdSubsystem::ModeChanged ()
+{
+	for (int i = 0; i < 2; i++)
+		oapiTriggerRedrawArea (0, 0, GlobalElId(ELID_BTNCOL[i]));
+}
+
+// --------------------------------------------------------------
+
+bool MfdSubsystem::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
+{
+	if (panelid != 0) return false;
+
+	const int xofs = (mfdid == MFD_LEFT ? 173:736);
+	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_BTNROW), _R( 51+xofs,359,321+xofs,377), PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_ONREPLAY, panel2dtex, btnrow); // bottom button row
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_BTNCOL[0]), _R(    xofs,100, 25+xofs,323), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY, panel2dtex, btncol[0]); // left button column
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_BTNCOL[1]), _R(348+xofs,100,373+xofs,323), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY, panel2dtex, btncol[1]); // right button column
+
+	return true;
+}
+
+// --------------------------------------------------------------
+
+bool MfdSubsystem::clbkLoadVC (int vcid)
+{
+	if (vcid != 0) return false;
+
+	vctex = oapiGetTextureHandle (DG()->vcmesh_tpl, 20);
+	const double xofs = (mfdid == MFD_LEFT ? -0.2684 : 0.0616);
+
+	oapiVCRegisterArea (GlobalElId(ELID_BTNROW), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY);
+	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_BTNROW), _V(0.0840+xofs, 1.0745, 7.2238), _V(0.1228+xofs, 1.0745, 7.2238), _V(0.0840+xofs, 1.0587, 7.2180), _V(0.1228+xofs, 1.0587, 7.2180));
+
+	oapiVCRegisterArea (GlobalElId(ELID_BTNCOL[0]), PANEL_REDRAW_MOUSE|PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY);
+	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_BTNCOL[0]), _V(0+xofs, 1.2155, 7.2751), _V(0.0168+xofs, 1.2155, 7.2751), _V(0+xofs, 1.0963, 7.2317), _V(0.0168+xofs, 1.0963, 7.2317));
+
+	oapiVCRegisterArea (GlobalElId(ELID_BTNCOL[1]), PANEL_REDRAW_MOUSE|PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY);
+	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_BTNCOL[1]), _V(0.1900+xofs, 1.2155, 7.2751), _V(0.2068+xofs, 1.2155, 7.2751), _V(0.1900+xofs, 1.0963, 7.2317), _V(0.2068+xofs, 1.0963, 7.2317));
+
+	return true;
+}
+
+
+// ==============================================================
+// MfdButtonGrp: row/column group of MFD buttons
+// ==============================================================
+
+MfdButtonGrp::MfdButtonGrp (MfdSubsystem *_subsys, DWORD _nbtn)
+: PanelElement(_subsys->DG()), subsys(_subsys), nbtn(_nbtn)
 {
 	ispushed = new bool[nbtn];
 	for (DWORD i = 0; i < nbtn; i++)
@@ -84,14 +147,14 @@ MFDButtonGroup::MFDButtonGroup (VESSEL3 *v, DWORD _mfdid, DWORD _nbtn)
 
 // --------------------------------------------------------------
 
-MFDButtonGroup::~MFDButtonGroup ()
+MfdButtonGrp::~MfdButtonGrp ()
 {
 	delete []ispushed;
 }
 
 // --------------------------------------------------------------
 
-void MFDButtonGroup::PushButtonVC (DEVMESHHANDLE hMesh, int meshgrp, int btn, bool down)
+void MfdButtonGrp::PushButtonVC (DEVMESHHANDLE hMesh, int meshgrp, int btn, bool down)
 {
 	if (down == ispushed[btn]) return; // nothing to do
 	ispushed[btn] = down;
@@ -115,34 +178,101 @@ void MFDButtonGroup::PushButtonVC (DEVMESHHANDLE hMesh, int meshgrp, int btn, bo
 }
 
 // ==============================================================
+// MfdButtonRow: POW/SEL/MNU buttons
 // ==============================================================
 
-MFDButtonCol::MFDButtonCol (VESSEL3 *v, DWORD _mfdid, DWORD _lr)
-: MFDButtonGroup (v, _mfdid, 6)
+MfdButtonRow::MfdButtonRow (MfdSubsystem *_subsys)
+: MfdButtonGrp(_subsys, 2)
 {
-	lr = _lr;
-	xcnt = lblx[mfdid][lr];
+}
+
+// --------------------------------------------------------------
+
+bool MfdButtonRow::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
+{
+	static const int grpid[2] = {GRP_LMFD_BBUTTONS_VC, GRP_RMFD_BBUTTONS_VC};
+	if (pending_action) {
+		PushButtonVC (hMesh, grpid[subsys->MfdId()], pending_btn, pending_action==1);
+		pending_action = 0;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
+bool MfdButtonRow::ProcessMouse2D (int event, int mx, int my)
+{
+	bool proc = false;
+	if (mx < 26)                    oapiToggleMFD_on (subsys->MfdId()), proc = true;
+	else if (mx >= 214 && mx < 240) oapiSendMFDKey (subsys->MfdId(), OAPI_KEY_F1), proc = true;
+	else if (mx > 244)              oapiSendMFDKey (subsys->MfdId(), OAPI_KEY_GRAVE), proc = true;
+	return proc;
+}
+
+// --------------------------------------------------------------
+
+bool MfdButtonRow::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	bool proc = false;
+	double dp;
+	bool pushed;
+	int anim_btn = -1;
+
+	if (event & PANEL_MOUSE_LBDOWN) {
+		if (modf (p.x*7.0/4.0, &dp) < 0.75) {
+			curbtn = anim_btn = (int)dp;
+			pushed = true;
+			switch (curbtn) {
+			case 0:
+				oapiSendMFDKey (subsys->MfdId(), OAPI_KEY_F1);
+				proc = true;
+				break;
+			case 1:
+				oapiSendMFDKey (subsys->MfdId(), OAPI_KEY_GRAVE);
+				proc = true;
+				break;
+			}
+		}
+	} else if (curbtn >= 0) {
+		if (event & PANEL_MOUSE_LBUP) {
+			anim_btn = curbtn;
+			pushed = false;
+			curbtn = -1;
+		}
+	}
+	// animate button pushes
+	if (anim_btn >= 0) {
+		pending_btn = anim_btn;
+		pending_action = (pushed ? 1:2);
+		return true;
+	}
+
+	return false;
+}
+
+// ==============================================================
+// MfdButtonCol: Left/right MFD button column
+// ==============================================================
+
+MfdButtonCol::MfdButtonCol (MfdSubsystem *_subsys, int side)
+: MfdButtonGrp(_subsys, 6), sd(side)
+{
+	xcnt = lblx[subsys->MfdId()][sd];
 	curbtn = -1;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
-MFDButtonCol::~MFDButtonCol ()
-{
-}
-
-// ==============================================================
-
-bool MFDButtonCol::Redraw2D (SURFHANDLE surf)
+bool MfdButtonCol::Redraw2D (SURFHANDLE surf)
 {
 	int btn, x, /*y,*/ len, i, w;
 	const char *label;
 
-	for (btn = 0; btn < 6; btn++)
+	for (btn = 0; btn < nbtn; btn++)
 		oapiBlt (surf, surf, xcnt-14, lbly[btn], 773, 22, 28, CHH); // blank label
 
 	for (btn = 0; btn < 6; btn++) {
-		if (label = oapiMFDButtonLabel (mfdid, btn+lr*6)) {
+		if (label = oapiMFDButtonLabel (subsys->MfdId(), btn+sd*6)) {
 			len = strlen(label);
 			for (w = i = 0; i < len; i++) w += CHW[label[i]];
 			for (i = 0, x = xcnt-w/2; i < len; i++) {
@@ -157,15 +287,15 @@ bool MFDButtonCol::Redraw2D (SURFHANDLE surf)
     return false;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
-bool MFDButtonCol::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
+bool MfdButtonCol::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 {
 	if (pending_action) { // process button push
 
 		static const int grpid[2][2] = {{GRP_LMFD_LBUTTONS_VC,GRP_LMFD_RBUTTONS_VC},
 		                                {GRP_RMFD_LBUTTONS_VC,GRP_RMFD_RBUTTONS_VC}};
-		PushButtonVC (hMesh, grpid[mfdid][lr], pending_btn, pending_action==1);
+		PushButtonVC (hMesh, grpid[subsys->MfdId()][sd], pending_btn, pending_action==1);
 		pending_action = 0;
 		return false;
 
@@ -210,15 +340,17 @@ bool MFDButtonCol::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 		};
 		const int CHY = 1012;
 
+		surf = subsys->VcTex();
+
 		const int xcnt0 = 148, dx = 40, wlbl = 32, hlbl = 12;
 		const char *label;
-		int btn, xcnt, x, y = 14+lr*41+mfdid*82, w, len, i;
+		int btn, xcnt, x, y = 14+sd*41+subsys->MfdId()*82, w, len, i;
 
 		for (btn = 0; btn < 6; btn++)
 			oapiBlt (surf, surf, xcnt0-wlbl/2+btn*dx, y, 0, 128, wlbl, hlbl); // blank label
 
 		for (btn = 0; btn < 6; btn++) {
-			if (label = oapiMFDButtonLabel (mfdid, btn+lr*6)) {
+			if (label = oapiMFDButtonLabel (subsys->MfdId(), btn+sd*6)) {
 				len = strlen(label);
 				for (w = i = 0; i < len; i++) w += CHW[label[i]];
 				xcnt = xcnt0 + btn*dx;
@@ -235,32 +367,31 @@ bool MFDButtonCol::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 	}
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
-bool MFDButtonCol::ProcessMouse2D (int event, int mx, int my)
+bool MfdButtonCol::ProcessMouse2D (int event, int mx, int my)
 {
 	int process_btn = -1;
 
 	if (event & PANEL_MOUSE_LBDOWN) {
 		if (my%41 < 18)
-			curbtn = process_btn = my/41 + lr*6;
+			curbtn = process_btn = my/41 + sd*6;
 	} else if (curbtn >= 0) {
 		process_btn = curbtn;
 		if (event & PANEL_MOUSE_LBUP)
 			curbtn = -1;
 	}
 	if (process_btn >= 0) {
-		oapiProcessMFDButton (mfdid, process_btn, event);
+		oapiProcessMFDButton (subsys->MfdId(), process_btn, event);
 		return true;
 	}
 	return false;
 }
 
-// ==============================================================
+// --------------------------------------------------------------
 
-bool MFDButtonCol::ProcessMouseVC (int event, VECTOR3 &p)
+bool MfdButtonCol::ProcessMouseVC (int event, VECTOR3 &p)
 {
-	DeltaGlider *dg = (DeltaGlider*)vessel;
 	double dp;
 	bool pushed;
 	int anim_btn = -1, process_btn = -1;
@@ -279,7 +410,7 @@ bool MFDButtonCol::ProcessMouseVC (int event, VECTOR3 &p)
 		}
 	}
 	if (process_btn >= 0) {
-		oapiProcessMFDButton (mfdid, process_btn + lr*6, event);
+		oapiProcessMFDButton (subsys->MfdId(), process_btn + sd*6, event);
 	}
 	// animate button pushes
 	if (anim_btn >= 0) {
@@ -290,75 +421,3 @@ bool MFDButtonCol::ProcessMouseVC (int event, VECTOR3 &p)
 	return false;
 }
 
-// ==============================================================
-// ==============================================================
-
-MFDButtonRow::MFDButtonRow (VESSEL3 *v, DWORD _mfdid)
-: MFDButtonGroup (v, _mfdid, 2)
-{
-}
-
-// ==============================================================
-
-bool MFDButtonRow::ProcessMouse2D (int event, int mx, int my)
-{
-	bool proc = false;
-	if (mx < 26)                    oapiToggleMFD_on (mfdid), proc = true;
-	else if (mx >= 214 && mx < 240) oapiSendMFDKey (mfdid, OAPI_KEY_F1), proc = true;
-	else if (mx > 244)              oapiSendMFDKey (mfdid, OAPI_KEY_GRAVE), proc = true;
-	return proc;
-}
-
-// ==============================================================
-
-bool MFDButtonRow::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
-{
-	static const int grpid[2] = {GRP_LMFD_BBUTTONS_VC, GRP_RMFD_BBUTTONS_VC};
-	if (pending_action) {
-		PushButtonVC (hMesh, grpid[mfdid], pending_btn, pending_action==1);
-		pending_action = 0;
-	}
-	return false;
-}
-
-// ==============================================================
-
-bool MFDButtonRow::ProcessMouseVC (int event, VECTOR3 &p)
-{
-	DeltaGlider *dg = (DeltaGlider*)vessel;
-	bool proc = false;
-	double dp;
-	bool pushed;
-	int anim_btn = -1;
-
-	if (event & PANEL_MOUSE_LBDOWN) {
-		if (modf (p.x*7.0/4.0, &dp) < 0.75) {
-			curbtn = anim_btn = (int)dp;
-			pushed = true;
-			switch (curbtn) {
-			case 0:
-				oapiSendMFDKey (mfdid, OAPI_KEY_F1);
-				proc = true;
-				break;
-			case 1:
-				oapiSendMFDKey (mfdid, OAPI_KEY_GRAVE);
-				proc = true;
-				break;
-			}
-		}
-	} else if (curbtn >= 0) {
-		if (event & PANEL_MOUSE_LBUP) {
-			anim_btn = curbtn;
-			pushed = false;
-			curbtn = -1;
-		}
-	}
-	// animate button pushes
-	if (anim_btn >= 0) {
-		pending_btn = anim_btn;
-		pending_action = (pushed ? 1:2);
-		return true;
-	}
-
-	return false;
-}

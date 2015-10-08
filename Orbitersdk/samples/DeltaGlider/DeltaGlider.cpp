@@ -12,7 +12,6 @@
 
 #include "DeltaGlider.h"
 #include "AAP.h"
-#include "MFDButton.h"
 #include "Horizon.h"
 #include "InstrHsi.h"
 #include "InstrAoa.h"
@@ -29,6 +28,7 @@
 #include "HoverSubsys.h"
 #include "RcsSubsys.h"
 #include "GearSubsys.h"
+#include "MfdSubsys.h"
 #include "SwitchArray.h"
 #include "AirlockSwitch.h"
 #include "MwsButton.h"
@@ -162,6 +162,8 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	ssys.push_back (ssys_gear      = new GearSubsystem (this, ssys_id++));
 	ssys.push_back (ssys_hud       = new HUDControl (this, ssys_id++));
 	ssys.push_back (ssys_pressurectrl = new PressureControl (this, ssys_id++));
+	for (i = 0; i < 2; i++)
+		ssys.push_back (ssys_mfd[i] = new MfdSubsystem (this, ssys_id++, MFD_LEFT+i));
 
 	aoa_ind = PI;
 	slip_ind = PI*0.5;
@@ -299,51 +301,26 @@ void DeltaGlider::CreatePanelElements ()
 	ninstr_ovhd = 10;
 
 	ninstr = ninstr_main + ninstr_ovhd;
-
 	instr = new PanelElement*[ninstr];
+	memset (instr, 0, ninstr*sizeof(PanelElement*));
 	instr[0]  = new InstrAtt (this);
 	instr[1]  = new InstrHSI (this);
 	instr[2]  = new InstrAOA (this);
 	instr[3]  = new InstrVS (this);
 	instr[4]  = new FuelMFD (this);
-	instr[5]  = 0;
 	instr[6]  = new ElevatorTrim (this);
 	instr[7]  = new Airbrake (this);
-	instr[8]  = 0;
-	instr[9]  = 0;
-	instr[10] = 0;
 	instr[11] = new ATCtrlDial (this);
 	instr[12] = new UndockButton (this);
-	instr[13] = 0;
-	instr[14] = 0;
-	instr[15] = 0;
-	instr[16] = 0;
-	instr[17] = 0;
-	instr[18] = 0;
-	instr[19] = 0;
-	instr[20] = 0;
-	instr[21] = 0;
-	instr[22] = 0;
 	instr[23] = new NoseconeLever (this);
 	instr[24] = new NoseconeIndicator (this);
 	instr[25] = new SwitchArray (this);
-	instr[26] = 0;
 	instr[27] = new MWSButton (this);
-	for (i = MFD_LEFT; i <= MFD_RIGHT; i++) {
-		instr[28+i*3] = new MFDButtonRow (this, i);
-		for (j = 0; j < 2; j++)
-			instr[29+i*3+j] = new MFDButtonCol (this, i, j);
-	}
-	instr[34] = 0;
-	instr[35] = 0;
-	instr[36] = 0;
-	instr[37] = 0;
 	instr[38] = new InstrLightSwitch (this);
 	instr[39] = new InstrLightBrightnessDial (this);
 	instr[40] = new FloodLightSwitch (this);
 	instr[41] = new FloodLightBrightnessDial (this);
 	instr[42] = new AngRateIndicator (this, g_Param.surf);
-	instr[43] = 0;
 	instr[44] = new LandDockLightSwitch (this);
 	instr[45] = new StrobeLightSwitch (this);
 	instr[46] = new NavLightSwitch (this);
@@ -2394,16 +2371,7 @@ void DeltaGlider::clbkVisualDestroyed (VISHANDLE vis, int refcount)
 // --------------------------------------------------------------
 void DeltaGlider::clbkMFDMode (int mfd, int mode)
 {
-	switch (mfd) {
-	case MFD_LEFT:
-		oapiTriggerRedrawArea (0, 0, AID_MFD1_LBUTTONS);
-		oapiTriggerRedrawArea (0, 0, AID_MFD1_RBUTTONS);
-		break;
-	case MFD_RIGHT:
-		oapiTriggerRedrawArea (0, 0, AID_MFD2_LBUTTONS);
-		oapiTriggerRedrawArea (0, 0, AID_MFD2_RBUTTONS);
-		break;
-	}
+	ssys_mfd[mfd-MFD_LEFT]->ModeChanged ();
 }
 
 // --------------------------------------------------------------
@@ -2735,16 +2703,6 @@ void DeltaGlider::DefinePanelMain (PANELHANDLE hPanel)
 	RegisterPanelMFDGeometry (hPanel, MFD_LEFT, 0, GRP_LMFD_DISPLAY_P0);
 	RegisterPanelMFDGeometry (hPanel, MFD_RIGHT, 0, GRP_RMFD_DISPLAY_P0);
 
-	xofs = 173; // left MFD
-	RegisterPanelArea (hPanel, AID_MFD1_BBUTTONS, _R( 51+xofs,359,321+xofs,377), PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_ONREPLAY, panel2dtex, instr[28]); // bottom button row
-	RegisterPanelArea (hPanel, AID_MFD1_LBUTTONS, _R(    xofs,100, 25+xofs,323), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY, panel2dtex, instr[29]); // left button column
-	RegisterPanelArea (hPanel, AID_MFD1_RBUTTONS, _R(348+xofs,100,373+xofs,323), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY, panel2dtex, instr[30]); // right button column
-
-	xofs = 736; // right MFD
-	RegisterPanelArea (hPanel, AID_MFD2_BBUTTONS, _R( 51+xofs,359,321+xofs,377), PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_ONREPLAY, panel2dtex, instr[31]); // bottom button row
-	RegisterPanelArea (hPanel, AID_MFD2_LBUTTONS, _R(    xofs,100, 25+xofs,323), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY, panel2dtex, instr[32]); // left button column
-	RegisterPanelArea (hPanel, AID_MFD2_RBUTTONS, _R(348+xofs,100,373+xofs,323), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY, panel2dtex, instr[33]); // right button column
-
 	RegisterPanelArea (hPanel, AID_HORIZON,      _R(0,0,0,0),           PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, 0, instr[0]);
 	RegisterPanelArea (hPanel, AID_HSIINSTR,     _R(0,0,0,0),           PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, 0, instr[1]);
 	RegisterPanelArea (hPanel, AID_AOAINSTR,     _R(0,0,0,0),           PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[2]);
@@ -2880,28 +2838,6 @@ bool DeltaGlider::clbkLoadVC (int id)
 		SetCameraOffset (_V(0,1.467,6.782));
 		SetCameraShiftRange (_V(0,0,0.1), _V(-0.2,0,0), _V(0.2,0,0));
 		oapiVCSetNeighbours (1, 2, -1, -1);
-
-		// left MFD controls on the front panel
-		oapiVCRegisterArea (AID_MFD1_BBUTTONS, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_MFD1_BBUTTONS, _V(-0.1844, 1.0745, 7.2238), _V(-0.1456, 1.0745, 7.2238), _V(-0.1844, 1.0587, 7.2180), _V(-0.1456, 1.0587, 7.2180));
-		oapiVCRegisterArea (AID_MFD1_LBUTTONS, PANEL_REDRAW_MOUSE|PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_MFD1_LBUTTONS, _V(-0.2684, 1.2155, 7.2751), _V(-0.2516, 1.2155, 7.2751), _V(-0.2684, 1.0963, 7.2317), _V(-0.2516, 1.0963, 7.2317));
-		oapiVCRegisterArea (AID_MFD1_RBUTTONS, PANEL_REDRAW_MOUSE|PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_MFD1_RBUTTONS, _V(-0.0784, 1.2155, 7.2751), _V(-0.0616, 1.2155, 7.2751), _V(-0.0784, 1.0963, 7.2317), _V(-0.0616, 1.0963, 7.2317));
-
-		// right MFD controls on the front panel
-		oapiVCRegisterArea (AID_MFD2_BBUTTONS, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_MFD2_BBUTTONS, _V(0.1456, 1.0745, 7.2238), _V(0.1844, 1.0745, 7.2238), _V(0.1456, 1.0587, 7.2180), _V(0.1844, 1.0587, 7.2180));
-		oapiVCRegisterArea (AID_MFD2_LBUTTONS, PANEL_REDRAW_MOUSE|PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_MFD2_LBUTTONS, _V(0.0616, 1.2155, 7.2751), _V(0.0784, 1.2155, 7.2751), _V(0.0616, 1.0963, 7.2317), _V(0.0784, 1.0963, 7.2317));
-		oapiVCRegisterArea (AID_MFD2_RBUTTONS, PANEL_REDRAW_MOUSE|PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_MFD2_RBUTTONS, _V(0.2516, 1.2155, 7.2751), _V(0.2684, 1.2155, 7.2751), _V(0.2516, 1.0963, 7.2317), _V(0.2684, 1.0963, 7.2317));
-
-		//oapiVCRegisterArea (AID_MFD1_PWR, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_ONREPLAY);
-		//oapiVCSetAreaClickmode_Spherical (AID_MFD1_PWR, _V(-0.1914,1.009,7.2775), 0.01);
-
-		//oapiVCRegisterArea (AID_MFD2_PWR, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_ONREPLAY);
-		//oapiVCSetAreaClickmode_Spherical (AID_MFD2_PWR, _V(0.0483,1.009,7.2775), 0.01);
 
 		// artificial horizon
 		oapiVCRegisterArea (AID_HORIZON, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
@@ -3088,13 +3024,6 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 
 	// standalone id
 	switch (id) {
-	case AID_MFD1_LBUTTONS:
-	case AID_MFD1_RBUTTONS:
-	case AID_MFD1_BBUTTONS:
-	case AID_MFD2_LBUTTONS:
-	case AID_MFD2_RBUTTONS:
-	case AID_MFD2_BBUTTONS:
-		return instr[13+id]->ProcessMouseVC (event, p);
 	case AID_MFD1_PWR:
 		oapiToggleMFD_on (MFD_LEFT);
 		return true;
@@ -3187,13 +3116,6 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 
 	// standalone id
 	switch (id) {
-	case AID_MFD1_LBUTTONS:
-	case AID_MFD1_RBUTTONS:
-	case AID_MFD1_BBUTTONS:
-	case AID_MFD2_LBUTTONS:
-	case AID_MFD2_RBUTTONS:
-	case AID_MFD2_BBUTTONS:
-		return (vcmesh ? instr[13+id]->RedrawVC(vcmesh, vctex) : false);
 	case AID_ENGINESCRAM:
 		RedrawVC_ThScram();
 		return false;

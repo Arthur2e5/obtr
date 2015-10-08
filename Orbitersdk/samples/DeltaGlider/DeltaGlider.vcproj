@@ -538,14 +538,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\MFDButton.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\MFDButton.h"
-					>
-				</File>
-				<File
 					RelativePath=".\MomentInd.cpp"
 					>
 				</File>
@@ -635,6 +627,14 @@
 				</File>
 				<File
 					RelativePath=".\MainRetroSubsys.h"
+					>
+				</File>
+				<File
+					RelativePath=".\MfdSubsys.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\MfdSubsys.h"
 					>
 				</File>
 				<File
