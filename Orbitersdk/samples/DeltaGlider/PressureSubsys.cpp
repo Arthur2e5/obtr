@@ -4,24 +4,25 @@
 //          Copyright (C) 2001-2015 Martin Schweiger
 //                   All rights reserved
 //
-// PressureCtrl.cpp
+// PressureSubsys.cpp
 // Cabin and airlock pressure control subsystem
 // ==============================================================
 
-#include "PressureCtrl.h"
+#include "PressureSubsys.h"
+#include "DockingSubsys.h"
 #include "DeltaGlider.h"
 #include "dg_vc_anim.h"
 #include "meshres_vc.h"
 
 // ==============================================================
 
-double PressureControl::v_cabin = 24.0;
-double PressureControl::v_airlock = 4.0;
-double PressureControl::p_target = 100e3;
+double PressureSubsystem::v_cabin = 24.0;
+double PressureSubsystem::v_airlock = 4.0;
+double PressureSubsystem::p_target = 100e3;
 
 // --------------------------------------------------------------
 
-PressureControl::PressureControl (DeltaGlider *vessel, int ident)
+PressureSubsystem::PressureSubsystem (DeltaGlider *vessel, int ident)
 : DGSubsystem(vessel, ident)
 {
 	extern GDIParams g_Param;
@@ -39,15 +40,15 @@ PressureControl::PressureControl (DeltaGlider *vessel, int ident)
 
 // --------------------------------------------------------------
 
-void PressureControl::clbkPostStep (double simt, double simdt, double mjd)
+void PressureSubsystem::clbkPostStep (double simt, double simdt, double mjd)
 {
 	docked = DG()->DockingStatus(0) != 0;
 	double p_static = DG()->GetAtmPressure();
 	p_ext_hatch = p_static;
 	if (!docked) {
 		p_ext_lock = p_static;
-		if (DG()->nose_status != DeltaGlider::DOOR_CLOSED)
-			p_ext_lock += DG()->GetDynPressure() * DG()->nose_proc;
+		if (DG()->SubsysDocking()->NoseconeStatus() != DeltaGlider::DOOR_CLOSED)
+			p_ext_lock += DG()->GetDynPressure() * DG()->SubsysDocking()->NoseconePosition();
 	}
 	else v_extdock = 2.0; // for now
 
@@ -134,7 +135,7 @@ void PressureControl::clbkPostStep (double simt, double simdt, double mjd)
 
 // --------------------------------------------------------------
 
-bool PressureControl::clbkLoadVC (int id)
+bool PressureSubsystem::clbkLoadVC (int id)
 {
 	switch (id) {
 	case 0:
@@ -168,8 +169,8 @@ bool PressureControl::clbkLoadVC (int id)
 
 // ==============================================================
 
-PValveSwitch::PValveSwitch (PressureControl *pc, int id)
-: DGSwitch1 (pc->Vessel(), DGSwitch1::TWOSTATE), pctrl(pc), vid(id)
+PValveSwitch::PValveSwitch (PressureSubsystem *_subsys, int id)
+: DGSwitch1(_subsys->DG(), DGSwitch1::TWOSTATE), subsys(_subsys), vid(id)
 {
 }
 
@@ -177,7 +178,7 @@ PValveSwitch::PValveSwitch (PressureControl *pc, int id)
 
 void PValveSwitch::ResetVC (DEVMESHHANDLE hMesh)
 {
-	SetState (pctrl->GetPValve(vid) ? UP:DOWN);
+	SetState (subsys->GetPValve(vid) ? UP:DOWN);
 }
 
 // --------------------------------------------------------------
@@ -186,7 +187,7 @@ bool PValveSwitch::ProcessMouseVC (int event, VECTOR3 &p)
 {
 	if (DGSwitch1::ProcessMouseVC (event, p)) {
 		DGSwitch1::State state = GetState();
-		pctrl->SetPValve (vid, state==UP ? 1:0);
+		subsys->SetPValve (vid, state==UP ? 1:0);
 		return true;
 	}
 	return false;
@@ -194,8 +195,8 @@ bool PValveSwitch::ProcessMouseVC (int event, VECTOR3 &p)
 
 // ==============================================================
 
-PressureIndicator::PressureIndicator (PressureControl *pc, SURFHANDLE blitsrc)
-: PanelElement (pc->Vessel()), pctrl(pc), bsrc(blitsrc)
+PressureIndicator::PressureIndicator (PressureSubsystem *_subsys, SURFHANDLE blitsrc)
+: PanelElement(_subsys->DG()), subsys(_subsys), bsrc(blitsrc)
 {
 	btgt = 0;
 }
@@ -205,7 +206,7 @@ PressureIndicator::PressureIndicator (PressureControl *pc, SURFHANDLE blitsrc)
 void PressureIndicator::ResetVC (DEVMESHHANDLE hMesh)
 {
 	upt = 0.0;
-	btgt = oapiGetTextureHandle (pctrl->DG()->vcmesh_tpl, 14);
+	btgt = oapiGetTextureHandle (subsys->DG()->vcmesh_tpl, 14);
 	for (int i = 0; i < 4; i++)
 		for (int j = 0; j < 8; j++)
 			label[i][j] = ' ';
@@ -222,13 +223,13 @@ bool PressureIndicator::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 	upt = t + 0.5;
 
 	char cbuf[16];
-	ValStr (pctrl->PExtHatch(), cbuf);
+	ValStr (subsys->PExtHatch(), cbuf);
 	BlitReadout (0, cbuf);
-	ValStr (pctrl->PCabin(), cbuf);
+	ValStr (subsys->PCabin(), cbuf);
 	BlitReadout (1, cbuf);
-	ValStr (pctrl->PAirlock(), cbuf);
+	ValStr (subsys->PAirlock(), cbuf);
 	BlitReadout (2, cbuf);
-	ValStr (pctrl->PExtLock(), cbuf);
+	ValStr (subsys->PExtLock(), cbuf);
 	BlitReadout (3, cbuf);
 
 	return false;

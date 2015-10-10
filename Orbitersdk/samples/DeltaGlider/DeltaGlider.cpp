@@ -21,13 +21,13 @@
 #include "Airbrake.h"
 #include "UndockBtn.h"
 #include "HudCtrl.h"
-#include "NconeLever.h"
 #include "FuelMfd.h"
 #include "ThrottleScram.h"
 #include "MainRetroSubsys.h"
 #include "HoverSubsys.h"
 #include "RcsSubsys.h"
 #include "GearSubsys.h"
+#include "DockingSubsys.h"
 #include "MfdSubsys.h"
 #include "SwitchArray.h"
 #include "AirlockSwitch.h"
@@ -35,7 +35,7 @@
 #include "MomentInd.h"
 #include "CockpitLight.h"
 #include "ScnEditorAPI.h"
-#include "PressureCtrl.h"
+#include "PressureSubsys.h"
 #include "DlgCtrl.h"
 #include "dg_vc_anim.h"
 #include "meshres.h"
@@ -156,22 +156,19 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 
 	// Subsystem definitions
 	int ssys_id = 0;
-	ssys.push_back (ssys_mainretro = new MainRetroSubsystem (this, ssys_id++));
-	ssys.push_back (ssys_hoverctrl = new HoverSubsystem (this, ssys_id++));
-	ssys.push_back (ssys_rcs       = new RcsSubsystem (this, ssys_id++));
-	ssys.push_back (ssys_gear      = new GearSubsystem (this, ssys_id++));
-	ssys.push_back (ssys_hud       = new HUDControl (this, ssys_id++));
-	ssys.push_back (ssys_pressurectrl = new PressureControl (this, ssys_id++));
+	ssys.push_back (ssys_mainretro    = new MainRetroSubsystem (this, ssys_id++));
+	ssys.push_back (ssys_hoverctrl    = new HoverSubsystem (this, ssys_id++));
+	ssys.push_back (ssys_rcs          = new RcsSubsystem (this, ssys_id++));
+	ssys.push_back (ssys_gear         = new GearSubsystem (this, ssys_id++));
+	ssys.push_back (ssys_hud          = new HUDControl (this, ssys_id++));
+	ssys.push_back (ssys_pressurectrl = new PressureSubsystem (this, ssys_id++));
+	ssys.push_back (ssys_docking      = new DockingCtrlSubsystem (this, ssys_id++));
 	for (i = 0; i < 2; i++)
 		ssys.push_back (ssys_mfd[i] = new MfdSubsystem (this, ssys_id++, MFD_LEFT+i));
 
 	aoa_ind = PI;
 	slip_ind = PI*0.5;
 	load_ind = PI;
-	nose_status       = DOOR_CLOSED;
-	nose_proc         = 0.0;
-	noselever_status  = DOOR_CLOSED;
-	noselever_proc    = 0.0;
 	undock_status     = DOOR_CLOSED;
 	undock_proc       = 0.0;
 	ladder_status     = DOOR_CLOSED;
@@ -312,8 +309,6 @@ void DeltaGlider::CreatePanelElements ()
 	instr[7]  = new Airbrake (this);
 	instr[11] = new ATCtrlDial (this);
 	instr[12] = new UndockButton (this);
-	instr[23] = new NoseconeLever (this);
-	instr[24] = new NoseconeIndicator (this);
 	instr[25] = new SwitchArray (this);
 	instr[27] = new MWSButton (this);
 	instr[38] = new InstrLightSwitch (this);
@@ -347,37 +342,6 @@ void DeltaGlider::CreatePanelElements ()
 // --------------------------------------------------------------
 void DeltaGlider::DefineAnimations ()
 {
-	// ***** Nose cone animation *****
-	static UINT NConeTLGrp[2] = {GRP_NConeTL1,GRP_NConeTL2};
-	static MGROUP_ROTATE NConeTL (0, NConeTLGrp, 2,
-		_V(-0.424,-0.066,9.838), _V(-0.707,-0.707,0), (float)(150*RAD));
-	static UINT NConeTRGrp[2] = {GRP_NConeTR1,GRP_NConeTR2};
-	static MGROUP_ROTATE NConeTR (0, NConeTRGrp, 2,
-		_V( 0.424,-0.066,9.838), _V(-0.707, 0.707,0), (float)(150*RAD));
-	static UINT NConeBLGrp[2] = {GRP_NConeBL1,GRP_NConeBL2};
-	static MGROUP_ROTATE NConeBL (0, NConeBLGrp, 2,
-		_V(-0.424,-0.914,9.838), _V( 0.707,-0.707,0), (float)(150*RAD));
-	static UINT NConeBRGrp[2] = {GRP_NConeBR1,GRP_NConeBR2};
-	static MGROUP_ROTATE NConeBR (0, NConeBRGrp, 2,
-		_V( 0.424,-0.914,9.838), _V( 0.707, 0.707,0), (float)(150*RAD));
-	static UINT NConeDockGrp[1] = {GRP_NConeDock};
-	static MGROUP_TRANSLATE NConeDock (0, NConeDockGrp, 1, _V(0,0,0.06));
-	// virtual cockpit mesh animation (nose cone visible from cockpit)
-	static UINT VCNConeTLGrp[1] = {GRP_NOSECONE_L_VC};
-	static MGROUP_ROTATE VCNConeTL (1, VCNConeTLGrp, 1,
-		_V(-0.424,-0.066,9.838), _V(-0.707,-0.707,0), (float)(150*RAD));
-	static UINT VCNConeTRGrp[1] = {GRP_NOSECONE_R_VC};
-	static MGROUP_ROTATE VCNConeTR (1, VCNConeTRGrp, 1,
-		_V( 0.424,-0.066,9.838), _V(-0.707, 0.707,0), (float)(150*RAD));
-	anim_nose = CreateAnimation (0);
-	AddAnimationComponent (anim_nose, 0.01, 0.92, &NConeTL);
-	AddAnimationComponent (anim_nose, 0.01, 0.92, &VCNConeTL);
-	AddAnimationComponent (anim_nose, 0.02, 0.925, &NConeTR);
-	AddAnimationComponent (anim_nose, 0.02, 0.925, &VCNConeTR);
-	AddAnimationComponent (anim_nose, 0, 0.91, &NConeBL);
-	AddAnimationComponent (anim_nose, 0.015, 0.915, &NConeBR);
-	AddAnimationComponent (anim_nose, 0.8, 1, &NConeDock);
-
 	// ***** Outer airlock animation *****
 	static UINT OLockGrp[2] = {GRP_OLock1,GRP_OLock2};
 	static MGROUP_ROTATE OLock (0, OLockGrp, 2,
@@ -541,13 +505,6 @@ void DeltaGlider::DefineAnimations ()
 		vc_abrakelever_ref, vc_abrakelever_axis, (float)(-40*RAD));
 	anim_airbrakelever = CreateAnimation(0.8);
 	AddAnimationComponent (anim_airbrakelever, 0, 1, &AirbrakeLeverTransform);
-
-	// Nosecone lever
-	static UINT NoseconeLeverGrp = GRP_NOSECONE_LEVER_VC;
-	static MGROUP_ROTATE NoseconeLeverTransform (1, &NoseconeLeverGrp, 1,
-		vc_nconelever_ref, vc_nconelever_axis, (float)(-70*RAD));
-	anim_noselever = CreateAnimation (0.5);
-	AddAnimationComponent (anim_noselever, 0, 1, &NoseconeLeverTransform);
 
 	// Undock lever
 	static UINT UndockLeverGrp = GRP_UNDOCK_LEVER_VC;
@@ -793,10 +750,11 @@ bool DeltaGlider::clbkDrawHUD (int mode, const HUDPAINTSPEC *hps, oapi::Sketchpa
 	}
 
 	if (oapiGetHUDMode() == HUD_DOCKING) {
-		if (nose_status != DOOR_OPEN) {
+		DoorStatus ncone = ssys_docking->NoseconeStatus();
+		if (ncone != DOOR_OPEN) {
 			int d = hps->Markersize*5;
 			double tmp;
-			if (nose_status == DOOR_CLOSED || modf (oapiGetSimTime(), &tmp) < 0.5) {
+			if (ncone == DOOR_CLOSED || modf (oapiGetSimTime(), &tmp) < 0.5) {
 				skp->Line (cx-d,cy-d,cx+d,cy+d);
 				skp->Line (cx-d,cy+d,cx+d,cy-d);
 			}
@@ -886,9 +844,10 @@ void DeltaGlider::clbkRenderHUD (int mode, const HUDPAINTSPEC *hps, SURFHANDLE h
 	}
 
 	// show nosecone status
-	if (oapiGetHUDMode() == HUD_DOCKING && nose_status != DOOR_OPEN) {
+	DoorStatus ncone = ssys_docking->NoseconeStatus();
+	if (oapiGetHUDMode() == HUD_DOCKING && ncone != DOOR_OPEN) {
 		double tmp;
-		if (nose_status == DOOR_CLOSED || modf (oapiGetSimTime(), &tmp) < 0.5) {
+		if (ncone == DOOR_CLOSED || modf (oapiGetSimTime(), &tmp) < 0.5) {
 			memcpy (vtx+nvtx, vnose, 16*sizeof(NTVERTEX));
 			for (i = 0; i < 36; i++) idx[nidx+i] = inose[i]+nvtx;
 			nvtx += 16;
@@ -932,36 +891,10 @@ void DeltaGlider::SetGearParameters (double state)
 	}
 }
 
-void DeltaGlider::ActivateDockingPort (DoorStatus action)
-{
-	bool close = (action == DOOR_CLOSED || action == DOOR_CLOSING);
-	nose_status = noselever_status = action;
-	if (action <= DOOR_OPEN) {
-		nose_proc = noselever_proc = (action == DOOR_CLOSED ? 0.0 : 1.0);
-		SetAnimation (anim_nose, nose_proc);
-		SetAnimation (anim_noselever, noselever_proc);
-		UpdateStatusIndicators();
-	}
-	oapiTriggerPanelRedrawArea (0, AID_NOSECONELEVER);
-	oapiTriggerRedrawArea (0, 0, AID_NOSECONEINDICATOR);
-
-	if (close && ladder_status != DOOR_CLOSED)
-		ActivateLadder (action); // retract ladder before closing the nose cone
-
-	UpdateCtrlDialog (this);
-	RecordEvent ("NOSECONE", close ? "CLOSE" : "OPEN");
-}
-
 void DeltaGlider::ActivateUndocking (DoorStatus action)
 {
 	undock_status = action;
 	if (action == DOOR_OPENING) Undock(0);
-}
-
-void DeltaGlider::RevertDockingPort ()
-{
-	ActivateDockingPort (nose_status == DOOR_CLOSED || nose_status == DOOR_CLOSING ?
-						 DOOR_OPENING : DOOR_CLOSING);
 }
 
 void DeltaGlider::ActivateHatch (DoorStatus action)
@@ -1000,7 +933,7 @@ void DeltaGlider::RevertHatch ()
 void DeltaGlider::ActivateLadder (DoorStatus action)
 {
 	bool close = (action == DOOR_CLOSED || action == DOOR_CLOSING);
-	if (!close && nose_status != DOOR_OPEN) return;
+	if (!close && ssys_docking->NoseconeStatus() != DOOR_OPEN) return;
 	// don't extend ladder if nose cone is closed
 
 	ladder_status = action;
@@ -1678,7 +1611,7 @@ void DeltaGlider::UpdateStatusIndicators ()
 	vtx[4].tu = vtx[5].tu = x;
 
 	// nose cone indicator
-	x = (nose_status == DOOR_CLOSED ? xoff : nose_status == DOOR_OPEN ? xon : modf (oapiGetSimTime(), &d) < 0.5 ? xon : xoff);
+	x = (ssys_docking->NoseconeStatus() == DOOR_CLOSED ? xoff : ssys_docking->NoseconeStatus() == DOOR_OPEN ? xon : modf (oapiGetSimTime(), &d) < 0.5 ? xon : xoff);
 	vtx[6].tu = vtx[7].tu = x;
 
 	// top hatch indicator
@@ -2026,7 +1959,7 @@ void DeltaGlider::clbkSetClassCaps (FILEHANDLE cfg)
 
 	CreateVariableDragElement (ssys_gear->GearPositionPtr(), 0.8, _V(0, -1, 0));     // landing gear
 	CreateVariableDragElement (ssys_mainretro->RCoverPositionPtr(), 0.2, _V(0,-0.5,6.5)); // retro covers
-	CreateVariableDragElement (&nose_proc, 3, _V(0, 0, 8));        // nose cone
+	CreateVariableDragElement (ssys_docking->NoseconePositionPtr(), 3, _V(0, 0, 8));        // nose cone
 	CreateVariableDragElement (&radiator_proc, 1, _V(0,1.5,-4));   // radiator
 	CreateVariableDragElement (&brake_proc, 4, _V(0,0,-8));        // airbrake
 
@@ -2088,14 +2021,7 @@ void DeltaGlider::clbkLoadStateEx (FILEHANDLE scn, void *vs)
     char *line;
 
 	while (oapiReadScenario_nextline (scn, line)) {
-        if (!_strnicmp (line, "NOSECONE", 8)) {
-			sscanf (line+8, "%d%lf", &nose_status, &nose_proc);
-			if (nose_status == DOOR_OPEN || nose_status == DOOR_OPENING) {
-				noselever_status = DOOR_OPEN; noselever_proc = 1.0;
-			} else {
-				noselever_status = DOOR_CLOSED; noselever_proc = 0.0;
-			}
-		} else if (!_strnicmp (line, "AIRLOCK", 7)) {
+		if (!_strnicmp (line, "AIRLOCK", 7)) {
 			sscanf (line+7, "%d%lf", &olock_status, &olock_proc);
 		} else if (!_strnicmp (line, "IAIRLOCK", 8)) {
 			sscanf (line+8, "%d%lf", &ilock_status, &ilock_proc);
@@ -2200,10 +2126,6 @@ void DeltaGlider::clbkSaveState (FILEHANDLE scn)
 		(*it)->clbkSaveState (scn);
 
 	// Write custom parameters
-	if (nose_status) {
-		sprintf (cbuf, "%d %0.4f", nose_status, nose_proc);
-		oapiWriteScenario_string (scn, "NOSECONE", cbuf);
-	}
 	if (olock_status) {
 		sprintf (cbuf, "%d %0.4f", olock_status, olock_proc);
 		oapiWriteScenario_string (scn, "AIRLOCK", cbuf);
@@ -2270,7 +2192,6 @@ void DeltaGlider::clbkPostCreation ()
 	SetEmptyMass ();
 
 	// update animation states
-	SetAnimation (anim_nose, nose_proc);
 	SetAnimation (anim_ladder, ladder_proc);
 	SetAnimation (anim_olock, olock_proc);
 	SetAnimation (anim_ilock, ilock_proc);
@@ -2278,7 +2199,6 @@ void DeltaGlider::clbkPostCreation ()
 	SetAnimation (anim_radiator, radiator_proc);
 	SetAnimation (anim_brake, brake_proc);
 	SetAnimation (anim_airbrakelever, airbrakelever_status & 1);
-	SetAnimation (anim_noselever, nose_status & 1);
 	SetAnimation (anim_radiatorswitch, radiator_status & 1);
 	SetAnimation (anim_ladderswitch, ladder_status & 1);
 
@@ -2295,7 +2215,7 @@ bool DeltaGlider::clbkPlaybackEvent (double simt, double event_t, const char *ev
 		ssys_gear->ActivateGear (!_stricmp (event, "UP") ? DOOR_CLOSING : DOOR_OPENING);
 		return true;
 	} else if (!_stricmp (event_type, "NOSECONE")) {
-		ActivateDockingPort (!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
+		ssys_docking->ActivateNosecone (!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
 		return true;
 	} else if (!_stricmp (event_type, "RCOVER")) {
 		ssys_mainretro->ActivateRCover (!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
@@ -2431,40 +2351,6 @@ void DeltaGlider::clbkPostStep (double simt, double simdt, double mjd)
 	if (scramjet) ScramjetThrust ();
 
 	th_main_level = GetThrusterGroupLevel (THGROUP_MAIN);
-
-	// animate nose cone
-	if (nose_status >= DOOR_CLOSING) {
-		double da = simdt * NOSE_OPERATING_SPEED;
-		if (nose_status == DOOR_CLOSING) {
-			if (nose_proc > 0.0)
-				nose_proc = max (0.0, nose_proc-da);
-			else
-				nose_status = DOOR_CLOSED;
-		} else { // door opening
-			if (nose_proc < 1.0)
-				nose_proc = min (1.0, nose_proc+da);
-			else
-				nose_status = DOOR_OPEN;
-		}
-		SetAnimation (anim_nose, nose_proc);
-		oapiTriggerRedrawArea (0, 0, AID_NOSECONEINDICATOR);
-		UpdateStatusIndicators();
-	}
-	if (noselever_status >= DOOR_CLOSING) {
-		double da = simdt * 4.0;
-		if (noselever_status == DOOR_CLOSING) {
-			if (noselever_proc > 0.0)
-				noselever_proc = max (0.0, noselever_proc-da);
-			else
-				noselever_status = DOOR_CLOSED;
-		} else  { // door opening
-			if (noselever_proc < 1.0)
-				noselever_proc = min (1.0, noselever_proc+da);
-			else
-				noselever_status = DOOR_OPEN;
-		}
-		SetAnimation (anim_noselever, noselever_proc);
-	}
 
 	// animate undock lever
 	if (undock_status >= DOOR_CLOSING) {
@@ -2712,8 +2598,6 @@ void DeltaGlider::DefinePanelMain (PANELHANDLE hPanel)
 	RegisterPanelArea (hPanel, AID_AIRBRAKE,     _R( 141,153, 161,213), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN, panel2dtex, instr[7]);
 	RegisterPanelArea (hPanel, AID_ADCTRLMODE,   _R(  99, 69, 139,113), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, panel2dtex, instr[11]);
 	RegisterPanelArea (hPanel, AID_DOCKRELEASE,  _R(1141,474,1172,504), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, instr[12]);
-	RegisterPanelArea (hPanel, AID_NOSECONELEVER, _R(1141,327,1180,421), PANEL_REDRAW_USER,  PANEL_MOUSE_LBDOWN, panel2dtex, instr[23]);
-	RegisterPanelArea (hPanel, AID_NOSECONEINDICATOR, _R(0,0,0,0),      PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, instr[24]);
 	RegisterPanelArea (hPanel, AID_MWS,          _R(1071,  6,1098, 32), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN, panel2dtex, instr[27]);
 
 	if (ScramVersion()) {
@@ -2945,10 +2829,6 @@ bool DeltaGlider::clbkLoadVC (int id)
 		oapiVCRegisterArea (AID_AIRBRAKE, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_AIRBRAKE, vc_abrakelever_mousearea[0], vc_abrakelever_mousearea[1], vc_abrakelever_mousearea[2], vc_abrakelever_mousearea[3]);
 
-		// Nosecone lever
-		oapiVCRegisterArea (AID_NOSECONELEVER, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_NOSECONELEVER, vc_nconelever_mousearea[0], vc_nconelever_mousearea[1], vc_nconelever_mousearea[2], vc_nconelever_mousearea[3]);
-
 		// Undock lever
 		oapiVCRegisterArea (AID_DOCKRELEASE, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_DOCKRELEASE, vc_undocklever_mousearea[0], vc_undocklever_mousearea[1], vc_undocklever_mousearea[2], vc_undocklever_mousearea[3]);
@@ -3075,8 +2955,6 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 		return instr[6]->ProcessMouseVC (event, p);
 	case AID_AIRBRAKE:
 		return instr[7]->ProcessMouseVC (event, p);
-	case AID_NOSECONELEVER:
-		return instr[23]->ProcessMouseVC (event, p);
 	case AID_DOCKRELEASE:
 		return instr[12]->ProcessMouseVC (event, p);
 	case AID_RADIATOREX:
@@ -3169,8 +3047,6 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 		return (vcmesh ? instr[48]->RedrawVC (vcmesh, surf) : false);
 	case AID_OLOCK_SWITCH:
 		return (vcmesh ? instr[49]->RedrawVC (vcmesh, surf) : false);
-	case AID_NOSECONEINDICATOR:
-		return instr[24]->RedrawVC (vcmesh, surf);
 	case AID_FLOODLIGHT_SWITCH:
 		return (vcmesh ? instr[40]->RedrawVC (vcmesh, surf) : false);
 	case AID_INSTRLIGHT_SWITCH:
@@ -3249,7 +3125,7 @@ int DeltaGlider::clbkConsumeBufferedKey (DWORD key, bool down, char *kstate)
 			ssys_hud->ToggleHUDMode ();
 			return true;
 		case OAPI_KEY_K:  // "operate docking port"
-			RevertDockingPort ();
+			ssys_docking->RevertNosecone ();
 			return 1;
 		case OAPI_KEY_O:  // "operate outer airlock"
 			RevertOuterAirlock ();
@@ -3398,10 +3274,10 @@ BOOL CALLBACK EdPg1Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			GetDG(hTab)->ActivateInnerAirlock (DeltaGlider::DOOR_OPEN);
 			return TRUE;
 		case IDC_NCONE_CLOSE:
-			GetDG(hTab)->ActivateDockingPort (DeltaGlider::DOOR_CLOSED);
+			GetDG(hTab)->SubsysDocking()->ActivateNosecone (DeltaGlider::DOOR_CLOSED);
 			return TRUE;
 		case IDC_NCONE_OPEN:
-			GetDG(hTab)->ActivateDockingPort (DeltaGlider::DOOR_OPEN);
+			GetDG(hTab)->SubsysDocking()->ActivateNosecone (DeltaGlider::DOOR_OPEN);
 			return TRUE;
 		case IDC_LADDER_RETRACT:
 			GetDG(hTab)->ActivateLadder (DeltaGlider::DOOR_CLOSED);
@@ -3562,10 +3438,10 @@ BOOL CALLBACK Ctrl_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			dg->SubsysMainRetro()->ActivateRCover (DeltaGlider::DOOR_OPENING);
 			return 0;
 		case IDC_NCONE_CLOSE:
-			dg->ActivateDockingPort (DeltaGlider::DOOR_CLOSING);
+			dg->SubsysDocking()->ActivateNosecone (DeltaGlider::DOOR_CLOSING);
 			return 0;
 		case IDC_NCONE_OPEN:
-			dg->ActivateDockingPort (DeltaGlider::DOOR_OPENING);
+			dg->SubsysDocking()->ActivateNosecone (DeltaGlider::DOOR_OPENING);
 			return 0;
 		case IDC_OLOCK_CLOSE:
 			dg->ActivateOuterAirlock (DeltaGlider::DOOR_CLOSING);
@@ -3635,7 +3511,7 @@ void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd)
 	SendDlgItemMessage (hWnd, IDC_RETRO_OPEN, BM_SETCHECK, bstatus[op], 0);
 	SendDlgItemMessage (hWnd, IDC_RETRO_CLOSE, BM_SETCHECK, bstatus[1-op], 0);
 
-	op = dg->nose_status & 1;
+	op = dg->SubsysDocking()->NoseconeStatus() & 1;
 	SendDlgItemMessage (hWnd, IDC_NCONE_OPEN, BM_SETCHECK, bstatus[op], 0);
 	SendDlgItemMessage (hWnd, IDC_NCONE_CLOSE, BM_SETCHECK, bstatus[1-op], 0);
 

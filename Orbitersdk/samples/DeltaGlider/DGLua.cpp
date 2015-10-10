@@ -1,6 +1,7 @@
 #include "DeltaGlider.h"
 #include "MainRetroSubsys.h"
 #include "GearSubsys.h"
+#include "DockingSubsys.h"
 #include <stdio.h>
 
 extern "C" {
@@ -116,7 +117,7 @@ static int dgNosecone (lua_State *L)
 	DeltaGlider *dg = lua_toDG (L, 1);
 	int action = lua_tointeger (L, 2);
 	if (dg && action >= 0 && action < 2)
-		dg->ActivateDockingPort (DGaction[action]);
+		dg->SubsysDocking()->ActivateNosecone (DGaction[action]);
 	return 0;
 }
 

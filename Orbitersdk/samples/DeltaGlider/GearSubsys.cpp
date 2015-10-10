@@ -30,6 +30,15 @@ GearSubsystem::GearSubsystem (DeltaGlider *v, int ident)
 
 // --------------------------------------------------------------
 
+GearSubsystem::~GearSubsystem ()
+{
+	// delete components
+	delete gearctrl;
+	delete wheelbrake;
+}
+
+// --------------------------------------------------------------
+
 void GearSubsystem::ActivateGear (DeltaGlider::DoorStatus action)
 {
 	gearctrl->ActivateGear (action);

@@ -173,6 +173,8 @@ class HoverSubsystem;
 class RcsSubsystem;
 class GearSubsystem;
 class MfdSubsystem;
+class PressureSubsystem;
+class DockingCtrlSubsystem;
 
 // ==========================================================
 // Interface for derived vessel class: DeltaGlider
@@ -181,7 +183,6 @@ class MfdSubsystem;
 class DeltaGlider: public VESSEL4 {
 	friend class AAP;
 	friend class FuelMFD;
-	friend class PressureControl;
 	friend class ThrottleScram;
 
 public:
@@ -286,9 +287,8 @@ public:
 	int airbrake_tgt;
 
 	enum DoorStatus { DOOR_CLOSED, DOOR_OPEN, DOOR_CLOSING, DOOR_OPENING }
-		nose_status, noselever_status, ladder_status, olock_status, ilock_status,
+		ladder_status, olock_status, ilock_status,
 		hatch_status, radiator_status, brake_status, undock_status, airbrakelever_status;
-	void ActivateDockingPort (DoorStatus action);
 	void ActivateUndocking (DoorStatus action);
 	void ActivateLadder (DoorStatus action);
 	void ActivateOuterAirlock (DoorStatus action);
@@ -296,7 +296,6 @@ public:
 	void ActivateHatch (DoorStatus action);
 	void ActivateAirbrake (DoorStatus action, bool half_step = false);
 	void ActivateRadiator (DoorStatus action);
-	void RevertDockingPort ();
 	void RevertLadder ();
 	void RevertOuterAirlock ();
 	void RevertInnerAirlock ();
@@ -314,12 +313,10 @@ public:
 	void ModInstrBrightness (bool up);
 	void ModFloodBrightness (bool up);
 	void SetGearParameters (double state);
-	double nose_proc, noselever_proc, ladder_proc, olock_proc, ilock_proc,
+	double ladder_proc, olock_proc, ilock_proc,
 		hatch_proc, radiator_proc, brake_proc, undock_proc, airbrakelever_proc;     // logical status
 
 	// Animation handles
-	UINT anim_nose;             // handle for nose cone animation
-	UINT anim_noselever;        // handle for nose cone lever animation
 	UINT anim_undocklever;      // handle for undock lever animation
 	UINT anim_ladder;           // handle for front escape ladder animation
 	UINT anim_olock;            // handle for outer airlock animation
@@ -365,8 +362,10 @@ public:
 
 	double GetThrusterFlowRate(THRUSTER_HANDLE th);  // D. Beachy: get thruster flow rate in kg/s
 
+	// subsystem access functions
 	inline MainRetroSubsystem *SubsysMainRetro() { return ssys_mainretro; }
 	inline GearSubsystem *SubsysGear() { return ssys_gear; }
+	inline DockingCtrlSubsystem *SubsysDocking() { return ssys_docking; }
 
 	// script interface-related methods
 	int Lua_InitInterpreter (void *context);
@@ -382,13 +381,14 @@ private:
 	void ScramjetThrust ();                      // scramjet thrust calculation
 
 	// Vessel subsystems -------------------------------------------------------------
-	HUDControl          *ssys_hud;               // HUD control system
-	MainRetroSubsystem  *ssys_mainretro;         // main engine gimbal control system
-	HoverSubsystem      *ssys_hoverctrl;         // hover engine control system
-	RcsSubsystem        *ssys_rcs;               // reaction control subsystem
-	GearSubsystem       *ssys_gear;              // landing gear control subsystem
-	PressureControl     *ssys_pressurectrl;      // pressure control system
-	MfdSubsystem        *ssys_mfd[2];            // MFD instruments
+	HUDControl           *ssys_hud;              // HUD control system
+	MainRetroSubsystem   *ssys_mainretro;        // main engine gimbal control system
+	HoverSubsystem       *ssys_hoverctrl;        // hover engine control system
+	RcsSubsystem         *ssys_rcs;              // reaction control subsystem
+	GearSubsystem        *ssys_gear;             // landing gear control subsystem
+	PressureSubsystem    *ssys_pressurectrl;     // pressure control system
+	DockingCtrlSubsystem *ssys_docking;          // docking control subsystem
+	MfdSubsystem         *ssys_mfd[2];           // MFD instruments
 	std::vector<DGSubsystem*> ssys;              // list of subsystems
 
 	AAP *aap;                                    // atmospheric autopilot
@@ -525,8 +525,6 @@ typedef struct {
 #define AID_SCRAMTEMPDISP      114
 
 // Panel 2
-#define AID_NOSECONELEVER      204
-#define AID_NOSECONEINDICATOR  206
 #define AID_DOCKRELEASE        207
 
 // Virtual cockpit-specific area identifiers:

@@ -14,7 +14,6 @@
 #include "DeltaGlider.h"
 #include "DGSubsys.h"
 #include "DGSwitches.h"
-#include <vector>
 
 // ==============================================================
 // Landing gear subsystem
@@ -26,6 +25,7 @@ class Wheelbrake;
 class GearSubsystem: public DGSubsystem {
 public:
 	GearSubsystem (DeltaGlider *v, int ident);
+	~GearSubsystem ();
 	void ActivateGear (DeltaGlider::DoorStatus action);
 	void RevertGear ();
 	DeltaGlider::DoorStatus GearStatus() const;

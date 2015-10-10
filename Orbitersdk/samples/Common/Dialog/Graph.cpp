@@ -181,7 +181,8 @@ void Graph::Refresh (HDC hDC, int w, int h)
 	HFONT pfont = (HFONT)SelectObject (hDC, gdi.font[0]);
 
 	if (ndata >= 2) {
-		float f, ys = dy/(vmax-vmin);
+		double f;
+		float ys = dy/(vmax-vmin);
 		SelectObject (hDC, gdi.pen[0]);
 
 		// draw grid lines and ordinate labels
@@ -194,13 +195,13 @@ void Graph::Refresh (HDC hDC, int w, int h)
 		}
 		if (data_minortick > 1) {
 			SelectObject (hDC, gdi.pen[1]);
-			for (f = data_tickmin, i = 0; f > vmin; f -= data_dtick/(float)data_minortick) {
+			for (f = data_tickmin, i = 0; f > vmin; f -= data_dtick/data_minortick) {
 				if (i++ % data_minortick) {
 					y = y0 - (int)((f-vmin)*ys+0.5);
 					MoveToEx (hDC, x0, y, 0); LineTo (hDC, x1, y);
 				}
 			}
-			for (f = data_tickmin, i = 0; f < vmax; f += data_dtick/(float)data_minortick) {
+			for (f = data_tickmin, i = 0; f < vmax; f += data_dtick/data_minortick) {
 				if (i++ % data_minortick) {
 					y = y0 - (int)((f-vmin)*ys+0.5);
 					MoveToEx (hDC, x0, y, 0); LineTo (hDC, x1, y);

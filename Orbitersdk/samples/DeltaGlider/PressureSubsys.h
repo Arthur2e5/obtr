@@ -4,12 +4,12 @@
 //          Copyright (C) 2001-2015 Martin Schweiger
 //                   All rights reserved
 //
-// PressureCtrl.h
+// PressureSubsys.h
 // Cabin and airlock pressure control subsystem
 // ==============================================================
 
-#ifndef __PRESSURECTRL_H
-#define __PRESSURECTRL_H
+#ifndef __PRESSURESUBSYS_H
+#define __PRESSURESUBSYS_H
 
 #include "DeltaGlider.h"
 #include "DGSubsys.h"
@@ -25,9 +25,9 @@ class PressureIndicator;
 // Pressure control module
 // ==============================================================
 
-class PressureControl: public DGSubsystem {
+class PressureSubsystem: public DGSubsystem {
 public:
-	PressureControl (DeltaGlider *vessel, int ident);
+	PressureSubsystem (DeltaGlider *vessel, int ident);
 	void clbkPostStep (double simt, double simdt, double mjd);
 	inline double PCabin() const { return p_cabin; }
 	inline double PAirlock() const { return p_airlock; }
@@ -60,12 +60,12 @@ private:
 
 class PValveSwitch: public DGSwitch1 {
 public:
-	PValveSwitch (PressureControl *pc, int id);
+	PValveSwitch (PressureSubsystem *_subsys, int id);
 	void ResetVC (DEVMESHHANDLE hMesh);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 
 private:
-	PressureControl *pctrl;
+	PressureSubsystem *subsys;
 	int vid; // valve identifier
 };
 
@@ -74,17 +74,17 @@ private:
 
 class PressureIndicator: public PanelElement {
 public:
-	PressureIndicator (PressureControl *pc, SURFHANDLE blitsrc);
+	PressureIndicator (PressureSubsystem *_subsys, SURFHANDLE blitsrc);
 	void ResetVC (DEVMESHHANDLE hMesh);
 	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
 
 private:
 	void ValStr (double p, char *cbuf);
 	void BlitReadout (int which, const char *str);
-	PressureControl *pctrl;
+	PressureSubsystem *subsys;
 	double upt;
 	SURFHANDLE bsrc, btgt;
 	char label[4][8];
 };
 
-#endif // !___PRESSURECTRL_H
+#endif // !___PRESSURESUBSYS_H

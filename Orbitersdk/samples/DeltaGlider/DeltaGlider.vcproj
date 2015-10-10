@@ -554,14 +554,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\NconeLever.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\NconeLever.h"
-					>
-				</File>
-				<File
 					RelativePath=".\SwitchArray.cpp"
 					>
 				</File>
@@ -595,6 +587,14 @@
 				</File>
 				<File
 					RelativePath=".\DGSubsys.h"
+					>
+				</File>
+				<File
+					RelativePath=".\DockingSubsys.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\DockingSubsys.h"
 					>
 				</File>
 				<File
@@ -638,11 +638,11 @@
 					>
 				</File>
 				<File
-					RelativePath=".\PressureCtrl.cpp"
+					RelativePath=".\PressureSubsys.cpp"
 					>
 				</File>
 				<File
-					RelativePath=".\PressureCtrl.h"
+					RelativePath=".\PressureSubsys.h"
 					>
 				</File>
 				<File
