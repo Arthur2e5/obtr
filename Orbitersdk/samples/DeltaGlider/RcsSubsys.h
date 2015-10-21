@@ -18,24 +18,45 @@
 // Reaction control subsystem
 // ==============================================================
 
-class RcsModeDial;
+class RcsModeSelector;
 class RcsProgButtons;
 
 class RcsSubsystem: public DGSubsystem {
 public:
 	RcsSubsystem (DeltaGlider *dg, int ident);
+	~RcsSubsystem ();
+
 	void SetMode (int mode);
 	void SetProg (int prog, bool active);
 	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);
 
 private:
-	RcsModeDial *modedial;
+	RcsModeSelector *modeselector;
 	RcsProgButtons *progbuttons;
-	int ELID_MODEDIAL;
 	int ELID_PROGBUTTONS;
 };
 
+// ==============================================================
+// Control selector dial
+// ==============================================================
+
+class RcsModeSelector: public DGSubsystemComponent {
+	friend class RcsModeDial;
+
+public:
+	RcsModeSelector (RcsSubsystem *_subsys);
+	int GetMode ();
+	void SetMode (int mode);
+	bool IncMode ();
+	bool DecMode ();
+	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
+	bool clbkLoadVC (int vcid);
+
+public:
+	RcsModeDial *dial;
+	int ELID_DIAL;
+};
 
 // ==============================================================
 // Mode dial
@@ -43,7 +64,7 @@ private:
 
 class RcsModeDial: public DGDial1 {
 public:
-	RcsModeDial (RcsSubsystem *_subsys);
+	RcsModeDial (RcsModeSelector *comp);
 	void Reset2D (MESHHANDLE hMesh);
 	void ResetVC (DEVMESHHANDLE hMesh);
 	bool Redraw2D (SURFHANDLE surf);
@@ -52,7 +73,7 @@ public:
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 
 private:
-	RcsSubsystem *subsys;
+	RcsModeSelector *component;
 };
 
 

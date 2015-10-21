@@ -73,7 +73,7 @@ bool ElevatorTrim::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 	double level = vessel->GetControlSurfaceLevel (AIRCTRL_ELEVATORTRIM);
 	if (level != trimposVC) {
 		const DWORD nvtx = 3;
-		WORD vidx[3] = {4,5,6};
+		WORD vidx[3] = {VC_ETRIMSCALE_vofs,VC_ETRIMSCALE_vofs+1,VC_ETRIMSCALE_vofs+2};
 		NTVERTEX vtx[nvtx];
 		GROUPEDITSPEC ges;
 		ges.flags = GRPEDIT_VTXCRDY|GRPEDIT_VTXCRDZ;
@@ -81,15 +81,18 @@ bool ElevatorTrim::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 		ges.Vtx = vtx;
 		ges.vIdx = vidx;
 
-		const double *y0 = vc_etrim_needle0_y;
-		const double *z0 = vc_etrim_needle0_z;
+		static const double tilt = atan(VC_ETRIMSCALE_axis.z/VC_ETRIMSCALE_axis.y);
+		static const double y0[3] = {VC_ETRIMSCALE_ref[0].y,VC_ETRIMSCALE_ref[1].y,VC_ETRIMSCALE_ref[2].y};
+		static const double z0[3] = {VC_ETRIMSCALE_ref[0].z,VC_ETRIMSCALE_ref[1].z,VC_ETRIMSCALE_ref[2].z};
+		//const double *y0 = vc_etrim_needle0_y;
+		//const double *z0 = vc_etrim_needle0_z;
 		static double range = 0.032;
-		static double dy = -range*cos(vc_etrim_tilt), dz = -range*sin(vc_etrim_tilt);
+		static double dy = -range*cos(tilt), dz = -range*sin(tilt);
 		for (DWORD i = 0; i < nvtx; i++) {
 			vtx[i].y = (float)(y0[i] + level*dy);
 			vtx[i].z = (float)(z0[i] + level*dz);
 		}
-		oapiEditMeshGroup (hMesh, GRP_LIT_SURFACES_VC, &ges);
+		oapiEditMeshGroup (hMesh, GRP_VC4_LIT_VC, &ges);
 
 		DeltaGlider *dg = (DeltaGlider*)vessel;
 		double v;

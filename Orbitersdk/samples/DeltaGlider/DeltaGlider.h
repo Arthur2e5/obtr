@@ -171,6 +171,7 @@ class HUDControl;
 class MainRetroSubsystem;
 class HoverSubsystem;
 class RcsSubsystem;
+class AerodynCtrlSubsystem;
 class GearSubsystem;
 class MfdSubsystem;
 class PressureSubsystem;
@@ -222,11 +223,6 @@ public:
 	void RedrawVC_ThScram ();
 	void InitVCMesh ();
 
-	bool DecAttMode ();
-	bool IncAttMode ();
-	bool DecADCMode ();
-	bool IncADCMode ();
-
 	double GetMainThrusterLevel (int which) const { return GetThrusterLevel (th_main[which]); }
 	double GetRetroThrusterLevel (int which) const { return GetThrusterLevel (th_retro[which]); }
 	void   SetMainRetroLevel (int which, double lmain, double lretro);
@@ -260,6 +256,7 @@ public:
 	void clbkHUDMode (int mode);
 	void clbkMFDMode (int mfd, int mode);
 	void clbkNavMode (int mode, bool active);
+	void clbkDockEvent (int dock, OBJHANDLE mate);
 	int  clbkNavProcess (int mode);
 	int  clbkConsumeDirectKey (char *kstate);
 	int  clbkConsumeBufferedKey (DWORD key, bool down, char *kstate);
@@ -287,21 +284,16 @@ public:
 	int airbrake_tgt;
 
 	enum DoorStatus { DOOR_CLOSED, DOOR_OPEN, DOOR_CLOSING, DOOR_OPENING }
-		ladder_status, olock_status, ilock_status,
-		hatch_status, radiator_status, brake_status, undock_status, airbrakelever_status;
-	void ActivateUndocking (DoorStatus action);
-	void ActivateLadder (DoorStatus action);
+		olock_status, ilock_status, hatch_status, radiator_status, brake_status, airbrakelever_status;
 	void ActivateOuterAirlock (DoorStatus action);
 	void ActivateInnerAirlock (DoorStatus action);
 	void ActivateHatch (DoorStatus action);
 	void ActivateAirbrake (DoorStatus action, bool half_step = false);
 	void ActivateRadiator (DoorStatus action);
-	void RevertLadder ();
 	void RevertOuterAirlock ();
 	void RevertInnerAirlock ();
 	void RevertHatch ();
 	void RevertRadiator ();
-	void SetPressureValve (int id, DoorStatus action);
 	void SetInstrLight (bool on, bool force=false);
 	inline bool GetInstrLight () const { return instr_light_on; }
 	inline bool GetStrobeLight () const { return strobe_light_on; }
@@ -313,12 +305,9 @@ public:
 	void ModInstrBrightness (bool up);
 	void ModFloodBrightness (bool up);
 	void SetGearParameters (double state);
-	double ladder_proc, olock_proc, ilock_proc,
-		hatch_proc, radiator_proc, brake_proc, undock_proc, airbrakelever_proc;     // logical status
+	double olock_proc, ilock_proc, hatch_proc, radiator_proc, brake_proc, airbrakelever_proc;     // logical status
 
 	// Animation handles
-	UINT anim_undocklever;      // handle for undock lever animation
-	UINT anim_ladder;           // handle for front escape ladder animation
 	UINT anim_olock;            // handle for outer airlock animation
 	UINT anim_ilock;            // handle for inner airlock animation
 	UINT anim_hatch;            // handle for top hatch animation
@@ -332,7 +321,6 @@ public:
 	UINT anim_vc_trimwheel;     // VC elevator trim wheel
 	UINT anim_scramthrottle[2]; // VC scram throttle levers (left and right)
 	UINT anim_airbrakelever;    // VC airbrake lever
-	UINT anim_ladderswitch;     // VC ladder switch animation
 	UINT anim_radiatorswitch;   // VC radiator switch animation
 	UINT anim_instrbdial;       // VC instrument brightness dial
 	UINT anim_floodbdial;       // VC floodlight brightness dial
@@ -354,10 +342,6 @@ public:
 	enum {CAM_GENERIC, CAM_PANELMAIN, CAM_PANELUP, CAM_PANELDN, CAM_VCPILOT, CAM_VCPSNGR1, CAM_VCPSNGR2, CAM_VCPSNGR3, CAM_VCPSNGR4} campos;
 
 	BEACONLIGHTSPEC beacon[8];                   // light beacon definitions
-	//void SetNavlight (bool on);
-	//void SetBeacon (bool on);
-	//void SetStrobe (bool on);
-	//void SetDockingLight (bool on);
 	bool GetBeaconState (int which); // which=0:nav, 1:beacon, 2:strobe
 
 	double GetThrusterFlowRate(THRUSTER_HANDLE th);  // D. Beachy: get thruster flow rate in kg/s
@@ -385,6 +369,7 @@ private:
 	MainRetroSubsystem   *ssys_mainretro;        // main engine gimbal control system
 	HoverSubsystem       *ssys_hoverctrl;        // hover engine control system
 	RcsSubsystem         *ssys_rcs;              // reaction control subsystem
+	AerodynCtrlSubsystem *ssys_aerodyn;          // aerodynamic control subsystem
 	GearSubsystem        *ssys_gear;             // landing gear control subsystem
 	PressureSubsystem    *ssys_pressurectrl;     // pressure control system
 	DockingCtrlSubsystem *ssys_docking;          // docking control subsystem
@@ -418,7 +403,6 @@ private:
 	CTRLSURFHANDLE hlaileron, hraileron;         // control surface handles
 	PSTREAM_HANDLE hatch_vent;
 	double hatch_vent_t;
-	bool dockreleasedown;
 	SpotLight *docking_light;
 	PointLight *cockpit_light;
 	bool instr_light_on;                         // instrument illumination switch status
@@ -437,7 +421,6 @@ private:
 	int mainTSFCidx, scTSFCidx[2];
 	int mainpropidx[2], rcspropidx[2], scrampropidx[2];
 	int mainpropmass, rcspropmass, scrampropmass;
-	int rotidx[3][3]; // obsolete
 
 	struct PrpDisp {        // propellant status display parameters
 		int dsp_main,      dsp_rcs;
@@ -471,7 +454,6 @@ typedef struct {
 // Panel 0
 #define AID_PROPELLANTSTATUS     0
 #define AID_ENGINESCRAM          4
-#define AID_ADCTRLMODE           6
 #define AID_AOAINSTR             9
 #define AID_VSINSTR             10
 #define AID_SLIPINSTR           11
@@ -493,7 +475,6 @@ typedef struct {
 #define AID_SCRAMPROPMASS       43
 #define AID_RADIATORSWITCH      49
 #define AID_HATCHSWITCH         51
-#define AID_LADDERSWITCH        52
 #define AID_MWS                 53
 #define AID_AIRBRAKE            54
 #define AID_SWITCHARRAY         55
@@ -524,16 +505,11 @@ typedef struct {
 #define AID_MYAW               113
 #define AID_SCRAMTEMPDISP      114
 
-// Panel 2
-#define AID_DOCKRELEASE        207
-
 // Virtual cockpit-specific area identifiers:
 #define AID_MFD1_PWR           300
 #define AID_MFD2_PWR           301
 #define AID_BUTTONROW1         304
 #define AID_RADIATOREX         305
 #define AID_RADIATORIN         306
-#define AID_LADDEREX           307
-#define AID_LADDERIN           308
 
 #endif // !__DELTAGLIDER_H

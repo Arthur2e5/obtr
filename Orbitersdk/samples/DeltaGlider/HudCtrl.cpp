@@ -360,7 +360,7 @@ bool HUDUpDownSwitch::ProcessMouseVC (int event, VECTOR3 &p)
 	if (DGSwitch1::ProcessMouseVC (event, p)) {
 		DGSwitch1::State state = GetState();
 		switch (state) {
-			case DGSwitch1::UP: ctrl->ActivateHud (DeltaGlider::DOOR_OPENING); break;
+			case DGSwitch1::UP:   ctrl->ActivateHud (DeltaGlider::DOOR_OPENING); break;
 			case DGSwitch1::DOWN: ctrl->ActivateHud (DeltaGlider::DOOR_CLOSING); break;
 		}
 		return true;

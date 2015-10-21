@@ -979,14 +979,7 @@ RetroCoverControl::RetroCoverControl (MainRetroSubsystem *_subsys)
 	rcover_status = DeltaGlider::DOOR_CLOSED;
 	rcover_proc   = 0.0;
 
-	ELID_SWITCH = AddElement  (sw = new RetroCoverSwitch (this));
-
-	// Retro engine cover switch
-	static UINT RetroSwitchGrp = GRP_RETRO_COVER_SWITCH_VC;
-	static MGROUP_ROTATE RetroSwitchTransform (1, &RetroSwitchGrp, 1,
-		vc_rcoverswitch_ref, vc_rcoverswitch_axis, (float)(-50*RAD));
-	anim_retroswitch = DG()->CreateAnimation (0.5);
-	DG()->AddAnimationComponent (anim_retroswitch, 0, 1, &RetroSwitchTransform);
+	ELID_SWITCH = AddElement (sw = new RetroCoverSwitch (this));
 
 	// Retro cover animation
 	static UINT RCoverTLGrp[2] = {GRP_RCoverTL1,GRP_RCoverTL2};
@@ -1024,7 +1017,6 @@ void RetroCoverControl::Activate (DeltaGlider::DoorStatus action)
 	}
 	DG()->EnableRetroThrusters (action == DeltaGlider::DOOR_OPEN);
 	oapiTriggerPanelRedrawArea (1, AID_SWITCHARRAY);
-	DG()->SetAnimation (anim_retroswitch, close ? 0:1);
 	UpdateCtrlDialog (DG());
 	DG()->RecordEvent ("RCOVER", close ? "CLOSE" : "OPEN");
 }
@@ -1094,8 +1086,9 @@ bool RetroCoverControl::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// Retro engine cover switch
-	oapiVCRegisterArea (GlobalElId(ELID_SWITCH), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_SWITCH), vc_rcoverswitch_mousearea[0], vc_rcoverswitch_mousearea[1], vc_rcoverswitch_mousearea[2], vc_rcoverswitch_mousearea[3]);
+	oapiVCRegisterArea (GlobalElId(ELID_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
+	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_SWITCH), VC_RCOVER_SWITCH_mousearea[0], VC_RCOVER_SWITCH_mousearea[1], VC_RCOVER_SWITCH_mousearea[2], VC_RCOVER_SWITCH_mousearea[3]);
+	sw->DefineAnimationVC (VC_RCOVER_SWITCH_ref, VC_RCOVER_SWITCH_axis, GRP_SWITCH1_VC, VC_RCOVER_SWITCH_vofs);
 
 	return true;
 }
@@ -1104,13 +1097,12 @@ bool RetroCoverControl::clbkLoadVC (int vcid)
 
 void RetroCoverControl::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
 {
-	DG()->SetAnimation (anim_retroswitch, rcover_status & 1);
 }
 
 // ==============================================================
 
 RetroCoverSwitch::RetroCoverSwitch (RetroCoverControl *comp)
-: PanelElement (comp->DG()), component(comp)
+: DGSwitch1(comp->DG(), DGSwitch1::SPRING), component(comp)
 {
 }
 
@@ -1118,8 +1110,13 @@ RetroCoverSwitch::RetroCoverSwitch (RetroCoverControl *comp)
 
 bool RetroCoverSwitch::ProcessMouseVC (int event, VECTOR3 &p)
 {
-	DeltaGlider *dg = component->DG();
-	int pos = max(0, min (1, (int)(p.y*2.0)));
-	component->Activate (pos ? DeltaGlider::DOOR_CLOSING:DeltaGlider::DOOR_OPENING);
+	if (DGSwitch1::ProcessMouseVC (event, p)) {
+		DGSwitch1::State state = GetState();
+		switch (state) {
+			case DGSwitch1::UP: component->Activate (DeltaGlider::DOOR_CLOSING); break;
+			case DGSwitch1::DOWN: component->Activate (DeltaGlider::DOOR_OPENING); break;
+		}
+		return true;
+	}
 	return false;
 }

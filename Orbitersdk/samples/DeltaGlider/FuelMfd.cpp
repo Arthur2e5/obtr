@@ -31,6 +31,7 @@ FuelMFD::FuelMFD (VESSEL3 *v): PanelElement (v)
 	int i, j;
 	isScram = false;
 	doSetupVC = doSetup2D = true;
+	Mmain = 0.0;
 	for (i = 0; i < 9; i++)
 		for (j = 0; j < 5; j++) sout[i][j] = 0;
 	memset (&vc_grp, 0, sizeof(GROUPREQUESTSPEC));
@@ -83,6 +84,7 @@ void FuelMFD::Reset2D (MESHHANDLE hMesh)
 
 	DeltaGlider *dg = (DeltaGlider*)vessel;
 	isScram = dg->ScramVersion();
+	Mmain = dg->GetPropellantMass (dg->ph_main);
 	if (doSetup2D) {
 		NTVERTEX *Vtx = grp->Vtx+vtxofs;
 		crd_2D[0] = Vtx[8].y;   crd_2D[1] = Vtx[10].y;
@@ -100,6 +102,7 @@ void FuelMFD::ResetVC (DEVMESHHANDLE hMesh)
 
 	DeltaGlider *dg = (DeltaGlider*)vessel;
 	isScram = dg->ScramVersion();
+	Mmain = dg->GetPropellantMass (dg->ph_main);
 
 	vc_grp.nVtx = 20;
 	if (!vc_grp.Vtx) vc_grp.Vtx = new NTVERTEX[vc_grp.nVtx];

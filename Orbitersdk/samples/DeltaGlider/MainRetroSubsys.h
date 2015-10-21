@@ -228,12 +228,11 @@ private:
 	DeltaGlider::DoorStatus rcover_status;
 	double rcover_proc;
 	UINT anim_rcover;           // handle for retro cover animation
-	UINT anim_retroswitch;      // VC retro cover switch animation
 };
 
 // ==============================================================
 
-class RetroCoverSwitch: public PanelElement {
+class RetroCoverSwitch: public DGSwitch1 {
 public:
 	RetroCoverSwitch (RetroCoverControl *comp);
 	bool ProcessMouseVC (int event, VECTOR3 &p);

@@ -164,7 +164,7 @@ bool SwitchArray::Redraw2D (SURFHANDLE surf)
 			case 4: state = (dg->radiator_status == DeltaGlider::DOOR_OPEN || dg->radiator_status == DeltaGlider::DOOR_OPENING ? 1:0); break;
 			case 5: break; //state = (dg->rcover_status == DeltaGlider::DOOR_OPEN || dg->rcover_status == DeltaGlider::DOOR_OPENING ? 1:0); break;
 			case 6: state = (dg->hatch_status == DeltaGlider::DOOR_OPEN || dg->hatch_status == DeltaGlider::DOOR_OPENING ? 1:0); break;
-			case 7: state = (dg->ladder_status == DeltaGlider::DOOR_OPEN || dg->ladder_status == DeltaGlider::DOOR_OPENING ? 1:0); break;
+			case 7: break; //state = (dg->ladder_status == DeltaGlider::DOOR_OPEN || dg->ladder_status == DeltaGlider::DOOR_OPENING ? 1:0); break;
 		}
 		if (state != btnstate[i]) {
 			btnstate[i] = state;
@@ -194,7 +194,7 @@ bool SwitchArray::ProcessMouse2D (int event, int mx, int my)
 			case 4: dg->ActivateRadiator (state == 0 ? DeltaGlider::DOOR_CLOSING : DeltaGlider::DOOR_OPENING); return true;
 			case 5: return false; //dg->ActivateRCover (state == 0 ? DeltaGlider::DOOR_CLOSING : DeltaGlider::DOOR_OPENING); return true;
 			case 6: dg->ActivateHatch (state == 0 ? DeltaGlider::DOOR_CLOSING : DeltaGlider::DOOR_OPENING); return true;
-			case 7: dg->ActivateLadder (state == 0 ? DeltaGlider::DOOR_CLOSING : DeltaGlider::DOOR_OPENING); return true;
+			case 7: return false; //dg->ActivateLadder (state == 0 ? DeltaGlider::DOOR_CLOSING : DeltaGlider::DOOR_OPENING); return true;
 		}
 	}
 	return false;

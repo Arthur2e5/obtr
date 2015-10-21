@@ -1,4 +1,4 @@
-// Created by deltaglider_vc.m 26-Sep-2015
+// Created by deltaglider_vc.m 21-Oct-2015
 
 #ifndef __DG_VC_ANIM_H
 #define __DG_VC_ANIM_H
@@ -122,6 +122,75 @@ const VECTOR3 VC_BTN_HOVERMODE_2_ref = {-0.06894,0.98272,7.18026};
 
 // BTN_HOVERMODE_2 (VC): rotation axis
 const VECTOR3 VC_BTN_HOVERMODE_2_axis = {0.00000,-0.58280,0.81262};
+
+// GEARLEVER (VC): mouse catch area
+const VECTOR3 VC_GEARLEVER_mousearea[4] = {{-0.38900,0.90989,7.13172},{-0.35900,0.90989,7.13172},{-0.38900,1.00108,7.19712},{-0.35900,1.00108,7.19712}};
+
+// GEARLEVER (VC): rotation reference
+const VECTOR3 VC_GEARLEVER_ref = {-0.37400,0.92634,7.20505};
+
+// GEARLEVER (VC): rotation axis
+const VECTOR3 VC_GEARLEVER_axis = {1.00000,0.00000,0.00000};
+
+// AIRBRAKELEVER (VC): mouse catch area
+const VECTOR3 VC_AIRBRAKELEVER_mousearea[4] = {{-0.33700,0.97772,7.17631},{-0.29300,0.97772,7.17631},{-0.33700,1.04273,7.22293},{-0.29300,1.04273,7.22293}};
+
+// AIRBRAKELEVER (VC): rotation reference
+const VECTOR3 VC_AIRBRAKELEVER_ref = {-0.31500,0.94718,7.25322};
+
+// AIRBRAKELEVER (VC): rotation axis
+const VECTOR3 VC_AIRBRAKELEVER_axis = {1.00000,0.00000,0.00000};
+
+// ETRIMWHEEL (VC): mouse catch area
+const VECTOR3 VC_ETRIMWHEEL_mousearea[4] = {{-0.34600,0.87841,7.10545},{-0.31600,0.87841,7.10545},{-0.34600,0.96780,7.16956},{-0.31600,0.96780,7.16956}};
+
+// ETRIMWHEEL (VC): rotation reference
+const VECTOR3 VC_ETRIMWHEEL_ref = {-0.33100,0.89659,7.17448};
+
+// ETRIMWHEEL (VC): rotation axis
+const VECTOR3 VC_ETRIMWHEEL_axis = {1.00000,0.00000,0.00000};
+
+// ETRIMSCALE (VC): rotation reference
+const VECTOR3 VC_ETRIMSCALE_ref[3] = {{-0.31250,0.92067,7.13576},{-0.31950,0.92310,7.13751},{-0.31250,0.92554,7.13925}};
+
+// ETRIMSCALE (VC): rotation axis
+const VECTOR3 VC_ETRIMSCALE_axis = {0.00000,0.81262,0.58280};
+
+// NCONELEVER (VC): mouse catch area
+const VECTOR3 VC_NCONELEVER_mousearea[4] = {{0.35900,0.90989,7.13172},{0.38900,0.90989,7.13172},{0.35900,1.00108,7.19712},{0.38900,1.00108,7.19712}};
+
+// NCONELEVER (VC): rotation reference
+const VECTOR3 VC_NCONELEVER_ref = {0.37400,0.92634,7.20505};
+
+// NCONELEVER (VC): rotation axis
+const VECTOR3 VC_NCONELEVER_axis = {1.00000,0.00000,0.00000};
+
+// UNDOCKLEVER (VC): mouse catch area
+const VECTOR3 VC_UNDOCKLEVER_mousearea[4] = {{0.30450,0.91660,7.13284},{0.33950,0.91660,7.13284},{0.30450,1.01412,7.20278},{0.33950,1.01412,7.20278}};
+
+// UNDOCKLEVER (VC): rotation reference
+const VECTOR3 VC_UNDOCKLEVER_ref = {0.32200,0.92110,7.15145};
+
+// UNDOCKLEVER (VC): rotation axis
+const VECTOR3 VC_UNDOCKLEVER_axis = {1.00000,0.00000,0.00000};
+
+// RCOVER_SWITCH (VC): mouse catch area
+const VECTOR3 VC_RCOVER_SWITCH_mousearea[4] = {{0.30700,0.86332,7.09217},{0.32700,0.86332,7.09217},{0.30700,0.89583,7.11548},{0.32700,0.89583,7.11548}};
+
+// RCOVER_SWITCH (VC): rotation reference
+const VECTOR3 VC_RCOVER_SWITCH_ref = {0.31700,0.87783,7.10626};
+
+// RCOVER_SWITCH (VC): rotation axis
+const VECTOR3 VC_RCOVER_SWITCH_axis = {1.00000,0.00000,0.00000};
+
+// ELADDER_SWITCH (VC): mouse catch area
+const VECTOR3 VC_ELADDER_SWITCH_mousearea[4] = {{0.34200,0.86332,7.09217},{0.36200,0.86332,7.09217},{0.34200,0.89583,7.11548},{0.36200,0.89583,7.11548}};
+
+// ELADDER_SWITCH (VC): rotation reference
+const VECTOR3 VC_ELADDER_SWITCH_ref = {0.35200,0.87783,7.10626};
+
+// ELADDER_SWITCH (VC): rotation axis
+const VECTOR3 VC_ELADDER_SWITCH_axis = {1.00000,0.00000,0.00000};
 
 // RCS_DIAL (VC): mouse catch area
 const VECTOR3 VC_RCS_DIAL_mousearea[4] = {{0.05000,1.26200,7.26800},{0.08000,1.26200,7.26800},{0.05000,1.29200,7.26800},{0.08000,1.29200,7.26800}};
@@ -381,69 +450,6 @@ const VECTOR3 VC_LOCK_O2_SWITCH_ref = {-0.06740,1.69530,6.78479};
 // LOCK_O2_SWITCH (VC): rotation axis
 const VECTOR3 VC_LOCK_O2_SWITCH_axis = {1.00000,0.00000,0.00000};
 
-// Gear lever (VC): mouse catch area
-const VECTOR3 vc_gearlever_mousearea[4] = {{-0.38900,0.90014,7.12473},{-0.35900,0.90014,7.12473},{-0.38900,0.99132,7.19012},{-0.35900,0.99132,7.19012}};
-
-// Nosecone lever (VC): mouse catch area
-const VECTOR3 vc_nconelever_mousearea[4] = {{0.35900,0.90014,7.12473},{0.38900,0.90014,7.12473},{0.35900,0.99132,7.19012},{0.38900,0.99132,7.19012}};
-
-// Undock lever (VC): mouse catch area
-const VECTOR3 vc_undocklever_mousearea[4] = {{0.30450,0.88247,7.10837},{0.33950,0.88247,7.10837},{0.30450,0.97999,7.17830},{0.33950,0.97999,7.17830}};
-
-// Airbrake lever (VC): mouse catch area
-const VECTOR3 vc_abrakelever_mousearea[4] = {{-0.33700,0.97755,7.17655},{-0.29300,0.97755,7.17655},{-0.33700,1.04256,7.22318},{-0.29300,1.04256,7.22318}};
-
-// Elevator trim wheel (VC): mouse catch area
-const VECTOR3 vc_etrimwheel_mousearea[4] = {{-0.34600,0.87841,7.10545},{-0.31600,0.87841,7.10545},{-0.34600,0.96780,7.16956},{-0.31600,0.96780,7.16956}};
-
-// Elevator trim indicator (VC): neutral position y
-const double vc_etrim_needle0_y[3] = {0.920665,0.923103,0.925541};
-
-// Elevator trim indicator (VC): neutral position z
-const double vc_etrim_needle0_z[3] = {7.135757,7.137506,7.139254};
-
-// Elevator trim indicator (VC): tilt angle
-const double vc_etrim_tilt = 0.622165;
-
-// Elevator trim wheel (VC): rotation axis
-const VECTOR3 etrim_wheel_axis = {1.00000,0.00000,0.00000};
-
-// Elevator trim wheel (VC): rotation reference
-const VECTOR3 etrim_wheel_ref = {-0.33500,0.89425,7.17773};
-
-// Gear lever (VC): rotation axis
-const VECTOR3 vc_gearlever_axis = {1.00000,0.00000,0.00000};
-
-// Gear lever (VC): rotation reference
-const VECTOR3 vc_gearlever_ref = {-0.37400,0.91659,7.19806};
-
-// Airbrake lever (VC): rotation axis
-const VECTOR3 vc_abrakelever_axis = {1.00000,0.00000,0.00000};
-
-// Airbrake lever (VC): rotation reference
-const VECTOR3 vc_abrakelever_ref = {-0.31700,0.94718,7.25322};
-
-// Nosecone lever (VC): rotation axis
-const VECTOR3 vc_nconelever_axis = {1.00000,0.00000,0.00000};
-
-// Nosecone lever (VC): rotation reference
-const VECTOR3 vc_nconelever_ref = {0.37400,0.91659,7.19806};
-
-// Undock lever (VC): rotation axis
-const VECTOR3 vc_undocklever_axis = {1.00000,0.00000,0.00000};
-
-// Undock lever (VC): rotation reference
-const VECTOR3 vc_undocklever_ref = {0.32200,0.88697,7.12697};
-
-// Retro cover switch (VC): rotation axis
-const VECTOR3 vc_rcoverswitch_axis = {1.00000,0.00000,0.00000};
-
-// Retro cover switch (VC): rotation reference
-const VECTOR3 vc_rcoverswitch_ref = {0.00000,1.00378,7.19660};
-
-// Retro cover switch (VC): mouse catch area
-const VECTOR3 vc_rcoverswitch_mousearea[4] = {{0.29700,0.98115,7.17668},{0.33700,0.98115,7.17668},{0.29700,1.02991,7.21164},{0.33700,1.02991,7.21164}};
-
 const int VC_AF_DIAL_vofs = 0;
 
 const int VC_GIMBAL_DIAL_vofs = 76;
@@ -479,6 +485,18 @@ const int VC_BTN_HOVERMODE_1_LABEL_vofs = 8;
 const int VC_BTN_HOVERMODE_2_vofs = 40;
 
 const int VC_BTN_HOVERMODE_2_LABEL_vofs = 16;
+
+const int VC_GEAR_INDICATOR_vofs = 8;
+
+const int VC_ETRIMSCALE_vofs = 12;
+
+const int VC_NCONE_INDICATOR_vofs = 19;
+
+const int VC_RCOVER_SWITCH_vofs = 0;
+
+const int VC_ELADDER_SWITCH_vofs = 33;
+
+const int VC_SEAL_INDICATOR_vofs = 23;
 
 const int VC_RCS_DIAL_vofs = 228;
 
@@ -520,32 +538,32 @@ const int VC_BTN_NAVMODE_6_vofs = 220;
 
 const int VC_BTN_NAVMODE_6_LABEL_vofs = 88;
 
-const int VC_INSTRLIGHT_SWITCH_vofs = 0;
+const int VC_INSTRLIGHT_SWITCH_vofs = 66;
 
-const int VC_FLOODLIGHT_SWITCH_vofs = 33;
+const int VC_FLOODLIGHT_SWITCH_vofs = 99;
 
-const int VC_HUDRETRACT_SWITCH_vofs = 66;
+const int VC_HUDRETRACT_SWITCH_vofs = 132;
 
-const int VC_LANDINGLIGHT_SWITCH_vofs = 99;
+const int VC_LANDINGLIGHT_SWITCH_vofs = 165;
 
-const int VC_STROBELIGHT_SWITCH_vofs = 132;
+const int VC_STROBELIGHT_SWITCH_vofs = 198;
 
-const int VC_NAVLIGHT_SWITCH_vofs = 165;
+const int VC_NAVLIGHT_SWITCH_vofs = 231;
 
-const int VC_HATCH_SWITCH_vofs = 198;
+const int VC_HATCH_SWITCH_vofs = 264;
 
-const int VC_ILOCK_SWITCH_vofs = 231;
+const int VC_ILOCK_SWITCH_vofs = 297;
 
-const int VC_OLOCK_SWITCH_vofs = 264;
+const int VC_OLOCK_SWITCH_vofs = 330;
 
-const int VC_CABIN_O2_SWITCH_vofs = 297;
+const int VC_CABIN_O2_SWITCH_vofs = 363;
 
-const int VC_VALVE1_SWITCH_vofs = 330;
+const int VC_VALVE1_SWITCH_vofs = 396;
 
-const int VC_VALVE2_SWITCH_vofs = 363;
+const int VC_VALVE2_SWITCH_vofs = 429;
 
-const int VC_VALVE3_SWITCH_vofs = 396;
+const int VC_VALVE3_SWITCH_vofs = 462;
 
-const int VC_LOCK_O2_SWITCH_vofs = 429;
+const int VC_LOCK_O2_SWITCH_vofs = 495;
 
 #endif // !__DG_VC_ANIM_H

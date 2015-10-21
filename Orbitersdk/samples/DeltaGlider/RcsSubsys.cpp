@@ -21,15 +21,25 @@
 RcsSubsystem::RcsSubsystem (DeltaGlider *dg, int ident)
 : DGSubsystem (dg, ident)
 {
-	ELID_MODEDIAL    = AddElement (modedial = new RcsModeDial(this));
+	// create component instances
+	AddComponent (modeselector = new RcsModeSelector (this));
+
 	ELID_PROGBUTTONS = AddElement (progbuttons = new RcsProgButtons(this));
+}
+
+// --------------------------------------------------------------
+
+RcsSubsystem::~RcsSubsystem ()
+{
+	// delete components
+	delete modeselector;
 }
 
 // --------------------------------------------------------------
 
 void RcsSubsystem::SetMode (int mode)
 {
-	oapiTriggerRedrawArea (0, 0, GlobalElId(ELID_MODEDIAL));
+	modeselector->SetMode (mode);
 }
 
 // --------------------------------------------------------------
@@ -46,14 +56,10 @@ bool RcsSubsystem::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW
 {
 	if (panelid != 0) return false;
 
-	// RCS mode dial
-	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_MODEDIAL), _R(1142, 69,1182,113), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, 0, modedial);
-
 	// RCS program buttons
 	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_PROGBUTTONS), _R(1121,119,1197,273), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN, 0, progbuttons);
 
-	return true;
+	return DGSubsystem::clbkLoadPanel2D (panelid, hPanel, viewW, viewH);
 }
 
 // --------------------------------------------------------------
@@ -61,11 +67,6 @@ bool RcsSubsystem::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW
 bool RcsSubsystem::clbkLoadVC (int vcid)
 {
 	if (vcid != 0) return false;
-
-	// RCS mode dial
-	oapiVCRegisterArea (GlobalElId(ELID_MODEDIAL), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_MODEDIAL), VC_RCS_DIAL_mousearea[0], VC_RCS_DIAL_mousearea[1], VC_RCS_DIAL_mousearea[2], VC_RCS_DIAL_mousearea[3]);
-	modedial->DefineAnimationVC (VC_RCS_DIAL_ref, VC_RCS_DIAL_axis, GRP_DIAL1_VC, VC_RCS_DIAL_vofs);
 
 	// Navmode indicator/selector on the top right of the front panel
 	oapiVCRegisterArea (GlobalElId(ELID_PROGBUTTONS), PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
@@ -78,6 +79,82 @@ bool RcsSubsystem::clbkLoadVC (int vcid)
 		progbuttons->DefineAnimationsVC (VC_BTN_NAVMODE_1_axis, GRP_BUTTON3_VC, GRP_LIT_SURF_VC, navbtn_vofs, navlbl_vofs);
 	}
 
+	return DGSubsystem::clbkLoadVC (vcid);
+}
+
+
+// ==============================================================
+// Control selector dial
+// ==============================================================
+
+RcsModeSelector::RcsModeSelector (RcsSubsystem *_subsys)
+: DGSubsystemComponent(_subsys)
+{
+	ELID_DIAL = AddElement (dial = new RcsModeDial (this));
+}
+
+// --------------------------------------------------------------
+
+int RcsModeSelector::GetMode ()
+{
+	return DG()->GetAttitudeMode();
+}
+
+// --------------------------------------------------------------
+
+void RcsModeSelector::SetMode (int mode)
+{
+	int curmode = GetMode();
+	if (curmode != mode) DG()->SetAttitudeMode (mode);
+	oapiTriggerRedrawArea (0, 0, GlobalElId(ELID_DIAL));
+}
+
+// --------------------------------------------------------------
+
+bool RcsModeSelector::IncMode ()
+{
+	int mode = GetMode();
+	if (mode < 2) {
+		SetMode (mode+1);
+		return true;
+	} else return false;
+}
+
+// --------------------------------------------------------------
+
+bool RcsModeSelector::DecMode ()
+{
+	int mode = GetMode();
+	if (mode) {
+		SetMode (mode-1);
+		return true;
+	} else return false;
+}
+
+// --------------------------------------------------------------
+
+bool RcsModeSelector::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
+{
+	if (panelid != 0) return false;
+
+	// RCS mode dial
+	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_DIAL), _R(1142, 69,1182,113), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, 0, dial);
+
+	return true;
+}
+
+// --------------------------------------------------------------
+
+bool RcsModeSelector::clbkLoadVC (int vcid)
+{
+	if (vcid != 0) return false;
+
+	// RCS mode dial
+	oapiVCRegisterArea (GlobalElId(ELID_DIAL), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN);
+	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_DIAL), VC_RCS_DIAL_mousearea[0], VC_RCS_DIAL_mousearea[1], VC_RCS_DIAL_mousearea[2], VC_RCS_DIAL_mousearea[3]);
+	dial->DefineAnimationVC (VC_RCS_DIAL_ref, VC_RCS_DIAL_axis, GRP_DIAL1_VC, VC_RCS_DIAL_vofs);
+
 	return true;
 }
 
@@ -86,8 +163,8 @@ bool RcsSubsystem::clbkLoadVC (int vcid)
 // Mode dial
 // ==============================================================
 
-RcsModeDial::RcsModeDial (RcsSubsystem *_subsys)
-: DGDial1(_subsys->DG(), 3, -50*RAD, 50*RAD), subsys(_subsys)
+RcsModeDial::RcsModeDial (RcsModeSelector *comp)
+: DGDial1(comp->DG(), 3, -50*RAD, 50*RAD), component(comp)
 {
 }
 
@@ -103,7 +180,7 @@ void RcsModeDial::Reset2D (MESHHANDLE hMesh)
 
 void RcsModeDial::ResetVC (DEVMESHHANDLE hMesh)
 {
-	DWORD mode = subsys->DG()->GetAttitudeMode();
+	DWORD mode = component->DG()->GetAttitudeMode();
 	SetPosition (mode);
 }
 
@@ -120,7 +197,7 @@ bool RcsModeDial::Redraw2D (SURFHANDLE surf)
 	static const float tx_dy = 43.0f;              // texture block height
 	static float tu[4] = {tx_x0/texw,(tx_x0+tx_dx)/texw,tx_x0/texw,(tx_x0+tx_dx)/texw};
 
-	float dtu = (float)(subsys->DG()->GetAttitudeMode()*40.0)/texw;
+	float dtu = (float)(component->DG()->GetAttitudeMode()*40.0)/texw;
 	for (int i = 0; i < 4; i++)
 		grp->Vtx[vtxofs+i].tu = tu[i]+dtu;
 	return false;
@@ -130,7 +207,7 @@ bool RcsModeDial::Redraw2D (SURFHANDLE surf)
 
 bool RcsModeDial::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 {
-	int pos = subsys->DG()->GetAttitudeMode();
+	int pos = component->GetMode();
 	SetPosition(pos);
 	return DGDial1::RedrawVC (hMesh, surf);
 }
@@ -139,7 +216,7 @@ bool RcsModeDial::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 
 bool RcsModeDial::ProcessMouse2D (int event, int mx, int my)
 {
-	return (mx < 20 ? subsys->DG()->DecAttMode() : subsys->DG()->IncAttMode());
+	return (mx < 20 ? component->DecMode() : component->IncMode());
 }
 
 // --------------------------------------------------------------
@@ -148,7 +225,7 @@ bool RcsModeDial::ProcessMouseVC (int event, VECTOR3 &p)
 {
 	if (DGDial1::ProcessMouseVC (event, p)) {
 		int pos = GetPosition();
-		subsys->DG()->SetAttitudeMode (pos);
+		component->SetMode (pos);
 		return true;
 	}
 	return false;

@@ -440,14 +440,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\AtctrlDial.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\AtctrlDial.h"
-					>
-				</File>
-				<File
 					RelativePath=".\CockpitLight.cpp"
 					>
 				</File>
@@ -569,18 +561,18 @@
 					RelativePath=".\ThrottleScram.h"
 					>
 				</File>
-				<File
-					RelativePath=".\UndockBtn.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\UndockBtn.h"
-					>
-				</File>
 			</Filter>
 			<Filter
 				Name="Subsystems"
 				>
+				<File
+					RelativePath=".\AerodynSubsys.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\AerodynSubsys.h"
+					>
+				</File>
 				<File
 					RelativePath=".\DGSubsys.cpp"
 					>

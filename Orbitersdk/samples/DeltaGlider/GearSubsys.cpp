@@ -138,7 +138,7 @@ GearControl::GearControl (GearSubsystem *_subsys)
 	// VC gear lever animation
 	static UINT GearLeverGrp = GRP_GEAR_LEVER_VC;
 	static MGROUP_ROTATE GearLeverTransform (1, &GearLeverGrp, 1,
-		vc_gearlever_ref, vc_gearlever_axis, (float)(-70*RAD));
+		VC_GEARLEVER_ref, VC_GEARLEVER_axis, (float)(-70*RAD));
 	anim_gearlever = DG()->CreateAnimation (0.5);
 	DG()->AddAnimationComponent (anim_gearlever, 0, 1, &GearLeverTransform);
 }
@@ -244,7 +244,7 @@ bool GearControl::clbkLoadVC (int vcid)
 
 	// Gear lever
 	oapiVCRegisterArea (GlobalElId(ELID_LEVER), PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_LEVER), vc_gearlever_mousearea[0], vc_gearlever_mousearea[1], vc_gearlever_mousearea[2], vc_gearlever_mousearea[3]);
+	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_LEVER), VC_GEARLEVER_mousearea[0], VC_GEARLEVER_mousearea[1], VC_GEARLEVER_mousearea[2], VC_GEARLEVER_mousearea[3]);
 
 	// Gear indicator
 	oapiVCRegisterArea (GlobalElId(ELID_INDICATOR), PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE);
@@ -392,7 +392,7 @@ bool GearIndicator::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 	}
 	if (showlights != light) {
 		GROUPEDITSPEC ges;
-		static WORD vtxofs = 7;
+		static WORD vtxofs = VC_GEAR_INDICATOR_vofs;
 		static const DWORD nvtx = 2;
 		static WORD vidx[nvtx] = {vtxofs,vtxofs+1};
 		static float v[2] = {0.2427f,0.3042f};
@@ -403,7 +403,7 @@ bool GearIndicator::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 		ges.Vtx = vtx;
 		ges.vIdx = vidx;
 		ges.nVtx = nvtx;
-		oapiEditMeshGroup (hMesh, GRP_LIT_SURFACES_VC, &ges);
+		oapiEditMeshGroup (hMesh, GRP_VC4_LIT_VC, &ges);
 		light = showlights;
 	}
 	return false;
