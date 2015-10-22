@@ -111,7 +111,7 @@ Atlantis::Atlantis (OBJHANDLE hObj, int fmodel)
 	pET = NULL; // ET reference
 
 	center_arm      = false;
-	arm_moved       = false;
+	arm_moved       = arm_scheduled = false;
 	bManualSeparate = false;
 	ofs_sts_sat     = _V(0,0,0);      
 	do_eva          = false;
@@ -610,19 +610,19 @@ void Atlantis::DefineAnimations (void)
 
 	static UINT RMSShoulderYawGrp[1] = {GRP_Shoulder};
 	rms_anim[0] = new MGROUP_ROTATE (midx, RMSShoulderYawGrp, 1,
-		_V(-2.26, 1.5, 10), _V(0, 1, 0), (float)(-360*RAD)); // -180 .. +180
+		_V(-2.26, 1.70, 9.65), _V(0, 1, 0), (float)(-360*RAD)); // -180 .. +180
 	anim_arm_sy = CreateAnimation (0.5);
 	parent = AddAnimationComponent (anim_arm_sy, 0, 1, rms_anim[0]);
 
 	static UINT RMSShoulderPitchGrp[1] = {GRP_Humerus};
 	rms_anim[1] = new MGROUP_ROTATE (midx, RMSShoulderPitchGrp, 1,
-		_V(-2.26, 1.8, 10), _V(1, 0, 0), (float)(147*RAD)); // -2 .. +145
+		_V(-2.26, 1.70, 9.65), _V(1, 0, 0), (float)(147*RAD)); // -2 .. +145
 	anim_arm_sp = CreateAnimation (0.0136);
 	parent = AddAnimationComponent (anim_arm_sp, 0, 1, rms_anim[1], parent);
 
 	static UINT RMSElbowPitchGrp[3] = {GRP_radii,GRP_RMScamera,GRP_RMScamera_pivot};
 	rms_anim[2] = new MGROUP_ROTATE (midx, RMSElbowPitchGrp, 3,
-		_V(-2.26,1.7,3.3), _V(1,0,0), (float)(-162*RAD)); // -160 .. +2
+		_V(-2.26,1.55,3.10), _V(1,0,0), (float)(-162*RAD)); // -160 .. +2
 	anim_arm_ep = CreateAnimation (0.0123);
 	parent = AddAnimationComponent (anim_arm_ep, 0, 1, rms_anim[2], parent);
 
@@ -1226,7 +1226,7 @@ void Atlantis::RevertSpeedbrake (void)
 void Atlantis::SetAnimationArm (UINT anim, double state)
 {
 	SetAnimation (anim, state);
-	arm_moved = true;
+	arm_scheduled = true;
 
 	HWND hDlg;
 	if (!SatStowed() && (hDlg = oapiFindDialog (g_Param.hDLL, IDD_RMS))) {
@@ -1362,9 +1362,12 @@ void Atlantis::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 		}
 	}
 
-	ofs_sts_sat.x=sts_sat_x;
-	ofs_sts_sat.y=sts_sat_y;
-	ofs_sts_sat.z=sts_sat_z;
+	if (sts_sat_x || sts_sat_y || sts_sat_z) {
+		ofs_sts_sat.x=sts_sat_x;
+		ofs_sts_sat.y=sts_sat_y;
+		ofs_sts_sat.z=sts_sat_z;
+		SetAttachmentParams (sat_attach, ofs_sts_sat, _V(0,1,0), _V(0,0,1));
+	}
 
 	// optional meshes
 	if (do_cargostatic && !mesh_cargo) {
@@ -1377,7 +1380,6 @@ void Atlantis::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 	t0 = ascap->GetMT0();
 
 	SetGearParameters (gear_proc);
-	UpdateMesh ();
 }
 
 // --------------------------------------------------------------
@@ -1477,6 +1479,8 @@ void Atlantis::clbkPostCreation ()
 	EnableRCS (status == 3);
 	EnableOMS (status == 3);
 	//SetADCtrlMode (status < 3 ? 0 : 7);
+
+	UpdateMesh ();
 }
 
 // --------------------------------------------------------------
@@ -1648,6 +1652,10 @@ void Atlantis::clbkPreStep (double simt, double simdt, double mjd)
 	if (arm_moved) {
 		SetAttachmentParams (rms_attach, arm_tip[0], arm_tip[1]-arm_tip[0], arm_tip[2]-arm_tip[0]);
 		arm_moved = false;
+	}
+	if (arm_scheduled) {
+		arm_scheduled = false;
+		arm_moved = true;
 	}
 }
 

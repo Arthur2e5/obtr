@@ -2,6 +2,7 @@
 #include "MainRetroSubsys.h"
 #include "GearSubsys.h"
 #include "DockingSubsys.h"
+#include "AerodynSubsys.h"
 #include <stdio.h>
 
 extern "C" {
@@ -171,6 +172,6 @@ static int dgABrake (lua_State *L)
 	DeltaGlider *dg = lua_toDG (L, 1);
 	int action = lua_tointeger (L, 2);
 	if (dg && action >= 0 && action < 2)
-		dg->ActivateAirbrake (DGaction[action]);
+		dg->SubsysAerodyn()->ActivateAirbrake (DGaction[action]);
 	return 0;
 }

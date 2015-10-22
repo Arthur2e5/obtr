@@ -17,7 +17,6 @@
 #include "InstrAoa.h"
 #include "InstrVs.h"
 #include "ElevTrim.h"
-#include "Airbrake.h"
 #include "HudCtrl.h"
 #include "FuelMfd.h"
 #include "ThrottleScram.h"
@@ -175,11 +174,6 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	ilock_proc        = 0.0;
 	hatch_status      = DOOR_CLOSED;
 	hatch_proc        = 0.0;
-	brake_status      = DOOR_CLOSED;
-	brake_proc        = 0.0;
-	airbrakelever_status = DOOR_CLOSED;
-	airbrakelever_proc   = 0.0;
-	airbrake_tgt         = 0;
 	radiator_status   = DOOR_CLOSED;
 	radiator_proc     = 0.0;
 	visual            = NULL;
@@ -300,7 +294,6 @@ void DeltaGlider::CreatePanelElements ()
 	instr[3]  = new InstrVS (this);
 	instr[4]  = new FuelMFD (this);
 	instr[6]  = new ElevatorTrim (this);
-	instr[7]  = new Airbrake (this);
 	instr[25] = new SwitchArray (this);
 	instr[27] = new MWSButton (this);
 	instr[38] = new InstrLightSwitch (this);
@@ -439,24 +432,6 @@ void DeltaGlider::DefineAnimations ()
 	anim_raileron = CreateAnimation (0.5);
 	AddAnimationComponent (anim_raileron, 0, 1, &RAileron);
 
-	// ***** Airbrake animation *****
-	static UINT UpperBrakeGrp[4] = {35,30,52,55};
-	static MGROUP_ROTATE UpperBrake (0, UpperBrakeGrp, 4,
-		_V(0,-0.4,-6.0), _V(1,0,0), (float)(50*RAD));
-	static UINT LowerBrakeGrp[4] = {29,36,51,54};
-	static MGROUP_ROTATE LowerBrake (0, LowerBrakeGrp, 4,
-		_V(0,-0.4,-6.0), _V(1,0,0), (float)(-50*RAD));
-	static MGROUP_ROTATE RRudderBrake (0, RRudderGrp, 2,
-		_V( 8.668,0.958,-6.204), _V( 0.143,0.975,-0.172), (float)( 25*RAD));
-	static MGROUP_ROTATE LRudderBrake (0, LRudderGrp, 2,
-		_V(-8.668,0.958,-6.204), _V(-0.143,0.975,-0.172), (float)(-25*RAD));
-
-	anim_brake = CreateAnimation (0);
-	AddAnimationComponent (anim_brake, 0, 1, &UpperBrake);
-	AddAnimationComponent (anim_brake, 0, 1, &LowerBrake);
-	AddAnimationComponent (anim_brake, 0, 1, &RRudderBrake);
-	AddAnimationComponent (anim_brake, 0, 1, &LRudderBrake);
-
 	// ======================================================
 	// VC animation definitions
 	// ======================================================
@@ -481,13 +456,6 @@ void DeltaGlider::DefineAnimations ()
 		_V(0,0.7849,6.96), _V(1,0,0), (float)(30*RAD));
 	anim_scramthrottle[1] =  CreateAnimation (0);
 	AddAnimationComponent (anim_scramthrottle[1], 0, 1, &ScramThrottleR);
-
-	// Airbrake lever
-	static UINT AirbrakeLeverGrp = GRP_AIRBRAKE_LEVER_VC;
-	static MGROUP_ROTATE AirbrakeLeverTransform (1, &AirbrakeLeverGrp, 1,
-		VC_AIRBRAKELEVER_ref, VC_AIRBRAKELEVER_axis, (float)(-40*RAD));
-	anim_airbrakelever = CreateAnimation(0.8);
-	AddAnimationComponent (anim_airbrakelever, 0, 1, &AirbrakeLeverTransform);
 
 	// Instrument illumination brightness dial
 	static UINT InstrBDialGrp = GRP_INSTR_BRIGHTNESS_VC;
@@ -609,10 +577,6 @@ void DeltaGlider::InitPanel (int panel)
 			mainpropidx[i] = rcspropidx[i] = scrampropidx[i] = -1;
 		mainpropmass = rcspropmass = scrampropmass = -1;
 		hoverflowidx = mainTSFCidx = -1;
-
-		memset (&p_prpdisp, 0, sizeof(p_prpdisp));
-		memset (&p_engdisp, 0, sizeof(p_engdisp));
-		memset (&p_rngdisp, 0, sizeof(p_rngdisp));
 		break;
 	case 1: // overhead panel
 		srf[0] = oapiCreateSurface (LOADBMP (IDB_SWITCH1));
@@ -655,11 +619,6 @@ void DeltaGlider::InitVC (int vc)
 			mainpropidx[i] = rcspropidx[i] = scrampropidx[i] = -1;
 		hoverflowidx = mainTSFCidx = -1;
 		mainpropmass = rcspropmass = scrampropmass = -1;
-
-		memset (&p_prpdisp, 0, sizeof(p_prpdisp));
-		memset (&p_engdisp, 0, sizeof(p_engdisp));
-		memset (&p_rngdisp, 0, sizeof(p_rngdisp));
-
 		break;
 	}
 }
@@ -825,9 +784,10 @@ void DeltaGlider::clbkRenderHUD (int mode, const HUDPAINTSPEC *hps, SURFHANDLE h
 	}
 
 	// show airbrake status
-	if (brake_status != DOOR_CLOSED) {
+	DoorStatus abrake = ssys_aerodyn->AirbrakeStatus();
+	if (abrake != DOOR_CLOSED) {
 		double tmp;
-		if (brake_status == DOOR_OPEN || modf (oapiGetSimTime(), &tmp) < 0.5) {
+		if (abrake == DOOR_OPEN || modf (oapiGetSimTime(), &tmp) < 0.5) {
 			memcpy (vtx+nvtx, vbrk, 4*sizeof(NTVERTEX));
 			for (i = 0; i < 6; i++) idx[nidx+i] = ibrk[i]+nvtx;
 			nvtx += 4;
@@ -931,23 +891,6 @@ void DeltaGlider::RevertInnerAirlock ()
 {
 	ActivateInnerAirlock (ilock_status == DOOR_CLOSED || ilock_status == DOOR_CLOSING ?
 		                  DOOR_OPENING : DOOR_CLOSING);
-}
-
-void DeltaGlider::ActivateAirbrake (DoorStatus action, bool half_step)
-{
-	const double eps = 1e-8;
-	brake_status = airbrakelever_status = action;
-	if (action <= DOOR_OPEN) {
-		brake_proc = airbrakelever_proc = (action == DOOR_CLOSED ? 0.0 : 1.0);
-		SetAnimation (anim_brake, brake_proc);
-		SetAnimation (anim_airbrakelever, airbrakelever_proc);
-	} else if (action == DOOR_OPENING) {
-		airbrake_tgt = (airbrakelever_proc < 0.5-eps ? 1:2);
-	} else {
-		airbrake_tgt = (airbrakelever_proc > 0.5+eps ? 1:0);
-	}
-	oapiTriggerPanelRedrawArea (0, AID_AIRBRAKE);
-	RecordEvent ("AIRBRAKE", action == DOOR_CLOSING ? "CLOSE" : "OPEN");
 }
 
 void DeltaGlider::SetInstrLight (bool on, bool force)
@@ -1510,7 +1453,7 @@ void DeltaGlider::UpdateStatusIndicators ()
 	vtx[2].tu = vtx[3].tu = x;
 
 	// airbrake indicator
-	x = (brake_status == DOOR_CLOSED ? xoff : brake_status == DOOR_OPEN ? xon : modf (oapiGetSimTime(), &d) < 0.5 ? xon : xoff);
+	x = (ssys_aerodyn->AirbrakeStatus() == DOOR_CLOSED ? xoff : ssys_aerodyn->AirbrakeStatus() == DOOR_OPEN ? xon : modf (oapiGetSimTime(), &d) < 0.5 ? xon : xoff);
 	vtx[4].tu = vtx[5].tu = x;
 
 	// nose cone indicator
@@ -1864,7 +1807,7 @@ void DeltaGlider::clbkSetClassCaps (FILEHANDLE cfg)
 	CreateVariableDragElement (ssys_mainretro->RCoverPositionPtr(), 0.2, _V(0,-0.5,6.5)); // retro covers
 	CreateVariableDragElement (ssys_docking->NoseconePositionPtr(), 3, _V(0, 0, 8));        // nose cone
 	CreateVariableDragElement (&radiator_proc, 1, _V(0,1.5,-4));   // radiator
-	CreateVariableDragElement (&brake_proc, 4, _V(0,0,-8));        // airbrake
+	CreateVariableDragElement (ssys_aerodyn->AirbrakePositionPtr(), 4, _V(0,0,-8));        // airbrake
 
 	SetRotDrag (_V(0.10,0.13,0.04));
 	// angular damping
@@ -1928,18 +1871,6 @@ void DeltaGlider::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 			sscanf (line+7, "%d%lf", &olock_status, &olock_proc);
 		} else if (!_strnicmp (line, "IAIRLOCK", 8)) {
 			sscanf (line+8, "%d%lf", &ilock_status, &ilock_proc);
-		} else if (!_strnicmp (line, "AIRBRAKE", 8)) {
-			sscanf (line+8, "%d%lf", &brake_status, &brake_proc);
-			if (fabs (brake_proc-0.5) < 0.1 && brake_status <= DOOR_OPEN) {
-				airbrake_tgt = 1;
-				airbrakelever_status = DOOR_CLOSED; airbrakelever_proc = 0.5;
-			} else if (brake_status == DOOR_OPEN || brake_status == DOOR_OPENING) {
-				airbrake_tgt = 2;
-				airbrakelever_status = DOOR_OPEN; airbrakelever_proc = 1.0;
-			} else {
-				airbrake_tgt = 0;
-				airbrakelever_status = DOOR_CLOSED; airbrakelever_proc = 0.0;
-			}
 		} else if (!_strnicmp (line, "RADIATOR", 8)) {
 			sscanf (line+8, "%d%lf", &radiator_status, &radiator_proc);
 		} else if (!_strnicmp (line, "HATCH", 5)) {
@@ -2035,10 +1966,6 @@ void DeltaGlider::clbkSaveState (FILEHANDLE scn)
 		sprintf (cbuf, "%d %0.4f", ilock_status, ilock_proc);
 		oapiWriteScenario_string (scn, "IAIRLOCK", cbuf);
 	}
-	if (brake_status || brake_proc) {
-		sprintf (cbuf, "%d %0.4f", brake_status, brake_proc);
-		oapiWriteScenario_string (scn, "AIRBRAKE", cbuf);
-	}
 	if (radiator_status) {
 		sprintf (cbuf, "%d %0.4f", radiator_status, radiator_proc);
 		oapiWriteScenario_string (scn, "RADIATOR", cbuf);
@@ -2093,8 +2020,6 @@ void DeltaGlider::clbkPostCreation ()
 	SetAnimation (anim_ilock, ilock_proc);
 	SetAnimation (anim_hatch, hatch_proc);
 	SetAnimation (anim_radiator, radiator_proc);
-	SetAnimation (anim_brake, brake_proc);
-	SetAnimation (anim_airbrakelever, airbrakelever_status & 1);
 	SetAnimation (anim_radiatorswitch, radiator_status & 1);
 
 	if (insignia_tex)
@@ -2119,7 +2044,7 @@ bool DeltaGlider::clbkPlaybackEvent (double simt, double event_t, const char *ev
 		ActivateRadiator (!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
 		return true;
 	} else if (!_stricmp (event_type, "AIRBRAKE")) {
-		ActivateAirbrake(!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
+		ssys_aerodyn->ActivateAirbrake(!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
 		return true;
 	} else if (!_stricmp (event_type, "HATCH")) {
 		ActivateHatch (!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
@@ -2335,41 +2260,6 @@ void DeltaGlider::clbkPostStep (double simt, double simdt, double mjd)
 		UpdateStatusIndicators();
 	}
 
-	// animate airbrake
-	if (brake_status >= DOOR_CLOSING) {
-		double tgt, da = simdt * AIRBRAKE_OPERATING_SPEED;
-		if (brake_status == DOOR_CLOSING) { // retract brake
-			tgt = (airbrake_tgt == 1 ? 0.5:0.0);
-			if (brake_proc > tgt) brake_proc = max (tgt, brake_proc-da);
-			else                  brake_status = DOOR_CLOSED;
-		} else {                            // deploy brake
-			tgt = (airbrake_tgt == 1 ? 0.5:1.0);
-			if (brake_proc < tgt) brake_proc = min (tgt, brake_proc+da);
-			else                  brake_status = DOOR_OPEN;
-		}
-		SetAnimation (anim_brake, brake_proc);
-		UpdateStatusIndicators();
-	}
-	if (airbrakelever_status >= DOOR_CLOSING) {
-		double tgt, da = simdt * 4.0;
-		if (airbrakelever_status == DOOR_CLOSING) {
-			tgt = (airbrake_tgt == 1 ? 0.5:0.0);
-			if (airbrakelever_proc > tgt)
-				airbrakelever_proc = max (tgt, airbrakelever_proc-da);
-			else {
-				airbrakelever_status = DOOR_CLOSED;
-			}
-		} else  { // door opening
-			tgt = (airbrake_tgt == 1 ? 0.5:1.0);
-			if (airbrakelever_proc < tgt)
-				airbrakelever_proc = min (tgt, airbrakelever_proc+da);
-			else {
-				airbrakelever_status = DOOR_OPEN;
-			}
-		}
-		SetAnimation (anim_airbrakelever, airbrakelever_proc);
-	}
-
 	if (hatch_vent && simt > hatch_vent_t + 1.0) {
 		DelExhaustStream (hatch_vent);
 		hatch_vent = NULL;
@@ -2459,7 +2349,6 @@ void DeltaGlider::DefinePanelMain (PANELHANDLE hPanel)
 	RegisterPanelArea (hPanel, AID_VSINSTR,      _R(0,0,0,0),           PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[3]);
 	RegisterPanelArea (hPanel, AID_MAINPROP,     _R(0,0,0,0),           PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, instr2dtex, instr[4]);
 	RegisterPanelArea (hPanel, AID_ELEVATORTRIM, _R( 141,258, 161,318), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, instr[6]);
-	RegisterPanelArea (hPanel, AID_AIRBRAKE,     _R( 141,153, 161,213), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN, panel2dtex, instr[7]);
 	RegisterPanelArea (hPanel, AID_MWS,          _R(1071,  6,1098, 32), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN, panel2dtex, instr[27]);
 
 	if (ScramVersion()) {
@@ -2682,10 +2571,6 @@ bool DeltaGlider::clbkLoadVC (int id)
 		oapiVCRegisterArea (AID_ELEVATORTRIM, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_ELEVATORTRIM, VC_ETRIMWHEEL_mousearea[0], VC_ETRIMWHEEL_mousearea[1], VC_ETRIMWHEEL_mousearea[2], VC_ETRIMWHEEL_mousearea[3]);
 
-		// Airbrake lever
-		oapiVCRegisterArea (AID_AIRBRAKE, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_AIRBRAKE, VC_AIRBRAKELEVER_mousearea[0], VC_AIRBRAKELEVER_mousearea[1], VC_AIRBRAKELEVER_mousearea[2], VC_AIRBRAKELEVER_mousearea[3]);
-
 		oapiVCRegisterArea (AID_RADIATOREX, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Spherical (AID_RADIATOREX, _V(0.2582,0.9448,7.22),0.01);
 		oapiVCRegisterArea (AID_RADIATORIN, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
@@ -2799,8 +2684,6 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 		return instr[49]->ProcessMouseVC (event, p);
 	case AID_ELEVATORTRIM:
 		return instr[6]->ProcessMouseVC (event, p);
-	case AID_AIRBRAKE:
-		return instr[7]->ProcessMouseVC (event, p);
 	case AID_RADIATOREX:
 		ActivateRadiator (DOOR_OPENING);
 		return true;
@@ -2933,7 +2816,7 @@ int DeltaGlider::clbkConsumeBufferedKey (DWORD key, bool down, char *kstate)
 	if (KEYMOD_ALT (kstate)) {
 		switch (key) {
 		case OAPI_KEY_B:
-			ActivateAirbrake (DOOR_CLOSING);
+			ssys_aerodyn->ActivateAirbrake (DOOR_CLOSING);
 			return 1;
 		}
 	} else if (KEYMOD_SHIFT (kstate)) {
@@ -2943,7 +2826,7 @@ int DeltaGlider::clbkConsumeBufferedKey (DWORD key, bool down, char *kstate)
 			oapiOpenDialogEx (g_Param.hDLL, IDD_CTRL, Ctrl_DlgProc, DLG_CAPTIONCLOSE, this);
 			return 1;
 		case OAPI_KEY_B:
-			ActivateAirbrake (DOOR_OPENING);
+			ssys_aerodyn->ActivateAirbrake (DOOR_OPENING);
 			return 1;
 		case OAPI_KEY_H:
 			ssys_hud->RevertHud ();

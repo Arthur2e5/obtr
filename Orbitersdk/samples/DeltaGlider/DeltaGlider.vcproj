@@ -424,14 +424,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\Airbrake.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\Airbrake.h"
-					>
-				</File>
-				<File
 					RelativePath=".\AirlockSwitch.cpp"
 					>
 				</File>

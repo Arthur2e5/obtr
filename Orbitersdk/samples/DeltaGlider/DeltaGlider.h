@@ -281,14 +281,12 @@ public:
 	double lwingstatus, rwingstatus;
 	int hatchfail;
 	bool aileronfail[4];
-	int airbrake_tgt;
 
 	enum DoorStatus { DOOR_CLOSED, DOOR_OPEN, DOOR_CLOSING, DOOR_OPENING }
-		olock_status, ilock_status, hatch_status, radiator_status, brake_status, airbrakelever_status;
+		olock_status, ilock_status, hatch_status, radiator_status;
 	void ActivateOuterAirlock (DoorStatus action);
 	void ActivateInnerAirlock (DoorStatus action);
 	void ActivateHatch (DoorStatus action);
-	void ActivateAirbrake (DoorStatus action, bool half_step = false);
 	void ActivateRadiator (DoorStatus action);
 	void RevertOuterAirlock ();
 	void RevertInnerAirlock ();
@@ -305,7 +303,7 @@ public:
 	void ModInstrBrightness (bool up);
 	void ModFloodBrightness (bool up);
 	void SetGearParameters (double state);
-	double olock_proc, ilock_proc, hatch_proc, radiator_proc, brake_proc, airbrakelever_proc;     // logical status
+	double olock_proc, ilock_proc, hatch_proc, radiator_proc;     // logical status
 
 	// Animation handles
 	UINT anim_olock;            // handle for outer airlock animation
@@ -317,10 +315,8 @@ public:
 	UINT anim_elevatortrim;     // handle for elevator trim animation
 	UINT anim_laileron;         // handle for left aileron animation
 	UINT anim_raileron;         // handle for right aileron animation
-	UINT anim_brake;            // handle for airbrake animation
 	UINT anim_vc_trimwheel;     // VC elevator trim wheel
 	UINT anim_scramthrottle[2]; // VC scram throttle levers (left and right)
-	UINT anim_airbrakelever;    // VC airbrake lever
 	UINT anim_radiatorswitch;   // VC radiator switch animation
 	UINT anim_instrbdial;       // VC instrument brightness dial
 	UINT anim_floodbdial;       // VC floodlight brightness dial
@@ -350,6 +346,7 @@ public:
 	inline MainRetroSubsystem *SubsysMainRetro() { return ssys_mainretro; }
 	inline GearSubsystem *SubsysGear() { return ssys_gear; }
 	inline DockingCtrlSubsystem *SubsysDocking() { return ssys_docking; }
+	inline AerodynCtrlSubsystem *SubsysAerodyn() { return ssys_aerodyn; }
 
 	// script interface-related methods
 	int Lua_InitInterpreter (void *context);
@@ -421,22 +418,6 @@ private:
 	int mainTSFCidx, scTSFCidx[2];
 	int mainpropidx[2], rcspropidx[2], scrampropidx[2];
 	int mainpropmass, rcspropmass, scrampropmass;
-
-	struct PrpDisp {        // propellant status display parameters
-		int dsp_main,      dsp_rcs;
-		char lvl_main[8],  lvl_rcs[8];
-		char mass_main[8], mass_rcs[8];
-		char flow_main[8], flow_rcs[8];
-	} p_prpdisp;
-
-	struct EngDisp {       // engine status display parameters
-		int  bar[2];
-		char dsp[6][8];
-	} p_engdisp;
-
-	struct RngDisp {
-		char dsp[2][10];
-	} p_rngdisp;
 };
 
 // ==============================================================
@@ -476,7 +457,6 @@ typedef struct {
 #define AID_RADIATORSWITCH      49
 #define AID_HATCHSWITCH         51
 #define AID_MWS                 53
-#define AID_AIRBRAKE            54
 #define AID_SWITCHARRAY         55
 #define AID_AAP                 56
 #define AID_INSTRLIGHT_SWITCH   57

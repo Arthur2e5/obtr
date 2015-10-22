@@ -290,7 +290,7 @@ public:
 	double spdb_proc; // Speedbrake deployment state (0=retracted, 1=deployed)
 	double ldoor_drag, rdoor_drag; // drag components from open cargo doors
 	bool center_arm;
-	bool arm_moved;
+	bool arm_moved, arm_scheduled;
 	double center_arm_t;
 	bool do_eva;
 	bool do_plat;
