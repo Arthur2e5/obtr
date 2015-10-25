@@ -201,6 +201,18 @@ void ShuttleA_PL::clbkSetClassCaps (FILEHANDLE cfg)
 	payload_attachment[1]=CreateAttachment (true,_V(-0.319f, 0.0f,  -2.464f),_V(0.0f,0.0f,-1.0f),_V(0.0f,1.0f,0.0f),attach_id);
 	payload_attachment[2]=CreateAttachment (true,_V(-0.319f, 2.0f,   0.0f  ),_V(0.0f,1.0f, 0.0f),_V(1.0f,0.0f,0.0f),"GS"); // MS 060906: added by request
 
+	TOUCHDOWNVTX tdvtx[8] = {
+		{{-2,-2, 2.5}, 2e5, 3e4, 3},
+		{{-2,-2,-2.5}, 2e5, 3e4, 3},
+		{{ 2,-2,-2.5}, 2e5, 3e4, 3},
+		{{ 2,-2, 2.5}, 2e5, 3e4, 3},
+		{{-2, 2, 2.5}, 2e5, 3e4, 3},
+		{{-2, 2,-2.5}, 2e5, 3e4, 3},
+		{{ 2, 2,-2.5}, 2e5, 3e4, 3},
+		{{ 2, 2, 2.5}, 2e5, 3e4, 3}
+	};
+	SetTouchdownPoints (tdvtx, 8);
+
 	EnableTransponder (true);
 
 	mesh_main = oapiLoadMeshGlobal ("ShuttleA\\ShuttleA_pl");

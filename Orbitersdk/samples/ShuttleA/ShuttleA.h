@@ -80,6 +80,8 @@ const DWORD PANELEL_TEXW  =  512;
 const DWORD PANELEL_TEXH  =  512;
 const DWORD PANEL2D_MAINW = 1280;
 const DWORD PANEL2D_MAINH  = 382;
+const DWORD PANEL2D_OVRHW = 1280;
+const DWORD PANEL2D_OVRHH =  299;
 
 const DWORD LMFD_X     =  56;  // left MFD reference x-pos
 const DWORD RMFD_X     = 966;  // right MFD reference x-pos
@@ -104,7 +106,7 @@ class AttitudeReference;
 // Interface for derived vessel class: ShuttleA
 // ==========================================================
 
-class ShuttleA: public VESSEL3 {
+class ShuttleA: public VESSEL4 {
 	friend class PodTiltPreset;
 
 public:
@@ -183,6 +185,7 @@ public:
 
 private:
 	void DefineMainPanel (PANELHANDLE hPanel);
+	void DefineOverheadPanel (PANELHANDLE hPanel);
 	void ScalePanel (PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	void DefineAnimations ();
 	bool ToggleGrapple (int grapple);
@@ -232,6 +235,9 @@ private:
 	UINT anim_gear_switch;
 	UINT anim_cargo_switch;
 
+	MESHHANDLE hPanelMesh0; // mesh for 2D main panel
+	MESHHANDLE hPanelMesh1; // mesh for 2D overhead panel
+
 	void RedrawVC_ThPOD();
 	void RedrawVC_ThMain();
 	void RedrawVC_ThHover();
@@ -240,8 +246,8 @@ private:
 typedef struct {
 	HINSTANCE hDLL;
 	HFONT hFont[1];
-	HPEN hPen[2];
-	HBRUSH hBrush[1];
+	HPEN hPen[3];
+	HBRUSH hBrush[2];
 } GDIParams;
 
 #define AID_MFD1_LBUTTONS      0

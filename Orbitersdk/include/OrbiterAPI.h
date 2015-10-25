@@ -5514,7 +5514,7 @@ OAPIFUNC void       oapiVCRegisterMFD (int mfd, const VCMFDSPEC *spec);
 	* \note To define a mouse-sensitive volume in the virtual cockpit, use one of the
 	*  \a oapiVCSetAreaClickmode_XXX functions.
 	*/
-OAPIFUNC void       oapiVCRegisterArea (int id, const RECT &tgtrect, int draw_event, int mouse_event, int bkmode, SURFHANDLE tgt);
+OAPIFUNC void oapiVCRegisterArea (int id, const RECT &tgtrect, int draw_event, int mouse_event, int bkmode, SURFHANDLE tgt);
 
 	/**
 	* \brief Define an active area in a virtual cockpit. This version is used when no dynamic texture
@@ -5525,7 +5525,7 @@ OAPIFUNC void       oapiVCRegisterArea (int id, const RECT &tgtrect, int draw_ev
 	* \note This function is equivalent to:
 	* \code oapiVCRegisterArea (aid, _R(0,0,0,0), draw_event,mouse_event, PANEL_MAP_NONE, NULL); \endcode
 	*/
-OAPIFUNC void       oapiVCRegisterArea (int id, int draw_event, int mouse_event);
+OAPIFUNC void oapiVCRegisterArea (int id, int draw_event, int mouse_event);
 
 	/**
 	* \brief Associate a spherical region in the virtual cockpit with a registered area to receive mouse events.

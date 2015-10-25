@@ -16,7 +16,6 @@
 #include "InstrHsi.h"
 #include "InstrAoa.h"
 #include "InstrVs.h"
-#include "ElevTrim.h"
 #include "HudCtrl.h"
 #include "FuelMfd.h"
 #include "ThrottleScram.h"
@@ -34,6 +33,7 @@
 #include "CockpitLight.h"
 #include "ScnEditorAPI.h"
 #include "PressureSubsys.h"
+#include "LightSubsys.h"
 #include "DlgCtrl.h"
 #include "dg_vc_anim.h"
 #include "meshres.h"
@@ -162,6 +162,7 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	ssys.push_back (ssys_hud          = new HUDControl (this, ssys_id++));
 	ssys.push_back (ssys_pressurectrl = new PressureSubsystem (this, ssys_id++));
 	ssys.push_back (ssys_docking      = new DockingCtrlSubsystem (this, ssys_id++));
+	ssys.push_back (ssys_light        = new LightCtrlSubsystem (this, ssys_id++));
 	for (i = 0; i < 2; i++)
 		ssys.push_back (ssys_mfd[i] = new MfdSubsystem (this, ssys_id++, MFD_LEFT+i));
 
@@ -185,19 +186,13 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	insignia_tex      = NULL;
 	contrail_tex      = NULL;
 	hPanelMesh        = NULL;
+	panelcol          = 0;
 	campos            = CAM_GENERIC;
 	th_main_level     = 0.0;
-	cockpit_light     = NULL;
 	docking_light     = NULL;
-	instr_light_on    = false;
-	flood_light_mode  = 0;
 	landdock_light_mode = 0;
 	strobe_light_on   = false;
 	nav_light_on      = false;
-	instr_brightness  = 0.5;
-	flood_brightness  = 0.7;
-	for (i = 0; i < 2; i++)
-		panelcol[i]   = 0;
 	skinpath[0] = '\0';
 	for (i = 0; i < 3; i++)
 		skin[i] = 0;
@@ -211,11 +206,11 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 		scflowidx[i] = 0;
 		mainflowidx[i] = retroflowidx[i] = -1;
 		scTSFCidx[i] = -1;
-		mainpropidx[i] = rcspropidx[i] = scrampropidx[i] = -1;
+		mainpropidx[i] = scrampropidx[i] = -1;
 	}
 
 	hbmode = hbswitch = 0;
-	mainpropmass = rcspropmass = scrampropmass = -1;
+	mainpropmass = scrampropmass = -1;
 	mainTSFCidx = hoverflowidx = -1;
 	hbalanceidx = 28;
 	
@@ -293,13 +288,8 @@ void DeltaGlider::CreatePanelElements ()
 	instr[2]  = new InstrAOA (this);
 	instr[3]  = new InstrVS (this);
 	instr[4]  = new FuelMFD (this);
-	instr[6]  = new ElevatorTrim (this);
 	instr[25] = new SwitchArray (this);
 	instr[27] = new MWSButton (this);
-	instr[38] = new InstrLightSwitch (this);
-	instr[39] = new InstrLightBrightnessDial (this);
-	instr[40] = new FloodLightSwitch (this);
-	instr[41] = new FloodLightBrightnessDial (this);
 	instr[42] = new AngRateIndicator (this, g_Param.surf);
 	instr[44] = new LandDockLightSwitch (this);
 	instr[45] = new StrobeLightSwitch (this);
@@ -436,13 +426,6 @@ void DeltaGlider::DefineAnimations ()
 	// VC animation definitions
 	// ======================================================
 
-	// Elevator trim wheel
-	static UINT TrimWheelGrp = GRP_ETRIM_WHEEL_VC;
-	static MGROUP_ROTATE TrimWheelTransform (1, &TrimWheelGrp, 1,
-		VC_ETRIMWHEEL_ref, VC_ETRIMWHEEL_axis, (float)(PI*0.06));
-	anim_vc_trimwheel = CreateAnimation (0.5);
-	AddAnimationComponent (anim_vc_trimwheel, 0, 1, &TrimWheelTransform);
-
 	// Scram throttle left engine
 	static UINT ScramThrottleLGrp[2] = {GRP_THROTTLE_SCRAM_L1_VC,GRP_THROTTLE_SCRAM_L2_VC};
 	static MGROUP_ROTATE ScramThrottleL (1, ScramThrottleLGrp, 2,
@@ -456,20 +439,6 @@ void DeltaGlider::DefineAnimations ()
 		_V(0,0.7849,6.96), _V(1,0,0), (float)(30*RAD));
 	anim_scramthrottle[1] =  CreateAnimation (0);
 	AddAnimationComponent (anim_scramthrottle[1], 0, 1, &ScramThrottleR);
-
-	// Instrument illumination brightness dial
-	static UINT InstrBDialGrp = GRP_INSTR_BRIGHTNESS_VC;
-	static MGROUP_ROTATE InstrBDialTransform (1, &InstrBDialGrp, 1,
-		VC_INSTR_BRIGHTNESS_ref, VC_INSTR_BRIGHTNESS_axis, (float)(-280*RAD));
-	anim_instrbdial = CreateAnimation (0.5);
-	AddAnimationComponent (anim_instrbdial, 0, 1, &InstrBDialTransform);
-
-	// Floodlight brightness dial
-	static UINT FloodBDialGrp = GRP_FLOOD_BRIGHTNESS_VC;
-	static MGROUP_ROTATE FloodBDialTransform (1, &FloodBDialGrp, 1,
-		VC_FLOOD_BRIGHTNESS_ref, VC_FLOOD_BRIGHTNESS_axis, (float)(-280*RAD));
-	anim_floodbdial = CreateAnimation (0.5);
-	AddAnimationComponent (anim_floodbdial, 0, 1, &FloodBDialTransform);
 
 	static UINT RadiatorSwitchGrp = GRP_RADIATOR_SWITCH_VC;
 	static MGROUP_ROTATE RadiatorSwitch (1, &RadiatorSwitchGrp, 1,
@@ -495,8 +464,8 @@ void DeltaGlider::ApplySkin ()
 		{{0.75,0.75,0.65,1},{0.75,0.75,0.65,1},{0.3,0.3,0.3,1},{0.15,0.15,0.15,1},20}, // shiny anthrazit
 		{{0.5,0.1,0.1,1},{0.5,0.1,0.1,1},{0.2,0.2,0.2,1},{0.15,0.15,0.15,1},10} // DG-red
 	};
-	if (panelcol[0] > 0 && panelcol[0] <= 4)
-		oapiSetMaterial (vcmesh, 14, panelmat+panelcol[0]);
+	if (panelcol > 0 && panelcol <= 4)
+		oapiSetMaterial (vcmesh, 14, panelmat+panelcol);
 
 	//time_t lt; time(&lt); struct tm *st = localtime(&lt);
 	//if (vcmesh && st->tm_mon==3 && st->tm_mday==1) {
@@ -574,8 +543,8 @@ void DeltaGlider::InitPanel (int panel)
 		for (i = 0; i < 5; i++) engsliderpos[i] = (UINT)-1;
 		for (i = 0; i < 2; i++)
 			mainflowidx[i] = retroflowidx[i] = scTSFCidx[i] = scflowidx[i] =
-			mainpropidx[i] = rcspropidx[i] = scrampropidx[i] = -1;
-		mainpropmass = rcspropmass = scrampropmass = -1;
+			mainpropidx[i] = scrampropidx[i] = -1;
+		mainpropmass = scrampropmass = -1;
 		hoverflowidx = mainTSFCidx = -1;
 		break;
 	case 1: // overhead panel
@@ -616,9 +585,9 @@ void DeltaGlider::InitVC (int vc)
 		for (i = 0; i < 5; i++) engsliderpos[i] = (UINT)-1;
 		for (i = 0; i < 2; i++)
 			mainflowidx[i] = retroflowidx[i] = scTSFCidx[i] = scflowidx[i] =
-			mainpropidx[i] = rcspropidx[i] = scrampropidx[i] = -1;
+			mainpropidx[i] = scrampropidx[i] = -1;
 		hoverflowidx = mainTSFCidx = -1;
-		mainpropmass = rcspropmass = scrampropmass = -1;
+		mainpropmass = scrampropmass = -1;
 		break;
 	}
 }
@@ -893,58 +862,6 @@ void DeltaGlider::RevertInnerAirlock ()
 		                  DOOR_OPENING : DOOR_CLOSING);
 }
 
-void DeltaGlider::SetInstrLight (bool on, bool force)
-{
-	if (on == instr_light_on && !force) return; // nothing to do
-	instr_light_on = on;
-
-	if (vcmesh) {
-		static MATERIAL norm = {{1,1,1,1},{0.8,0.8,0.8,1},{0.1,0.1,0.1,0},{0.15,0.15,0.15,1},5};
-		static MATERIAL label_glow[3] = {
-			{{0,0,0,0},{0,0,0,0},{0,0,0,0},{0.35,1,0.35,1},0},
-		    {{0,0,0,0},{0,0,0,0},{0,0,0,0},{1,0.7,0.15,1},0},
-			{{0,0,0,0},{0,0,0,0},{0,0,0,0},{0.6,0.6,1.0,1},0}};
-		static MATERIAL btn_glow = {{1,1,1,1},{1,1,1,1},{0.1,0.1,0.1,1},{0.6,0.6,0.6,1},5};
-		oapiSetMaterial (vcmesh, 0, on ? &btn_glow : &norm);
-		int idx = max(0, min(2, panelcol[1]));
-		MATERIAL mat;
-		if (on) {
-			float scale = (float)(0.2 + instr_brightness*0.8);
-			memcpy(&mat, label_glow+panelcol[1], sizeof(MATERIAL));
-			mat.emissive.r *= scale;
-			mat.emissive.g *= scale;
-			mat.emissive.b *= scale;
-		}
-		oapiSetMaterial (vcmesh, 11, on ? &mat : &norm);
-		GROUPEDITSPEC ges = {on ? GRPEDIT_ADDUSERFLAG : GRPEDIT_DELUSERFLAG, 0x18, 0,0,0};
-		oapiEditMeshGroup (vcmesh, GRP_LIT_LABELS_VC, &ges);
-	}
-}
-
-
-void DeltaGlider::SetFloodLight (int mode)
-{
-	static const COLOUR4 zero = {0.0f,0.0f,0.0f,0.0f};
-	static const COLOUR4 wcol = {1.0f,1.0f,1.0f,0.0f};
-	static const COLOUR4 rcol = {0.6f,0.05f,0.0f,0.0f};
-
-	COLOUR4 col;
-
-	flood_light_mode = mode;
-	if (mode) {
-		col = (mode == 1 ? wcol : rcol);
-		if (!cockpit_light) {
-			cockpit_light = (PointLight*)AddPointLight(_V(0,1.65,6.68), 3, 0, 0, 3, col, col, zero);
-			cockpit_light->SetVisibility (LightEmitter::VIS_COCKPIT);
-			cockpit_light->Activate(true);
-		}
-		double intens = (float)(0.2 + flood_brightness*0.8);
-		cockpit_light->SetIntensity (intens);
-	} else {
-		DelLightEmitter (cockpit_light);
-		cockpit_light = NULL;
-	}
-}
 
 void DeltaGlider::SetLandDockLight (int mode)
 {
@@ -980,24 +897,6 @@ void DeltaGlider::SetNavLight (bool on)
 	for (int i = 0; i <= 2; i++) beacon[i].active = on;
 	oapiTriggerPanelRedrawArea (1, AID_SWITCHARRAY);
 	UpdateCtrlDialog (this);
-}
-
-void DeltaGlider::ModInstrBrightness (bool up)
-{
-	double dt = oapiGetSimStep();
-	double db = dt * (up ? 0.3 : -0.3);
-	instr_brightness = max(0.0, min (1.0, instr_brightness + db));
-	SetAnimation (anim_instrbdial, instr_brightness);
-	if (instr_light_on) SetInstrLight (true, true);
-}
-
-void DeltaGlider::ModFloodBrightness (bool up)
-{
-	double dt = oapiGetSimStep();
-	double db = dt * (up ? 0.3 : -0.3);
-	flood_brightness = max(0.0, min (1.0, flood_brightness + db));
-	SetAnimation (anim_floodbdial, flood_brightness);
-	if (flood_light_mode) SetFloodLight (flood_light_mode);
 }
 
 void DeltaGlider::ActivateRadiator (DoorStatus action)
@@ -1242,54 +1141,6 @@ bool DeltaGlider::RedrawPanel_ScramFlow (SURFHANDLE surf)
 	if (redraw) {
 		oapiBltPanelAreaBackground (AID_SCRAMDISP2, surf);
 		return RedrawPanel_IndicatorPair (surf, scflowidx, 66);
-	} else return false;
-}
-
-#ifdef UNDEF
-bool DeltaGlider::RedrawPanel_MainProp (SURFHANDLE surf)
-{
-	double m = GetPropellantMass (ph_main);
-	double lvl = m / max (1.0, max_rocketfuel);
-	int p = min (88, (int)(lvl*89.0));
-	if (p != *mainpropidx) {
-		mainpropidx[0] = mainpropidx[1] = p;
-		oapiBltPanelAreaBackground (AID_MAINPROP, surf);
-		return RedrawPanel_IndicatorPair (surf, mainpropidx, 88);
-	} else return false;
-}
-
-bool DeltaGlider::RedrawPanel_MainPropMass (SURFHANDLE surf)
-{
-	int m = (int)(GetPropellantMass (ph_main)+0.5);
-	if (m != mainpropmass) {
-		char cbuf[8];
-		mainpropmass = m;
-		sprintf (cbuf, "%05d", m);
-		return RedrawPanel_Number (surf, 0, 0, cbuf);
-	} else return false;
-}
-#endif
-
-bool DeltaGlider::RedrawPanel_RCSProp (SURFHANDLE surf)
-{
-	double m = GetPropellantMass (ph_rcs);
-	double lvl = m / RCS_FUEL_CAPACITY;
-	int p = min (88, (int)(lvl*89.0));
-	if (p != *rcspropidx) {
-		rcspropidx[0] = rcspropidx[1] = p;
-		oapiBltPanelAreaBackground (AID_RCSPROP, surf);
-		return RedrawPanel_IndicatorPair (surf, rcspropidx, 88);
-	} else return false;
-}
-
-bool DeltaGlider::RedrawPanel_RCSPropMass (SURFHANDLE surf)
-{
-	int m = (int)(GetPropellantMass (ph_rcs)+0.5);
-	if (m != rcspropmass) {
-		char cbuf[8];
-		rcspropmass = m;
-		sprintf (cbuf, "%03d", m);
-		return RedrawPanel_Number (surf, 0, 0, cbuf);
 	} else return false;
 }
 
@@ -1555,13 +1406,9 @@ void DeltaGlider::DrawNeedle (HDC hDC, int x, int y, double rad, double angle, d
 
 void DeltaGlider::InitVCMesh()
 {
-	SetInstrLight (instr_light_on, true);
-	SetFloodLight (flood_light_mode);
 	SetLandDockLight (landdock_light_mode);
 	SetStrobeLight (strobe_light_on);
 	SetNavLight (nav_light_on);
-	SetAnimation (anim_instrbdial, instr_brightness);
-	SetAnimation (anim_floodbdial, flood_brightness);
 
 	if (vcmesh) {
 		// hide pilot head in VCPILOT position
@@ -1901,7 +1748,7 @@ void DeltaGlider::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 				skin[2] = NULL;
 			}
 		} else if (!_strnicmp (line, "PANELCOL", 8)) {
-			sscanf (line+8, "%d%d", panelcol+0, panelcol+1);
+			sscanf (line+8, "%d", &panelcol);
 		} else if (!_strnicmp (line, "LIGHTS", 6)) {
 			int lgt[4];
 			sscanf (line+6, "%d%d%d%d", lgt+0, lgt+1, lgt+2, lgt+3);
@@ -1984,9 +1831,8 @@ void DeltaGlider::clbkSaveState (FILEHANDLE scn)
 		}
 	if (skinpath[0])
 		oapiWriteScenario_string (scn, "SKIN", skinpath);
-	if (panelcol[0] || panelcol[1]) {
-		sprintf (cbuf, "%d %d", panelcol[0], panelcol[1]);
-		oapiWriteScenario_string (scn, "PANELCOL", cbuf);
+	if (panelcol) {
+		oapiWriteScenario_int (scn, "PANELCOL", panelcol);
 	}
 	for (i = 0; i < 8; i++)
 		if (beacon[i].active) {
@@ -2343,13 +2189,12 @@ void DeltaGlider::DefinePanelMain (PANELHANDLE hPanel)
 	RegisterPanelMFDGeometry (hPanel, MFD_LEFT, 0, GRP_LMFD_DISPLAY_P0);
 	RegisterPanelMFDGeometry (hPanel, MFD_RIGHT, 0, GRP_RMFD_DISPLAY_P0);
 
-	RegisterPanelArea (hPanel, AID_HORIZON,      _R(0,0,0,0),           PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, 0, instr[0]);
-	RegisterPanelArea (hPanel, AID_HSIINSTR,     _R(0,0,0,0),           PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, 0, instr[1]);
-	RegisterPanelArea (hPanel, AID_AOAINSTR,     _R(0,0,0,0),           PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[2]);
-	RegisterPanelArea (hPanel, AID_VSINSTR,      _R(0,0,0,0),           PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[3]);
-	RegisterPanelArea (hPanel, AID_MAINPROP,     _R(0,0,0,0),           PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, instr2dtex, instr[4]);
-	RegisterPanelArea (hPanel, AID_ELEVATORTRIM, _R( 141,258, 161,318), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, instr[6]);
-	RegisterPanelArea (hPanel, AID_MWS,          _R(1071,  6,1098, 32), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN, panel2dtex, instr[27]);
+	RegisterPanelArea (hPanel, AID_HORIZON,  _R(0,0,0,0),        PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, 0, instr[0]);
+	RegisterPanelArea (hPanel, AID_HSIINSTR, _R(0,0,0,0),        PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, 0, instr[1]);
+	RegisterPanelArea (hPanel, AID_AOAINSTR, _R(0,0,0,0),        PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[2]);
+	RegisterPanelArea (hPanel, AID_VSINSTR,  _R(0,0,0,0),        PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[3]);
+	RegisterPanelArea (hPanel, AID_FUELMFD,  _R(0,0,0,0),        PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, instr2dtex, instr[4]);
+	RegisterPanelArea (hPanel, AID_MWS,      _R(1071,6,1098,32), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN, panel2dtex, instr[27]);
 
 	if (ScramVersion()) {
 		RegisterPanelArea (hPanel, AID_ENGINESCRAM, _R(4,386,57,488), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, instr[instr_scram0+0]);
@@ -2481,17 +2326,13 @@ bool DeltaGlider::clbkLoadVC (int id)
 		oapiVCRegisterArea (AID_HSIINSTR, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
 
 		// Propellant status display
-		oapiVCRegisterArea (AID_MAINPROP, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
+		oapiVCRegisterArea (AID_FUELMFD, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
 
 		// main/retro/hover engine indicators
 		oapiVCRegisterArea (AID_MAINDISP1, _R( 50,16, 63,89), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex1);
 		oapiVCRegisterArea (AID_MAINDISP2, _R( 85,16, 98,89), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex1);
 		oapiVCRegisterArea (AID_MAINDISP3, _R(120,16,133,89), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex1);
 		oapiVCRegisterArea (AID_MAINDISP4, _R( 23,16, 29,89), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex1);
-		//oapiVCRegisterArea (AID_MAINPROP, _R(122,102,135,197), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex1);
-		//oapiVCRegisterArea (AID_MAINPROPMASS, _R(110, 199, 140, 208), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_NONE, tex1);
-		oapiVCRegisterArea (AID_RCSPROP, _R(162,102,175,197), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex1);
-		oapiVCRegisterArea (AID_RCSPROPMASS, _R(156, 199, 174, 208), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_NONE, tex1);
 
 		// AOA/slip/slope+range indicators
 		oapiVCRegisterArea (AID_AOAINSTR,   _R( 17,181, 73,237), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex2);
@@ -2548,28 +2389,6 @@ bool DeltaGlider::clbkLoadVC (int id)
 		// Button row 1
 		oapiVCRegisterArea (AID_BUTTONROW1, PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_BUTTONROW1, _V(0.3014,0.8519,6.9562), _V(0.3679,0.8519,6.9562), _V(0.3014,0.8520,7.0163), _V(0.3679,0.8520,7.0163));
-
-		// Instrument light switch
-		oapiVCRegisterArea (AID_INSTRLIGHT_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_INSTRLIGHT_SWITCH, VC_INSTRLIGHT_SWITCH_mousearea[0], VC_INSTRLIGHT_SWITCH_mousearea[1], VC_INSTRLIGHT_SWITCH_mousearea[2], VC_INSTRLIGHT_SWITCH_mousearea[3]);
-		((DGSwitch1*)instr[38])->DefineAnimationVC (VC_INSTRLIGHT_SWITCH_ref, VC_INSTRLIGHT_SWITCH_axis, GRP_SWITCH1_VC, VC_INSTRLIGHT_SWITCH_vofs);
-
-		// Floodlight switch
-		oapiVCRegisterArea (AID_FLOODLIGHT_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_FLOODLIGHT_SWITCH, VC_FLOODLIGHT_SWITCH_mousearea[0], VC_FLOODLIGHT_SWITCH_mousearea[1], VC_FLOODLIGHT_SWITCH_mousearea[2], VC_FLOODLIGHT_SWITCH_mousearea[3]);
-		((DGSwitch1*)instr[40])->DefineAnimationVC (VC_FLOODLIGHT_SWITCH_ref, VC_FLOODLIGHT_SWITCH_axis, GRP_SWITCH1_VC, VC_FLOODLIGHT_SWITCH_vofs);
-
-		// Instrument brightness dial
-		oapiVCRegisterArea (AID_INSTRBRIGHT_DIAL, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_INSTRBRIGHT_DIAL, VC_INSTR_BRIGHTNESS_mousearea[0], VC_INSTR_BRIGHTNESS_mousearea[1], VC_INSTR_BRIGHTNESS_mousearea[2], VC_INSTR_BRIGHTNESS_mousearea[3]);
-
-		// Floodlight brightness dial
-		oapiVCRegisterArea (AID_FLOODBRIGHT_DIAL, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_FLOODBRIGHT_DIAL, VC_FLOOD_BRIGHTNESS_mousearea[0], VC_FLOOD_BRIGHTNESS_mousearea[1], VC_FLOOD_BRIGHTNESS_mousearea[2], VC_FLOOD_BRIGHTNESS_mousearea[3]);
-
-		// Elevator trim wheel
-		oapiVCRegisterArea (AID_ELEVATORTRIM, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_ELEVATORTRIM, VC_ETRIMWHEEL_mousearea[0], VC_ETRIMWHEEL_mousearea[1], VC_ETRIMWHEEL_mousearea[2], VC_ETRIMWHEEL_mousearea[3]);
 
 		oapiVCRegisterArea (AID_RADIATOREX, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Spherical (AID_RADIATOREX, _V(0.2582,0.9448,7.22),0.01);
@@ -2645,14 +2464,6 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 		return true;
 	case AID_BUTTONROW1:
 		return instr[25]->ProcessMouseVC (event, p);
-	case AID_INSTRLIGHT_SWITCH:
-		return instr[38]->ProcessMouseVC (event, p);
-	case AID_FLOODLIGHT_SWITCH:
-		return instr[40]->ProcessMouseVC (event, p);
-	case AID_INSTRBRIGHT_DIAL:
-		return instr[39]->ProcessMouseVC (event, p);
-	case AID_FLOODBRIGHT_DIAL:
-		return instr[41]->ProcessMouseVC (event, p);
 	case AID_ENGINESCRAM:
 		if (event & PANEL_MOUSE_LBDOWN) { // record which slider to operate
 			if      (p.x < 0.3) ctrl = 0; // left engine
@@ -2682,8 +2493,6 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 		return instr[48]->ProcessMouseVC (event, p);
 	case AID_OLOCK_SWITCH:
 		return instr[49]->ProcessMouseVC (event, p);
-	case AID_ELEVATORTRIM:
-		return instr[6]->ProcessMouseVC (event, p);
 	case AID_RADIATOREX:
 		ActivateRadiator (DOOR_OPENING);
 		return true;
@@ -2718,12 +2527,8 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 	case AID_ENGINESCRAM:
 		RedrawVC_ThScram();
 		return false;
-	case AID_MAINPROP:
+	case AID_FUELMFD:
 		return instr[4]->RedrawVC (vcmesh, intex);
-	case AID_RCSPROP:
-		return RedrawPanel_RCSProp (surf);
-	case AID_RCSPROPMASS:
-		return RedrawPanel_RCSPropMass (surf);
 	case AID_SCRAMPROP:
 		return RedrawPanel_ScramProp (surf);
 	case AID_SCRAMPROPMASS:
@@ -2748,8 +2553,6 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 		return RedrawPanel_ScramTSFC (surf);
 	case AID_SCRAMTEMPDISP:
 		return RedrawPanel_ScramTempDisp (surf);
-	case AID_ELEVATORTRIM:
-		return instr[6]->RedrawVC (vcmesh, surf);
 	case AID_HORIZON:
 		return (vcmesh ? instr[0]->RedrawVC (vcmesh, surf) : false);
 	case AID_HSIINSTR:
@@ -2766,10 +2569,6 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 		return (vcmesh ? instr[48]->RedrawVC (vcmesh, surf) : false);
 	case AID_OLOCK_SWITCH:
 		return (vcmesh ? instr[49]->RedrawVC (vcmesh, surf) : false);
-	case AID_FLOODLIGHT_SWITCH:
-		return (vcmesh ? instr[40]->RedrawVC (vcmesh, surf) : false);
-	case AID_INSTRLIGHT_SWITCH:
-		return (vcmesh ? instr[38]->RedrawVC (vcmesh, surf) : false);
 	case AID_ANGRATEINDICATOR:
 		return (vcmesh ? instr[42]->RedrawVC (vcmesh, oapiGetTextureHandle (vcmesh_tpl, 14)) : false);
 	case AID_MWS:

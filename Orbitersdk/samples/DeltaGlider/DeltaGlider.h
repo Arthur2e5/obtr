@@ -176,6 +176,7 @@ class GearSubsystem;
 class MfdSubsystem;
 class PressureSubsystem;
 class DockingCtrlSubsystem;
+class LightCtrlSubsystem;
 
 // ==========================================================
 // Interface for derived vessel class: DeltaGlider
@@ -214,10 +215,6 @@ public:
 	bool RedrawPanel_ScramFlow (SURFHANDLE surf);
 	bool RedrawPanel_MainTSFC (SURFHANDLE surf);
 	bool RedrawPanel_ScramTSFC (SURFHANDLE surf);
-	//bool RedrawPanel_MainProp (SURFHANDLE surf);
-	//bool RedrawPanel_MainPropMass (SURFHANDLE surf);
-	bool RedrawPanel_RCSProp (SURFHANDLE surf);
-	bool RedrawPanel_RCSPropMass (SURFHANDLE surf);
 	bool RedrawPanel_ScramProp (SURFHANDLE surf);
 	bool RedrawPanel_ScramPropMass (SURFHANDLE surf);
 	void RedrawVC_ThScram ();
@@ -292,16 +289,11 @@ public:
 	void RevertInnerAirlock ();
 	void RevertHatch ();
 	void RevertRadiator ();
-	void SetInstrLight (bool on, bool force=false);
-	inline bool GetInstrLight () const { return instr_light_on; }
 	inline bool GetStrobeLight () const { return strobe_light_on; }
 	inline bool GetNavLight () const { return nav_light_on; }
-	void SetFloodLight (int mode);
 	void SetLandDockLight (int mode);
 	void SetStrobeLight (bool on);
 	void SetNavLight (bool on);
-	void ModInstrBrightness (bool up);
-	void ModFloodBrightness (bool up);
 	void SetGearParameters (double state);
 	double olock_proc, ilock_proc, hatch_proc, radiator_proc;     // logical status
 
@@ -315,11 +307,8 @@ public:
 	UINT anim_elevatortrim;     // handle for elevator trim animation
 	UINT anim_laileron;         // handle for left aileron animation
 	UINT anim_raileron;         // handle for right aileron animation
-	UINT anim_vc_trimwheel;     // VC elevator trim wheel
 	UINT anim_scramthrottle[2]; // VC scram throttle levers (left and right)
 	UINT anim_radiatorswitch;   // VC radiator switch animation
-	UINT anim_instrbdial;       // VC instrument brightness dial
-	UINT anim_floodbdial;       // VC floodlight brightness dial
 
 	SURFHANDLE srf[nsurf];          // handles for panel bitmaps
 	SURFHANDLE insignia_tex;        // vessel-specific fuselage markings
@@ -371,6 +360,7 @@ private:
 	PressureSubsystem    *ssys_pressurectrl;     // pressure control system
 	DockingCtrlSubsystem *ssys_docking;          // docking control subsystem
 	MfdSubsystem         *ssys_mfd[2];           // MFD instruments
+	LightCtrlSubsystem   *ssys_light;            // cockpit/external light controls
 	std::vector<DGSubsystem*> ssys;              // list of subsystems
 
 	AAP *aap;                                    // atmospheric autopilot
@@ -387,7 +377,6 @@ private:
 	double max_rocketfuel, max_scramfuel;        // max capacity for rocket and scramjet fuel
 	VISHANDLE visual;                            // handle to DG visual representation
 	SURFHANDLE skin[3];                          // custom skin textures, if applicable
-	int panelcol[2];                             // panel/instr. light colour index, 0=default
 	MESHHANDLE hPanelMesh;                       // 2-D instrument panel mesh handle
 	char skinpath[32];                           // skin directory, if applicable
 	PROPELLANT_HANDLE ph_main, ph_rcs, ph_scram; // propellant resource handles
@@ -401,14 +390,10 @@ private:
 	PSTREAM_HANDLE hatch_vent;
 	double hatch_vent_t;
 	SpotLight *docking_light;
-	PointLight *cockpit_light;
-	bool instr_light_on;                         // instrument illumination switch status
-	double instr_brightness;                     // instrument illumination brightness setting
-	double flood_brightness;                     // floodlight brightness
-	int flood_light_mode;                        // 0=off, 1=red, 2=white
 	int landdock_light_mode;                     // 0=off, 1=docking, 2=landing
 	bool strobe_light_on;                        // false=off, true=on
 	bool nav_light_on;                           // false=off, true=on
+	int panelcol;                                // panel light colour index, 0=default
 
 	UINT engsliderpos[5];    // throttle settings for main,hover,scram engines
 	double scram_intensity[2];
@@ -416,8 +401,8 @@ private:
 	UINT wbrake_pos[2];
 	int mainflowidx[2], retroflowidx[2], hoverflowidx, scflowidx[2];
 	int mainTSFCidx, scTSFCidx[2];
-	int mainpropidx[2], rcspropidx[2], scrampropidx[2];
-	int mainpropmass, rcspropmass, scrampropmass;
+	int mainpropidx[2], scrampropidx[2];
+	int mainpropmass, scrampropmass;
 };
 
 // ==============================================================
@@ -441,17 +426,13 @@ typedef struct {
 #define AID_LOADINSTR           12
 #define AID_HSIINSTR            13
 #define AID_HORIZON             14
-#define AID_ELEVATORTRIM        28
 #define AID_MAINDISP1           32
 #define AID_MAINDISP2           33
 #define AID_MAINDISP3           34
 #define AID_MAINDISP4           35
 #define AID_SCRAMDISP2          36
 #define AID_SCRAMDISP3          37
-#define AID_MAINPROP            38
-#define AID_MAINPROPMASS        39
-#define AID_RCSPROP             40
-#define AID_RCSPROPMASS         41
+#define AID_FUELMFD             38
 #define AID_SCRAMPROP           42
 #define AID_SCRAMPROPMASS       43
 #define AID_RADIATORSWITCH      49
@@ -459,10 +440,6 @@ typedef struct {
 #define AID_MWS                 53
 #define AID_SWITCHARRAY         55
 #define AID_AAP                 56
-#define AID_INSTRLIGHT_SWITCH   57
-#define AID_INSTRBRIGHT_DIAL    58
-#define AID_FLOODLIGHT_SWITCH   59
-#define AID_FLOODBRIGHT_DIAL    60
 #define AID_ANGRATEINDICATOR    61
 #define AID_LANDDOCKLIGHT       63
 #define AID_STROBE_SWITCH       64

@@ -27,6 +27,7 @@ AerodynCtrlSubsystem::AerodynCtrlSubsystem (DeltaGlider *v, int ident)
 	// create component instances
 	AddComponent (selector = new AerodynSelector (this));
 	AddComponent (airbrake = new Airbrake (this));
+	AddComponent (elevtrim = new ElevatorTrim (this));
 }
 
 // --------------------------------------------------------------
@@ -36,6 +37,7 @@ AerodynCtrlSubsystem::~AerodynCtrlSubsystem ()
 	// delete components
 	delete selector;
 	delete airbrake;
+	delete elevtrim;
 }
 
 // --------------------------------------------------------------
@@ -201,7 +203,7 @@ bool AerodynSelectorDial::ProcessMouseVC (int event, VECTOR3 &p)
 // ==============================================================
 
 Airbrake::Airbrake (AerodynCtrlSubsystem *_subsys)
-: DGSubsystemComponent (_subsys)
+: DGSubsystemComponent(_subsys)
 {
 	ELID_LEVER = AddElement (lever = new AirbrakeLever (this));
 	brake_status         = DeltaGlider::DOOR_CLOSED;
@@ -432,5 +434,153 @@ bool AirbrakeLever::ProcessMouseVC (int event, VECTOR3 &p)
 {
 	DeltaGlider *dg = component->DG();
 	component->Activate (p.y > 0.5 ? DeltaGlider::DOOR_CLOSING : DeltaGlider::DOOR_OPENING);
+	return false;
+}
+
+// ==============================================================
+// Elevator trim control
+// ==============================================================
+
+ElevatorTrim::ElevatorTrim (AerodynCtrlSubsystem *_subsys)
+: DGSubsystemComponent(_subsys)
+{
+	ELID_TRIMWHEEL = AddElement (trimwheel = new ElevatorTrimWheel (this));
+
+	// Trim wheel animation
+	static UINT TrimWheelGrp = GRP_ETRIM_WHEEL_VC;
+	static MGROUP_ROTATE TrimWheelTransform (1, &TrimWheelGrp, 1,
+		VC_ETRIMWHEEL_ref, VC_ETRIMWHEEL_axis, (float)(PI*0.06));
+	anim_vc_trimwheel = DG()->CreateAnimation (0.5);
+	DG()->AddAnimationComponent (anim_vc_trimwheel, 0, 1, &TrimWheelTransform);
+}
+
+// --------------------------------------------------------------
+
+bool ElevatorTrim::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
+{
+	if (panelid != 0) return false;
+
+	// elevator trim wheel
+	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_TRIMWHEEL), _R( 141,258, 161,318), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, trimwheel);
+
+	return true;
+}
+
+// --------------------------------------------------------------
+
+bool ElevatorTrim::clbkLoadVC (int vcid)
+{
+	if (vcid != 0) return false;
+
+	// Elevator trim wheel
+	oapiVCRegisterArea (GlobalElId(ELID_TRIMWHEEL), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED);
+	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_TRIMWHEEL), VC_ETRIMWHEEL_mousearea[0], VC_ETRIMWHEEL_mousearea[1], VC_ETRIMWHEEL_mousearea[2], VC_ETRIMWHEEL_mousearea[3]);
+
+	return true;
+}
+
+// ==============================================================
+
+ElevatorTrimWheel::ElevatorTrimWheel (ElevatorTrim *comp)
+: PanelElement(comp->DG()), component(comp)
+{
+}
+
+// --------------------------------------------------------------
+
+void ElevatorTrimWheel::Reset2D (MESHHANDLE hMesh)
+{
+	trimpos2D = 0.0;
+	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
+	vtxofs = 60;
+}
+
+// --------------------------------------------------------------
+
+void ElevatorTrimWheel::ResetVC (DEVMESHHANDLE hMesh)
+{
+	trimposVC = 0.0;
+}
+
+// --------------------------------------------------------------
+
+bool ElevatorTrimWheel::Redraw2D (SURFHANDLE surf)
+{
+	// constants for panel coordinates
+	static const float bb_y0 =  284.5f;
+	static const float bb_dy =    7.0f;
+
+	double level = vessel->GetControlSurfaceLevel (AIRCTRL_ELEVATORTRIM);
+	if (level != trimpos2D) {
+		static const float yp[4] = {bb_y0, bb_y0, bb_y0+bb_dy, bb_y0+bb_dy};
+		float yshift = (float)(level*24.0);
+		for (int i = 0; i < 4; i++)
+			grp->Vtx[vtxofs+i].y = yp[i]+yshift;
+		trimpos2D = level;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
+bool ElevatorTrimWheel::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
+{
+	if (!hMesh) return false;
+
+	double level = vessel->GetControlSurfaceLevel (AIRCTRL_ELEVATORTRIM);
+	if (level != trimposVC) {
+		const DWORD nvtx = 3;
+		WORD vidx[3] = {VC_ETRIMSCALE_vofs,VC_ETRIMSCALE_vofs+1,VC_ETRIMSCALE_vofs+2};
+		NTVERTEX vtx[nvtx];
+		GROUPEDITSPEC ges;
+		ges.flags = GRPEDIT_VTXCRDY|GRPEDIT_VTXCRDZ;
+		ges.nVtx = nvtx;
+		ges.Vtx = vtx;
+		ges.vIdx = vidx;
+
+		static const double tilt = atan(VC_ETRIMSCALE_axis.z/VC_ETRIMSCALE_axis.y);
+		static const double y0[3] = {VC_ETRIMSCALE_ref[0].y,VC_ETRIMSCALE_ref[1].y,VC_ETRIMSCALE_ref[2].y};
+		static const double z0[3] = {VC_ETRIMSCALE_ref[0].z,VC_ETRIMSCALE_ref[1].z,VC_ETRIMSCALE_ref[2].z};
+		static double range = 0.032;
+		static double dy = -range*cos(tilt), dz = -range*sin(tilt);
+		for (DWORD i = 0; i < nvtx; i++) {
+			vtx[i].y = (float)(y0[i] + level*dy);
+			vtx[i].z = (float)(z0[i] + level*dz);
+		}
+		oapiEditMeshGroup (hMesh, GRP_VC4_LIT_VC, &ges);
+
+		DeltaGlider *dg = (DeltaGlider*)vessel;
+		double v;
+		vessel->SetAnimation (component->anim_vc_trimwheel, modf((1-level)*20, &v));
+
+		trimposVC = level;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
+bool ElevatorTrimWheel::ProcessMouse2D (int event, int mx, int my)
+{
+	double tgtlvl = vessel->GetControlSurfaceLevel (AIRCTRL_ELEVATORTRIM);
+	tgtlvl += oapiGetSimStep() * (my < 30 ? -0.2:0.2);
+	tgtlvl = max (-1.0, min (1.0, tgtlvl));
+	vessel->SetControlSurfaceLevel (AIRCTRL_ELEVATORTRIM, tgtlvl);
+	return true;
+}
+
+// --------------------------------------------------------------
+
+bool ElevatorTrimWheel::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	double dtrim = oapiGetSimStep() * (p.y < 0.5 ? 0.2:-0.2);
+	double trim0 = vessel->GetControlSurfaceLevel (AIRCTRL_ELEVATORTRIM);
+	double trim1 = max(-1.0, min(1.0, trim0+dtrim));
+
+	if (trim0 != trim1) {
+		vessel->SetControlSurfaceLevel (AIRCTRL_ELEVATORTRIM, trim1);
+		return true;
+	}
 	return false;
 }

@@ -12,6 +12,7 @@
 #include "CockpitLight.h"
 #include "DeltaGlider.h"
 
+#ifdef UNDEF
 // ==============================================================
 
 InstrLightSwitch::InstrLightSwitch (VESSEL3 *v): DGSwitch1(v, DGSwitch1::TWOSTATE)
@@ -88,6 +89,7 @@ bool FloodLightBrightnessDial::ProcessMouseVC (int event, VECTOR3 &p)
 	dg->ModFloodBrightness (p.x > 0.5);
 	return true;
 }
+#endif
 
 // ==============================================================
 // ==============================================================

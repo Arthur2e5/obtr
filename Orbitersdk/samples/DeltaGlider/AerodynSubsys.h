@@ -21,6 +21,7 @@
 
 class AerodynSelector;
 class Airbrake;
+class ElevatorTrim;
 
 class AerodynCtrlSubsystem: public DGSubsystem {
 public:
@@ -34,6 +35,7 @@ public:
 private:
 	AerodynSelector *selector;
 	Airbrake *airbrake;
+	ElevatorTrim *elevtrim;
 };
 
 // ==============================================================
@@ -118,6 +120,41 @@ public:
 private:
 	Airbrake *component;
 	int state;
+};
+
+// ==============================================================
+// Elevator trim control
+// ==============================================================
+
+class ElevatorTrim: public DGSubsystemComponent {
+	friend class ElevatorTrimWheel;
+
+public:
+	ElevatorTrim (AerodynCtrlSubsystem *_subsys);
+	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
+	bool clbkLoadVC (int vcid);
+
+private:
+	ElevatorTrimWheel *trimwheel;
+	int ELID_TRIMWHEEL;
+	UINT anim_vc_trimwheel;     // VC elevator trim wheel
+};
+
+// ==============================================================
+
+class ElevatorTrimWheel: public PanelElement {
+public:
+	ElevatorTrimWheel (ElevatorTrim *comp);
+	void Reset2D (MESHHANDLE hMesh);
+	void ResetVC (DEVMESHHANDLE hMesh);
+	bool Redraw2D (SURFHANDLE surf);
+	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
+	bool ProcessMouse2D (int event, int mx, int my);
+	bool ProcessMouseVC (int event, VECTOR3 &p);
+
+private:
+	ElevatorTrim *component;
+	double trimpos2D, trimposVC;
 };
 
 #endif // ___AERODYNSUBSYS_H

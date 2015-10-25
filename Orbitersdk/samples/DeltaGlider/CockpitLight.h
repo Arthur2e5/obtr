@@ -16,6 +16,7 @@
 // ==============================================================
 // Instrument lights on/off switch
 
+#ifdef UNDEF
 class InstrLightSwitch: public DGSwitch1 {
 public:
 	InstrLightSwitch (VESSEL3 *v);
@@ -49,6 +50,7 @@ public:
 	FloodLightBrightnessDial (VESSEL3 *v);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 };
+#endif
 
 // ==============================================================
 // Landing/docking light switch

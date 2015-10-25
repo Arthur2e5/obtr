@@ -39,22 +39,22 @@ GDIParams g_Param;
 
 static const int ntdvtx = 16;
 static TOUCHDOWNVTX tdvtx[ntdvtx] = {
-	{_V(-3  ,-3.05, 12.5), 3.5e6, 3.5e5, 1.5},
-	{_V(-3  ,-3.05,-13.5), 3e6,   3e5,   1.5},
-	{_V( 3  ,-3.05,-13.5), 3e6,   3e5,   1.5},
-	{_V( 3  ,-3.05, 12.5), 3.5e6, 3.5e5, 1.5},
-	{_V(-7.7, 0   ,-0.4 ), 3e7,   3e6,   1.5},
-	{_V( 7.7, 0   ,-0.4 ), 3e7,   3e6,   1.5},
-	{_V(-1.5, 3   ,13.5 ), 3e7,   3e6,   1.5},
-	{_V( 1.5, 3   ,13.5 ), 3e7,   3e6,   1.5},
-	{_V(-1.3, 2.8 ,17   ), 3e7,   3e6,   1.5},
-	{_V( 1.3, 2.8 ,17   ), 3e7,   3e6,   1.5},
-	{_V(-1.8, 0   ,18.3 ), 3e7,   3e6,   1.5},
-	{_V( 1.8, 0   ,18.3 ), 3e7,   3e6,   1.5},
-	{_V(-1.9, 2.2 ,-13.8), 3e7,   3e6,   1.5},
-	{_V( 1.9, 2.2 ,-13.8), 3e7,   3e6,   1.5},
-	{_V(-3.3, 0   ,-14.9), 3e7,   3e6,   1.5},
-	{_V( 3.3, 0   ,-14.9), 3e7,   3e6,   1.5}
+	{_V(-3  ,-3.05, 12.5), 3.5e6, 3.5e5, 3},
+	{_V(-3  ,-3.05,-13.5), 3e6,   3e5,   3},
+	{_V( 3  ,-3.05,-13.5), 3e6,   3e5,   3},
+	{_V( 3  ,-3.05, 12.5), 3.5e6, 3.5e5, 3},
+	{_V(-7.7, 0   ,-0.4 ), 3e7,   3e6,   3},
+	{_V( 7.7, 0   ,-0.4 ), 3e7,   3e6,   3},
+	{_V(-1.5, 3   ,13.5 ), 3e7,   3e6,   3},
+	{_V( 1.5, 3   ,13.5 ), 3e7,   3e6,   3},
+	{_V(-1.3, 2.8 ,17   ), 3e7,   3e6,   3},
+	{_V( 1.3, 2.8 ,17   ), 3e7,   3e6,   3},
+	{_V(-1.8, 0   ,18.3 ), 3e7,   3e6,   3},
+	{_V( 1.8, 0   ,18.3 ), 3e7,   3e6,   3},
+	{_V(-1.9, 2.2 ,-13.8), 3e7,   3e6,   3},
+	{_V( 1.9, 2.2 ,-13.8), 3e7,   3e6,   3},
+	{_V(-3.3, 0   ,-14.9), 3e7,   3e6,   3},
+	{_V( 3.3, 0   ,-14.9), 3e7,   3e6,   3}
 };
 
 // ==============================================================
@@ -93,7 +93,7 @@ SURFHANDLE ShuttleA::aditex = NULL;
 // Constructor
 // --------------------------------------------------------------
 ShuttleA::ShuttleA (OBJHANDLE hObj, int fmodel)
-: VESSEL3 (hObj, fmodel)
+: VESSEL4 (hObj, fmodel)
 {
 	int i;
 
@@ -126,7 +126,7 @@ ShuttleA::~ShuttleA ()
 	int i;
 	delete attref;
 	ReleaseSurfaces();
-	if (hPanelMesh) oapiDeleteMesh (hPanelMesh);
+	if (hPanelMesh0) oapiDeleteMesh (hPanelMesh0);
 	for (i = 0; i < npel; i++)
 		delete pel[i];
 }
@@ -606,7 +606,8 @@ bool ShuttleA::ToggleGrapple (int grapple)
 		if (cargo_arm_status == 0)  return false; //jettison is not armed
 		DetachChild (payload_attachment[grapple]);
 		ComputePayloadMass();
-		RecordEvent ("CARGO", cbuf);
+		//RecordEvent ("CARGO", cbuf);
+		// no need to record this, since it is already handled by the default "Detach" event
 		return true;
 
 	} else {             // grapple payload
@@ -889,47 +890,53 @@ bool ShuttleA::RedrawPanel_PodangleIndicator (SURFHANDLE surf)
 void ShuttleA::RedrawPanel_Fuelstatus (SURFHANDLE surf, int part)
 {
 	char cbuf[20];
+	int len;
 	double m, m0, rate, lvl;
 
 	HDC hDC = oapiGetDC (surf);
 	SelectObject (hDC, g_Param.hFont[0]);
+	SelectObject (hDC, g_Param.hBrush[1]);
+	SelectObject (hDC, g_Param.hPen[2]);
 	SetTextColor (hDC, RGB(224,224,224));
 	SetBkMode (hDC, TRANSPARENT);
+	SetTextAlign (hDC, TA_RIGHT);
 
 	switch (part) {
 	case 0:
 		sprintf (cbuf, "%0.1f", GetThrusterLevel (th_hover[0]) * MAX_HOVER_THRUST / ISP);
-		TextOut (hDC, 0, 0, cbuf, strlen (cbuf));
+		Rectangle (hDC, 0, 2, 20, 11); TextOut (hDC, 21, 0, cbuf, strlen(cbuf));
 		sprintf (cbuf, "%0.1f", GetThrusterLevel (th_hover[1]) * MAX_HOVER_THRUST / ISP);
-		TextOut (hDC, 0, 30, cbuf, strlen (cbuf));
+		Rectangle (hDC, 0, 32, 20, 41); TextOut (hDC, 21, 30, cbuf, strlen(cbuf));
 		sprintf (cbuf, "%0.1f", GetThrusterLevel (th_pod[1]) * MAX_RETRO_THRUST / ISP);
-		TextOut (hDC, 0, 58, cbuf, strlen (cbuf));
+		Rectangle (hDC, 0, 60, 20, 69); TextOut (hDC, 21, 58, cbuf, strlen(cbuf));
 		sprintf (cbuf, "%0.1f", GetThrusterLevel (th_pod[0]) * MAX_RETRO_THRUST / ISP);
-		TextOut (hDC, 0, 88, cbuf, strlen (cbuf));
+		Rectangle (hDC, 0, 90, 20, 99); TextOut (hDC, 21, 88, cbuf, strlen(cbuf));
 		sprintf (cbuf, "%0.1f", GetThrusterLevel (th_main[0]) * MAX_MAIN_THRUST / ISP);
-		TextOut (hDC, 0, 115, cbuf, strlen (cbuf));
+		Rectangle (hDC, 0, 117, 20, 126); TextOut (hDC, 21, 115, cbuf, strlen(cbuf));
 		sprintf (cbuf, "%0.1f", GetThrusterLevel (th_main[1]) * MAX_MAIN_THRUST / ISP);
-		TextOut (hDC, 0, 145, cbuf, 3);
+		Rectangle (hDC, 0, 147, 20, 156); TextOut (hDC, 21, 145, cbuf, strlen(cbuf));
 		break;
 	case 1:
+		SelectObject (hDC, g_Param.hBrush[0]);
 		m = GetPropellantMass (ph_main);
 		if (m > MAX_MAIN_FUEL*0.2) {
 			rate = GetPropellantFlowrate (ph_main);
 			lvl = m*1.25/MAX_MAIN_FUEL - 0.25;
-			SelectObject (hDC, g_Param.hBrush[0]);
-			Rectangle (hDC,  0, 50, 28, (int)((1.0-lvl)*50.0));
-			Rectangle (hDC, 38, 50, 66, (int)((1.0-lvl)*50.0));
+			Rectangle (hDC,  0, 50, 32, (int)((1.0-lvl)*50.0));
+			Rectangle (hDC, 40, 50, 72, (int)((1.0-lvl)*50.0));
 			m0 = 0.5 * (m - MAX_MAIN_FUEL*0.2);
 		} else {
 			rate = lvl = m0 = 0;
 		}
-		sprintf (cbuf, "%0.1f", 0.5*rate);
-		TextOut (hDC, 19, 55, cbuf, strlen(cbuf));
-		TextOut (hDC, 57, 55, cbuf, strlen(cbuf));
 		sprintf (cbuf, "%0.0f", m0);
 		SetTextAlign (hDC, TA_CENTER);
-		TextOut (hDC, 14, 20, cbuf, strlen (cbuf));
-		TextOut (hDC, 52, 20, cbuf, strlen (cbuf));
+		TextOut (hDC, 16, 20, cbuf, strlen (cbuf));
+		TextOut (hDC, 56, 20, cbuf, strlen (cbuf));
+		sprintf (cbuf, "%0.1f", 0.5*rate);
+		SetTextAlign (hDC, TA_RIGHT);
+		SelectObject (hDC, g_Param.hBrush[1]);
+		Rectangle (hDC, 21, 57, 42, 66); TextOut (hDC, 42, 55, cbuf, strlen(cbuf));
+		Rectangle (hDC, 61, 57, 82, 66); TextOut (hDC, 82, 55, cbuf, strlen(cbuf));
 		break;
 	case 2:
 		m = GetPropellantMass (ph_main);
@@ -943,25 +950,29 @@ void ShuttleA::RedrawPanel_Fuelstatus (SURFHANDLE surf, int part)
 		}
 		if (lvl > 0) {
 			SelectObject (hDC, g_Param.hBrush[0]);
-			Rectangle (hDC,  0, 57, 28, 19+(int)((1.0-lvl)*38.0));
+			Rectangle (hDC,  0, 57, 32, 19+(int)((1.0-lvl)*38.0));
 		}
-		sprintf (cbuf, "%0.1f", rate);
-		TextOut (hDC, 19, 0, cbuf, strlen(cbuf));
 		sprintf (cbuf, "%0.0f", m);
 		SetTextAlign (hDC, TA_CENTER);
-		TextOut (hDC, 14, 33, cbuf, strlen (cbuf));
+		TextOut (hDC, 16, 33, cbuf, strlen (cbuf));
+		sprintf (cbuf, "%0.1f", rate);
+		SetTextAlign (hDC, TA_RIGHT);
+		SelectObject (hDC, g_Param.hBrush[1]);
+		Rectangle (hDC, 21, 2, 42, 11); TextOut (hDC, 42, 0, cbuf, strlen(cbuf));
 		break;
 	case 3:
 		m = GetPropellantMass (ph_rcs);
 		if (m > 0) {
 			SelectObject (hDC, g_Param.hBrush[0]);
-			Rectangle (hDC, 0, 25, 28, (int)((1.0-m/MAX_RCS_FUEL)*25.0));
+			Rectangle (hDC, 0, 25, 32, (int)((1.0-m/MAX_RCS_FUEL)*25.0));
 		}
-		sprintf (cbuf, "%0.2f", GetPropellantFlowrate (ph_rcs));
-		TextOut (hDC, 19, 28, cbuf, strlen(cbuf));
 		SetTextAlign (hDC, TA_CENTER);
 		sprintf (cbuf, "%0.0f", m);
-		TextOut (hDC, 14, 7, cbuf, strlen(cbuf));
+		TextOut (hDC, 16, 7, cbuf, strlen(cbuf));
+		SetTextAlign (hDC, TA_RIGHT);
+		SelectObject (hDC, g_Param.hBrush[1]);
+		sprintf (cbuf, "%0.2f", GetPropellantFlowrate (ph_rcs));
+		Rectangle (hDC, 21, 30, 42, 39); TextOut (hDC, 42, 28, cbuf, strlen(cbuf));
 		break;
 	} 
 	oapiReleaseDC (surf, hDC);
@@ -1220,12 +1231,13 @@ void ShuttleA::clbkSetClassCaps (FILEHANDLE cfg)
 	CreateAirfoil (LIFT_VERTICAL, _V(0,0,0), Shuttle_MomentCoeff,  8, 140, 0.1);
 
 
-	// ************************ Mesh ****************************
+	// ************************ Meshes ****************************
 
-	
 	SetMeshVisibilityMode (AddMesh (exmesh_tpl = oapiLoadMeshGlobal ("ShuttleA\\ShuttleA")), MESHVIS_EXTERNAL);
 	SetMeshVisibilityMode (AddMesh (vcmesh_tpl = oapiLoadMeshGlobal ("ShuttleA\\ShuttleA_vc")), MESHVIS_VC);
-	
+	hPanelMesh0 = 0;
+	hPanelMesh1 = oapiLoadMeshGlobal ("ShuttleA\\ShuttleA_2dpanel1");
+
 
 	// ************************ Blit Ship Name ****************************
 	SURFHANDLE insignia_tex = oapiGetTextureHandle (exmesh_tpl, 2);
@@ -1554,6 +1566,12 @@ bool ShuttleA::clbkLoadPanel2D (int id, PANELHANDLE hPanel, DWORD viewW, DWORD v
 	case 0:
 		DefineMainPanel (hPanel);
 		ScalePanel (hPanel, viewW, viewH);
+		oapiSetPanelNeighbours (-1,-1,1,-1);
+		return true;
+	case 1:
+		DefineOverheadPanel (hPanel);
+		ScalePanel (hPanel, viewW, viewH);
+		oapiSetPanelNeighbours (-1,-1,-1,0);
 		return true;
 	default:
 		return false;
@@ -1595,8 +1613,8 @@ void ShuttleA::DefineMainPanel (PANELHANDLE hPanel)
 	int i;
 	DWORD panel_grp, back_grp0, back_grp1, back_grp2, frnt_grp0, frnt_grp1, frnt_grp2, lmfd_grp, rmfd_grp;
 
-	if (hPanelMesh) oapiDeleteMesh (hPanelMesh);
-	hPanelMesh = oapiCreateMesh(0,0);
+	if (hPanelMesh0) oapiDeleteMesh(hPanelMesh0);
+	hPanelMesh0 = oapiCreateMesh(0,0);
 	MESHGROUP zero_grp0 = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 	MESHGROUP zero_grp1 = {0, 0, 0, 0, 0, 1, 0, 0, 0};
 	MESHGROUP zero_grp2 = {0, 0, 0, 0, 0, 2, 0, 0, 0};
@@ -1604,26 +1622,28 @@ void ShuttleA::DefineMainPanel (PANELHANDLE hPanel)
 	MESHGROUP grp_lmfd = {VTX_MFD[0], IDX_MFD, 4, 6, 0, 0, 0, 0, 0};
 	MESHGROUP grp_rmfd = {VTX_MFD[1], IDX_MFD, 4, 6, 0, 0, 0, 0, 0};
 
-	back_grp0 = oapiAddMeshGroup (hPanelMesh, &zero_grp0); // mesh elements behind background using background texture
-	back_grp1 = oapiAddMeshGroup (hPanelMesh, &zero_grp1); // mesh elements behind background using panel element texture
-	back_grp2 = oapiAddMeshGroup (hPanelMesh, &zero_grp2); // mesh elements behind background using texture index 2 (ADI ball)
-	panel_grp = oapiAddMeshGroup (hPanelMesh, &grp);       // the panel background
-	frnt_grp0 = oapiAddMeshGroup (hPanelMesh, &zero_grp0); // mesh elements in front of background using background texture
-	frnt_grp1 = oapiAddMeshGroup (hPanelMesh, &zero_grp1); // mesh elements in front of background using panel element texture
-	frnt_grp2 = oapiAddMeshGroup (hPanelMesh, &zero_grp2); // mesh elements in front of background using texture index 2 (ADI ball)
-	lmfd_grp = oapiAddMeshGroup (hPanelMesh, &grp_lmfd);   // left MFD
-	rmfd_grp = oapiAddMeshGroup (hPanelMesh, &grp_rmfd);   // right MFD
+	back_grp0 = oapiAddMeshGroup (hPanelMesh0, &zero_grp0); // mesh elements behind background using background texture
+	back_grp1 = oapiAddMeshGroup (hPanelMesh0, &zero_grp1); // mesh elements behind background using panel element texture
+	back_grp2 = oapiAddMeshGroup (hPanelMesh0, &zero_grp2); // mesh elements behind background using texture index 2 (ADI ball)
+	panel_grp = oapiAddMeshGroup (hPanelMesh0, &grp);       // the panel background
+	frnt_grp0 = oapiAddMeshGroup (hPanelMesh0, &zero_grp0); // mesh elements in front of background using background texture
+	frnt_grp1 = oapiAddMeshGroup (hPanelMesh0, &zero_grp1); // mesh elements in front of background using panel element texture
+	frnt_grp2 = oapiAddMeshGroup (hPanelMesh0, &zero_grp2); // mesh elements in front of background using texture index 2 (ADI ball)
+	lmfd_grp = oapiAddMeshGroup (hPanelMesh0, &grp_lmfd);   // left MFD
+	rmfd_grp = oapiAddMeshGroup (hPanelMesh0, &grp_rmfd);   // right MFD
 
-	adiball->AddMeshData2D (hPanelMesh, back_grp2, frnt_grp2);
-	adictrl->AddMeshData2D (hPanelMesh, frnt_grp0, frnt_grp1);
-	podctrl->AddMeshData2D (hPanelMesh, frnt_grp0, frnt_grp1);
-	for (i = 3; i < 6; i++) pel[i]->AddMeshData2D (hPanelMesh, back_grp1);
-	for (; i < 8; i++) pel[i]->AddMeshData2D (hPanelMesh, frnt_grp0);
-	for (; i < npel; i++) pel[i]->AddMeshData2D (hPanelMesh, frnt_grp1);
-	for (i = 0; i < npel; i++) pel[i]->Reset2D ();
+	adiball->AddMeshData2D (hPanelMesh0, back_grp2, frnt_grp2);
+	adictrl->AddMeshData2D (hPanelMesh0, frnt_grp0, frnt_grp1);
+	podctrl->AddMeshData2D (hPanelMesh0, frnt_grp0, frnt_grp1);
 
+	for (i = 3; i < 6; i++) pel[i]->AddMeshData2D (hPanelMesh0, back_grp1);
+	for (; i < 8; i++) pel[i]->AddMeshData2D (hPanelMesh0, frnt_grp0);
+	for (; i < npel; i++) pel[i]->AddMeshData2D (hPanelMesh0, frnt_grp1);
+	hPanelMesh = hPanelMesh0;
 	SURFHANDLE paneltex[3] = {panel2dtex,paneleltex,aditex};
 	SetPanelBackground (hPanel, paneltex, 3, hPanelMesh, PANEL2D_MAINW, PANEL2D_MAINH, 0, PANEL_ATTACH_BOTTOM | PANEL_MOVEOUT_BOTTOM);
+
+	for (i = 0; i < npel; i++) pel[i]->Reset2D ();
 
 	RegisterPanelMFDGeometry (hPanel, MFD_LEFT, 0, lmfd_grp);
 	RegisterPanelMFDGeometry (hPanel, MFD_RIGHT, 0, rmfd_grp);
@@ -1656,51 +1676,24 @@ void ShuttleA::DefineMainPanel (PANELHANDLE hPanel)
 	RegisterPanelArea (hPanel, AID_VACCINSTR,     _R(0,0,0,0), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, paneleltex, pel[23]);
 }
 
+void ShuttleA::DefineOverheadPanel (PANELHANDLE hPanel)
+{
+	hPanelMesh = hPanelMesh1;
+	SURFHANDLE tex[2] = {oapiGetTextureHandle (hPanelMesh1, 1), oapiGetTextureHandle (hPanelMesh1, 2)};
+	SetPanelBackground (hPanel, tex, 2, hPanelMesh, PANEL2D_OVRHW, PANEL2D_OVRHH, 0, PANEL_ATTACH_TOP | PANEL_MOVEOUT_TOP);
+
+	RegisterPanelArea (hPanel, AID_FUELSTATUS1, _R(243,100,263,255), 0, _R(127, 77,147,232), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_CURRENT);
+	RegisterPanelArea (hPanel, AID_FUELSTATUS2, _R(287, 42,368,107), 0, _R(171, 19,252, 84), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_CURRENT);
+	RegisterPanelArea (hPanel, AID_FUELSTATUS3, _R(322,209,363,265), 0, _R(206,186,247,242), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_CURRENT);
+	RegisterPanelArea (hPanel, AID_FUELSTATUS4, _R(234, 42,275, 80), 0, _R(118, 19,159, 57), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_CURRENT);
+}
+
 void ShuttleA::ScalePanel (PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
 {
 	double defscale = (double)viewW/(double)PANEL2D_MAINW;
 	double magscale = max (defscale, 1.0);
 	SetPanelScaling (hPanel, defscale, magscale);
 }
-
-#ifdef UNDEF
-bool ShuttleA::clbkLoadPanel (int id)
-{
-	static MFDSPEC mfds_left  = {{ 66, 84,  326, 344}, 6, 6, 31, 38};
-	static MFDSPEC mfds_right = {{828, 84, 1088, 344}, 6, 6, 31, 38};
-	ReleaseSurfaces();
-
-	HBITMAP hBmp = LoadBitmap (g_Param.hDLL, MAKEINTRESOURCE (IDB_PANEL1+id));
-
-	switch (id) {
-	case 0: // main panel
-		oapiRegisterPanelBackground (hBmp, PANEL_ATTACH_BOTTOM|PANEL_MOVEOUT_BOTTOM, 0xffffff);
-		oapiSetPanelNeighbours (-1,-1,1,-1);
-		oapiRegisterPanelArea (AID_ENGINEINDICATOR,   _R( 584,  47, 709, 237), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND);
-		oapiRegisterPanelArea (AID_PODANGLEINDICATOR, _R( 502, 308, 649, 358), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND);
-		break;
-	case 1: // overhead panel
-		oapiRegisterPanelBackground (hBmp, PANEL_ATTACH_TOP|PANEL_MOVEOUT_TOP, 0xffffff);
-		oapiRegisterPanelArea (AID_FUELSTATUS1,       _R( 191, 102, 207, 257), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND);
-		oapiRegisterPanelArea (AID_FUELSTATUS2,       _R( 233,  44, 310, 109), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND);
-		oapiRegisterPanelArea (AID_FUELSTATUS3,       _R( 266, 211, 305, 267), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND);
-		oapiRegisterPanelArea (AID_FUELSTATUS4,       _R( 182,  44, 221,  82), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND);
-		oapiRegisterPanelArea (AID_AIRLOCK1SWITCH,    _R( 477,  38, 501,  88), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN);
-		oapiRegisterPanelArea (AID_AIRLOCK1INDICATOR, _R( 473,  91, 507,  99), PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND);
-		oapiRegisterPanelArea (AID_DOCKSWITCH,        _R( 479, 128, 503, 178), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN);
-		oapiRegisterPanelArea (AID_DOCKINDICATOR,     _R( 475, 180, 509, 188), PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND);
-		oapiRegisterPanelArea (AID_GEARSWITCH,        _R( 530, 128, 554, 178), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN);
-		oapiRegisterPanelArea (AID_GEARINDICATOR,     _R( 526, 180, 560, 188), PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND);
-		oapiRegisterPanelArea (AID_CARGO_OPEN,        _R( 615,  59, 699, 189), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN,PANEL_MAP_BACKGROUND);
-		oapiRegisterPanelArea (AID_GARGOARMSWITCH,	  _R( 723, 128, 747, 178), PANEL_REDRAW_USER,PANEL_MOUSE_LBDOWN);
-		oapiRegisterPanelArea (AID_CARGOARMINDICATOR, _R( 719, 180, 753, 188), PANEL_REDRAW_USER,PANEL_MOUSE_IGNORE);
-		oapiSetPanelNeighbours (-1,-1,-1,0);
-		break;
-	}
-	InitPanel (id);
-	return hBmp != NULL;
-}
-#endif
 
 // --------------------------------------------------------------
 // Respond to panel mouse event
@@ -1712,48 +1705,6 @@ bool ShuttleA::clbkPanelMouseEvent (int id, int event, int mx, int my, void *con
 		return pe->ProcessMouse2D (event, mx, my);
 	} else
 		return false;
-
-#ifdef UNDEF
-	static int ctrl = 3;
-	double lvl;
-	int mode, pmode, mfd;
-
-	switch (id) {
-	// panel 0 events:
-	case AID_PODANGLEPRESET:
-		if ((my % 18) > 14) return false;
-		mode = my / 18;
-		PresetPod (3, (2-mode)*0.5*PI);
-		return true;
-	case AID_NAVMODE:
-		if ((mx % 44) < 42) {
-			ToggleNavmode (6 - mx/44);
-			return true;
-		}
-		break;
-
-	// panel 1 events:
-	case AID_AIRLOCK1SWITCH:
-		ActivateAirlock (my < 25 ? DOOR_CLOSING : DOOR_OPENING);
-		break;
-	case AID_DOCKSWITCH:
-		ActivateDockingPort (my < 25 ? DOOR_CLOSING : DOOR_OPENING);
-		break;
-	case AID_GEARSWITCH:
-		ActivateLandingGear(my<25 ? DOOR_CLOSING:DOOR_OPENING);
-		break;
-	case AID_CARGO_OPEN:
-		mode =(mx >45?0:3);
-		mode +=	(my / 44);
-		if (ToggleGrapple(mode))
-			cargo_open[mode]=!cargo_open[mode];
-		return true;
-	case AID_GARGOARMSWITCH:
-		ActivateCargo(my>25? 1:0);
-
-	}
-	return false;
-#endif
 }
 
 // --------------------------------------------------------------
@@ -1764,72 +1715,17 @@ bool ShuttleA::clbkPanelRedrawEvent (int id, int event, SURFHANDLE surf, void *c
 	if (context) {
 		PanelElement *pe = (PanelElement*)context;
 		return pe->Redraw2D (surf);
-	} else
+	} else {
+		switch (id) {
+		case AID_FUELSTATUS1:
+		case AID_FUELSTATUS2:
+		case AID_FUELSTATUS3:
+		case AID_FUELSTATUS4:
+			RedrawPanel_Fuelstatus (surf, id-AID_FUELSTATUS1);
+			return true;
+		}
 		return false;
-
-#ifdef UNDEF
-	switch (id) {
-	// panel 0 events:
-	case AID_ENGINEINDICATOR:
-		return RedrawPanel_EngineIndicator (surf);
-	case AID_PODANGLEINDICATOR:
-		return RedrawPanel_PodangleIndicator (surf);
-	case AID_NAVMODE:
-		RedrawPanel_Navmode (surf);
-		return true;
-
-	// panel 1 events:
-	case AID_FUELSTATUS1:
-	case AID_FUELSTATUS2:
-	case AID_FUELSTATUS3:
-	case AID_FUELSTATUS4:
-		RedrawPanel_Fuelstatus (surf, id-AID_FUELSTATUS1);
-		return true;
-	case AID_AIRLOCK1SWITCH:
-		oapiBlt (surf, srf[0], 0, 0, lock_status == DOOR_OPEN ||
-			lock_status == DOOR_OPENING ? 24:0, 0, 24, 50);
-		return true;
-	case AID_AIRLOCK1INDICATOR:
-		switch (lock_status) {
-		case DOOR_CLOSED: oapiBlt (surf, srf[3], 0, 0, 0,  0, 34, 8); break;
-		case DOOR_OPEN:   oapiBlt (surf, srf[3], 0, 0, 0, 16, 34, 8); break;
-		default:          oapiBlt (surf, srf[3], 0, 0, 0,  8, 34, 8); break;
-		}
-		return true;
-	case AID_DOCKSWITCH:
-		oapiBlt (surf, srf[2], 0, 0, dock_status == DOOR_OPEN ||
-			dock_status == DOOR_OPENING ? 24:0, 0, 24, 50);
-		return true;
-	case AID_DOCKINDICATOR:
-		switch (dock_status) {
-		case DOOR_CLOSED: oapiBlt (surf, srf[4], 0, 0, 0,  0, 34, 8); break;
-		case DOOR_OPEN:   oapiBlt (surf, srf[4], 0, 0, 0, 16, 34, 8); break;
-		default:          oapiBlt (surf, srf[4], 0, 0, 0,  8, 34, 8); break;
-		}
-		return true;
-	case AID_GEARSWITCH:
-		oapiBlt (surf, srf[2], 0, 0, gear_status == DOOR_OPEN ||
-			gear_status == DOOR_OPENING ? 24:0, 0, 24, 50);
-		return true;
-	case AID_GEARINDICATOR:
-		switch (gear_status) {
-		case DOOR_CLOSED: oapiBlt (surf, srf[4], 0, 0, 0,  0, 34, 8); break;
-		case DOOR_OPEN:   oapiBlt (surf, srf[4], 0, 0, 0, 16, 34, 8); break;
-		default:          oapiBlt (surf, srf[4], 0, 0, 0,  8, 34, 8); break;
-		}
-		return true;
-	case AID_CARGO_OPEN:
-		RedrawPanel_CargoOpen(surf);
-		return true;
-	case AID_GARGOARMSWITCH:
-		oapiBlt (surf, srf[2], 0, 0, cargo_arm_status == 1 ? 24:0, 0, 24, 50);
-		return true;
-	case AID_CARGOARMINDICATOR:
-		oapiBlt (surf, srf[4], 0, 0,0, cargo_arm_status == 1 ? 16:0, 34, 8);		
-		return true;
 	}
-	return false;
-#endif
 }
 
 // --------------------------------------------------------------
@@ -1913,7 +1809,7 @@ bool ShuttleA::clbkDrawHUD (int mode, const HUDPAINTSPEC *hps, oapi::Sketchpad *
 	if (oapiCockpitMode() != COCKPIT_VIRTUAL) return false;
 
 	// draw the default HUD
-	VESSEL3::clbkDrawHUD (mode, hps, skp);
+	VESSEL4::clbkDrawHUD (mode, hps, skp);
 	int cx = hps->CX, cy = hps->CY;
 
 	// show gear deployment status
@@ -1968,7 +1864,7 @@ bool ShuttleA::clbkDrawHUD (int mode, const HUDPAINTSPEC *hps, oapi::Sketchpad *
 // --------------------------------------------------------------
 void ShuttleA::clbkRenderHUD (int mode, const HUDPAINTSPEC *hps, SURFHANDLE hTex)
 {
-	VESSEL3::clbkRenderHUD (mode, hps, hTex);
+	VESSEL4::clbkRenderHUD (mode, hps, hTex);
 
 	static float texw = 512.0f, texh = 256.0f;
 	float cx = (float)hps->CX, cy = (float)hps->CY;
@@ -2166,10 +2062,10 @@ bool ShuttleA::clbkLoadVC (int id)
 		
 		//OVERHEAD Panel
 		tex1 = oapiGetTextureHandle (vcmesh_tpl,14); //fuel management tex
-		oapiVCRegisterArea (AID_FUELSTATUS1,_R( 129, 77, 145, 232), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND,tex1);
-		oapiVCRegisterArea (AID_FUELSTATUS2,_R( 171,  19, 248, 84), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND,tex1);
-		oapiVCRegisterArea (AID_FUELSTATUS3,_R( 204, 186, 243, 242), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND,tex1);
-		oapiVCRegisterArea (AID_FUELSTATUS4,_R( 120,  19, 159,  57), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND,tex1);
+		oapiVCRegisterArea (AID_FUELSTATUS1,_R( 127,  77, 147, 232), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_CURRENT,tex1);
+		oapiVCRegisterArea (AID_FUELSTATUS2,_R( 171,  19, 252,  84), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_CURRENT,tex1);
+		oapiVCRegisterArea (AID_FUELSTATUS3,_R( 206, 186, 247, 242), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND,tex1);
+		oapiVCRegisterArea (AID_FUELSTATUS4,_R( 118,  19, 159,  57), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND,tex1);
 
 		tex1 = oapiGetTextureHandle (vcmesh_tpl,15); //indicator tex
 		oapiVCRegisterArea(AID_DOCKINDICATOR,    _R(0,0,34,8), PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND,tex1);
@@ -2464,7 +2360,9 @@ DLLCLBK void InitModule (HINSTANCE hModule)
 	g_Param.hFont[0] = CreateFont (-10, 0, 0, 0, 400, 0, 0, 0, 0, 0, 0, 0, 0, "Arial");
 	g_Param.hPen[0] = CreatePen (PS_SOLID, 3, RGB (120,220,120));
 	g_Param.hPen[1] = CreatePen (PS_SOLID, 1, RGB (220,220,120));
+	g_Param.hPen[2] = CreatePen (PS_SOLID, 1, RGB (0,0,0));
 	g_Param.hBrush[0] = CreateSolidBrush (RGB(0,128,0));
+	g_Param.hBrush[1] = CreateSolidBrush (RGB(0,0,0));
 
 	// load 2D panel texture
 	ShuttleA::panel2dtex = oapiLoadTexture ("ShuttleA\\panel2d.dds");
@@ -2480,8 +2378,8 @@ DLLCLBK void ExitModule (HINSTANCE hModule)
 	int i;
 	// deallocate GDI resources
 	for (i = 0; i < 1; i++) DeleteObject (g_Param.hFont[i]);
-	for (i = 0; i < 2; i++) DeleteObject (g_Param.hPen[i]);
-	for (i = 0; i < 1; i++) DeleteObject (g_Param.hBrush[i]);
+	for (i = 0; i < 3; i++) DeleteObject (g_Param.hPen[i]);
+	for (i = 0; i < 2; i++) DeleteObject (g_Param.hBrush[i]);
 
 	// deallocated 2D panel texture
 	oapiDestroySurface (ShuttleA::panel2dtex);

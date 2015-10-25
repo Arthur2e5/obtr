@@ -448,14 +448,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\ElevTrim.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\ElevTrim.h"
-					>
-				</File>
-				<File
 					RelativePath=".\FuelMfd.cpp"
 					>
 				</File>
@@ -603,6 +595,14 @@
 				</File>
 				<File
 					RelativePath=".\HudCtrl.h"
+					>
+				</File>
+				<File
+					RelativePath=".\LightSubsys.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\LightSubsys.h"
 					>
 				</File>
 				<File
