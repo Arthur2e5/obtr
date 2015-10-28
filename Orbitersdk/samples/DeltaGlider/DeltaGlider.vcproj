@@ -424,22 +424,6 @@
 					>
 				</File>
 				<File
-					RelativePath=".\AirlockSwitch.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\AirlockSwitch.h"
-					>
-				</File>
-				<File
-					RelativePath=".\CockpitLight.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\CockpitLight.h"
-					>
-				</File>
-				<File
 					RelativePath=".\DGSwitches.cpp"
 					>
 				</File>

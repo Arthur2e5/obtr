@@ -25,6 +25,9 @@ LightCtrlSubsystem::LightCtrlSubsystem (DeltaGlider *v, int ident)
 	// create component instances
 	AddComponent (instrlight = new InstrumentLight (this));
 	AddComponent (cockpitlight = new CockpitLight (this));
+	AddComponent (landdocklight = new LandDockLight (this));
+	AddComponent (strobelight = new StrobeLight (this));
+	AddComponent (navlight = new NavLight (this));
 }
 
 // --------------------------------------------------------------
@@ -34,6 +37,9 @@ LightCtrlSubsystem::~LightCtrlSubsystem ()
 	// delete components
 	delete instrlight;
 	delete cockpitlight;
+	delete landdocklight;
+	delete strobelight;
+	delete navlight;
 }
 
 // ==============================================================
@@ -344,3 +350,288 @@ bool CockpitBrightnessDial::ProcessMouseVC (int event, VECTOR3 &p)
 	return true;
 }
 
+// ==============================================================
+// Landing/docking lights
+// ==============================================================
+
+LandDockLight::LandDockLight (LightCtrlSubsystem *_subsys)
+: DGSubsystemComponent(_subsys)
+{
+	light_mode = 0;
+	light = NULL;
+	ELID_SWITCH = AddElement (sw = new LandDockLightSwitch (this));
+}
+
+// --------------------------------------------------------------
+
+void LandDockLight::SetLight (int mode)
+{
+	light_mode = mode;
+	if (light) {
+		DG()->DelLightEmitter (light);
+		light = NULL;
+	}
+	if (mode) {
+		COLOUR4 col_a = {0,0,0,0};
+		COLOUR4 col_white = {1,1,1,0};
+		if (mode == 1) {
+			light = (SpotLight*)DG()->AddSpotLight(_V(0.3,0.3,8.5), _V(0,0,1), 150, 1e-3, 0, 1e-3, RAD*30, RAD*60, col_white, col_white, col_a);
+		} else {
+			double tilt = -10.0*RAD;
+			light = (SpotLight*)DG()->AddSpotLight(_V(0.1,-0.3,7.5), _V(0,sin(tilt),cos(tilt)), 5000, 1e-3, 1e-5, 2e-7, RAD*25, RAD*40, col_white, col_white, col_a);
+		}
+		light->SetVisibility (LightEmitter::VIS_EXTERNAL);
+	}
+}
+
+// --------------------------------------------------------------
+
+void LandDockLight::clbkSaveState (FILEHANDLE scn)
+{
+	if (light_mode)
+		oapiWriteScenario_int (scn, "LANDDOCKLIGHT", light_mode);
+}
+
+// --------------------------------------------------------------
+
+bool LandDockLight::clbkParseScenarioLine (const char *line)
+{
+	if (!strnicmp (line, "LANDDOCKLIGHT", 13)) {
+		sscanf (line+13, "%d", &light_mode);
+		light_mode = max (0, min (2, light_mode));
+		return true;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
+bool LandDockLight::clbkLoadVC (int vcid)
+{
+	if (vcid != 0) return false;
+
+	// Landing/docking light switch
+	oapiVCRegisterArea (GlobalElId(ELID_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_SWITCH), VC_LANDINGLIGHT_SWITCH_mousearea[0], VC_LANDINGLIGHT_SWITCH_mousearea[1], VC_LANDINGLIGHT_SWITCH_mousearea[2], VC_LANDINGLIGHT_SWITCH_mousearea[3]);
+	sw->DefineAnimationVC (VC_LANDINGLIGHT_SWITCH_ref, VC_LANDINGLIGHT_SWITCH_axis, GRP_SWITCH1_VC, VC_LANDINGLIGHT_SWITCH_vofs);
+
+	return true;
+}
+
+// --------------------------------------------------------------
+
+void LandDockLight::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
+{
+	SetLight (light_mode);
+}
+
+// ==============================================================
+
+LandDockLightSwitch::LandDockLightSwitch (LandDockLight *comp)
+: DGSwitch1(comp->DG(), DGSwitch1::THREESTATE), component(comp)
+{
+}
+
+// --------------------------------------------------------------
+
+bool LandDockLightSwitch::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	if (DGSwitch1::ProcessMouseVC (event, p)) {
+		DGSwitch1::State state = GetState();
+		component->SetLight ((int)state);
+		return true;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
+void LandDockLightSwitch::ResetVC (DEVMESHHANDLE hMesh)
+{
+	SetState ((DGSwitch1::State)component->GetLight());
+	DGSwitch1::ResetVC (hMesh);
+}
+
+// ==============================================================
+// Strobes
+// ==============================================================
+
+StrobeLight::StrobeLight (LightCtrlSubsystem *_subsys)
+: DGSubsystemComponent(_subsys)
+{
+	light_on = false;
+	ELID_SWITCH = AddElement (sw = new StrobeLightSwitch (this));
+}
+
+// --------------------------------------------------------------
+
+void StrobeLight::SetLight (bool on)
+{
+	extern void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd=0);
+
+	light_on = on;
+	for (int i = 3; i <= 6; i++) DG()->beacon[i].active = on;
+	//oapiTriggerPanelRedrawArea (1, AID_SWITCHARRAY);
+	UpdateCtrlDialog (DG());
+}
+
+// --------------------------------------------------------------
+
+void StrobeLight::clbkSaveState (FILEHANDLE scn)
+{
+	if (light_on)
+		oapiWriteScenario_int (scn, "STROBELIGHT", (int)light_on);
+}
+
+// --------------------------------------------------------------
+
+bool StrobeLight::clbkParseScenarioLine (const char *line)
+{
+	if (!strnicmp (line, "STROBELIGHT", 11)) {
+		int mode;
+		sscanf (line+11, "%d", &mode);
+		light_on = (mode != 0);
+		return true;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
+bool StrobeLight::clbkLoadVC (int vcid)
+{
+	if (vcid != 0) return false;
+
+	// Strobe light switch
+	oapiVCRegisterArea (GlobalElId(ELID_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_SWITCH), VC_STROBELIGHT_SWITCH_mousearea[0], VC_STROBELIGHT_SWITCH_mousearea[1], VC_STROBELIGHT_SWITCH_mousearea[2], VC_STROBELIGHT_SWITCH_mousearea[3]);
+	sw->DefineAnimationVC (VC_STROBELIGHT_SWITCH_ref, VC_STROBELIGHT_SWITCH_axis, GRP_SWITCH1_VC, VC_STROBELIGHT_SWITCH_vofs);
+
+	return true;
+}
+
+// --------------------------------------------------------------
+
+void StrobeLight::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
+{
+	SetLight (light_on);
+}
+
+// ==============================================================
+
+StrobeLightSwitch::StrobeLightSwitch (StrobeLight *comp)
+: DGSwitch1(comp->DG(), DGSwitch1::TWOSTATE), component(comp)
+{
+}
+
+// --------------------------------------------------------------
+
+void StrobeLightSwitch::ResetVC (DEVMESHHANDLE hMesh)
+{
+	SetState (component->GetLight() ? UP:DOWN);
+	DGSwitch1::ResetVC (hMesh);
+}
+
+// --------------------------------------------------------------
+
+bool StrobeLightSwitch::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	if (DGSwitch1::ProcessMouseVC (event, p)) {
+		DGSwitch1::State state = GetState();
+		component->SetLight (state==UP);
+		return true;
+	}
+	return false;
+}
+
+// ==============================================================
+// Navigation lights
+// ==============================================================
+
+NavLight::NavLight (LightCtrlSubsystem *_subsys)
+: DGSubsystemComponent(_subsys)
+{
+	light_on = false;
+	ELID_SWITCH = AddElement (sw = new NavLightSwitch (this));
+}
+
+// --------------------------------------------------------------
+
+void NavLight::SetLight (bool on)
+{
+	extern void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd=0);
+
+	light_on = on;
+	for (int i = 0; i <= 2; i++) DG()->beacon[i].active = on;
+	//oapiTriggerPanelRedrawArea (1, AID_SWITCHARRAY);
+	UpdateCtrlDialog (DG());
+}
+
+// --------------------------------------------------------------
+
+void NavLight::clbkSaveState (FILEHANDLE scn)
+{
+	if (light_on)
+		oapiWriteScenario_int (scn, "NAVLIGHT", (int)light_on);
+}
+
+// --------------------------------------------------------------
+
+bool NavLight::clbkParseScenarioLine (const char *line)
+{
+	if (!strnicmp (line, "NAVLIGHT", 8)) {
+		int mode;
+		sscanf (line+8, "%d", &mode);
+		light_on = (mode != 0);
+		return true;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
+bool NavLight::clbkLoadVC (int vcid)
+{
+	if (vcid != 0) return false;
+
+	// Nav light switch
+	oapiVCRegisterArea (GlobalElId(ELID_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_SWITCH), VC_NAVLIGHT_SWITCH_mousearea[0], VC_NAVLIGHT_SWITCH_mousearea[1], VC_NAVLIGHT_SWITCH_mousearea[2], VC_NAVLIGHT_SWITCH_mousearea[3]);
+	sw->DefineAnimationVC (VC_NAVLIGHT_SWITCH_ref, VC_NAVLIGHT_SWITCH_axis, GRP_SWITCH1_VC, VC_NAVLIGHT_SWITCH_vofs);
+
+	return true;
+}
+
+// --------------------------------------------------------------
+
+void NavLight::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
+{
+	SetLight (light_on);
+}
+
+// ==============================================================
+
+NavLightSwitch::NavLightSwitch (NavLight *comp)
+: DGSwitch1(comp->DG(), DGSwitch1::TWOSTATE), component(comp)
+{
+}
+
+// --------------------------------------------------------------
+
+void NavLightSwitch::ResetVC (DEVMESHHANDLE hMesh)
+{
+	SetState (component->GetLight() ? UP:DOWN);
+	DGSwitch1::ResetVC (hMesh);
+}
+
+// --------------------------------------------------------------
+
+bool NavLightSwitch::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	if (DGSwitch1::ProcessMouseVC (event, p)) {
+		DGSwitch1::State state = GetState();
+		component->SetLight (state==UP);
+		return true;
+	}
+	return false;
+}

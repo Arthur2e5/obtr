@@ -266,11 +266,10 @@ public:
 	bool clbkVCRedrawEvent (int id, int event, SURFHANDLE surf);
 	int  clbkGeneric (int msgid, int prm, void *context);
 
-	double range;     // glide range
 	double aoa_ind;   // angle of AOA needle (NOT AOA!)
 	double slip_ind;  // angle of slip indicator needle
 	double load_ind;  // angle of load indicator needle
-	int hbalanceidx, hbswitch, hbmode;       // hover balance slider position
+	int hbswitch, hbmode;       // hover balance slider position
 	bool psngr[4];                           // passengers?
 	bool bDamageEnabled;                     // damage/failure testing?
 
@@ -280,26 +279,15 @@ public:
 	bool aileronfail[4];
 
 	enum DoorStatus { DOOR_CLOSED, DOOR_OPEN, DOOR_CLOSING, DOOR_OPENING }
-		olock_status, ilock_status, hatch_status, radiator_status;
-	void ActivateOuterAirlock (DoorStatus action);
-	void ActivateInnerAirlock (DoorStatus action);
+		hatch_status, radiator_status;
 	void ActivateHatch (DoorStatus action);
 	void ActivateRadiator (DoorStatus action);
-	void RevertOuterAirlock ();
-	void RevertInnerAirlock ();
 	void RevertHatch ();
 	void RevertRadiator ();
-	inline bool GetStrobeLight () const { return strobe_light_on; }
-	inline bool GetNavLight () const { return nav_light_on; }
-	void SetLandDockLight (int mode);
-	void SetStrobeLight (bool on);
-	void SetNavLight (bool on);
 	void SetGearParameters (double state);
-	double olock_proc, ilock_proc, hatch_proc, radiator_proc;     // logical status
+	double hatch_proc, radiator_proc;     // logical status
 
 	// Animation handles
-	UINT anim_olock;            // handle for outer airlock animation
-	UINT anim_ilock;            // handle for inner airlock animation
 	UINT anim_hatch;            // handle for top hatch animation
 	UINT anim_radiator;         // handle for radiator animation
 	UINT anim_rudder;           // handle for rudder animation
@@ -327,7 +315,6 @@ public:
 	enum {CAM_GENERIC, CAM_PANELMAIN, CAM_PANELUP, CAM_PANELDN, CAM_VCPILOT, CAM_VCPSNGR1, CAM_VCPSNGR2, CAM_VCPSNGR3, CAM_VCPSNGR4} campos;
 
 	BEACONLIGHTSPEC beacon[8];                   // light beacon definitions
-	bool GetBeaconState (int which); // which=0:nav, 1:beacon, 2:strobe
 
 	double GetThrusterFlowRate(THRUSTER_HANDLE th);  // D. Beachy: get thruster flow rate in kg/s
 
@@ -336,6 +323,7 @@ public:
 	inline GearSubsystem *SubsysGear() { return ssys_gear; }
 	inline DockingCtrlSubsystem *SubsysDocking() { return ssys_docking; }
 	inline AerodynCtrlSubsystem *SubsysAerodyn() { return ssys_aerodyn; }
+	inline PressureSubsystem *SubsysPressure() { return ssys_pressurectrl; }
 
 	// script interface-related methods
 	int Lua_InitInterpreter (void *context);
@@ -389,10 +377,6 @@ private:
 	CTRLSURFHANDLE hlaileron, hraileron;         // control surface handles
 	PSTREAM_HANDLE hatch_vent;
 	double hatch_vent_t;
-	SpotLight *docking_light;
-	int landdock_light_mode;                     // 0=off, 1=docking, 2=landing
-	bool strobe_light_on;                        // false=off, true=on
-	bool nav_light_on;                           // false=off, true=on
 	int panelcol;                                // panel light colour index, 0=default
 
 	UINT engsliderpos[5];    // throttle settings for main,hover,scram engines
@@ -401,8 +385,8 @@ private:
 	UINT wbrake_pos[2];
 	int mainflowidx[2], retroflowidx[2], hoverflowidx, scflowidx[2];
 	int mainTSFCidx, scTSFCidx[2];
-	int mainpropidx[2], scrampropidx[2];
-	int mainpropmass, scrampropmass;
+	int scrampropidx[2];
+	int scrampropmass;
 };
 
 // ==============================================================
@@ -441,15 +425,9 @@ typedef struct {
 #define AID_SWITCHARRAY         55
 #define AID_AAP                 56
 #define AID_ANGRATEINDICATOR    61
-#define AID_LANDDOCKLIGHT       63
-#define AID_STROBE_SWITCH       64
-#define AID_NAVLIGHT_SWITCH     65
 #define AID_HATCH_SWITCH        66
-#define AID_ILOCK_SWITCH        67
-#define AID_OLOCK_SWITCH        68
 
 // Panel 1
-#define AID_AIRLOCKSWITCH      100
 #define AID_BEACONBUTTON       103
 #define AID_VPITCH             105
 #define AID_VBANK              106

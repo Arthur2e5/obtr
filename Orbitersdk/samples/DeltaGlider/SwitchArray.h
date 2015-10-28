@@ -24,26 +24,6 @@ public:
 };
 
 // ==============================================================
-// Inner airlock open/close switch
-
-class ILockSwitch: public DGSwitch1 {
-public:
-	ILockSwitch (VESSEL3 *v);
-	void ResetVC (DEVMESHHANDLE hMesh);
-	bool ProcessMouseVC (int event, VECTOR3 &p);
-};
-
-// ==============================================================
-// Outer airlock open/close switch
-
-class OLockSwitch: public DGSwitch1 {
-public:
-	OLockSwitch (VESSEL3 *v);
-	void ResetVC (DEVMESHHANDLE hMesh);
-	bool ProcessMouseVC (int event, VECTOR3 &p);
-};
-
-// ==============================================================
 
 class SwitchArray: public PanelElement {
 public:

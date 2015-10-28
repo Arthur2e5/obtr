@@ -3,6 +3,7 @@
 #include "GearSubsys.h"
 #include "DockingSubsys.h"
 #include "AerodynSubsys.h"
+#include "PressureSubsys.h"
 #include <stdio.h>
 
 extern "C" {
@@ -145,7 +146,7 @@ static int dgOLock (lua_State *L)
 	DeltaGlider *dg = lua_toDG (L, 1);
 	int action = lua_tointeger (L, 2);
 	if (dg && action >= 0 && action < 2)
-		dg->ActivateOuterAirlock (DGaction[action]);
+		dg->SubsysPressure()->ActivateOuterAirlock (DGaction[action]);
 	return 0;
 }
 
@@ -154,7 +155,7 @@ static int dgILock (lua_State *L)
 	DeltaGlider *dg = lua_toDG (L, 1);
 	int action = lua_tointeger (L, 2);
 	if (dg && action >= 0 && action < 2)
-		dg->ActivateInnerAirlock (DGaction[action]);
+		dg->SubsysPressure()->ActivateInnerAirlock (DGaction[action]);
 	return 0;
 }
 

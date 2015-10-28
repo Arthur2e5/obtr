@@ -27,10 +27,8 @@
 #include "DockingSubsys.h"
 #include "MfdSubsys.h"
 #include "SwitchArray.h"
-#include "AirlockSwitch.h"
 #include "MwsButton.h"
 #include "MomentInd.h"
-#include "CockpitLight.h"
 #include "ScnEditorAPI.h"
 #include "PressureSubsys.h"
 #include "LightSubsys.h"
@@ -169,10 +167,6 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	aoa_ind = PI;
 	slip_ind = PI*0.5;
 	load_ind = PI;
-	olock_status      = DOOR_CLOSED;
-	olock_proc        = 0.0;
-	ilock_status      = DOOR_CLOSED;
-	ilock_proc        = 0.0;
 	hatch_status      = DOOR_CLOSED;
 	hatch_proc        = 0.0;
 	radiator_status   = DOOR_CLOSED;
@@ -189,10 +183,6 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	panelcol          = 0;
 	campos            = CAM_GENERIC;
 	th_main_level     = 0.0;
-	docking_light     = NULL;
-	landdock_light_mode = 0;
-	strobe_light_on   = false;
-	nav_light_on      = false;
 	skinpath[0] = '\0';
 	for (i = 0; i < 3; i++)
 		skin[i] = 0;
@@ -206,13 +196,12 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 		scflowidx[i] = 0;
 		mainflowidx[i] = retroflowidx[i] = -1;
 		scTSFCidx[i] = -1;
-		mainpropidx[i] = scrampropidx[i] = -1;
+		scrampropidx[i] = -1;
 	}
 
 	hbmode = hbswitch = 0;
-	mainpropmass = scrampropmass = -1;
+	scrampropmass = -1;
 	mainTSFCidx = hoverflowidx = -1;
-	hbalanceidx = 28;
 	
 	ninstr = 0;
 
@@ -271,7 +260,7 @@ void DeltaGlider::SetEmptyMass () const
 // --------------------------------------------------------------
 void DeltaGlider::CreatePanelElements ()
 {
-	int i, j;
+	int i;
 
 	ninstr_main = 50;
 	instr_scram0 = ninstr_main;
@@ -291,12 +280,7 @@ void DeltaGlider::CreatePanelElements ()
 	instr[25] = new SwitchArray (this);
 	instr[27] = new MWSButton (this);
 	instr[42] = new AngRateIndicator (this, g_Param.surf);
-	instr[44] = new LandDockLightSwitch (this);
-	instr[45] = new StrobeLightSwitch (this);
-	instr[46] = new NavLightSwitch (this);
 	instr[47] = new HatchSwitch (this);
-	instr[48] = new ILockSwitch (this);
-	instr[49] = new OLockSwitch (this);
 
 	aap = new AAP (this);   aap->AttachHSI ((InstrHSI*)instr[1]);
 
@@ -304,7 +288,6 @@ void DeltaGlider::CreatePanelElements ()
 		instr[instr_scram0+0] = new ThrottleScram (this);
 	}
 
-	instr[instr_ovhd0+0] = new AirlockSwitch (this);
 	for (i = 0; i < 3; i++) {
 		instr[instr_ovhd0+1+i] = new AngularVelocityIndicator (this, i);
 		instr[instr_ovhd0+4+i] = new AngularAccelerationIndicator (this, i);
@@ -317,29 +300,6 @@ void DeltaGlider::CreatePanelElements ()
 // --------------------------------------------------------------
 void DeltaGlider::DefineAnimations ()
 {
-	// ***** Outer airlock animation *****
-	static UINT OLockGrp[2] = {GRP_OLock1,GRP_OLock2};
-	static MGROUP_ROTATE OLock (0, OLockGrp, 2,
-		_V(0,-0.080,9.851), _V(1,0,0), (float)(110*RAD));
-	static UINT VCOLockGrp[1] = {13};
-	static MGROUP_ROTATE VCOLock (1, VCOLockGrp, 1,
-		_V(0,-0.080,9.851), _V(1,0,0), (float)(110*RAD));
-	anim_olock = CreateAnimation (0);
-	AddAnimationComponent (anim_olock, 0, 1, &OLock);
-	AddAnimationComponent (anim_olock, 0, 1, &VCOLock);
-
-	// ***** Inner airlock animation *****
-	static UINT ILockGrp[2] = {GRP_ILock1,GRP_ILock2};
-	static MGROUP_ROTATE ILock (0, ILockGrp, 2,
-		_V(0,-0.573,7.800), _V(1,0,0), (float)(85*RAD));
-	// virtual cockpit mesh animation (inner airlock visible from cockpit)
-	static UINT VCILockGrp[4] = {GRP_ILOCK1_VC,GRP_ILOCK2_VC,GRP_ILOCK3_VC,GRP_ILOCK_GLASS_VC};
-	static MGROUP_ROTATE VCILock (1, VCILockGrp, 4,
-		_V(0,-0.573,7.800), _V(1,0,0), (float)(85*RAD));
-	anim_ilock = CreateAnimation (0);
-	AddAnimationComponent (anim_ilock, 0, 1, &ILock);
-	AddAnimationComponent (anim_ilock, 0, 1, &VCILock);
-
 	// ***** Top hatch animation *****
 	static UINT HatchGrp[2] = {GRP_Hatch1,GRP_Hatch2};
 	static MGROUP_ROTATE Hatch (0, HatchGrp, 2,
@@ -543,8 +503,8 @@ void DeltaGlider::InitPanel (int panel)
 		for (i = 0; i < 5; i++) engsliderpos[i] = (UINT)-1;
 		for (i = 0; i < 2; i++)
 			mainflowidx[i] = retroflowidx[i] = scTSFCidx[i] = scflowidx[i] =
-			mainpropidx[i] = scrampropidx[i] = -1;
-		mainpropmass = scrampropmass = -1;
+			scrampropidx[i] = -1;
+		scrampropmass = -1;
 		hoverflowidx = mainTSFCidx = -1;
 		break;
 	case 1: // overhead panel
@@ -585,9 +545,9 @@ void DeltaGlider::InitVC (int vc)
 		for (i = 0; i < 5; i++) engsliderpos[i] = (UINT)-1;
 		for (i = 0; i < 2; i++)
 			mainflowidx[i] = retroflowidx[i] = scTSFCidx[i] = scflowidx[i] =
-			mainpropidx[i] = scrampropidx[i] = -1;
+			scrampropidx[i] = -1;
 		hoverflowidx = mainTSFCidx = -1;
-		mainpropmass = scrampropmass = -1;
+		scrampropmass = -1;
 		break;
 	}
 }
@@ -822,83 +782,6 @@ void DeltaGlider::RevertHatch ()
 				   DOOR_OPENING : DOOR_CLOSING);
 }
 
-void DeltaGlider::ActivateOuterAirlock (DoorStatus action)
-{
-	bool close = (action == DOOR_CLOSED || action == DOOR_CLOSING);
-	olock_status = action;
-	if (action <= DOOR_OPEN) {
-		olock_proc = (action == DOOR_CLOSED ? 0.0 : 1.0);
-		SetAnimation (anim_olock, olock_proc);
-		UpdateStatusIndicators();
-	}
-	oapiTriggerPanelRedrawArea (1, AID_AIRLOCKSWITCH);
-	UpdateCtrlDialog (this);
-	RecordEvent ("OLOCK", close ? "CLOSE" : "OPEN");
-}
-
-void DeltaGlider::RevertOuterAirlock ()
-{
-	ActivateOuterAirlock (olock_status == DOOR_CLOSED || olock_status == DOOR_CLOSING ?
-		                  DOOR_OPENING : DOOR_CLOSING);
-}
-
-void DeltaGlider::ActivateInnerAirlock (DoorStatus action)
-{
-	bool close = (action == DOOR_CLOSED || action == DOOR_CLOSING);
-	ilock_status = action;
-	if (action <= DOOR_OPEN) {
-		ilock_proc = (action == DOOR_CLOSED ? 0.0 : 1.0);
-		SetAnimation (anim_ilock, ilock_proc);
-		UpdateStatusIndicators();
-	}
-	oapiTriggerPanelRedrawArea (1, AID_AIRLOCKSWITCH);
-	UpdateCtrlDialog (this);
-	RecordEvent ("ILOCK", close ? "CLOSE" : "OPEN");
-}
-
-void DeltaGlider::RevertInnerAirlock ()
-{
-	ActivateInnerAirlock (ilock_status == DOOR_CLOSED || ilock_status == DOOR_CLOSING ?
-		                  DOOR_OPENING : DOOR_CLOSING);
-}
-
-
-void DeltaGlider::SetLandDockLight (int mode)
-{
-	landdock_light_mode = mode;
-	if (docking_light) {
-		DelLightEmitter (docking_light);
-		docking_light = NULL;
-	}
-	if (mode) {
-		COLOUR4 col_a = {0,0,0,0};
-		COLOUR4 col_white = {1,1,1,0};
-		if (mode == 1) {
-			docking_light = (SpotLight*)AddSpotLight(_V(0.3,0.3,8.5), _V(0,0,1), 150, 1e-3, 0, 1e-3, RAD*30, RAD*60, col_white, col_white, col_a);
-		} else {
-			double tilt = -10.0*RAD;
-			docking_light = (SpotLight*)AddSpotLight(_V(0.1,-0.3,7.5), _V(0,sin(tilt),cos(tilt)), 5000, 1e-3, 1e-5, 2e-7, RAD*25, RAD*40, col_white, col_white, col_a);
-		}
-		docking_light->SetVisibility (LightEmitter::VIS_EXTERNAL);
-	}
-}
-
-void DeltaGlider::SetStrobeLight (bool on)
-{
-	strobe_light_on = on;
-	for (int i = 3; i <=6; i++) beacon[i].active = on;
-	oapiTriggerPanelRedrawArea (1, AID_SWITCHARRAY);
-	UpdateCtrlDialog (this);
-}
-
-void DeltaGlider::SetNavLight (bool on)
-{
-	nav_light_on = on;
-	for (int i = 0; i <= 2; i++) beacon[i].active = on;
-	oapiTriggerPanelRedrawArea (1, AID_SWITCHARRAY);
-	UpdateCtrlDialog (this);
-}
-
 void DeltaGlider::ActivateRadiator (DoorStatus action)
 {
 	bool close = (action == DOOR_CLOSED || action == DOOR_CLOSING);
@@ -953,17 +836,6 @@ double DeltaGlider::GetMaxHoverThrust () const
 	for (int i = 0; i < 3; i++)
 		th0 += GetThrusterMax (th_hover[i]);
 	return th0;
-}
-
-bool DeltaGlider::GetBeaconState (int which)
-{
-	switch (which) {
-		case 0: return beacon[0].active;
-		case 1: return beacon[3].active;
-		case 2: return beacon[5].active;
-		case 3: return beacon[7].active;
-		default: return false;
-	}
 }
 
 void DeltaGlider::TestDamage ()
@@ -1320,11 +1192,11 @@ void DeltaGlider::UpdateStatusIndicators ()
 	vtx[10].tu = vtx[11].tu = x;
 
 	// outer airlock indicator
-	x = (olock_status == DOOR_CLOSED ? xoff : olock_status == DOOR_OPEN ? xon : modf (oapiGetSimTime(), &d) < 0.5 ? xon : xoff);
+	x = (ssys_pressurectrl->OLockStatus() == DOOR_CLOSED ? xoff : ssys_pressurectrl->OLockStatus() == DOOR_OPEN ? xon : modf (oapiGetSimTime(), &d) < 0.5 ? xon : xoff);
 	vtx[12].tu = vtx[13].tu = x;
 
 	// inner airlock indicator
-	x = (ilock_status == DOOR_CLOSED ? xoff : ilock_status == DOOR_OPEN ? xon : modf (oapiGetSimTime(), &d) < 0.5 ? xon : xoff);
+	x = (ssys_pressurectrl->ILockStatus() == DOOR_CLOSED ? xoff : ssys_pressurectrl->ILockStatus() == DOOR_OPEN ? xon : modf (oapiGetSimTime(), &d) < 0.5 ? xon : xoff);
 	vtx[14].tu = vtx[15].tu = x;
 
 	oapiEditMeshGroup (vcmesh, GRP_STATUS_INDICATOR_VC, &ges);
@@ -1406,10 +1278,6 @@ void DeltaGlider::DrawNeedle (HDC hDC, int x, int y, double rad, double angle, d
 
 void DeltaGlider::InitVCMesh()
 {
-	SetLandDockLight (landdock_light_mode);
-	SetStrobeLight (strobe_light_on);
-	SetNavLight (nav_light_on);
-
 	if (vcmesh) {
 		// hide pilot head in VCPILOT position
 		GROUPEDITSPEC ges;
@@ -1714,18 +1582,10 @@ void DeltaGlider::clbkLoadStateEx (FILEHANDLE scn, void *vs)
     char *line;
 
 	while (oapiReadScenario_nextline (scn, line)) {
-		if (!_strnicmp (line, "AIRLOCK", 7)) {
-			sscanf (line+7, "%d%lf", &olock_status, &olock_proc);
-		} else if (!_strnicmp (line, "IAIRLOCK", 8)) {
-			sscanf (line+8, "%d%lf", &ilock_status, &ilock_proc);
-		} else if (!_strnicmp (line, "RADIATOR", 8)) {
+		if (!_strnicmp (line, "RADIATOR", 8)) {
 			sscanf (line+8, "%d%lf", &radiator_status, &radiator_proc);
 		} else if (!_strnicmp (line, "HATCH", 5)) {
 			sscanf (line+5, "%d%lf", &hatch_status, &hatch_proc);
-		} else if (!_strnicmp (line, "TRIM", 4)) {
-			double trim;
-			sscanf (line+4, "%lf", &trim);
-			SetControlSurfaceLevel (AIRCTRL_ELEVATORTRIM, trim, true);
 		} else if (!_strnicmp (line, "TANKCONFIG", 10)) {
 			if (scramjet) sscanf (line+10, "%d", &tankconfig);
 		} else if (!_strnicmp (line, "PSNGR", 5)) {
@@ -1752,9 +1612,9 @@ void DeltaGlider::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 		} else if (!_strnicmp (line, "LIGHTS", 6)) {
 			int lgt[4];
 			sscanf (line+6, "%d%d%d%d", lgt+0, lgt+1, lgt+2, lgt+3);
-			SetNavLight (lgt[0] != 0);
+			//SetNavLight (lgt[0] != 0);
 			//SetBeacon (lgt[1] != 0);
-			SetStrobeLight (lgt[2] != 0);
+			//SetStrobeLight (lgt[2] != 0);
 			//SetDockingLight (lgt[3] != 0);
 		} else if (!_strnicmp (line, "AAP", 3)) {
 			aap->SetState (line);
@@ -1801,18 +1661,11 @@ void DeltaGlider::clbkSaveState (FILEHANDLE scn)
 	// Write default vessel parameters
 	VESSEL4::clbkSaveState (scn);
 
+	// Let subsystems write their parameters
 	for (std::vector<DGSubsystem*>::iterator it = ssys.begin(); it != ssys.end(); ++it)
 		(*it)->clbkSaveState (scn);
 
 	// Write custom parameters
-	if (olock_status) {
-		sprintf (cbuf, "%d %0.4f", olock_status, olock_proc);
-		oapiWriteScenario_string (scn, "AIRLOCK", cbuf);
-	}
-	if (ilock_status) {
-		sprintf (cbuf, "%d %0.4f", ilock_status, ilock_proc);
-		oapiWriteScenario_string (scn, "IAIRLOCK", cbuf);
-	}
 	if (radiator_status) {
 		sprintf (cbuf, "%d %0.4f", radiator_status, radiator_proc);
 		oapiWriteScenario_string (scn, "RADIATOR", cbuf);
@@ -1841,9 +1694,6 @@ void DeltaGlider::clbkSaveState (FILEHANDLE scn)
 			break;
 		}
 
-	double trim = GetControlSurfaceLevel (AIRCTRL_ELEVATORTRIM);
-	if (trim) oapiWriteScenario_float (scn, "TRIM", trim);
-
 	if (tankconfig)
 		oapiWriteScenario_int (scn, "TANKCONFIG", tankconfig);
 
@@ -1862,8 +1712,6 @@ void DeltaGlider::clbkPostCreation ()
 	SetEmptyMass ();
 
 	// update animation states
-	SetAnimation (anim_olock, olock_proc);
-	SetAnimation (anim_ilock, ilock_proc);
 	SetAnimation (anim_hatch, hatch_proc);
 	SetAnimation (anim_radiator, radiator_proc);
 	SetAnimation (anim_radiatorswitch, radiator_status & 1);
@@ -1896,10 +1744,10 @@ bool DeltaGlider::clbkPlaybackEvent (double simt, double event_t, const char *ev
 		ActivateHatch (!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
 		return true;
 	} else if (!_stricmp (event_type, "OLOCK")) {
-		ActivateOuterAirlock (!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
+		ssys_pressurectrl->ActivateOuterAirlock (!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
 		return true;
 	} else if (!_stricmp (event_type, "ILOCK")) {
-		ActivateInnerAirlock (!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
+		ssys_pressurectrl->ActivateInnerAirlock (!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
 		return true;
 	} else if (!_stricmp (event_type, "LADDER")) {
 		ssys_docking->ActivateLadder (!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
@@ -2045,50 +1893,6 @@ void DeltaGlider::clbkPostStep (double simt, double simdt, double mjd)
 			}
 		}
 		SetAnimation (anim_hatch, hatch_proc);
-		UpdateStatusIndicators();
-	}
-
-	// animate outer airlock
-	if (olock_status >= DOOR_CLOSING) {
-		double da = simdt * AIRLOCK_OPERATING_SPEED;
-		if (olock_status == DOOR_CLOSING) {
-			if (olock_proc > 0.0)
-				olock_proc = max (0.0, olock_proc-da);
-			else {
-				olock_status = DOOR_CLOSED;
-				//oapiTriggerPanelRedrawArea (1, AID_AIRLOCKINDICATOR);
-			}
-		} else { // door opening
-			if (olock_proc < 1.0)
-				olock_proc = min (1.0, olock_proc+da);
-			else {
-				olock_status = DOOR_OPEN;
-				//oapiTriggerPanelRedrawArea (1, AID_AIRLOCKINDICATOR);
-			}
-		}
-		SetAnimation (anim_olock, olock_proc);
-		UpdateStatusIndicators();
-	}
-
-	// animate inner airlock
-	if (ilock_status >= DOOR_CLOSING) {
-		double da = simdt * AIRLOCK_OPERATING_SPEED;
-		if (ilock_status == DOOR_CLOSING) {
-			if (ilock_proc > 0.0)
-				ilock_proc = max (0.0, ilock_proc-da);
-			else {
-				ilock_status = DOOR_CLOSED;
-				//oapiTriggerPanelRedrawArea (1, AID_AIRLOCKINDICATOR);
-			}
-		} else { // door opening
-			if (ilock_proc < 1.0)
-				ilock_proc = min (1.0, ilock_proc+da);
-			else {
-				ilock_status = DOOR_OPEN;
-				//oapiTriggerPanelRedrawArea (1, AID_AIRLOCKINDICATOR);
-			}
-		}
-		SetAnimation (anim_ilock, ilock_proc);
 		UpdateStatusIndicators();
 	}
 
@@ -2252,7 +2056,7 @@ void DeltaGlider::DefinePanelOverhead (PANELHANDLE hPanel)
 	SetPanelBackground (hPanel, &panel2dtex, 1, hPanelMesh, panelw, panelh, 0,
 		PANEL_ATTACH_TOP | PANEL_MOVEOUT_TOP);
 
-	RegisterPanelArea (hPanel, AID_AIRLOCKSWITCH, _R(240,30, 390,68), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN, panel2dtex, instr[instr_ovhd0+0]);
+	//RegisterPanelArea (hPanel, AID_AIRLOCKSWITCH, _R(240,30, 390,68), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN, panel2dtex, instr[instr_ovhd0+0]);
 	RegisterPanelArea (hPanel, AID_SWITCHARRAY,   _R(797,38,1048,76), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN, panel2dtex, instr[25]);
 	RegisterPanelArea (hPanel, AID_VPITCH, _R(625,191,665,240), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[instr_ovhd0+1]);
 	RegisterPanelArea (hPanel, AID_VBANK,  _R(558,191,608,231), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[instr_ovhd0+2]);
@@ -2353,35 +2157,10 @@ bool DeltaGlider::clbkLoadVC (int id)
 			oapiVCSetAreaClickmode_Quadrilateral (AID_ENGINESCRAM, _V(-0.45,0.98,6.94), _V(-0.39,0.98,6.94), _V(-0.45,0.95,7.07), _V(-0.39,0.95,7.07));
 		}
 
-		// Landing/docking light switch
-		oapiVCRegisterArea (AID_LANDDOCKLIGHT, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_LANDDOCKLIGHT, VC_LANDINGLIGHT_SWITCH_mousearea[0], VC_LANDINGLIGHT_SWITCH_mousearea[1], VC_LANDINGLIGHT_SWITCH_mousearea[2], VC_LANDINGLIGHT_SWITCH_mousearea[3]);
-		((DGSwitch1*)instr[44])->DefineAnimationVC (VC_LANDINGLIGHT_SWITCH_ref, VC_LANDINGLIGHT_SWITCH_axis, GRP_SWITCH1_VC, VC_LANDINGLIGHT_SWITCH_vofs);
-
-		// Strobe light switch
-		oapiVCRegisterArea (AID_STROBE_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_STROBE_SWITCH, VC_STROBELIGHT_SWITCH_mousearea[0], VC_STROBELIGHT_SWITCH_mousearea[1], VC_STROBELIGHT_SWITCH_mousearea[2], VC_STROBELIGHT_SWITCH_mousearea[3]);
-		((DGSwitch1*)instr[45])->DefineAnimationVC (VC_STROBELIGHT_SWITCH_ref, VC_STROBELIGHT_SWITCH_axis, GRP_SWITCH1_VC, VC_STROBELIGHT_SWITCH_vofs);
-
-		// Nav light switch
-		oapiVCRegisterArea (AID_NAVLIGHT_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_NAVLIGHT_SWITCH, VC_NAVLIGHT_SWITCH_mousearea[0], VC_NAVLIGHT_SWITCH_mousearea[1], VC_NAVLIGHT_SWITCH_mousearea[2], VC_NAVLIGHT_SWITCH_mousearea[3]);
-		((DGSwitch1*)instr[46])->DefineAnimationVC (VC_NAVLIGHT_SWITCH_ref, VC_NAVLIGHT_SWITCH_axis, GRP_SWITCH1_VC, VC_NAVLIGHT_SWITCH_vofs);
-
 		// Hatch open/close switch
 		oapiVCRegisterArea (AID_HATCH_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
 		oapiVCSetAreaClickmode_Quadrilateral (AID_HATCH_SWITCH, VC_HATCH_SWITCH_mousearea[0], VC_HATCH_SWITCH_mousearea[1], VC_HATCH_SWITCH_mousearea[2], VC_HATCH_SWITCH_mousearea[3]);
 		((DGSwitch1*)instr[47])->DefineAnimationVC (VC_HATCH_SWITCH_ref, VC_HATCH_SWITCH_axis, GRP_SWITCH1_VC, VC_HATCH_SWITCH_vofs);
-
-		// Inner airlock open/close switch
-		oapiVCRegisterArea (AID_ILOCK_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_ILOCK_SWITCH, VC_ILOCK_SWITCH_mousearea[0], VC_ILOCK_SWITCH_mousearea[1], VC_ILOCK_SWITCH_mousearea[2], VC_ILOCK_SWITCH_mousearea[3]);
-		((DGSwitch1*)instr[48])->DefineAnimationVC (VC_ILOCK_SWITCH_ref, VC_ILOCK_SWITCH_axis, GRP_SWITCH1_VC, VC_ILOCK_SWITCH_vofs);
-
-		// Outer airlock open/close switch
-		oapiVCRegisterArea (AID_OLOCK_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_OLOCK_SWITCH, VC_OLOCK_SWITCH_mousearea[0], VC_OLOCK_SWITCH_mousearea[1], VC_OLOCK_SWITCH_mousearea[2], VC_OLOCK_SWITCH_mousearea[3]);
-		((DGSwitch1*)instr[49])->DefineAnimationVC (VC_OLOCK_SWITCH_ref, VC_OLOCK_SWITCH_axis, GRP_SWITCH1_VC, VC_OLOCK_SWITCH_vofs);
 
 		//oapiVCRegisterArea (AID_MWS, PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
 		//oapiVCSetAreaClickmode_Spherical (AID_MWS, _V(0.0755,1.2185,7.3576), 0.013);
@@ -2481,18 +2260,8 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 			py = p.y;
 		}
 		return true;
-	case AID_LANDDOCKLIGHT:
-		return instr[44]->ProcessMouseVC (event, p);
-	case AID_STROBE_SWITCH:
-		return instr[45]->ProcessMouseVC (event, p);
-	case AID_NAVLIGHT_SWITCH:
-		return instr[46]->ProcessMouseVC (event, p);
 	case AID_HATCH_SWITCH:
 		return instr[47]->ProcessMouseVC (event, p);
-	case AID_ILOCK_SWITCH:
-		return instr[48]->ProcessMouseVC (event, p);
-	case AID_OLOCK_SWITCH:
-		return instr[49]->ProcessMouseVC (event, p);
 	case AID_RADIATOREX:
 		ActivateRadiator (DOOR_OPENING);
 		return true;
@@ -2557,18 +2326,8 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 		return (vcmesh ? instr[0]->RedrawVC (vcmesh, surf) : false);
 	case AID_HSIINSTR:
 		return instr[1]->RedrawVC (vcmesh, surf);
-	case AID_LANDDOCKLIGHT:
-		return (vcmesh ? instr[44]->RedrawVC (vcmesh, surf) : false);
-	case AID_STROBE_SWITCH:
-		return (vcmesh ? instr[45]->RedrawVC (vcmesh, surf) : false);
-	case AID_NAVLIGHT_SWITCH:
-		return (vcmesh ? instr[46]->RedrawVC (vcmesh, surf) : false);
 	case AID_HATCH_SWITCH:
 		return (vcmesh ? instr[47]->RedrawVC (vcmesh, surf) : false);
-	case AID_ILOCK_SWITCH:
-		return (vcmesh ? instr[48]->RedrawVC (vcmesh, surf) : false);
-	case AID_OLOCK_SWITCH:
-		return (vcmesh ? instr[49]->RedrawVC (vcmesh, surf) : false);
 	case AID_ANGRATEINDICATOR:
 		return (vcmesh ? instr[42]->RedrawVC (vcmesh, oapiGetTextureHandle (vcmesh_tpl, 14)) : false);
 	case AID_MWS:
@@ -2646,7 +2405,7 @@ int DeltaGlider::clbkConsumeBufferedKey (DWORD key, bool down, char *kstate)
 			ssys_docking->RevertNosecone ();
 			return 1;
 		case OAPI_KEY_O:  // "operate outer airlock"
-			RevertOuterAirlock ();
+			ssys_pressurectrl->RevertOuterAirlock ();
 			return 1;
 		}
 	}
@@ -2780,16 +2539,16 @@ BOOL CALLBACK EdPg1Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			GetDG(hTab)->SubsysMainRetro()->ActivateRCover (DeltaGlider::DOOR_OPEN);
 			return TRUE;
 		case IDC_OLOCK_CLOSE:
-			GetDG(hTab)->ActivateOuterAirlock (DeltaGlider::DOOR_CLOSED);
+			GetDG(hTab)->SubsysPressure()->ActivateOuterAirlock (DeltaGlider::DOOR_CLOSED);
 			return TRUE;
 		case IDC_OLOCK_OPEN:
-			GetDG(hTab)->ActivateOuterAirlock (DeltaGlider::DOOR_OPEN);
+			GetDG(hTab)->SubsysPressure()->ActivateOuterAirlock (DeltaGlider::DOOR_OPEN);
 			return TRUE;
 		case IDC_ILOCK_CLOSE:
-			GetDG(hTab)->ActivateInnerAirlock (DeltaGlider::DOOR_CLOSED);
+			GetDG(hTab)->SubsysPressure()->ActivateInnerAirlock (DeltaGlider::DOOR_CLOSED);
 			return TRUE;
 		case IDC_ILOCK_OPEN:
-			GetDG(hTab)->ActivateInnerAirlock (DeltaGlider::DOOR_OPEN);
+			GetDG(hTab)->SubsysPressure()->ActivateInnerAirlock (DeltaGlider::DOOR_OPEN);
 			return TRUE;
 		case IDC_NCONE_CLOSE:
 			GetDG(hTab)->SubsysDocking()->ActivateNosecone (DeltaGlider::DOOR_CLOSED);
@@ -2962,16 +2721,16 @@ BOOL CALLBACK Ctrl_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			dg->SubsysDocking()->ActivateNosecone (DeltaGlider::DOOR_OPENING);
 			return 0;
 		case IDC_OLOCK_CLOSE:
-			dg->ActivateOuterAirlock (DeltaGlider::DOOR_CLOSING);
+			dg->SubsysPressure()->ActivateOuterAirlock (DeltaGlider::DOOR_CLOSING);
 			return 0;
 		case IDC_OLOCK_OPEN:
-			dg->ActivateOuterAirlock (DeltaGlider::DOOR_OPENING);
+			dg->SubsysPressure()->ActivateOuterAirlock (DeltaGlider::DOOR_OPENING);
 			return 0;
 		case IDC_ILOCK_CLOSE:
-			dg->ActivateInnerAirlock (DeltaGlider::DOOR_CLOSING);
+			dg->SubsysPressure()->ActivateInnerAirlock (DeltaGlider::DOOR_CLOSING);
 			return 0;
 		case IDC_ILOCK_OPEN:
-			dg->ActivateInnerAirlock (DeltaGlider::DOOR_OPENING);
+			dg->SubsysPressure()->ActivateInnerAirlock (DeltaGlider::DOOR_OPENING);
 			return 0;
 		case IDC_LADDER_RETRACT:
 			dg->SubsysDocking()->ActivateLadder (DeltaGlider::DOOR_CLOSING);
@@ -2991,15 +2750,15 @@ BOOL CALLBACK Ctrl_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		case IDC_RADIATOR_EXTEND:
 			dg->ActivateRadiator (DeltaGlider::DOOR_OPENING);
 			return 0;
-		case IDC_NAVLIGHT:
-			dg->SetNavLight (SendDlgItemMessage (hWnd, IDC_NAVLIGHT, BM_GETCHECK, 0, 0) == BST_CHECKED);
-			return 0;
+		//case IDC_NAVLIGHT:
+		//	dg->SetNavLight (SendDlgItemMessage (hWnd, IDC_NAVLIGHT, BM_GETCHECK, 0, 0) == BST_CHECKED);
+		//	return 0;
 		//case IDC_BEACONLIGHT:
 		//	dg->SetBeacon (SendDlgItemMessage (hWnd, IDC_BEACONLIGHT, BM_GETCHECK, 0, 0) == BST_CHECKED);
 		//	return 0;
-		case IDC_STROBELIGHT:
-			dg->SetStrobeLight (SendDlgItemMessage (hWnd, IDC_STROBELIGHT, BM_GETCHECK, 0, 0) == BST_CHECKED);
-			return 0;
+		//case IDC_STROBELIGHT:
+		//	dg->SetStrobeLight (SendDlgItemMessage (hWnd, IDC_STROBELIGHT, BM_GETCHECK, 0, 0) == BST_CHECKED);
+		//	return 0;
 		case IDC_DOCKINGLIGHT:
 			//dg->SetDockingLight (SendDlgItemMessage (hWnd, IDC_DOCKINGLIGHT, BM_GETCHECK, 0, 0) == BST_CHECKED);
 			return 0;
@@ -3033,11 +2792,11 @@ void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd)
 	SendDlgItemMessage (hWnd, IDC_NCONE_OPEN, BM_SETCHECK, bstatus[op], 0);
 	SendDlgItemMessage (hWnd, IDC_NCONE_CLOSE, BM_SETCHECK, bstatus[1-op], 0);
 
-	op = dg->olock_status & 1;
+	op = dg->SubsysPressure()->OLockStatus() & 1;
 	SendDlgItemMessage (hWnd, IDC_OLOCK_OPEN, BM_SETCHECK, bstatus[op], 0);
 	SendDlgItemMessage (hWnd, IDC_OLOCK_CLOSE, BM_SETCHECK, bstatus[1-op], 0);
 
-	op = dg->ilock_status & 1;
+	op = dg->SubsysPressure()->ILockStatus() & 1;
 	SendDlgItemMessage (hWnd, IDC_ILOCK_OPEN, BM_SETCHECK, bstatus[op], 0);
 	SendDlgItemMessage (hWnd, IDC_ILOCK_CLOSE, BM_SETCHECK, bstatus[1-op], 0);
 

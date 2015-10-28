@@ -21,6 +21,9 @@
 
 class InstrumentLight;
 class CockpitLight;
+class LandDockLight;
+class StrobeLight;
+class NavLight;
 
 class LightCtrlSubsystem: public DGSubsystem {
 public:
@@ -30,6 +33,9 @@ public:
 private:
 	InstrumentLight *instrlight;
 	CockpitLight *cockpitlight;
+	LandDockLight *landdocklight;
+	StrobeLight *strobelight;
+	NavLight *navlight;
 };
 
 // ==============================================================
@@ -136,6 +142,109 @@ public:
 
 private:
 	CockpitLight *component;
+};
+
+// ==============================================================
+// Landing/docking lights
+// ==============================================================
+
+class LandDockLight: public DGSubsystemComponent {
+	friend class LandDockLightSwitch;
+
+public:
+	LandDockLight (LightCtrlSubsystem *_subsys);
+	void SetLight (int mode);
+	inline int GetLight () const { return light_mode; }
+	void clbkSaveState (FILEHANDLE scn);
+	bool clbkParseScenarioLine (const char *line);
+	bool clbkLoadVC (int vcid);
+	void clbkResetVC (int vcid, DEVMESHHANDLE hMesh);
+
+private:
+	int light_mode;                      // 0=off, 1=docking, 2=landing
+	SpotLight *light;
+	LandDockLightSwitch *sw;
+	int ELID_SWITCH;
+};
+
+// ==============================================================
+
+class LandDockLightSwitch: public DGSwitch1 {
+public:
+	LandDockLightSwitch (LandDockLight *comp);
+	void ResetVC (DEVMESHHANDLE hMesh);
+	bool ProcessMouseVC (int event, VECTOR3 &p);
+
+private:
+	LandDockLight *component;
+};
+
+// ==============================================================
+// Strobes
+// ==============================================================
+
+class StrobeLight: public DGSubsystemComponent {
+	friend class StrobeLightSwitch;
+
+public:
+	StrobeLight (LightCtrlSubsystem *_subsys);
+	void SetLight (bool on);
+	inline bool GetLight () const { return light_on; }
+	void clbkSaveState (FILEHANDLE scn);
+	bool clbkParseScenarioLine (const char *line);
+	bool clbkLoadVC (int vcid);
+	void clbkResetVC (int vcid, DEVMESHHANDLE hMesh);
+
+private:
+	bool light_on;                        // false=off, true=on
+	StrobeLightSwitch *sw;
+	int ELID_SWITCH;
+};
+
+// ==============================================================
+
+class StrobeLightSwitch: public DGSwitch1 {
+public:
+	StrobeLightSwitch (StrobeLight *comp);
+	void ResetVC (DEVMESHHANDLE hMesh);
+	bool ProcessMouseVC (int event, VECTOR3 &p);
+
+private:
+	StrobeLight *component;
+};
+
+// ==============================================================
+// Navigation lights
+// ==============================================================
+
+class NavLight: public DGSubsystemComponent {
+	friend class NavLightSwitch;
+
+public:
+	NavLight (LightCtrlSubsystem *_subsys);
+	inline bool GetLight () const { return light_on; }
+	void SetLight (bool on);
+	void clbkSaveState (FILEHANDLE scn);
+	bool clbkParseScenarioLine (const char *line);
+	bool clbkLoadVC (int vcid);
+	void clbkResetVC (int vcid, DEVMESHHANDLE hMesh);
+
+private:
+	bool light_on;                           // false=off, true=on
+	NavLightSwitch *sw;
+	int ELID_SWITCH;
+};
+
+// ==============================================================
+
+class NavLightSwitch: public DGSwitch1 {
+public:
+	NavLightSwitch (NavLight *comp);
+	void ResetVC (DEVMESHHANDLE hMesh);
+	bool ProcessMouseVC (int event, VECTOR3 &p);
+
+private:
+	NavLight *component;
 };
 
 #endif // !__LIGHTSUBSYS_H

@@ -17,7 +17,7 @@
 
 // ==============================================================
 
-class DeltaGlider;
+class AirlockCtrl;
 class PValveSwitch;
 class PressureIndicator;
 
@@ -28,15 +28,20 @@ class PressureIndicator;
 class PressureSubsystem: public DGSubsystem {
 public:
 	PressureSubsystem (DeltaGlider *vessel, int ident);
-	void clbkPostStep (double simt, double simdt, double mjd);
+	~PressureSubsystem ();
 	inline double PCabin() const { return p_cabin; }
 	inline double PAirlock() const { return p_airlock; }
 	inline double PExtHatch() const { return p_ext_hatch; }
 	inline double PExtLock() const { return p_ext_lock; }
 	inline int GetPValve (int i) const { return valve_status[i]; }
 	inline void SetPValve (int i, int status) { valve_status[i] = status; }
-	
-	bool clbkLoadVC (int id);       // create the VC elements for this module
+	DeltaGlider::DoorStatus OLockStatus () const;
+	DeltaGlider::DoorStatus ILockStatus () const;
+	void ActivateOuterAirlock (DeltaGlider::DoorStatus action);
+	void ActivateInnerAirlock (DeltaGlider::DoorStatus action);
+	void RevertOuterAirlock ();
+	void clbkPostStep (double simt, double simdt, double mjd);
+	bool clbkLoadVC (int vcid);     // create the VC elements for this module
 
 private:
 	bool docked;
@@ -46,6 +51,7 @@ private:
 	static double v_airlock;        // airlock volume [m^3]
 	double v_extdock;               // volume of compartment outside airlock
 	static double p_target;         // target pressure in cabin and airlock when supply valves are open
+	AirlockCtrl *airlockctrl;       // airlock controls
 	PValveSwitch *valve_switch[5];  // the switches controlling supply and relief valves
 	int valve_status[5];            // 0=closed, 1=open
 	PressureIndicator *pind;
@@ -53,6 +59,65 @@ private:
 	// local panel element identifiers
 	int ELID_PVALVESWITCH[5];
 	int ELID_DISPLAY;
+};
+
+// ==============================================================
+// Airlock controls
+// ==============================================================
+
+class AirlockCtrl: public DGSubsystemComponent {
+	friend class PressureSubsystem;
+	friend class OuterLockSwitch;
+	friend class InnerLockSwitch;
+
+public:
+	AirlockCtrl (PressureSubsystem *_subsys);
+	void ActivateOuterLock (DeltaGlider::DoorStatus action);
+	void ActivateInnerLock (DeltaGlider::DoorStatus action);
+	void RevertOuterLock ();
+	void RevertInnerLock ();
+	void clbkSaveState (FILEHANDLE scn);
+	bool clbkParseScenarioLine (const char *line);
+	void clbkPostCreation ();
+	void clbkPostStep (double simt, double simdt, double mjd);
+	bool clbkLoadVC (int vcid);
+
+private:
+	DeltaGlider::DoorStatus olock_status, ilock_status;
+	double olock_proc, ilock_proc;
+
+	OuterLockSwitch *osw;
+	InnerLockSwitch *isw;
+
+	int ELID_OSWITCH;
+	int ELID_ISWITCH;
+
+	UINT anim_olock;            // handle for outer airlock animation
+	UINT anim_ilock;            // handle for inner airlock animation
+};
+
+// ==============================================================
+
+class OuterLockSwitch: public DGSwitch1 {
+public:
+	OuterLockSwitch (AirlockCtrl *comp);
+	void ResetVC (DEVMESHHANDLE hMesh);
+	bool ProcessMouseVC (int event, VECTOR3 &p);
+
+private:
+	AirlockCtrl *component;
+};
+
+// ==============================================================
+
+class InnerLockSwitch: public DGSwitch1 {
+public:
+	InnerLockSwitch (AirlockCtrl *comp);
+	void ResetVC (DEVMESHHANDLE hMesh);
+	bool ProcessMouseVC (int event, VECTOR3 &p);
+
+private:
+	AirlockCtrl *component;
 };
 
 // ==============================================================

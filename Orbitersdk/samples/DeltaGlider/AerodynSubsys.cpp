@@ -456,6 +456,27 @@ ElevatorTrim::ElevatorTrim (AerodynCtrlSubsystem *_subsys)
 
 // --------------------------------------------------------------
 
+void ElevatorTrim::clbkSaveState (FILEHANDLE scn)
+{
+	double trim = DG()->GetControlSurfaceLevel (AIRCTRL_ELEVATORTRIM);
+	if (trim) oapiWriteScenario_float (scn, "TRIM", trim);	
+}
+
+// --------------------------------------------------------------
+
+bool ElevatorTrim::clbkParseScenarioLine (const char *line)
+{
+	if (!_strnicmp (line, "TRIM", 4)) {
+		double trim;
+		sscanf (line+4, "%lf", &trim);
+		DG()->SetControlSurfaceLevel (AIRCTRL_ELEVATORTRIM, trim, true);
+		return true;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
 bool ElevatorTrim::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
 {
 	if (panelid != 0) return false;
