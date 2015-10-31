@@ -230,7 +230,7 @@ bool NoseconeCtrl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW
 	if (panelid != 0) return false;
 
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_LEVER), _R(1141,327,1180,421), PANEL_REDRAW_USER,  PANEL_MOUSE_LBDOWN, panel2dtex, lever);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_LEVER), _R(1221,347,1260,461), PANEL_REDRAW_USER,  PANEL_MOUSE_LBDOWN, panel2dtex, lever);
 	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_INDICATOR), _R(0,0,0,0), PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, indicator);
 
 	return true;
@@ -312,8 +312,8 @@ bool NoseconeLever::Redraw2D (SURFHANDLE surf)
 	bool leverdown = (action == DeltaGlider::DOOR_OPENING || action == DeltaGlider::DOOR_OPEN);
 
 	float y0, dy, tv0;
-	if (leverdown) y0 = 400.5f, dy = 21.0f, tv0 = texh-677.5f;
-	else           y0 = 326.5f, dy = 19.0f, tv0 = texh-696.5f;
+	if (leverdown) y0 = 420.5f, dy = 21.0f, tv0 = texh-677.5f;
+	else           y0 = 346.5f, dy = 19.0f, tv0 = texh-696.5f;
 	int j;
 	for (j = 0; j < 4; j++) {
 		grp->Vtx[vtxofs+j].y = y0 + (j/2)*dy;
@@ -475,7 +475,7 @@ bool UndockCtrl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, 
 	if (panelid != 0) return false;
 
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_LEVER), _R(1141,474,1172,504), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, lever);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_LEVER), _R(1151,355,1193,436), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, lever);
 
 	return true;
 }
@@ -515,9 +515,9 @@ void UndockLever::Reset2D (MESHHANDLE hMesh)
 bool UndockLever::Redraw2D (SURFHANDLE surf)
 {
 	static const float texh = (float)PANEL2D_TEXH; // texture height
-	static const float bb_y0 =  471.5f;     // top edge of button block
-	static const float tx_dy = 39.0f;       // texture block height
-	static const float tx_y0 = texh-614.5f; // top edge of texture block
+	static const float bb_y0 =  354.0f;     // top edge of button block
+	static const float tx_dy = 103.0f;       // texture block height
+	static const float tx_y0 = texh-356.0f; // top edge of texture block
 
 	float y = (btndown ? bb_y0+tx_dy : bb_y0);
 	float tv = (btndown ? tx_y0+tx_dy : tx_y0)/texh;

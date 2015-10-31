@@ -11,6 +11,7 @@
 #define STRICT 1
 #include "FuelMfd.h"
 #include "DeltaGlider.h"
+#include "ScramSubsys.h"
 #include "meshres_p0.h"
 #include "meshres_vc.h"
 
@@ -31,7 +32,7 @@ FuelMFD::FuelMFD (VESSEL3 *v): PanelElement (v)
 	int i, j;
 	isScram = false;
 	doSetupVC = doSetup2D = true;
-	Mmain = 0.0;
+	Mmain = Mrcs = Mscram = 0.0;
 	for (i = 0; i < 9; i++)
 		for (j = 0; j < 5; j++) sout[i][j] = 0;
 	memset (&vc_grp, 0, sizeof(GROUPREQUESTSPEC));
@@ -85,6 +86,8 @@ void FuelMFD::Reset2D (MESHHANDLE hMesh)
 	DeltaGlider *dg = (DeltaGlider*)vessel;
 	isScram = dg->ScramVersion();
 	Mmain = dg->GetPropellantMass (dg->ph_main);
+	Mrcs  = dg->GetPropellantMass (dg->ph_rcs);
+	if (isScram) Mscram = dg->SubsysScram()->GetPropellantMass ();
 	if (doSetup2D) {
 		NTVERTEX *Vtx = grp->Vtx+vtxofs;
 		crd_2D[0] = Vtx[8].y;   crd_2D[1] = Vtx[10].y;
@@ -103,6 +106,8 @@ void FuelMFD::ResetVC (DEVMESHHANDLE hMesh)
 	DeltaGlider *dg = (DeltaGlider*)vessel;
 	isScram = dg->ScramVersion();
 	Mmain = dg->GetPropellantMass (dg->ph_main);
+	Mrcs  = dg->GetPropellantMass (dg->ph_rcs);
+	if (isScram) Mscram = dg->SubsysScram()->GetPropellantMass ();
 
 	vc_grp.nVtx = 20;
 	if (!vc_grp.Vtx) vc_grp.Vtx = new NTVERTEX[vc_grp.nVtx];
@@ -181,9 +186,9 @@ void FuelMFD::Redraw (NTVERTEX *Vtx, SURFHANDLE surf, float crd[4])
 
 	if (isScram) {
 		// scram level
-		m = dg->GetPropellantMass (dg->ph_scram);
-		lvl = m / max (1.0, dg->max_scramfuel);
-		isp = dg->GetThrusterIsp (dg->th_scram[0]);
+		m = dg->SubsysScram()->GetPropellantMass ();
+		lvl = m / max (1.0, dg->SubsysScram()->GetPropellantMaxMass());
+		isp = dg->SubsysScram()->GetThrusterIsp (0);
 		dv = isp * log(m0/(m0-m));
 		//y1 = (float)(fuely - lvl * fuelh);
 		y = crd[0] + (float)lvl*(crd[1]-crd[0]);

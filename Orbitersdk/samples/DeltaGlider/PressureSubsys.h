@@ -18,6 +18,7 @@
 // ==============================================================
 
 class AirlockCtrl;
+class TophatchCtrl;
 class PValveSwitch;
 class PressureIndicator;
 
@@ -40,6 +41,9 @@ public:
 	void ActivateOuterAirlock (DeltaGlider::DoorStatus action);
 	void ActivateInnerAirlock (DeltaGlider::DoorStatus action);
 	void RevertOuterAirlock ();
+	void ActivateHatch (DeltaGlider::DoorStatus action);
+	DeltaGlider::DoorStatus HatchStatus () const;
+	void RepairDamage ();
 	void clbkPostStep (double simt, double simdt, double mjd);
 	bool clbkLoadVC (int vcid);     // create the VC elements for this module
 
@@ -52,6 +56,7 @@ private:
 	double v_extdock;               // volume of compartment outside airlock
 	static double p_target;         // target pressure in cabin and airlock when supply valves are open
 	AirlockCtrl *airlockctrl;       // airlock controls
+	TophatchCtrl *hatchctrl;        // top hatch controls
 	PValveSwitch *valve_switch[5];  // the switches controlling supply and relief valves
 	int valve_status[5];            // 0=closed, 1=open
 	PressureIndicator *pind;
@@ -118,6 +123,49 @@ public:
 
 private:
 	AirlockCtrl *component;
+};
+
+// ==============================================================
+// Top hatch controls
+// ==============================================================
+
+class TophatchCtrl: public DGSubsystemComponent {
+	friend class PressureSubsystem;
+	friend class HatchCtrlSwitch;
+
+public:
+	TophatchCtrl (PressureSubsystem *_subsys);
+	~TophatchCtrl ();
+	void Activate (DeltaGlider::DoorStatus action);
+	void Revert ();
+	void RepairDamage();
+	void clbkSaveState (FILEHANDLE scn);
+	bool clbkParseScenarioLine (const char *line);
+	void clbkPostCreation ();
+	void clbkPostStep (double simt, double simdt, double mjd);
+	bool clbkLoadVC (int vcid);     // create the VC elements for this module
+
+private:
+	DeltaGlider::DoorStatus hatch_status;
+	double hatch_proc;
+	HatchCtrlSwitch *sw;
+	int ELID_SWITCH;
+	PSTREAM_HANDLE hatch_vent;
+	double hatch_vent_t;
+	UINT anim_hatch;            // handle for top hatch animation
+	int hatchfail;
+};
+
+// ==============================================================
+
+class HatchCtrlSwitch: public DGSwitch1 {
+public:
+	HatchCtrlSwitch (TophatchCtrl *comp);
+	void ResetVC (DEVMESHHANDLE hMesh);
+	bool ProcessMouseVC (int event, VECTOR3 &p);
+
+private:
+	TophatchCtrl *component;
 };
 
 // ==============================================================

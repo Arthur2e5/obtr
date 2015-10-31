@@ -275,7 +275,6 @@ bool GearControl::clbkParseScenarioLine (const char *line)
 		} else {
 			gearlever_status = DeltaGlider::DOOR_CLOSED; gearlever_proc = 0.0;
 		}
-		DG()->SetGearParameters (gear_proc);
 		return true;
 	}
 	return false;
@@ -287,6 +286,7 @@ void GearControl::clbkPostCreation ()
 {
 	DG()->SetAnimation (anim_gear, gear_proc);
 	DG()->SetAnimation (anim_gearlever, gear_status & 1);
+	DG()->SetGearParameters (gear_proc);
 }
 
 // ==============================================================

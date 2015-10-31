@@ -33,6 +33,7 @@ PressureSubsystem::PressureSubsystem (DeltaGlider *vessel, int ident)
 	docked = false;
 
 	AddComponent (airlockctrl = new AirlockCtrl (this));
+	AddComponent (hatchctrl = new TophatchCtrl (this));
 
 	for (int i = 0; i < 5; i++) {
 		ELID_PVALVESWITCH[i] = AddElement (valve_switch[i] = new PValveSwitch (this, i));
@@ -46,6 +47,7 @@ PressureSubsystem::PressureSubsystem (DeltaGlider *vessel, int ident)
 PressureSubsystem::~PressureSubsystem ()
 {
 	delete airlockctrl;
+	delete hatchctrl;
 }
 
 // --------------------------------------------------------------
@@ -85,6 +87,27 @@ void PressureSubsystem::RevertOuterAirlock ()
 
 // --------------------------------------------------------------
 
+void PressureSubsystem::ActivateHatch (DeltaGlider::DoorStatus action)
+{
+	hatchctrl->Activate (action);
+}
+
+// --------------------------------------------------------------
+
+DeltaGlider::DoorStatus PressureSubsystem::HatchStatus () const
+{
+	return hatchctrl->hatch_status;
+}
+
+// --------------------------------------------------------------
+
+void PressureSubsystem::RepairDamage ()
+{
+	hatchctrl->RepairDamage ();
+}
+
+// --------------------------------------------------------------
+
 void PressureSubsystem::clbkPostStep (double simt, double simdt, double mjd)
 {
 	DGSubsystem::clbkPostStep (simt, simdt, mjd);
@@ -103,8 +126,8 @@ void PressureSubsystem::clbkPostStep (double simt, double simdt, double mjd)
 
 	// exchange cabin - ext.hatch
 	cs = (valve_status[1] ? 2e-4:0.0);
-	if (DG()->hatch_status != DeltaGlider::DOOR_CLOSED) {
-		cs += 0.1*DG()->hatch_proc;
+	if (hatchctrl->hatch_status != DeltaGlider::DOOR_CLOSED) {
+		cs += 0.1*hatchctrl->hatch_proc;
 	}
 	if (cs) {
 		pdiff = p_ext_hatch-p_cabin;
@@ -466,6 +489,230 @@ bool InnerLockSwitch::ProcessMouseVC (int event, VECTOR3 &p)
 	}
 	return false;
 }
+
+// ==============================================================
+// Top hatch controls
+// ==============================================================
+
+TophatchCtrl::TophatchCtrl (PressureSubsystem *_subsys)
+: DGSubsystemComponent(_subsys)
+{
+	hatch_status = DeltaGlider::DOOR_CLOSED;
+	hatch_proc   = 0.0;
+	hatch_vent   = NULL;
+	hatchfail    = 0;
+
+	ELID_SWITCH = AddElement (sw = new HatchCtrlSwitch (this));
+
+	// Top hatch animation
+	static UINT HatchGrp[2] = {GRP_Hatch1,GRP_Hatch2};
+	static MGROUP_ROTATE Hatch (0, HatchGrp, 2,
+		_V(0,2.069,5.038), _V(1,0,0), (float)(110*RAD));
+	static UINT VCHatchGrp[1] = {GRP_HATCH_VC};
+	static MGROUP_ROTATE VCHatch (1, VCHatchGrp, 1,
+		_V(0,2.069,5.038), _V(1,0,0), (float)(110*RAD));
+	static UINT RearLadderGrp[2] = {GRP_RearLadder1,GRP_RearLadder2};
+	static MGROUP_ROTATE RearLadder1 (0, RearLadderGrp, 2,
+		_V(0,1.7621,4.0959), _V(1,0,0), (float)(-20*RAD));
+	static MGROUP_ROTATE RearLadder2 (0, RearLadderGrp+1, 1,
+		_V(0,1.1173,4.1894), _V(1,0,0), (float)(180*RAD));
+
+	// virtual cockpit ladder animation
+	static UINT VCRearLadderGrp[2] = {GRP_LADDER1_VC,GRP_LADDER2_VC};
+	static MGROUP_ROTATE VCRearLadder1 (1, VCRearLadderGrp, 2,
+		_V(0,1.7621,4.0959), _V(1,0,0), (float)(-20*RAD));
+	static MGROUP_ROTATE VCRearLadder2 (1, VCRearLadderGrp+1, 1,
+		_V(0,1.1173,4.1894), _V(1,0,0), (float)(180*RAD));
+	anim_hatch = DG()->CreateAnimation (0);
+	DG()->AddAnimationComponent (anim_hatch, 0, 1, &Hatch);
+	DG()->AddAnimationComponent (anim_hatch, 0, 1, &VCHatch);
+	DG()->AddAnimationComponent (anim_hatch, 0, 0.25, &RearLadder1);
+	DG()->AddAnimationComponent (anim_hatch, 0.25, 0.8, &RearLadder2);
+	DG()->AddAnimationComponent (anim_hatch, 0, 0.25, &VCRearLadder1);
+	DG()->AddAnimationComponent (anim_hatch, 0.25, 0.8, &VCRearLadder2);
+}
+
+// --------------------------------------------------------------
+
+TophatchCtrl::~TophatchCtrl ()
+{
+	if (hatch_vent)
+		DG()->DelExhaustStream (hatch_vent);
+}
+
+// --------------------------------------------------------------
+
+void TophatchCtrl::Activate (DeltaGlider::DoorStatus action)
+{
+	extern void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd=0);
+
+	bool close = (action == DeltaGlider::DOOR_CLOSED || action == DeltaGlider::DOOR_CLOSING);
+	if (hatch_status == DeltaGlider::DOOR_CLOSED && !close && !hatch_vent && DG()->GetAtmPressure() < 10e3) {
+		static PARTICLESTREAMSPEC airvent = {
+			0, 1.0, 15, 0.5, 0.3, 2, 0.3, 1.0, PARTICLESTREAMSPEC::EMISSIVE,
+			PARTICLESTREAMSPEC::LVL_LIN, 0.1, 0.1,
+			PARTICLESTREAMSPEC::ATM_FLAT, 0.1, 0.1
+		};
+		static VECTOR3 pos = {0,2,4};
+		static VECTOR3 dir = {0,1,0};
+		static double lvl = 0.1;
+		hatch_vent = DG()->AddParticleStream (&airvent, pos, dir, &lvl);
+		hatch_vent_t = oapiGetSimTime();
+	}
+
+	hatch_status = action;
+	if (action <= DeltaGlider::DOOR_OPEN) {
+		hatch_proc = (action == DeltaGlider::DOOR_CLOSED ? 0.0 : 1.0);
+		DG()->SetAnimation (anim_hatch, hatch_proc);
+		DG()->UpdateStatusIndicators();
+	}
+	//oapiTriggerPanelRedrawArea (1, AID_SWITCHARRAY);
+	UpdateCtrlDialog (DG());
+	DG()->RecordEvent ("HATCH", close ? "CLOSE" : "OPEN");
+}
+
+// --------------------------------------------------------------
+
+void TophatchCtrl::Revert ()
+{
+	Activate (hatch_status == DeltaGlider::DOOR_CLOSED || hatch_status == DeltaGlider::DOOR_CLOSING ?
+				   DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
+}
+
+// --------------------------------------------------------------
+
+void TophatchCtrl::clbkSaveState (FILEHANDLE scn)
+{
+	if (hatch_status) {
+		char cbuf[256];
+		sprintf (cbuf, "%d %0.4lf", hatch_status, hatch_proc);
+		oapiWriteScenario_string (scn, "HATCH", cbuf);
+	}
+}
+
+// --------------------------------------------------------------
+
+bool TophatchCtrl::clbkParseScenarioLine (const char *line)
+{
+	if (!_strnicmp (line, "HATCH", 5)) {
+		sscanf (line+5, "%d%lf", &hatch_status, &hatch_proc);
+		return true;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
+void TophatchCtrl::clbkPostCreation ()
+{
+	DG()->SetAnimation (anim_hatch, hatch_proc);	
+}
+
+// --------------------------------------------------------------
+
+void TophatchCtrl::clbkPostStep (double simt, double simdt, double mjd)
+{
+	// animate top hatch
+	if (!hatchfail && hatch_status >= DeltaGlider::DOOR_CLOSING) {
+		double da = simdt * HATCH_OPERATING_SPEED;
+		if (hatch_status == DeltaGlider::DOOR_CLOSING) {
+			if (hatch_proc > 0.0)
+				hatch_proc = max (0.0, hatch_proc-da);
+			else {
+				hatch_status = DeltaGlider::DOOR_CLOSED;
+				//oapiTriggerPanelRedrawArea (2, AID_NOSECONEINDICATOR);
+			}
+		} else {
+			if (hatch_proc < 1.0)
+				hatch_proc = min (1.0, hatch_proc+da);
+			else {
+				hatch_status = DeltaGlider::DOOR_OPEN;
+				//oapiTriggerPanelRedrawArea (2, AID_NOSECONEINDICATOR);
+			}
+		}
+		DG()->SetAnimation (anim_hatch, hatch_proc);
+		DG()->UpdateStatusIndicators();
+	}
+
+	// air venting particle stream
+	if (hatch_vent && simt > hatch_vent_t + 1.0) {
+		DG()->DelExhaustStream (hatch_vent);
+		hatch_vent = NULL;
+	}
+
+	// test for damage condition
+	if (hatchfail < 2 && hatch_proc > 0.05 && DG()->GetDynPressure() > 30e3) {
+		if (oapiRand() < 1.0 - exp(-simdt*0.2)) {
+			if (++hatchfail == 1) {  // jam hatch
+				DG()->SetAnimation(anim_hatch, hatch_proc = 0.2);
+			} else {                 // tear off hatch
+				static UINT HatchGrp[2] = {12,88};
+				GROUPEDITSPEC ges;
+				ges.flags = GRPEDIT_SETUSERFLAG;
+				ges.UsrFlag = 3;
+				for (int i = 0; i < 2; i++)
+					oapiEditMeshGroup (DG()->exmesh, HatchGrp[i], &ges);
+			}
+		}
+	}
+}
+
+// --------------------------------------------------------------
+
+bool TophatchCtrl::clbkLoadVC (int vcid)
+{
+	if (vcid != 0) return false;
+
+	// Hatch open/close switch
+	oapiVCRegisterArea (GlobalElId(ELID_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_SWITCH), VC_HATCH_SWITCH_mousearea[0], VC_HATCH_SWITCH_mousearea[1], VC_HATCH_SWITCH_mousearea[2], VC_HATCH_SWITCH_mousearea[3]);
+	sw->DefineAnimationVC (VC_HATCH_SWITCH_ref, VC_HATCH_SWITCH_axis, GRP_SWITCH1_VC, VC_HATCH_SWITCH_vofs);
+
+	return true;
+}
+
+// --------------------------------------------------------------
+
+void TophatchCtrl::RepairDamage ()
+{
+	if (hatchfail) {
+		DG()->SetAnimation (anim_hatch, hatch_proc = 0.0);
+		static UINT HatchGrp[2] = {12,88};
+		GROUPEDITSPEC ges;
+		ges.flags = GRPEDIT_SETUSERFLAG;
+		ges.UsrFlag = 0;
+		for (int i = 0; i < 2; i++)
+			oapiEditMeshGroup (DG()->exmesh, HatchGrp[i], &ges);
+	}
+}
+
+// ==============================================================
+
+HatchCtrlSwitch::HatchCtrlSwitch (TophatchCtrl *comp)
+: DGSwitch1(comp->DG(), DGSwitch1::TWOSTATE), component(comp)
+{
+}
+
+// --------------------------------------------------------------
+
+void HatchCtrlSwitch::ResetVC (DEVMESHHANDLE hMesh)
+{
+	SetState (component->hatch_status == DeltaGlider::DOOR_CLOSED ||
+			  component->hatch_status == DeltaGlider::DOOR_CLOSING ? DOWN:UP);
+}
+
+// --------------------------------------------------------------
+
+bool HatchCtrlSwitch::ProcessMouseVC (int event, VECTOR3 &p)
+{
+	if (DGSwitch1::ProcessMouseVC (event, p)) {
+		DGSwitch1::State state = GetState();
+		component->Activate (state==UP ? DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
+		return true;
+	}
+	return false;
+}
+
 
 // ==============================================================
 

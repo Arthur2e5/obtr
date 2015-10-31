@@ -128,7 +128,7 @@ static int dgHatch (lua_State *L)
 	DeltaGlider *dg = lua_toDG (L, 1);
 	int action = lua_tointeger (L, 2);
 	if (dg && action >= 0 && action < 2)
-		dg->ActivateHatch (DGaction[action]);
+		dg->SubsysPressure()->ActivateHatch (DGaction[action]);
 	return 0;
 }
 

@@ -131,6 +131,7 @@
 				StringPooling="true"
 				EnableFunctionLevelLinking="true"
 				PrecompiledHeaderFile=""
+				DebugInformationFormat="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -148,6 +149,7 @@
 				AdditionalDependencies="DlgCtrl.lib lua5.1.lib"
 				SuppressStartupBanner="true"
 				AdditionalLibraryDirectories="&quot;$(SDKLibDir)\Lua&quot;"
+				GenerateDebugInformation="false"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -383,32 +385,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="Ramjet.cpp"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="Ramjet.h"
-				>
-			</File>
-			<File
 				RelativePath="resource.h"
 				>
 			</File>
@@ -521,14 +497,6 @@
 					RelativePath=".\SwitchArray.h"
 					>
 				</File>
-				<File
-					RelativePath=".\ThrottleScram.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\ThrottleScram.h"
-					>
-				</File>
 			</Filter>
 			<Filter
 				Name="Subsystems"
@@ -619,6 +587,14 @@
 				</File>
 				<File
 					RelativePath=".\RcsSubsys.h"
+					>
+				</File>
+				<File
+					RelativePath=".\ScramSubsys.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ScramSubsys.h"
 					>
 				</File>
 			</Filter>

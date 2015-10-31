@@ -21,7 +21,6 @@
 #define STRICT 1
 
 #include "orbitersdk.h"
-#include "Ramjet.h"
 #include "..\Common\Vessel\Instrument.h"
 #include "resource.h"
 #include <vector>
@@ -171,6 +170,7 @@ class HUDControl;
 class MainRetroSubsystem;
 class HoverSubsystem;
 class RcsSubsystem;
+class ScramSubsystem;
 class AerodynCtrlSubsystem;
 class GearSubsystem;
 class MfdSubsystem;
@@ -190,13 +190,14 @@ class DeltaGlider: public VESSEL4 {
 public:
 	DeltaGlider (OBJHANDLE hObj, int fmodel);
 	~DeltaGlider ();
+	short FlightModel() const { return flightmodel; }
 	void SetEmptyMass () const;
 	void CreatePanelElements ();
 	void DefineAnimations ();
 	void ReleaseSurfaces();
 	void InitPanel (int panel);
 	void InitVC (int vc);
-	inline bool ScramVersion() const { return scramjet != NULL; }
+	inline bool ScramVersion() const { return ssys_scram != NULL; }
 	void DrawHUD (int mode, const HUDPAINTSPEC *hps, HDC hDC);
 	void DrawNeedle (HDC hDC, int x, int w, double rad, double angle, double *pangle = 0, double speed = PI);
 	void UpdateStatusIndicators();
@@ -215,15 +216,11 @@ public:
 	bool RedrawPanel_ScramFlow (SURFHANDLE surf);
 	bool RedrawPanel_MainTSFC (SURFHANDLE surf);
 	bool RedrawPanel_ScramTSFC (SURFHANDLE surf);
-	bool RedrawPanel_ScramProp (SURFHANDLE surf);
-	bool RedrawPanel_ScramPropMass (SURFHANDLE surf);
-	void RedrawVC_ThScram ();
 	void InitVCMesh ();
 
 	double GetMainThrusterLevel (int which) const { return GetThrusterLevel (th_main[which]); }
 	double GetRetroThrusterLevel (int which) const { return GetThrusterLevel (th_retro[which]); }
 	void   SetMainRetroLevel (int which, double lmain, double lretro);
-	void   SetScramLevel (int which, double level);
 	void   EnableRetroThrusters (bool state);
 	void   GetMainThrusterDir (int which, VECTOR3 &dir) const { GetThrusterDir(th_main[which], dir); }
 	void   SetMainThrusterDir (int which, const VECTOR3 &dir) { SetThrusterDir(th_main[which], dir); }
@@ -275,27 +272,22 @@ public:
 
 	// parameters for failure modelling
 	double lwingstatus, rwingstatus;
-	int hatchfail;
 	bool aileronfail[4];
 
 	enum DoorStatus { DOOR_CLOSED, DOOR_OPEN, DOOR_CLOSING, DOOR_OPENING }
-		hatch_status, radiator_status;
-	void ActivateHatch (DoorStatus action);
+		radiator_status;
 	void ActivateRadiator (DoorStatus action);
-	void RevertHatch ();
 	void RevertRadiator ();
 	void SetGearParameters (double state);
-	double hatch_proc, radiator_proc;     // logical status
+	double radiator_proc;     // logical status
 
 	// Animation handles
-	UINT anim_hatch;            // handle for top hatch animation
 	UINT anim_radiator;         // handle for radiator animation
 	UINT anim_rudder;           // handle for rudder animation
 	UINT anim_elevator;         // handle for elevator animation
 	UINT anim_elevatortrim;     // handle for elevator trim animation
 	UINT anim_laileron;         // handle for left aileron animation
 	UINT anim_raileron;         // handle for right aileron animation
-	UINT anim_scramthrottle[2]; // VC scram throttle levers (left and right)
 	UINT anim_radiatorswitch;   // VC radiator switch animation
 
 	SURFHANDLE srf[nsurf];          // handles for panel bitmaps
@@ -320,6 +312,7 @@ public:
 
 	// subsystem access functions
 	inline MainRetroSubsystem *SubsysMainRetro() { return ssys_mainretro; }
+	inline ScramSubsystem *SubsysScram() { return ssys_scram; }
 	inline GearSubsystem *SubsysGear() { return ssys_gear; }
 	inline DockingCtrlSubsystem *SubsysDocking() { return ssys_docking; }
 	inline AerodynCtrlSubsystem *SubsysAerodyn() { return ssys_aerodyn; }
@@ -335,14 +328,12 @@ private:
 	void ApplySkin();                            // apply custom skin
 	void PaintMarkings (SURFHANDLE tex);         // paint individual vessel markings
 
-	Ramjet *scramjet;                            // scramjet module (NULL = none)
-	void ScramjetThrust ();                      // scramjet thrust calculation
-
 	// Vessel subsystems -------------------------------------------------------------
 	HUDControl           *ssys_hud;              // HUD control system
 	MainRetroSubsystem   *ssys_mainretro;        // main engine gimbal control system
 	HoverSubsystem       *ssys_hoverctrl;        // hover engine control system
 	RcsSubsystem         *ssys_rcs;              // reaction control subsystem
+	ScramSubsystem       *ssys_scram;            // scramjet module (NULL = none)
 	AerodynCtrlSubsystem *ssys_aerodyn;          // aerodynamic control subsystem
 	GearSubsystem        *ssys_gear;             // landing gear control subsystem
 	PressureSubsystem    *ssys_pressurectrl;     // pressure control system
@@ -356,37 +347,30 @@ private:
 	PanelElement **instr;                        // panel instrument objects
 	DWORD ninstr;                                // total number of instruments
 	DWORD ninstr_main, ninstr_ovhd;              // number of instruments on main/overhead panels 
-	DWORD instr_scram0, instr_ovhd0;             // instrument index offsets
+	DWORD instr_ovhd0;                           // instrument index offsets
 
 	bool bMWSActive, bMWSOn;                     // master warning flags
 	bool bGearIsDown;                            // touchdown point state flag
 	int modelidx;                                // flight model index
 	int tankconfig;                              // 0=rocket fuel only, 1=scramjet fuel only, 2=both
-	double max_rocketfuel, max_scramfuel;        // max capacity for rocket and scramjet fuel
+	double max_rocketfuel;                       // max capacity for rocket and scramjet fuel
 	VISHANDLE visual;                            // handle to DG visual representation
 	SURFHANDLE skin[3];                          // custom skin textures, if applicable
 	MESHHANDLE hPanelMesh;                       // 2-D instrument panel mesh handle
 	char skinpath[32];                           // skin directory, if applicable
-	PROPELLANT_HANDLE ph_main, ph_rcs, ph_scram; // propellant resource handles
+	PROPELLANT_HANDLE ph_main, ph_rcs;           // propellant resource handles
 	THRUSTER_HANDLE th_main[2];                  // main engine handles
 	THRUSTER_HANDLE th_retro[2];                 // retro engine handles
 	THRUSTER_HANDLE th_hover[3];                 // hover engine handles
-	THRUSTER_HANDLE th_scram[2];                 // scramjet handles
 	double th_main_level;                        // mean thruster main level
 	AIRFOILHANDLE hwing;                         // airfoil handle for wings
 	CTRLSURFHANDLE hlaileron, hraileron;         // control surface handles
-	PSTREAM_HANDLE hatch_vent;
-	double hatch_vent_t;
 	int panelcol;                                // panel light colour index, 0=default
 
-	UINT engsliderpos[5];    // throttle settings for main,hover,scram engines
-	double scram_intensity[2];
-	double scram_max[2];
 	UINT wbrake_pos[2];
 	int mainflowidx[2], retroflowidx[2], hoverflowidx, scflowidx[2];
 	int mainTSFCidx, scTSFCidx[2];
 	int scrampropidx[2];
-	int scrampropmass;
 };
 
 // ==============================================================
@@ -403,7 +387,6 @@ typedef struct {
 // Panel area identifiers:
 // Panel 0
 #define AID_PROPELLANTSTATUS     0
-#define AID_ENGINESCRAM          4
 #define AID_AOAINSTR             9
 #define AID_VSINSTR             10
 #define AID_SLIPINSTR           11
@@ -417,15 +400,12 @@ typedef struct {
 #define AID_SCRAMDISP2          36
 #define AID_SCRAMDISP3          37
 #define AID_FUELMFD             38
-#define AID_SCRAMPROP           42
-#define AID_SCRAMPROPMASS       43
 #define AID_RADIATORSWITCH      49
 #define AID_HATCHSWITCH         51
 #define AID_MWS                 53
 #define AID_SWITCHARRAY         55
 #define AID_AAP                 56
 #define AID_ANGRATEINDICATOR    61
-#define AID_HATCH_SWITCH        66
 
 // Panel 1
 #define AID_BEACONBUTTON       103

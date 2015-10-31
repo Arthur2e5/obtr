@@ -18,10 +18,10 @@
 #include "InstrVs.h"
 #include "HudCtrl.h"
 #include "FuelMfd.h"
-#include "ThrottleScram.h"
 #include "MainRetroSubsys.h"
 #include "HoverSubsys.h"
 #include "RcsSubsys.h"
+#include "ScramSubsys.h"
 #include "AerodynSubsys.h"
 #include "GearSubsys.h"
 #include "DockingSubsys.h"
@@ -163,20 +163,17 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	ssys.push_back (ssys_light        = new LightCtrlSubsystem (this, ssys_id++));
 	for (i = 0; i < 2; i++)
 		ssys.push_back (ssys_mfd[i] = new MfdSubsystem (this, ssys_id++, MFD_LEFT+i));
+	ssys_scram = 0; // creation deferred to clbkSetClassCaps
 
 	aoa_ind = PI;
 	slip_ind = PI*0.5;
 	load_ind = PI;
-	hatch_status      = DOOR_CLOSED;
-	hatch_proc        = 0.0;
 	radiator_status   = DOOR_CLOSED;
 	radiator_proc     = 0.0;
 	visual            = NULL;
 	exmesh            = NULL;
 	vcmesh            = NULL;
 	vcmesh_tpl        = NULL;
-	scramjet          = NULL;
-	hatch_vent        = NULL;
 	insignia_tex      = NULL;
 	contrail_tex      = NULL;
 	hPanelMesh        = NULL;
@@ -189,10 +186,6 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	for (i = 0; i < 4; i++)
 		psngr[i] = false;
 	for (i = 0; i < 2; i++) {
-		scram_max[i] = 0.0;
-		scram_intensity[i] = 0.0;
-	}
-	for (i = 0; i < 2; i++) {
 		scflowidx[i] = 0;
 		mainflowidx[i] = retroflowidx[i] = -1;
 		scTSFCidx[i] = -1;
@@ -200,7 +193,6 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	}
 
 	hbmode = hbswitch = 0;
-	scrampropmass = -1;
 	mainTSFCidx = hoverflowidx = -1;
 	
 	ninstr = 0;
@@ -209,7 +201,6 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	bDamageEnabled = (GetDamageModel() != 0);
 	bMWSActive = false;
 	lwingstatus = rwingstatus = 1.0;
-	hatchfail = 0;
 	for (i = 0; i < 4; i++) aileronfail[i] = false;
 
 	DefineAnimations();
@@ -223,8 +214,7 @@ DeltaGlider::~DeltaGlider ()
 {
 	DWORD i;
 
-	if (scramjet) delete scramjet;
-
+	// delete subsystems
 	for (std::vector<DGSubsystem*>::iterator it = ssys.begin(); it != ssys.end(); ++it)
 		delete *it;
 
@@ -247,7 +237,7 @@ DeltaGlider::~DeltaGlider ()
 // --------------------------------------------------------------
 void DeltaGlider::SetEmptyMass () const
 {
-	double emass = (scramjet ? EMPTY_MASS_SC : EMPTY_MASS);
+	double emass = (ssys_scram ? EMPTY_MASS_SC : EMPTY_MASS);
 	// add passengers+life support to empty vessel mass
 	for (int i = 0; i < 4; i++)
 		if (psngr[i]) emass += PSNGR_MASS;
@@ -263,8 +253,6 @@ void DeltaGlider::CreatePanelElements ()
 	int i;
 
 	ninstr_main = 50;
-	instr_scram0 = ninstr_main;
-	ninstr_main += (ScramVersion() ? 1 : 0);
 
 	instr_ovhd0 = ninstr_main;
 	ninstr_ovhd = 10;
@@ -280,13 +268,8 @@ void DeltaGlider::CreatePanelElements ()
 	instr[25] = new SwitchArray (this);
 	instr[27] = new MWSButton (this);
 	instr[42] = new AngRateIndicator (this, g_Param.surf);
-	instr[47] = new HatchSwitch (this);
 
 	aap = new AAP (this);   aap->AttachHSI ((InstrHSI*)instr[1]);
-
-	if (ScramVersion()) {
-		instr[instr_scram0+0] = new ThrottleScram (this);
-	}
 
 	for (i = 0; i < 3; i++) {
 		instr[instr_ovhd0+1+i] = new AngularVelocityIndicator (this, i);
@@ -300,32 +283,6 @@ void DeltaGlider::CreatePanelElements ()
 // --------------------------------------------------------------
 void DeltaGlider::DefineAnimations ()
 {
-	// ***** Top hatch animation *****
-	static UINT HatchGrp[2] = {GRP_Hatch1,GRP_Hatch2};
-	static MGROUP_ROTATE Hatch (0, HatchGrp, 2,
-		_V(0,2.069,5.038), _V(1,0,0), (float)(110*RAD));
-	static UINT VCHatchGrp[1] = {GRP_HATCH_VC};
-	static MGROUP_ROTATE VCHatch (1, VCHatchGrp, 1,
-		_V(0,2.069,5.038), _V(1,0,0), (float)(110*RAD));
-	static UINT RearLadderGrp[2] = {GRP_RearLadder1,GRP_RearLadder2};
-	static MGROUP_ROTATE RearLadder1 (0, RearLadderGrp, 2,
-		_V(0,1.7621,4.0959), _V(1,0,0), (float)(-20*RAD));
-	static MGROUP_ROTATE RearLadder2 (0, RearLadderGrp+1, 1,
-		_V(0,1.1173,4.1894), _V(1,0,0), (float)(180*RAD));
-	// virtual cockpit ladder animation
-	static UINT VCRearLadderGrp[2] = {GRP_LADDER1_VC,GRP_LADDER2_VC};
-	static MGROUP_ROTATE VCRearLadder1 (1, VCRearLadderGrp, 2,
-		_V(0,1.7621,4.0959), _V(1,0,0), (float)(-20*RAD));
-	static MGROUP_ROTATE VCRearLadder2 (1, VCRearLadderGrp+1, 1,
-		_V(0,1.1173,4.1894), _V(1,0,0), (float)(180*RAD));
-	anim_hatch = CreateAnimation (0);
-	AddAnimationComponent (anim_hatch, 0, 1, &Hatch);
-	AddAnimationComponent (anim_hatch, 0, 1, &VCHatch);
-	AddAnimationComponent (anim_hatch, 0, 0.25, &RearLadder1);
-	AddAnimationComponent (anim_hatch, 0.25, 0.8, &RearLadder2);
-	AddAnimationComponent (anim_hatch, 0, 0.25, &VCRearLadder1);
-	AddAnimationComponent (anim_hatch, 0.25, 0.8, &VCRearLadder2);
-
 	// ***** Radiator animation *****
 	static UINT RaddoorGrp[2] = {GRP_Raddoor1,GRP_Raddoor2};
 	static MGROUP_ROTATE Raddoor (0, RaddoorGrp, 2,
@@ -385,20 +342,6 @@ void DeltaGlider::DefineAnimations ()
 	// ======================================================
 	// VC animation definitions
 	// ======================================================
-
-	// Scram throttle left engine
-	static UINT ScramThrottleLGrp[2] = {GRP_THROTTLE_SCRAM_L1_VC,GRP_THROTTLE_SCRAM_L2_VC};
-	static MGROUP_ROTATE ScramThrottleL (1, ScramThrottleLGrp, 2,
-		_V(0,0.7849,6.96), _V(1,0,0), (float)(30*RAD));
-	anim_scramthrottle[0] =  CreateAnimation (0);
-	AddAnimationComponent (anim_scramthrottle[0], 0, 1, &ScramThrottleL);
-
-	// Scram throttle right engine
-	static UINT ScramThrottleRGrp[2] = {GRP_THROTTLE_SCRAM_R1_VC,GRP_THROTTLE_SCRAM_R2_VC};
-	static MGROUP_ROTATE ScramThrottleR (1, ScramThrottleRGrp, 2,
-		_V(0,0.7849,6.96), _V(1,0,0), (float)(30*RAD));
-	anim_scramthrottle[1] =  CreateAnimation (0);
-	AddAnimationComponent (anim_scramthrottle[1], 0, 1, &ScramThrottleR);
 
 	static UINT RadiatorSwitchGrp = GRP_RADIATOR_SWITCH_VC;
 	static MGROUP_ROTATE RadiatorSwitch (1, &RadiatorSwitchGrp, 1,
@@ -500,11 +443,9 @@ void DeltaGlider::InitPanel (int panel)
 		// reset state flags for panel instruments
 		for (i = 0; i < ninstr; i++) if (instr[i]) instr[i]->Reset2D (hPanelMesh);
 
-		for (i = 0; i < 5; i++) engsliderpos[i] = (UINT)-1;
 		for (i = 0; i < 2; i++)
 			mainflowidx[i] = retroflowidx[i] = scTSFCidx[i] = scflowidx[i] =
 			scrampropidx[i] = -1;
-		scrampropmass = -1;
 		hoverflowidx = mainTSFCidx = -1;
 		break;
 	case 1: // overhead panel
@@ -542,34 +483,11 @@ void DeltaGlider::InitVC (int vc)
 		srf[10] = oapiCreateSurface (LOADBMP (IDB_FONT2));
 
 		// reset state flags for panel instruments
-		for (i = 0; i < 5; i++) engsliderpos[i] = (UINT)-1;
 		for (i = 0; i < 2; i++)
 			mainflowidx[i] = retroflowidx[i] = scTSFCidx[i] = scflowidx[i] =
 			scrampropidx[i] = -1;
 		hoverflowidx = mainTSFCidx = -1;
-		scrampropmass = -1;
 		break;
-	}
-}
-
-void DeltaGlider::ScramjetThrust ()
-{
-	int i;
-	const double eps = 1e-8;
-	const double Fnominal = 2.5*MAX_MAIN_THRUST[modelidx];
-
-	double Fscram[2];
-	scramjet->Thrust (Fscram);
-
-	for (i = 0; i < 2; i++) {
-		double level = GetThrusterLevel (th_scram[i]);
-		double Fmax  = Fscram[i]/(level+eps);
-		SetThrusterMax0 (th_scram[i], Fmax);
-		SetThrusterIsp (th_scram[i], max (1.0, Fscram[i]/(scramjet->DMF(i)+eps))); // don't allow ISP=0
-
-		// the following are used for calculating exhaust density
-		scram_max[i] = min (Fmax/Fnominal, 1.0);
-		scram_intensity[i] = level * scram_max[i];
 	}
 }
 
@@ -749,39 +667,6 @@ void DeltaGlider::SetGearParameters (double state)
 	}
 }
 
-void DeltaGlider::ActivateHatch (DoorStatus action)
-{
-	bool close = (action == DOOR_CLOSED || action == DOOR_CLOSING);
-	if (hatch_status == DOOR_CLOSED && !close && !hatch_vent && GetAtmPressure() < 10e3) {
-		static PARTICLESTREAMSPEC airvent = {
-			0, 1.0, 15, 0.5, 0.3, 2, 0.3, 1.0, PARTICLESTREAMSPEC::EMISSIVE,
-			PARTICLESTREAMSPEC::LVL_LIN, 0.1, 0.1,
-			PARTICLESTREAMSPEC::ATM_FLAT, 0.1, 0.1
-		};
-		static VECTOR3 pos = {0,2,4};
-		static VECTOR3 dir = {0,1,0};
-		static double lvl = 0.1;
-		hatch_vent = AddParticleStream (&airvent, pos, dir, &lvl);
-		hatch_vent_t = oapiGetSimTime();
-	}
-
-	hatch_status = action;
-	if (action <= DOOR_OPEN) {
-		hatch_proc = (action == DOOR_CLOSED ? 0.0 : 1.0);
-		SetAnimation (anim_hatch, hatch_proc);
-		UpdateStatusIndicators();
-	}
-	oapiTriggerPanelRedrawArea (1, AID_SWITCHARRAY);
-	UpdateCtrlDialog (this);
-	RecordEvent ("HATCH", close ? "CLOSE" : "OPEN");
-}
-
-void DeltaGlider::RevertHatch ()
-{
-	ActivateHatch (hatch_status == DOOR_CLOSED || hatch_status == DOOR_CLOSING ?
-				   DOOR_OPENING : DOOR_CLOSING);
-}
-
 void DeltaGlider::ActivateRadiator (DoorStatus action)
 {
 	bool close = (action == DOOR_CLOSED || action == DOOR_CLOSING);
@@ -811,16 +696,6 @@ void DeltaGlider::SetMainRetroLevel (int which, double lmain, double lretro)
 	} else {            // set individual engine
 		SetThrusterLevel (th_main [which], lmain);
 		SetThrusterLevel (th_retro[which], lretro);
-	}
-}
-
-void DeltaGlider::SetScramLevel (int which, double level)
-{
-	for (int i = 0; i < 2; i++) {
-		if (which != 1-i) {
-			SetThrusterLevel (th_scram[i], level);
-			scram_intensity[i] = level * scram_max[i];
-		}
 	}
 }
 
@@ -881,14 +756,6 @@ void DeltaGlider::TestDamage ()
 		}
 	}
 
-	// top hatch damage
-	if (hatch_proc > 0.05 && hatchfail < 2 && dynp > 30e3) {
-		if (oapiRand() < 1.0 - exp(-dt*0.2)) {
-			hatchfail++;
-			newdamage = true;
-		}
-	}
-
 	if (newdamage) {
 		bMWSActive = true;
 		ApplyDamage ();
@@ -920,7 +787,7 @@ void DeltaGlider::RepairDamage ()
 		hraileron = CreateControlSurface2 (AIRCTRL_AILERON, 0.3, 1.5, _V(-7.5,0,-7.2), AIRCTRL_AXIS_XNEG, anim_laileron);
 	for (i = 0; i < 4; i++)
 		aileronfail[i] = false;
-	hatchfail = 0;
+	ssys_pressurectrl->RepairDamage ();
 	bMWSActive = false;
 	oapiTriggerRedrawArea (0,0, AID_MWS);
 	//UpdateDamageDialog (this);
@@ -976,23 +843,11 @@ bool DeltaGlider::RedrawPanel_Wingload (SURFHANDLE surf, bool force)
 	} else return false;
 }
 
-void DeltaGlider::RedrawVC_ThScram ()
-{
-	for (int i = 0; i < 2; i++) {
-		double level = GetThrusterLevel (th_scram[i]);
-		UINT pos = (UINT)(level*500.0);
-		if (pos != engsliderpos[i+3]) {
-			SetAnimation (anim_scramthrottle[i], level);
-			engsliderpos[i+3] = pos;
-		}
-	}
-}
-
 bool DeltaGlider::RedrawPanel_ScramTSFC (SURFHANDLE surf)
 {
 	bool redraw = false;
 	for (int i = 0; i < 2; i++) {
-		int p = min (66, (int)(scramjet->TSFC(i)*(1e3*66.0/0.03)));
+		int p = min (66, (int)(ssys_scram->TSFC(i)*(1e3*66.0/0.03)));
 		if (p != scTSFCidx[i])
 			scTSFCidx[i] = p, redraw = true;
 	}
@@ -1006,36 +861,13 @@ bool DeltaGlider::RedrawPanel_ScramFlow (SURFHANDLE surf)
 {
 	bool redraw = false;
 	for (int i = 0; i < 2; i++) {
-		int p = min (66, (int)(scramjet->DMF(i)/3.0*67.0));
+		int p = min (66, (int)(ssys_scram->DMF(i)/3.0*67.0));
 		if (p != scflowidx[i])
 			scflowidx[i] = p, redraw = true;
 	}
 	if (redraw) {
 		oapiBltPanelAreaBackground (AID_SCRAMDISP2, surf);
 		return RedrawPanel_IndicatorPair (surf, scflowidx, 66);
-	} else return false;
-}
-
-bool DeltaGlider::RedrawPanel_ScramProp (SURFHANDLE surf)
-{
-	double m = GetPropellantMass (ph_scram);
-	double lvl = m / max (1.0, max_scramfuel);
-	int p = min (88, (int)(lvl*89.0));
-	if (p != *scrampropidx) {
-		scrampropidx[0] = scrampropidx[1] = p;
-		oapiBltPanelAreaBackground (AID_SCRAMPROP, surf);
-		return RedrawPanel_IndicatorPair (surf, scrampropidx, 88);
-	} else return false;
-}
-
-bool DeltaGlider::RedrawPanel_ScramPropMass (SURFHANDLE surf)
-{
-	int m = (int)(GetPropellantMass (ph_scram)+0.5);
-	if (m != scrampropmass) {
-		char cbuf[8];
-		scrampropmass = m;
-		sprintf (cbuf, "%05d", m);
-		return RedrawPanel_Number (surf, 0, 0, cbuf);
 	} else return false;
 }
 
@@ -1050,7 +882,7 @@ bool DeltaGlider::RedrawPanel_ScramTempDisp (SURFHANDLE surf)
 	SelectObject (hDC, g_Param.pen[0]);
 	for (j = 0; j < 3; j++) {
 		for (i = 0; i < 2; i++) {
-			T = scramjet->Temp (i, j);
+			T = ssys_scram->Temp (i, j);
 			phi = PI * min (T,3900.0)/2000.0;
 			dx = (int)(rad*sin(phi)), dy = (int)(rad*cos(phi));
 			x0 = (isVC ? 20 : 22-j) + i*43;
@@ -1184,7 +1016,7 @@ void DeltaGlider::UpdateStatusIndicators ()
 	vtx[6].tu = vtx[7].tu = x;
 
 	// top hatch indicator
-	x = (hatch_status == DOOR_CLOSED ? xoff : hatch_status == DOOR_OPEN ? xon : modf (oapiGetSimTime(), &d) < 0.5 ? xon : xoff);
+	x = (ssys_pressurectrl->HatchStatus() == DOOR_CLOSED ? xoff : ssys_pressurectrl->HatchStatus() == DOOR_OPEN ? xon : modf (oapiGetSimTime(), &d) < 0.5 ? xon : xoff);
 	vtx[8].tu = vtx[9].tu = x;
 
 	// radiator indicator
@@ -1250,15 +1082,6 @@ void DeltaGlider::SetDamageVisuals ()
 				oapiEditMeshGroup (exmesh, AileronGrp[i*2+j], &ges);
 			}
 	}
-
-	// top hatch
-	for (i = 0; i < 2; i++) {
-		ges.flags = GRPEDIT_SETUSERFLAG;
-		ges.UsrFlag = (hatchfail < 2 ? 0:3);
-		oapiEditMeshGroup (exmesh, HatchGrp[i], &ges);
-	}
-	if (hatchfail == 1)
-		SetAnimation (anim_hatch, hatch_proc = 0.2);
 }
 
 void DeltaGlider::DrawNeedle (HDC hDC, int x, int y, double rad, double angle, double *pangle, double vdial)
@@ -1307,9 +1130,9 @@ void DeltaGlider::clbkSetClassCaps (FILEHANDLE cfg)
 	bool b;
 	int i;
 	if (oapiReadItem_bool (cfg, "SCRAMJET", b) && b) // set up scramjet configuration
-		scramjet = new Ramjet (this);
+		ssys.push_back (ssys_scram = new ScramSubsystem (this, ssys.size()));
 
-	VESSEL4::SetEmptyMass (scramjet ? EMPTY_MASS_SC : EMPTY_MASS);
+	VESSEL4::SetEmptyMass (ssys_scram ? EMPTY_MASS_SC : EMPTY_MASS);
 	VECTOR3 r[2] = {{0,0,6}, {0,0,-4}};
 	SetSize (10.0);
 	SetVisibilityLimit (7.5e-4, 1.5e-3);
@@ -1335,22 +1158,18 @@ void DeltaGlider::clbkSetClassCaps (FILEHANDLE cfg)
 
 	// ****************** propellant specs **********************
 
-	tankconfig = (scramjet ? 1:0);
+	tankconfig = (ssys_scram ? 1:0);
 	switch (tankconfig) {
 	case 0:
 		max_rocketfuel = TANK1_CAPACITY + TANK2_CAPACITY;
-		max_scramfuel = 0.0;
 		break;
 	case 1:
 		max_rocketfuel = TANK1_CAPACITY;
-		max_scramfuel = TANK2_CAPACITY;
 		break;
 	}
 
 	ph_main  = CreatePropellantResource (max_rocketfuel);    // main tank (fuel + oxydant)
 	ph_rcs   = CreatePropellantResource (RCS_FUEL_CAPACITY); // RCS tank  (fuel + oxydant)
-	if (max_scramfuel)
-		ph_scram = CreatePropellantResource (max_scramfuel); // scramjet fuel
 
 	// **************** thruster definitions ********************
 
@@ -1372,11 +1191,6 @@ void DeltaGlider::clbkSetClassCaps (FILEHANDLE cfg)
 	};
 	PARTICLESTREAMSPEC exhaust_hover = {
 		0, 1.5, 30, 150, 0.1, 0.1, 12, 1.0, PARTICLESTREAMSPEC::EMISSIVE,
-		PARTICLESTREAMSPEC::LVL_SQRT, 0, 1,
-		PARTICLESTREAMSPEC::ATM_PLOG, 1e-5, 0.1
-	};
-	PARTICLESTREAMSPEC exhaust_scram = {
-		0, 2.0, 10, 150, 0.1, 0.2, 16, 1.0, PARTICLESTREAMSPEC::EMISSIVE,
 		PARTICLESTREAMSPEC::LVL_SQRT, 0, 1,
 		PARTICLESTREAMSPEC::ATM_PLOG, 1e-5, 0.1
 	};
@@ -1483,27 +1297,6 @@ void DeltaGlider::clbkSetClassCaps (FILEHANDLE cfg)
 	LightEmitter *le = AddPointLight (_V(0,0,-10), 200, 1e-3, 0, 2e-3, col_d, col_s, col_a);
 	le->SetIntensityRef (&th_main_level);
 
-	// **************** scramjet definitions ********************
-
-	if (scramjet) {
-		VECTOR3 dir = {0.0, sin(SCRAM_DEFAULT_DIR), cos(SCRAM_DEFAULT_DIR)};
-
-		for (int i = 0; i < 2; i++) {
-			th_scram[i] = CreateThruster (_V(i?0.9:-0.9, -0.8, -5.6), dir, 0, ph_scram, 0);
-			scramjet->AddThrusterDefinition (th_scram[i], SCRAM_FHV[modelidx],
-				SCRAM_INTAKE_AREA, SCRAM_TEMAX[modelidx], SCRAM_MAX_DMF[modelidx]);
-		}
-
-		// thrust rating and ISP for scramjet engines are updated continuously
-		//AddExhaust (th_scram[0], 10.0, 0.5);
-		//AddExhaust (th_scram[1], 10.0, 0.5);
-		PSTREAM_HANDLE ph;
-		ph = AddExhaustStream (th_scram[0], _V(-1,-1.1,-5.4), &exhaust_scram);
-		if (ph) oapiParticleSetLevelRef (ph, scram_intensity+0);
-		ph = AddExhaustStream (th_scram[1], _V( 1,-1.1,-5.4), &exhaust_scram);
-		if (ph) oapiParticleSetLevelRef (ph, scram_intensity+1);
-	}
-
 	// ********************* aerodynamics ***********************
 
 	hwing = CreateAirfoil3 (LIFT_VERTICAL, _V(0,0,-0.3), VLiftCoeff, 0, 5, 90, 1.5);
@@ -1545,7 +1338,7 @@ void DeltaGlider::clbkSetClassCaps (FILEHANDLE cfg)
 		beacon[i].active = false;
 		AddBeacon (beacon+i);
 	}
-	if (scramjet) beacon[4].pos = &beaconpos_scram;
+	if (ssys_scram) beacon[4].pos = &beaconpos_scram;
 
 	//docking_light = (SpotLight*)AddSpotLight(_V(2.5,-0.5,6.5), _V(0,0,1), 150, 1e-3, 0, 1e-3, RAD*25, RAD*60, col_white, col_white, col_a);
 	//docking_light->Activate(false);
@@ -1584,10 +1377,8 @@ void DeltaGlider::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 	while (oapiReadScenario_nextline (scn, line)) {
 		if (!_strnicmp (line, "RADIATOR", 8)) {
 			sscanf (line+8, "%d%lf", &radiator_status, &radiator_proc);
-		} else if (!_strnicmp (line, "HATCH", 5)) {
-			sscanf (line+5, "%d%lf", &hatch_status, &hatch_proc);
 		} else if (!_strnicmp (line, "TANKCONFIG", 10)) {
-			if (scramjet) sscanf (line+10, "%d", &tankconfig);
+			if (ssys_scram) sscanf (line+10, "%d", &tankconfig);
 		} else if (!_strnicmp (line, "PSNGR", 5)) {
 			DWORD i, res, pi[4];
 			res = sscanf (line+5, "%d%d%d%d", pi+0, pi+1, pi+2, pi+3);
@@ -1600,7 +1391,7 @@ void DeltaGlider::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 			strcat (fname, skinpath);
 			int n = strlen(fname); fname[n++] = '\\';
 			strcpy (fname+n, "dgmk4_1.dds");  skin[0] = oapiLoadTexture (fname);
-			strcpy (fname+n, scramjet ? "dgmk4_2.dds" : "dgmk4_2_ns.dds");  skin[1] = oapiLoadTexture (fname);
+			strcpy (fname+n, ssys_scram ? "dgmk4_2.dds" : "dgmk4_2_ns.dds");  skin[1] = oapiLoadTexture (fname);
 			strcpy (fname+n, "idpanel1.dds"); skin[2] = oapiLoadTexture (fname);
 			if (skin[2]) {
 				oapiBlt (insignia_tex, skin[2], 0, 0, 0, 0, 256, 256);
@@ -1632,22 +1423,6 @@ void DeltaGlider::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 	            ParseScenarioLineEx (line, vs);
         }
     }
-
-	// modify tank configuration (DG-S only)
-	if (tankconfig != 0) {
-		switch (tankconfig) {
-		case 1:
-			max_rocketfuel = TANK1_CAPACITY;
-			max_scramfuel  = TANK2_CAPACITY;
-			break;
-		case 2:
-			max_rocketfuel = TANK2_CAPACITY;
-			max_scramfuel  = TANK1_CAPACITY;
-			break;
-		}
-		SetPropellantMaxMass (ph_main, max_rocketfuel);
-		SetPropellantMaxMass (ph_scram, max_scramfuel);
-	}
 }
 
 // --------------------------------------------------------------
@@ -1669,10 +1444,6 @@ void DeltaGlider::clbkSaveState (FILEHANDLE scn)
 	if (radiator_status) {
 		sprintf (cbuf, "%d %0.4f", radiator_status, radiator_proc);
 		oapiWriteScenario_string (scn, "RADIATOR", cbuf);
-	}
-	if (hatch_status) {
-		sprintf (cbuf, "%d %0.4lf", hatch_status, hatch_proc);
-		oapiWriteScenario_string (scn, "HATCH", cbuf);
 	}
 	for (i = 0; i < 4; i++)
 		if (psngr[i]) {
@@ -1710,9 +1481,27 @@ void DeltaGlider::clbkPostCreation ()
 		(*it)->clbkPostCreation ();
 
 	SetEmptyMass ();
+	if (tankconfig) {
+		if (!ssys_scram) {
+			tankconfig = 0;
+		} else {
+			double max_scramfuel;
+			switch (tankconfig) {
+			case 1:
+				max_rocketfuel = TANK1_CAPACITY;
+				max_scramfuel = TANK2_CAPACITY;
+				break;
+			case 2:
+				max_rocketfuel = TANK2_CAPACITY;
+				max_scramfuel  = TANK1_CAPACITY;
+				break;
+			}
+			SetPropellantMaxMass (ph_main, max_rocketfuel);
+			ssys_scram->SetPropellantMaxMass (max_scramfuel);
+		}
+	}
 
 	// update animation states
-	SetAnimation (anim_hatch, hatch_proc);
 	SetAnimation (anim_radiator, radiator_proc);
 	SetAnimation (anim_radiatorswitch, radiator_status & 1);
 
@@ -1741,7 +1530,7 @@ bool DeltaGlider::clbkPlaybackEvent (double simt, double event_t, const char *ev
 		ssys_aerodyn->ActivateAirbrake(!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
 		return true;
 	} else if (!_stricmp (event_type, "HATCH")) {
-		ActivateHatch (!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
+		ssys_pressurectrl->ActivateHatch (!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
 		return true;
 	} else if (!_stricmp (event_type, "OLOCK")) {
 		ssys_pressurectrl->ActivateOuterAirlock (!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
@@ -1869,32 +1658,7 @@ int DeltaGlider::clbkNavProcess (int mode)
 // --------------------------------------------------------------
 void DeltaGlider::clbkPostStep (double simt, double simdt, double mjd)
 {
-	// calculate max scramjet thrust
-	if (scramjet) ScramjetThrust ();
-
 	th_main_level = GetThrusterGroupLevel (THGROUP_MAIN);
-
-	// animate top hatch
-	if (hatch_status >= DOOR_CLOSING) {
-		double da = simdt * HATCH_OPERATING_SPEED;
-		if (hatch_status == DOOR_CLOSING) {
-			if (hatch_proc > 0.0)
-				hatch_proc = max (0.0, hatch_proc-da);
-			else {
-				hatch_status = DOOR_CLOSED;
-				//oapiTriggerPanelRedrawArea (2, AID_NOSECONEINDICATOR);
-			}
-		} else {
-			if (hatch_proc < 1.0)
-				hatch_proc = min (1.0, hatch_proc+da);
-			else {
-				hatch_status = DOOR_OPEN;
-				//oapiTriggerPanelRedrawArea (2, AID_NOSECONEINDICATOR);
-			}
-		}
-		SetAnimation (anim_hatch, hatch_proc);
-		UpdateStatusIndicators();
-	}
 
 	// animate radiator
 	if (radiator_status >= DOOR_CLOSING) {
@@ -1908,11 +1672,6 @@ void DeltaGlider::clbkPostStep (double simt, double simdt, double mjd)
 		}
 		SetAnimation (anim_radiator, radiator_proc);
 		UpdateStatusIndicators();
-	}
-
-	if (hatch_vent && simt > hatch_vent_t + 1.0) {
-		DelExhaustStream (hatch_vent);
-		hatch_vent = NULL;
 	}
 
 	// damage/failure system
@@ -2001,7 +1760,6 @@ void DeltaGlider::DefinePanelMain (PANELHANDLE hPanel)
 	RegisterPanelArea (hPanel, AID_MWS,      _R(1071,6,1098,32), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN, panel2dtex, instr[27]);
 
 	if (ScramVersion()) {
-		RegisterPanelArea (hPanel, AID_ENGINESCRAM, _R(4,386,57,488), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, instr[instr_scram0+0]);
 	} else {
 		MESHGROUP *grp = oapiMeshGroup (hPanelMesh, GRP_SCRAM_INSTRUMENTS_P0);
 		grp->UsrFlag = 3;
@@ -2050,7 +1808,8 @@ void DeltaGlider::DefinePanelOverhead (PANELHANDLE hPanel)
 
 		// Define panel elements on top of background
 		for (i = 0; i < ninstr_ovhd; i++)
-			instr[instr_ovhd0+i]->AddMeshData2D (panelmesh1, 1);
+			if (instr[instr_ovhd0+i])
+				instr[instr_ovhd0+i]->AddMeshData2D (panelmesh1, 1);
 	}
 	hPanelMesh = panelmesh1;
 	SetPanelBackground (hPanel, &panel2dtex, 1, hPanelMesh, panelw, panelh, 0,
@@ -2151,16 +1910,7 @@ bool DeltaGlider::clbkLoadVC (int id)
 			oapiVCRegisterArea (AID_SCRAMDISP2, _R(195,16,208,89), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex1);
 			oapiVCRegisterArea (AID_SCRAMDISP3, _R(158,16,171,89), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex1);
 			oapiVCRegisterArea (AID_SCRAMTEMPDISP, _R(6,10,87,140), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND, tex2);
-			oapiVCRegisterArea (AID_SCRAMPROP, _R(200,102,213,197), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex1);
-			oapiVCRegisterArea (AID_SCRAMPROPMASS, _R(188, 199, 218, 208), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_NONE, tex1);
-			oapiVCRegisterArea (AID_ENGINESCRAM, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED);
-			oapiVCSetAreaClickmode_Quadrilateral (AID_ENGINESCRAM, _V(-0.45,0.98,6.94), _V(-0.39,0.98,6.94), _V(-0.45,0.95,7.07), _V(-0.39,0.95,7.07));
 		}
-
-		// Hatch open/close switch
-		oapiVCRegisterArea (AID_HATCH_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_HATCH_SWITCH, VC_HATCH_SWITCH_mousearea[0], VC_HATCH_SWITCH_mousearea[1], VC_HATCH_SWITCH_mousearea[2], VC_HATCH_SWITCH_mousearea[3]);
-		((DGSwitch1*)instr[47])->DefineAnimationVC (VC_HATCH_SWITCH_ref, VC_HATCH_SWITCH_axis, GRP_SWITCH1_VC, VC_HATCH_SWITCH_vofs);
 
 		//oapiVCRegisterArea (AID_MWS, PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
 		//oapiVCSetAreaClickmode_Spherical (AID_MWS, _V(0.0755,1.2185,7.3576), 0.013);
@@ -2243,25 +1993,6 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 		return true;
 	case AID_BUTTONROW1:
 		return instr[25]->ProcessMouseVC (event, p);
-	case AID_ENGINESCRAM:
-		if (event & PANEL_MOUSE_LBDOWN) { // record which slider to operate
-			if      (p.x < 0.3) ctrl = 0; // left engine
-			else if (p.x > 0.7) ctrl = 1; // right engine
-			else                ctrl = 2; // both
-			py = p.y;
-		} else {
-			for (int i = 0; i < 2; i++) {
-				if (ctrl == i || ctrl == 2) {
-					double lvl = max (0.0, min (1.0, GetThrusterLevel (th_scram[i]) + (p.y-py)));
-					if (lvl < 0.01) lvl = 0.0;
-					SetThrusterLevel (th_scram[i], lvl);
-				}
-			}
-			py = p.y;
-		}
-		return true;
-	case AID_HATCH_SWITCH:
-		return instr[47]->ProcessMouseVC (event, p);
 	case AID_RADIATOREX:
 		ActivateRadiator (DOOR_OPENING);
 		return true;
@@ -2293,15 +2024,8 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 
 	// standalone id
 	switch (id) {
-	case AID_ENGINESCRAM:
-		RedrawVC_ThScram();
-		return false;
 	case AID_FUELMFD:
 		return instr[4]->RedrawVC (vcmesh, intex);
-	case AID_SCRAMPROP:
-		return RedrawPanel_ScramProp (surf);
-	case AID_SCRAMPROPMASS:
-		return RedrawPanel_ScramPropMass (surf);
 	case AID_MAINDISP1:
 		return RedrawPanel_MainFlow (surf);
 	case AID_MAINDISP2:
@@ -2326,8 +2050,6 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 		return (vcmesh ? instr[0]->RedrawVC (vcmesh, surf) : false);
 	case AID_HSIINSTR:
 		return instr[1]->RedrawVC (vcmesh, surf);
-	case AID_HATCH_SWITCH:
-		return (vcmesh ? instr[47]->RedrawVC (vcmesh, surf) : false);
 	case AID_ANGRATEINDICATOR:
 		return (vcmesh ? instr[42]->RedrawVC (vcmesh, oapiGetTextureHandle (vcmesh_tpl, 14)) : false);
 	case AID_MWS:
@@ -2344,19 +2066,13 @@ int DeltaGlider::clbkConsumeDirectKey (char *kstate)
 {
 	if (KEYMOD_ALT (kstate)) {
 		if (KEYDOWN (kstate, OAPI_KEY_ADD)) { // increment scram thrust
-			if (scramjet)
-				for (int i = 0; i < 2; i++) {
-					IncThrusterLevel (th_scram[i], oapiGetSimStep() * 0.3);
-					scram_intensity[i] = GetThrusterLevel (th_scram[i]) * scram_max[i];
-				}
+			if (ssys_scram)
+				ssys_scram->IncThrusterLevel (2, 0.3 * oapiGetSimStep());
 			RESETKEY (kstate, OAPI_KEY_ADD);
 		}
 		if (KEYDOWN (kstate, OAPI_KEY_SUBTRACT)) { // decrement scram thrust
-			if (scramjet)
-				for (int i = 0; i < 2; i++) {
-					IncThrusterLevel (th_scram[i], oapiGetSimStep() * -0.3);
-					scram_intensity[i] = GetThrusterLevel (th_scram[i]) * scram_max[i];
-				}
+			if (ssys_scram)
+				ssys_scram->IncThrusterLevel (2, -0.3 * oapiGetSimStep());
 			RESETKEY (kstate, OAPI_KEY_SUBTRACT);
 		}
 	}
@@ -2563,10 +2279,10 @@ BOOL CALLBACK EdPg1Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			GetDG(hTab)->SubsysDocking()->ActivateLadder (DeltaGlider::DOOR_OPEN);
 			return TRUE;
 		case IDC_HATCH_CLOSE:
-			GetDG(hTab)->ActivateHatch (DeltaGlider::DOOR_CLOSED);
+			GetDG(hTab)->SubsysPressure()->ActivateHatch (DeltaGlider::DOOR_CLOSED);
 			return TRUE;
 		case IDC_HATCH_OPEN:
-			GetDG(hTab)->ActivateHatch (DeltaGlider::DOOR_OPEN);
+			GetDG(hTab)->SubsysPressure()->ActivateHatch (DeltaGlider::DOOR_OPEN);
 			return TRUE;
 		case IDC_RADIATOR_RETRACT:
 			GetDG(hTab)->ActivateRadiator (DeltaGlider::DOOR_CLOSED);
@@ -2739,10 +2455,10 @@ BOOL CALLBACK Ctrl_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			dg->SubsysDocking()->ActivateLadder (DeltaGlider::DOOR_OPENING);
 			return 0;
 		case IDC_HATCH_CLOSE:
-			dg->ActivateHatch (DeltaGlider::DOOR_CLOSING);
+			dg->SubsysPressure()->ActivateHatch (DeltaGlider::DOOR_CLOSING);
 			return 0;
 		case IDC_HATCH_OPEN:
-			dg->ActivateHatch (DeltaGlider::DOOR_OPENING);
+			dg->SubsysPressure()->ActivateHatch (DeltaGlider::DOOR_OPENING);
 			return 0;
 		case IDC_RADIATOR_RETRACT:
 			dg->ActivateRadiator (DeltaGlider::DOOR_CLOSING);
@@ -2804,7 +2520,7 @@ void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd)
 	SendDlgItemMessage (hWnd, IDC_LADDER_EXTEND, BM_SETCHECK, bstatus[op], 0);
 	SendDlgItemMessage (hWnd, IDC_LADDER_RETRACT, BM_SETCHECK, bstatus[1-op], 0);
 
-	op = dg->hatch_status & 1;
+	op = dg->SubsysPressure()->HatchStatus() & 1;
 	SendDlgItemMessage (hWnd, IDC_HATCH_OPEN, BM_SETCHECK, bstatus[op], 0);
 	SendDlgItemMessage (hWnd, IDC_HATCH_CLOSE, BM_SETCHECK, bstatus[1-op], 0);
 

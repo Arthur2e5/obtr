@@ -24,6 +24,7 @@ class DGSubsystem: public Subsystem {
 public:
 	DGSubsystem (DeltaGlider *v, int ident): Subsystem (v, ident) {}
 	inline DeltaGlider *DG() { return (DeltaGlider*)Vessel(); }
+	inline const DeltaGlider *DG() const { return (DeltaGlider*)Vessel(); }
 	void AddComponent (DGSubsystemComponent *comp);
 	virtual void clbkPostCreation ();
 	virtual void clbkSaveState (FILEHANDLE scn);

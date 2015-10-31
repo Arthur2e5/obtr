@@ -402,52 +402,13 @@ public:
 	double GetCOG_elev () const;
 
 	/**
-	 * \brief Returns the three points defining the vessel's ground contact plane.
-	 * \param pt1 touchdown point of nose wheel (or equivalent)
-	 * \param pt2 touchdown point of left main wheel (or equivalent)
-	 * \param pt3 touchdown point of right main wheel (or equivalent)
-	 * \note The function returns 3 reference points defining the vessel's
-	 *   surface contact points when touched down on a planetary surface
-	 *   (e.g. landing gear).
-	 * \note This function is superseded by \ref GetTouchdownPoints, which
-	 *   returns additional parameters and can be used for touchdown points
-	 *   >= 3.
-	 * \sa GetTouchdownPoint, SetTouchdownPoints, GetCOG_elev
-	 */
-	void GetTouchdownPoints (VECTOR3 &pt1, VECTOR3 &pt2, VECTOR3 &pt3) const;
-
-	/**
 	 * \brief Returns one of the touchdown vertex definitions for the vessel.
 	 * \param [out] tdvtx Reference of touchdown descriptor to be filled.
 	 * \param [in] idx Vertex index (>= 0)
 	 * \return True on success (index in valid range) false otherwise.
-	 * \sa GetTouchdownPoints, GetTouchdownPointCount,
-	 *   SetTouchdownPoints(const TOUCHDOWNVTX*,DWORD)const
+	 * \sa GetTouchdownPointCount, SetTouchdownPoints(const TOUCHDOWNVTX*,DWORD)const
 	 */
 	bool GetTouchdownPoint (TOUCHDOWNVTX &tdvtx, DWORD idx) const;
-
-	/**
-	 * \brief Defines the three points defining the vessel's ground contact plane.
-	 * \param pt1 touchdown point of nose wheel (or equivalent)
-	 * \param pt2 touchdown point of left main wheel (or equivalent)
-	 * \param pt3 touchdown point of right main wheel (or equivalent)
-	 * \note The points are the positions at which the vessel's undercarriage
-	 *   (or equivalent) touches the surface, specified in local vessel
-	 *   coordinates.
-	 * \note The order of points is significant since it defines the direction
-	 *   of the normal. The points should be specified such that the cross
-	 *   product pt3-pt1 x pt2-pt1 defines the horizon "up" direction for
-	 *   the landed vessel (given a left-handed coordinate system). 
-	 * \note Modifying the touchdown points during the simulation while the
-	 *   vessel is on the ground can result in jumps due to instantaneous
-	 *   position changes (infinite acceleration). To avoid this, the
-	 *   touchdown points should be modified gradually by small amounts
-	 *   over time (proportional to simulation time steps). 
-	 * \note An extended version of this method is available:
-	 *   SetTouchdownPoints(const TOUCHDOWNVTX*, DWORD)const
-	 * \sa GetTouchdownPoints, GetCOG_elev, \ref SetTouchdownPoints(const TOUCHDOWNVTX*, DWORD)const
-	 */
-	void SetTouchdownPoints (const VECTOR3 &pt1, const VECTOR3 &pt2, const VECTOR3 &pt3) const;
 
 	/**
 	 * \brief Defines an arbitrary number of vessel surface contact points
@@ -459,7 +420,7 @@ public:
 	 * \note In addition to the vertex positions, stiffness and damping
 	 *   parameters can be provided to define the compressibility of individual
 	 *   points, e.g. for simulating gear suspension.
-	 * \sa SetTouchdownPoints(const VECTOR3&, const VECTOR3&, const VECTOR3&)const
+	 * \sa GetTouchdownPointCount, GetTouchdownPoint
 	 */
 	void SetTouchdownPoints (const TOUCHDOWNVTX *tdvtx, DWORD ntdvtx) const;
 
@@ -5127,6 +5088,45 @@ public:
 	UINT   AddAttExhaustRef (const VECTOR3 &pos, const VECTOR3 &dir, double wscale = 1.0, double lscale = 1.0) const; // obsolete
 	void   AddAttExhaustMode (UINT idx, ATTITUDEMODE mode, int axis, int dir) const; // obsolete
 	void   ClearAttExhaustRefs (void) const; // obsolete
+
+	/**
+	 * \brief Defines the three points defining the vessel's ground contact plane.
+	 * \deprecated This method has been replaced by VESSEL::SetTouchdownPoints(const TOUCHDOWNVTX*,DWORD)const
+	 * \param pt1 touchdown point of nose wheel (or equivalent)
+	 * \param pt2 touchdown point of left main wheel (or equivalent)
+	 * \param pt3 touchdown point of right main wheel (or equivalent)
+	 * \note The points are the positions at which the vessel's undercarriage
+	 *   (or equivalent) touches the surface, specified in local vessel
+	 *   coordinates.
+	 * \note The order of points is significant since it defines the direction
+	 *   of the normal. The points should be specified such that the cross
+	 *   product pt3-pt1 x pt2-pt1 defines the horizon "up" direction for
+	 *   the landed vessel (given a left-handed coordinate system). 
+	 * \note Modifying the touchdown points during the simulation while the
+	 *   vessel is on the ground can result in jumps due to instantaneous
+	 *   position changes (infinite acceleration). To avoid this, the
+	 *   touchdown points should be modified gradually by small amounts
+	 *   over time (proportional to simulation time steps). 
+	 * \note This method is retained only for backward compatibility. Vessels should now use
+	 *   SetTouchdownPoints(const TOUCHDOWNVTX*,DWORD)const to define a convex hull of touchdown points.
+	 * \sa GetTouchdownPoints, GetCOG_elev, \ref SetTouchdownPoints(const TOUCHDOWNVTX*, DWORD)const
+	 */
+	void SetTouchdownPoints (const VECTOR3 &pt1, const VECTOR3 &pt2, const VECTOR3 &pt3) const;
+
+	/**
+	 * \brief Returns the three points defining the vessel's ground contact plane.
+	 * \deprecated This method has been replaced by VESSEL::GetTouchdownPoint(TOUCHDOWNVTX&,DWORD)const
+	 * \param pt1 touchdown point of nose wheel (or equivalent)
+	 * \param pt2 touchdown point of left main wheel (or equivalent)
+	 * \param pt3 touchdown point of right main wheel (or equivalent)
+	 * \note The function returns 3 reference points defining the vessel's
+	 *   surface contact points when touched down on a planetary surface
+	 *   (e.g. landing gear).
+	 * \note This function is superseded by \ref GetTouchdownPoint(TOUCHDOWNVTX&,DWORD)const, which
+	 *   provides access to additional parameters and can be used for touchdown points >= 3.
+	 * \sa GetTouchdownPoint, SetTouchdownPoints, GetCOG_elev
+	 */
+	void GetTouchdownPoints (VECTOR3 &pt1, VECTOR3 &pt2, VECTOR3 &pt3) const;
 
 	/**
 	 * \brief Returns the scaling factor for the yaw moment.

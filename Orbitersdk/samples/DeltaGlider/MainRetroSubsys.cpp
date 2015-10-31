@@ -113,7 +113,6 @@ MainRetroThrottle::MainRetroThrottle (MainRetroSubsystem *_subsys)
 		_V(0,0.72,6.9856), _V(1,0,0), (float)(50*RAD));
 	anim_lever[1] = DG()->CreateAnimation (0.4);
 	DG()->AddAnimationComponent (anim_lever[1], 0, 1, &MainThrottleR);
-
 }
 
 // --------------------------------------------------------------

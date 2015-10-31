@@ -14,16 +14,6 @@
 #include "DGSwitches.h"
 
 // ==============================================================
-// Top hatch open/close switch
-
-class HatchSwitch: public DGSwitch1 {
-public:
-	HatchSwitch (VESSEL3 *v);
-	void ResetVC (DEVMESHHANDLE hMesh);
-	bool ProcessMouseVC (int event, VECTOR3 &p);
-};
-
-// ==============================================================
 
 class SwitchArray: public PanelElement {
 public:
