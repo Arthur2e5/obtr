@@ -27,8 +27,11 @@ public:
 	DGSwitch1 (VESSEL3 *v, Mode m=TWOSTATE);
 	void DefineAnimationVC (const VECTOR3 &ref, const VECTOR3 &axis,
 		DWORD meshgrp, int vtxofs);
+	void DefineAnimation2D (MESHHANDLE hMesh, DWORD meshgrp, int vtxofs);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
+	bool ProcessMouse2D (int event, int mx, int my);
 	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
+	bool Redraw2D (SURFHANDLE surf);
 
 	inline State GetState() const { return state; }
 	bool SetState (State s);
@@ -44,6 +47,7 @@ private:
 	int vofs;          // vertex offset
 	const static int nvtx;   // number of vertices in switch lever
 	static double travel; // switch lever angle from center to up position [rad]
+	const static float tu0[3], tv0, tw, th;
 };
 
 // ==============================================================

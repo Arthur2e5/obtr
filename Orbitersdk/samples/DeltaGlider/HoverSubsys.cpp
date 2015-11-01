@@ -584,7 +584,7 @@ bool HoverManualComponent::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWO
 
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
 
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_THROTTLE),  _R( 4,234, 57,374), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBPRESSED, panel2dtex, throttle);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_THROTTLE),  _R( 4,304, 57,444), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBPRESSED, panel2dtex, throttle);
 
 	return true;
 }
@@ -1242,7 +1242,7 @@ bool HoverThrottle::Redraw2D (SURFHANDLE surf)
 {
 	// constants for texture coordinates
 	static const float tx_dy = 18.0f;
-	static const float bb_y0 = 358.5f;
+	static const float bb_y0 = 428.5f;
 
 	int j;
 	float pos;

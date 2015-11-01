@@ -219,8 +219,8 @@ public:
 	void clbkSaveState (FILEHANDLE scn);
 	bool clbkParseScenarioLine (const char *line);
 	void clbkPostStep (double simt, double simdt, double mjd);
+	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);
-	void clbkResetVC (int vcid, DEVMESHHANDLE hMesh);
 
 private:
 	RetroCoverSwitch *sw;
@@ -235,6 +235,7 @@ private:
 class RetroCoverSwitch: public DGSwitch1 {
 public:
 	RetroCoverSwitch (RetroCoverControl *comp);
+	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 
 private:

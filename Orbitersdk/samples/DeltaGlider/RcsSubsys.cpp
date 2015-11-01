@@ -139,7 +139,7 @@ bool RcsModeSelector::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD vi
 
 	// RCS mode dial
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_DIAL), _R(1142, 69,1182,113), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, 0, dial);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_DIAL), _R(100, 69,140,113), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, 0, dial);
 
 	return true;
 }

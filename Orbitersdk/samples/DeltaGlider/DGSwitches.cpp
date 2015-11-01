@@ -15,6 +15,10 @@
 
 double DGSwitch1::travel = 28.0*RAD;
 const int DGSwitch1::nvtx = 33;
+const float DGSwitch1::tu0[3] = {53.0f/2048.0f, 105.0f/2048.0f, 79.0f/2048.0f};
+const float DGSwitch1::tv0 = 337.0f/1024.0f;
+const float DGSwitch1::tw  =  26.0f/2048.0f;
+const float DGSwitch1::th  =  52.0f/1024.0f;
 
 // --------------------------------------------------------------
 
@@ -37,11 +41,34 @@ void DGSwitch1::DefineAnimationVC (const VECTOR3 &ref, const VECTOR3 &axis,
 
 // --------------------------------------------------------------
 
+void DGSwitch1::DefineAnimation2D (MESHHANDLE hMesh, DWORD meshgrp, int vtxofs)
+{
+	grp = oapiMeshGroup (hMesh, meshgrp);
+	mgrp = meshgrp;
+	vofs = vtxofs;
+}
+
+// --------------------------------------------------------------
+
 bool DGSwitch1::ProcessMouseVC (int event, VECTOR3 &p)
 {
 	if (event & PANEL_MOUSE_LBDOWN) {
 		if (p.y < 0.5) Down();
 		else           Up();
+	} else if (event & PANEL_MOUSE_LBUP) {
+		if (mode == SPRING)
+			SetState (CENTER);
+	}
+	return (state != vstate);
+}
+
+// --------------------------------------------------------------
+
+bool DGSwitch1::ProcessMouse2D (int event, int mx, int my)
+{
+	if (event & PANEL_MOUSE_LBDOWN) {
+		if (my < 26) Up();
+		else         Down();
 	} else if (event & PANEL_MOUSE_LBUP) {
 		if (mode == SPRING)
 			SetState (CENTER);
@@ -85,6 +112,20 @@ bool DGSwitch1::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 		}
 		GROUPEDITSPEC ges = {GRPEDIT_VTXCRD|GRPEDIT_VTXNML, 0, vtx, nvtx, vperm};
 		oapiEditMeshGroup (hMesh, mgrp, &ges);
+		vstate = state;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
+bool DGSwitch1::Redraw2D (SURFHANDLE surf)
+{
+	if (state != vstate) {
+		const int nvtx = 4;
+		for (int i = 0; i < nvtx; i++) {
+			grp->Vtx[vofs+i].tu = tu0[state] + (i&1 ? tw:0);
+		}
 		vstate = state;
 	}
 	return false;

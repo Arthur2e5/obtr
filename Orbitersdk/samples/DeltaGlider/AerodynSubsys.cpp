@@ -118,7 +118,7 @@ bool AerodynSelector::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD vi
 
 	// mode dial
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_DIAL), _R(99,69,139,113), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN, panel2dtex, dial);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_DIAL), _R(23,69,63,113), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN, panel2dtex, dial);
 
 	return true;
 }

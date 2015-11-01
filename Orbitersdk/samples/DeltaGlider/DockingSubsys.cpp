@@ -640,6 +640,19 @@ bool EscapeLadderCtrl::clbkParseScenarioLine (const char *line)
 
 // --------------------------------------------------------------
 
+bool EscapeLadderCtrl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
+{
+	if (panelid != 0) return false;
+
+	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_SWITCH), _R(1171,496,1197,548), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, sw);
+	sw->DefineAnimation2D (DG()->panelmesh0, GRP_INSTRUMENTS_ABOVE_P0, 184);
+
+	return true;
+}
+
+// --------------------------------------------------------------
+
 bool EscapeLadderCtrl::clbkLoadVC (int vcid)
 {
 	if (vcid != 0) return false;
@@ -657,6 +670,21 @@ bool EscapeLadderCtrl::clbkLoadVC (int vcid)
 LadderSwitch::LadderSwitch (EscapeLadderCtrl *comp)
 : DGSwitch1(comp->DG(), DGSwitch1::SPRING), component(comp)
 {
+}
+
+// --------------------------------------------------------------
+
+bool LadderSwitch::ProcessMouse2D (int event, int mx, int my)
+{
+	if (DGSwitch1::ProcessMouse2D (event, mx, my)) {
+		DGSwitch1::State state = GetState();
+		switch (state) {
+			case DGSwitch1::UP: component->Activate (DeltaGlider::DOOR_CLOSING); break;
+			case DGSwitch1::DOWN: component->Activate (DeltaGlider::DOOR_OPENING); break;
+		}
+		return true;
+	}
+	return false;
 }
 
 // --------------------------------------------------------------

@@ -122,7 +122,7 @@ bool MainRetroThrottle::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD 
 	if (panelid != 0) return false;
 
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_LEVERS), _R(4,52,57,227), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, levers);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_LEVERS), _R(4,122,57,297), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, levers);
 
 	return true;
 }
@@ -172,7 +172,7 @@ bool MainRetroThrottleLevers::Redraw2D (SURFHANDLE surf)
 {
 	// constants for texture coordinates
 	static const float tx_dy = 18.0f;
-	static const float bb_y0 = 171.5f;
+	static const float bb_y0 = 241.5f;
 
 	int i, j, vofs;
 	float pos;
@@ -1080,6 +1080,19 @@ void RetroCoverControl::clbkPostStep (double simt, double simdt, double mjd)
 
 // --------------------------------------------------------------
 
+bool RetroCoverControl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
+{
+	if (panelid != 0) return false;
+
+	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_SWITCH), _R(1129,496,1155,548), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, sw);
+	sw->DefineAnimation2D (DG()->panelmesh0, GRP_INSTRUMENTS_ABOVE_P0, 180);
+
+	return true;
+}
+
+// --------------------------------------------------------------
+
 bool RetroCoverControl::clbkLoadVC (int vcid)
 {
 	if (vcid != 0) return false;
@@ -1092,17 +1105,26 @@ bool RetroCoverControl::clbkLoadVC (int vcid)
 	return true;
 }
 
-// --------------------------------------------------------------
-
-void RetroCoverControl::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
-{
-}
-
 // ==============================================================
 
 RetroCoverSwitch::RetroCoverSwitch (RetroCoverControl *comp)
 : DGSwitch1(comp->DG(), DGSwitch1::SPRING), component(comp)
 {
+}
+
+// --------------------------------------------------------------
+
+bool RetroCoverSwitch::ProcessMouse2D (int event, int mx, int my)
+{
+	if (DGSwitch1::ProcessMouse2D (event, mx, my)) {
+		DGSwitch1::State state = GetState();
+		switch (state) {
+			case DGSwitch1::UP: component->Activate (DeltaGlider::DOOR_CLOSING); break;
+			case DGSwitch1::DOWN: component->Activate (DeltaGlider::DOOR_OPENING); break;
+		}
+		return true;
+	}
+	return false;
 }
 
 // --------------------------------------------------------------

@@ -259,7 +259,7 @@ bool ScramThrottle::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD view
 	if (panelid != 0) return false;
 
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_LEVER), _R(4,386,57,488), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, lever);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_LEVER), _R(4,456,57,558), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, lever);
 
 	return true;
 }
@@ -306,7 +306,7 @@ void ScramThrottleLever::ResetVC (DEVMESHHANDLE hMesh)
 bool ScramThrottleLever::Redraw2D (SURFHANDLE surf)
 {
 	static const float tx_dy = 18.0f;
-	static const float bb_y0 = 471.5f;
+	static const float bb_y0 = 541.5f;
 
 	int i, j, vofs;
 	float pos;

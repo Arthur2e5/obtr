@@ -170,6 +170,7 @@ public:
 	void clbkPostStep (double simt, double simdt, double mjd);
 	void clbkSaveState (FILEHANDLE scn);
 	bool clbkParseScenarioLine (const char *line);
+	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);
 
 private:
@@ -185,6 +186,7 @@ private:
 class LadderSwitch: public DGSwitch1 {
 public:
 	LadderSwitch (EscapeLadderCtrl *comp);
+	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 
 private:
