@@ -57,7 +57,7 @@ bool RcsSubsystem::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW
 	if (panelid != 0) return false;
 
 	// RCS program buttons
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_PROGBUTTONS), _R(1121,119,1197,273), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN, 0, progbuttons);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_PROGBUTTONS), _R(1124,62,1272,110), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN, 0, progbuttons);
 
 	return DGSubsystem::clbkLoadPanel2D (panelid, hPanel, viewW, viewH);
 }
@@ -287,14 +287,14 @@ bool RcsProgButtons::Redraw2D (SURFHANDLE)
 {
 	// constants for texture coordinates
 	static const float texh = (float)PANEL2D_TEXH; // texture height
-	static const float tx_y0 = texh-655.0f;        // top edge of texture block
-	static const float tx_dy = 37.0f;              // texture block height
+	static const float tx_y0 = texh-597.0f;        // top edge of texture block
+	static const float tx_dy = 24.0f;              // texture block height
 	static const float tv0_active = (tx_y0)/texh, tv1_active = (tx_y0+tx_dy)/texh;
 	static const float tv0_idle = (tx_y0+tx_dy+0.5f)/texh, tv1_idle = (tx_y0+tx_dy+0.5f)/texh;
 	float tv0, tv1;
 	int vofs;
 
-	for (DWORD i = NAVMODE_KILLROT; i <= NAVMODE_HOLDALT; i++) {
+	for (DWORD i = NAVMODE_KILLROT; i <= NAVMODE_ANTINORMAL; i++) {
 		if (subsys->DG()->GetNavmodeState (i)) tv0 = tv0_active, tv1 = tv1_active;
 		else                             tv0 = tv0_idle,   tv1 = tv1_idle;
 		vofs = vtxofs+(i-NAVMODE_KILLROT)*4;
@@ -318,17 +318,11 @@ bool RcsProgButtons::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 
 bool RcsProgButtons::ProcessMouse2D (int event, int mx, int my)
 {
-	int mode = 0;
-	if (my < 39) {
-		if (mx >= 20 && mx < 59) mode = NAVMODE_KILLROT;
-	} else {
-		static int navmode[6] = {
-			NAVMODE_PROGRADE, NAVMODE_RETROGRADE,
-			NAVMODE_NORMAL, NAVMODE_ANTINORMAL,
-			NAVMODE_HLEVEL, NAVMODE_HOLDALT
-		};
-		mode = navmode[mx/39 + ((my-39)/39)*2];
-	}
+	static const int navmode[2][4] = {
+		{0,NAVMODE_PROGRADE,NAVMODE_NORMAL,0},
+		{NAVMODE_KILLROT,NAVMODE_RETROGRADE,NAVMODE_ANTINORMAL,NAVMODE_HLEVEL}
+	};
+	int mode = navmode[my/24][mx/37];
 	if (mode) subsys->DG()->ToggleNavmode (mode);
 	return (mode != 0);
 }

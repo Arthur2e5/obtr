@@ -142,10 +142,6 @@ const double DYNP_MAX = 300e3;
 // Max. allowed dynamic pressure [Pa]
 
 // =============================================
-
-const int nsurf = 12; // number of bitmap handles
-
-// =============================================
 // 2D instrument panel parameters
 
 const DWORD PANEL2D_WIDTH = 1280;  // panel width [pixel]
@@ -173,6 +169,7 @@ class RcsSubsystem;
 class ScramSubsystem;
 class AerodynCtrlSubsystem;
 class GearSubsystem;
+class AvionicsSubsystem;
 class MfdSubsystem;
 class PressureSubsystem;
 class DockingCtrlSubsystem;
@@ -194,7 +191,6 @@ public:
 	void SetEmptyMass () const;
 	void CreatePanelElements ();
 	void DefineAnimations ();
-	void ReleaseSurfaces();
 	void InitPanel (int panel);
 	void InitVC (int vc);
 	inline bool ScramVersion() const { return ssys_scram != NULL; }
@@ -290,7 +286,6 @@ public:
 	UINT anim_raileron;         // handle for right aileron animation
 	UINT anim_radiatorswitch;   // VC radiator switch animation
 
-	SURFHANDLE srf[nsurf];          // handles for panel bitmaps
 	SURFHANDLE insignia_tex;        // vessel-specific fuselage markings
 	SURFHANDLE contrail_tex;        // contrail particle texture
 	SURFHANDLE vctex, intex;
@@ -323,8 +318,6 @@ public:
 	int Lua_InitInstance (void *context);
 
 private:
-	bool RedrawPanel_IndicatorPair (SURFHANDLE surf, int *p, int range);
-	bool RedrawPanel_Number (SURFHANDLE surf, int x, int y, char *num);
 	void ApplySkin();                            // apply custom skin
 	void PaintMarkings (SURFHANDLE tex);         // paint individual vessel markings
 
@@ -338,6 +331,7 @@ private:
 	GearSubsystem        *ssys_gear;             // landing gear control subsystem
 	PressureSubsystem    *ssys_pressurectrl;     // pressure control system
 	DockingCtrlSubsystem *ssys_docking;          // docking control subsystem
+	AvionicsSubsystem    *ssys_avionics;         // avionics subsystem
 	MfdSubsystem         *ssys_mfd[2];           // MFD instruments
 	LightCtrlSubsystem   *ssys_light;            // cockpit/external light controls
 	std::vector<DGSubsystem*> ssys;              // list of subsystems
@@ -346,8 +340,6 @@ private:
 
 	PanelElement **instr;                        // panel instrument objects
 	DWORD ninstr;                                // total number of instruments
-	DWORD ninstr_main, ninstr_ovhd;              // number of instruments on main/overhead panels 
-	DWORD instr_ovhd0;                           // instrument index offsets
 
 	bool bMWSActive, bMWSOn;                     // master warning flags
 	bool bGearIsDown;                            // touchdown point state flag
@@ -405,19 +397,9 @@ typedef struct {
 #define AID_MWS                 53
 #define AID_SWITCHARRAY         55
 #define AID_AAP                 56
-#define AID_ANGRATEINDICATOR    61
 
 // Panel 1
 #define AID_BEACONBUTTON       103
-#define AID_VPITCH             105
-#define AID_VBANK              106
-#define AID_VYAW               107
-#define AID_APITCH             108
-#define AID_ABANK              109
-#define AID_AYAW               110
-#define AID_MPITCH             111
-#define AID_MBANK              112
-#define AID_MYAW               113
 #define AID_SCRAMTEMPDISP      114
 
 // Virtual cockpit-specific area identifiers:

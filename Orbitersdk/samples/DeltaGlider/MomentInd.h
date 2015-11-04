@@ -19,7 +19,9 @@ class AngRateIndicator: public PanelElement {
 public:
 	AngRateIndicator (VESSEL3 *v, SURFHANDLE blitsrc);
 	~AngRateIndicator ();
+	void Reset2D (MESHHANDLE hMesh);
 	void ResetVC (DEVMESHHANDLE hMesh);
+	bool Redraw2D (SURFHANDLE surf);
 	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
 
 protected:
@@ -40,51 +42,6 @@ private:
 	static int label_ofs_x[3];
 	char label[3][3][8];
 	SURFHANDLE bsrc;
-};
-
-
-// ==============================================================
-
-class MomentIndicator: public PanelElement {
-public:
-	MomentIndicator (VESSEL3 *v, int _axis, int yofs);
-	void ResetVC (DEVMESHHANDLE hMesh);
-
-protected:
-	bool Redraw (SURFHANDLE surf, double v, bool isvc);
-	int axis;
-
-private:
-	int rotidx;
-	int bmp_x, bmp_y, bmp_w, bmp_h;
-	static SURFHANDLE srf[3];
-};
-
-// ==============================================================
-
-class AngularVelocityIndicator: public MomentIndicator {
-public:
-	AngularVelocityIndicator (VESSEL3 *v, int _axis);
-	bool Redraw2D (SURFHANDLE surf);
-	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
-};
-
-// ==============================================================
-
-class AngularAccelerationIndicator: public MomentIndicator {
-public:
-	AngularAccelerationIndicator (VESSEL3 *v, int _axis);
-	bool Redraw2D (SURFHANDLE surf);
-	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
-};
-
-// ==============================================================
-
-class AngularMomentIndicator: public MomentIndicator {
-public:
-	AngularMomentIndicator (VESSEL3 *v, int _axis);
-	bool Redraw2D (SURFHANDLE surf);
-	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
 };
 
 #endif // !__MOMENTIND_H

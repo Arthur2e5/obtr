@@ -1916,6 +1916,7 @@ typedef union {
 #define PANEL_MAP_BACKGROUND    0x01 ///< area texture contains a copy of the panel background
 #define PANEL_MAP_CURRENT       0x02 ///< area texture contains a copy of the current panel state
 #define PANEL_MAP_BGONREQUEST   0x03 ///< area texture is undefined, but panel background can be requested
+#define PANEL_MAP_DIRECT        0x04 ///< provide the entire input surface to redraw functions without clipping
 //@}
 
 #define PANEL_ATTACH_BOTTOM    0x0001

@@ -25,6 +25,7 @@
 #include "AerodynSubsys.h"
 #include "GearSubsys.h"
 #include "DockingSubsys.h"
+#include "AvionicsSubsys.h"
 #include "MfdSubsys.h"
 #include "SwitchArray.h"
 #include "MwsButton.h"
@@ -161,6 +162,7 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	ssys.push_back (ssys_pressurectrl = new PressureSubsystem (this, ssys_id++));
 	ssys.push_back (ssys_docking      = new DockingCtrlSubsystem (this, ssys_id++));
 	ssys.push_back (ssys_light        = new LightCtrlSubsystem (this, ssys_id++));
+	ssys.push_back (ssys_avionics     = new AvionicsSubsystem (this, ssys_id++));
 	for (i = 0; i < 2; i++)
 		ssys.push_back (ssys_mfd[i] = new MfdSubsystem (this, ssys_id++, MFD_LEFT+i));
 	ssys_scram = 0; // creation deferred to clbkSetClassCaps
@@ -204,7 +206,6 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	for (i = 0; i < 4; i++) aileronfail[i] = false;
 
 	DefineAnimations();
-	for (i = 0; i < nsurf; i++) srf[i] = 0;
 }
 
 // --------------------------------------------------------------
@@ -225,8 +226,6 @@ DeltaGlider::~DeltaGlider ()
 	delete aap;
 
 	if (insignia_tex) oapiDestroySurface(insignia_tex);
-
-	if (contrail_tex) ReleaseSurfaces();
 
 	for (i = 0; i < 3; i++)
 		if (skin[i]) oapiReleaseTexture (skin[i]);
@@ -252,12 +251,8 @@ void DeltaGlider::CreatePanelElements ()
 {
 	int i;
 
-	ninstr_main = 50;
+	ninstr = 50;
 
-	instr_ovhd0 = ninstr_main;
-	ninstr_ovhd = 10;
-
-	ninstr = ninstr_main + ninstr_ovhd;
 	instr = new PanelElement*[ninstr];
 	memset (instr, 0, ninstr*sizeof(PanelElement*));
 	instr[0]  = new InstrAtt (this);
@@ -267,15 +262,8 @@ void DeltaGlider::CreatePanelElements ()
 	instr[4]  = new FuelMFD (this);
 	instr[25] = new SwitchArray (this);
 	instr[27] = new MWSButton (this);
-	instr[42] = new AngRateIndicator (this, g_Param.surf);
 
 	aap = new AAP (this);   aap->AttachHSI ((InstrHSI*)instr[1]);
-
-	for (i = 0; i < 3; i++) {
-		instr[instr_ovhd0+1+i] = new AngularVelocityIndicator (this, i);
-		instr[instr_ovhd0+4+i] = new AngularAccelerationIndicator (this, i);
-		instr[instr_ovhd0+7+i] = new AngularMomentIndicator (this, i);
-	}
 }
 
 // --------------------------------------------------------------
@@ -404,18 +392,6 @@ void DeltaGlider::PaintMarkings (SURFHANDLE tex)
 }
 
 // --------------------------------------------------------------
-// Release bitmaps used for panel animations
-// --------------------------------------------------------------
-void DeltaGlider::ReleaseSurfaces ()
-{
-	for (int i = 0; i < nsurf; i++)
-		if (srf[i]) {
-			oapiDestroySurface (srf[i]);
-			srf[i] = 0;
-		}
-}
-
-// --------------------------------------------------------------
 // Load panel animation bitmaps and initialise panel state
 // --------------------------------------------------------------
 void DeltaGlider::InitPanel (int panel)
@@ -427,19 +403,6 @@ void DeltaGlider::InitPanel (int panel)
 
 	switch (panel) {
 	case 0: // main panel
-		// load bitmaps used by the panel
-		srf[0] = oapiCreateSurface (LOADBMP (IDB_SWITCH1));
-		srf[1] = oapiCreateSurface (LOADBMP (IDB_NAVBUTTON));
-		srf[2] = oapiCreateSurface (LOADBMP (IDB_LIGHT1));
-		srf[4] = oapiCreateSurface (LOADBMP (IDB_SLIDER1));
-		srf[5] = oapiCreateSurface (LOADBMP (IDB_LIGHT2));
-		srf[6] = oapiCreateSurface (LOADBMP (IDB_SWITCH4));
-		srf[7] = oapiCreateSurface (LOADBMP (IDB_SWITCH4R));
-		srf[8] = oapiCreateSurface (LOADBMP (IDB_INDICATOR2));  oapiSetSurfaceColourKey (srf[8], 0);
-		srf[9] = oapiCreateSurface (LOADBMP (IDB_DIAL1));
-		srf[10] = oapiCreateSurface (LOADBMP (IDB_FONT2));
-		srf[11] = oapiCreateSurface (LOADBMP (IDB_WARN));
-
 		// reset state flags for panel instruments
 		for (i = 0; i < ninstr; i++) if (instr[i]) instr[i]->Reset2D (hPanelMesh);
 
@@ -449,18 +412,6 @@ void DeltaGlider::InitPanel (int panel)
 		hoverflowidx = mainTSFCidx = -1;
 		break;
 	case 1: // overhead panel
-		srf[0] = oapiCreateSurface (LOADBMP (IDB_SWITCH1));
-		srf[1] = oapiCreateSurface (LOADBMP (IDB_INDICATOR));
-		srf[4] = oapiCreateSurface (LOADBMP (IDB_VPITCH));
-		srf[5] = oapiCreateSurface (LOADBMP (IDB_VBANK));
-		srf[6] = oapiCreateSurface (LOADBMP (IDB_VYAW));
-		break;
-	case 2: // bottom panel
-		srf[0] = oapiCreateSurface (LOADBMP (IDB_SWITCH2));
-		srf[1] = oapiCreateSurface (LOADBMP (IDB_LEVER1));
-		srf[2] = oapiCreateSurface (LOADBMP (IDB_SWITCH3));
-		srf[9] = oapiCreateSurface (LOADBMP (IDB_INDICATOR));
-		for (i = 0; i < 2; i++) wbrake_pos[i] = (UINT)-1;
 		break;
 	}
 }
@@ -474,14 +425,6 @@ void DeltaGlider::InitVC (int vc)
 
 	switch (vc) {
 	case 0:
-		srf[2] = oapiCreateSurface (LOADBMP (IDB_LIGHT1));
-		srf[4] = oapiCreateSurface (LOADBMP (IDB_VPITCH));
-		srf[5] = oapiCreateSurface (LOADBMP (IDB_VBANK));
-		srf[6] = oapiCreateSurface (LOADBMP (IDB_VYAW));
-		srf[8] = oapiCreateSurface (LOADBMP (IDB_INDICATOR2));  oapiSetSurfaceColourKey (srf[8], 0);
-		srf[9] = oapiCreateSurface (LOADBMP (IDB_INDICATOR));
-		srf[10] = oapiCreateSurface (LOADBMP (IDB_FONT2));
-
 		// reset state flags for panel instruments
 		for (i = 0; i < 2; i++)
 			mainflowidx[i] = retroflowidx[i] = scTSFCidx[i] = scflowidx[i] =
@@ -853,7 +796,7 @@ bool DeltaGlider::RedrawPanel_ScramTSFC (SURFHANDLE surf)
 	}
 	if (redraw) {
 		oapiBltPanelAreaBackground (AID_SCRAMDISP3, surf);
-		return RedrawPanel_IndicatorPair (surf, scTSFCidx, 66);
+		//return RedrawPanel_IndicatorPair (surf, scTSFCidx, 66);
 	} else return false;
 }
 
@@ -867,7 +810,7 @@ bool DeltaGlider::RedrawPanel_ScramFlow (SURFHANDLE surf)
 	}
 	if (redraw) {
 		oapiBltPanelAreaBackground (AID_SCRAMDISP2, surf);
-		return RedrawPanel_IndicatorPair (surf, scflowidx, 66);
+		//return RedrawPanel_IndicatorPair (surf, scflowidx, 66);
 	} else return false;
 }
 
@@ -895,21 +838,6 @@ bool DeltaGlider::RedrawPanel_ScramTempDisp (SURFHANDLE surf)
 	return true;
 }
 
-bool DeltaGlider::RedrawPanel_IndicatorPair (SURFHANDLE surf, int *p, int range)
-{
-	oapiBlt (surf, srf[8], 0, range-p[0], 0, 0, 6, 7, SURF_PREDEF_CK);
-	oapiBlt (surf, srf[8], 7, range-p[1], 6, 0, 6, 7, SURF_PREDEF_CK);
-	return true;
-}
-
-bool DeltaGlider::RedrawPanel_Number (SURFHANDLE surf, int x, int y, char *num)
-{
-	for (; *num; num++) {
-		oapiBlt (surf, srf[10], x, y, (*num-'0')*7, 0, 6, 9);
-		x += 6;
-	}
-	return true;
-}
 // D. Beachy: begin refactored section to fix flow rate panels
 bool DeltaGlider::RedrawPanel_MainFlow (SURFHANDLE surf)
 {
@@ -923,7 +851,7 @@ bool DeltaGlider::RedrawPanel_MainFlow (SURFHANDLE surf)
 	}
 	if (redraw) {
 		oapiBltPanelAreaBackground (AID_MAINDISP1, surf);
-		return RedrawPanel_IndicatorPair (surf, mainflowidx, 66);
+		//return RedrawPanel_IndicatorPair (surf, mainflowidx, 66);
 	} else return false;
 }
 
@@ -939,7 +867,7 @@ bool DeltaGlider::RedrawPanel_RetroFlow (SURFHANDLE surf)
 	}
 	if (redraw) {
 		oapiBltPanelAreaBackground (AID_MAINDISP2, surf);
-		return RedrawPanel_IndicatorPair (surf, retroflowidx, 66);
+		//return RedrawPanel_IndicatorPair (surf, retroflowidx, 66);
 	} else return false;
 }
 
@@ -953,8 +881,8 @@ bool DeltaGlider::RedrawPanel_HoverFlow (SURFHANDLE surf)
 		hoverflowidx = p;
 		oapiBltPanelAreaBackground (AID_MAINDISP3, surf);
 		// draw a pair of matching indicators
-		oapiBlt (surf, srf[8], 0, 66-hoverflowidx, 0, 0, 6, 7, SURF_PREDEF_CK);
-		oapiBlt (surf, srf[8], 7, 66-hoverflowidx, 6, 0, 6, 7, SURF_PREDEF_CK);
+		//oapiBlt (surf, srf[8], 0, 66-hoverflowidx, 0, 0, 6, 7, SURF_PREDEF_CK);
+		//oapiBlt (surf, srf[8], 7, 66-hoverflowidx, 6, 0, 6, 7, SURF_PREDEF_CK);
 		return true;
 	} else return false;
 }
@@ -979,7 +907,7 @@ bool DeltaGlider::RedrawPanel_MainTSFC (SURFHANDLE surf)
 	if (p != mainTSFCidx) {
 		mainTSFCidx = p;
 		oapiBltPanelAreaBackground (AID_MAINDISP4, surf);
-		oapiBlt (surf, srf[8], 0, 66-mainTSFCidx, 0, 0, 6, 7, SURF_PREDEF_CK);
+		//oapiBlt (surf, srf[8], 0, 66-mainTSFCidx, 0, 0, 6, 7, SURF_PREDEF_CK);
 		return true;
 	} else return false;
 }
@@ -1574,7 +1502,7 @@ void DeltaGlider::clbkVisualCreated (VISHANDLE vis, int refcount)
 
 	//if (oapiCameraInternal()) {
 		UpdateStatusIndicators();
-		//if (oapiCockpitMode() == COCKPIT_VIRTUAL)
+		if (oapiCockpitMode() == COCKPIT_VIRTUAL)
 			InitVCMesh();
 	//}
 }
@@ -1737,7 +1665,6 @@ void DeltaGlider::SetPanelScale (PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
 
 void DeltaGlider::DefinePanelMain (PANELHANDLE hPanel)
 {
-	ReleaseSurfaces();
 	hPanelMesh = panelmesh0;
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(hPanelMesh,1);
 	SURFHANDLE instr2dtex = oapiGetTextureHandle(hPanelMesh,2);
@@ -1775,7 +1702,6 @@ void DeltaGlider::DefinePanelOverhead (PANELHANDLE hPanel)
 
 	MESHGROUP grp;
 	memset (&grp, 0, sizeof(MESHGROUP));
-	ReleaseSurfaces();
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(panelmesh0,1);
 
 	const DWORD NVTX = 8, NIDX = 12;
@@ -1805,11 +1731,6 @@ void DeltaGlider::DefinePanelOverhead (PANELHANDLE hPanel)
 
 		// Define overhead panel background
 		oapiAddMeshGroupBlock (panelmesh1, 0, VTX, NVTX, IDX, NIDX);
-
-		// Define panel elements on top of background
-		for (i = 0; i < ninstr_ovhd; i++)
-			if (instr[instr_ovhd0+i])
-				instr[instr_ovhd0+i]->AddMeshData2D (panelmesh1, 1);
 	}
 	hPanelMesh = panelmesh1;
 	SetPanelBackground (hPanel, &panel2dtex, 1, hPanelMesh, panelw, panelh, 0,
@@ -1817,15 +1738,6 @@ void DeltaGlider::DefinePanelOverhead (PANELHANDLE hPanel)
 
 	//RegisterPanelArea (hPanel, AID_AIRLOCKSWITCH, _R(240,30, 390,68), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN, panel2dtex, instr[instr_ovhd0+0]);
 	RegisterPanelArea (hPanel, AID_SWITCHARRAY,   _R(797,38,1048,76), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN, panel2dtex, instr[25]);
-	RegisterPanelArea (hPanel, AID_VPITCH, _R(625,191,665,240), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[instr_ovhd0+1]);
-	RegisterPanelArea (hPanel, AID_VBANK,  _R(558,191,608,231), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[instr_ovhd0+2]);
-	RegisterPanelArea (hPanel, AID_VYAW,   _R(492,191,542,231), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[instr_ovhd0+3]);
-	RegisterPanelArea (hPanel, AID_APITCH, _R(625,264,665,313), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[instr_ovhd0+4]);
-	RegisterPanelArea (hPanel, AID_ABANK,  _R(558,264,608,304), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[instr_ovhd0+5]);
-	RegisterPanelArea (hPanel, AID_AYAW,   _R(492,264,542,304), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[instr_ovhd0+6]);
-	RegisterPanelArea (hPanel, AID_MPITCH, _R(625,337,665,386), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[instr_ovhd0+7]);
-	RegisterPanelArea (hPanel, AID_MBANK,  _R(558,337,608,377), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[instr_ovhd0+8]);
-	RegisterPanelArea (hPanel, AID_MYAW,   _R(492,337,542,377), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[instr_ovhd0+9]);
 	InitPanel (1);
 }
 
@@ -1868,7 +1780,6 @@ bool DeltaGlider::clbkLoadVC (int id)
 	intex = oapiGetTextureHandle (vcmesh_tpl, 19);
 	vctex = oapiGetTextureHandle (vcmesh_tpl, 20);
 
-	ReleaseSurfaces();
 	InitVC (id);
 
 	SetCameraDefaultDirection (_V(0,0,1)); // forward
@@ -1901,9 +1812,6 @@ bool DeltaGlider::clbkLoadVC (int id)
 		oapiVCRegisterArea (AID_AOAINSTR,   _R( 17,181, 73,237), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex2);
 		oapiVCRegisterArea (AID_SLIPINSTR,  _R(109,181,165,237), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex2);
 		oapiVCRegisterArea (AID_LOADINSTR,  _R(111, 17,167, 73), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex2);
-
-		// angular velocity/acceleration/torque indicators
-		oapiVCRegisterArea (AID_ANGRATEINDICATOR, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
 
 		// scram engine indicators
 		if (ScramVersion()) {
@@ -2050,8 +1958,6 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 		return (vcmesh ? instr[0]->RedrawVC (vcmesh, surf) : false);
 	case AID_HSIINSTR:
 		return instr[1]->RedrawVC (vcmesh, surf);
-	case AID_ANGRATEINDICATOR:
-		return (vcmesh ? instr[42]->RedrawVC (vcmesh, oapiGetTextureHandle (vcmesh_tpl, 14)) : false);
 	case AID_MWS:
 		return (vcmesh ? instr[27]->RedrawVC (vcmesh, 0) : false);
 	}
@@ -2180,6 +2086,7 @@ DLLCLBK void ExitModule (HINSTANCE hModule)
 	for (i = 0; i < 2; i++) DeleteObject (g_Param.font[i]);
 	for (i = 0; i < 4; i++) DeleteObject (g_Param.brush[i]);
 	for (i = 0; i < 2; i++) DeleteObject (g_Param.pen[i]);
+	oapiReleaseTexture (g_Param.surf);
 }
 
 // --------------------------------------------------------------

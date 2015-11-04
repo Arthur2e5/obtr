@@ -510,6 +510,14 @@
 					>
 				</File>
 				<File
+					RelativePath=".\AvionicsSubsys.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\AvionicsSubsys.h"
+					>
+				</File>
+				<File
 					RelativePath=".\DGSubsys.cpp"
 					>
 				</File>

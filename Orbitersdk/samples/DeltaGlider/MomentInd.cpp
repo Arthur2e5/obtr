@@ -11,6 +11,7 @@
 #define STRICT 1
 #include "MomentInd.h"
 #include "DeltaGlider.h"
+#include "meshres_p0.h"
 #include "meshres_vc.h"
 
 // ==============================================================
@@ -25,12 +26,32 @@ int AngRateIndicator::label_ofs_x[3] = {207,150,84};
 AngRateIndicator::AngRateIndicator (VESSEL3 *v, SURFHANDLE blitsrc) : PanelElement(v), bsrc(blitsrc)
 {
 	nvtx = 7*3*3;
-	vtx0 = new NTVERTEX[nvtx];
 }
 
 AngRateIndicator::~AngRateIndicator ()
 {
-	delete []vtx0;
+}
+
+void AngRateIndicator::Reset2D (MESHHANDLE hMesh)
+{
+	grp = oapiMeshGroup (hMesh, GRP_ANGVELDISP_P0);
+	if (grp) {
+		vtxofs = 0;
+		static NTVERTEX *vtxbuf = 0;
+		if (!vtxbuf) {
+			vtxbuf = new NTVERTEX[nvtx];
+			memcpy (vtxbuf, grp->Vtx+vtxofs, nvtx*sizeof(NTVERTEX));
+		}
+		vtx0 = vtxbuf;
+
+		w0 = vtx0[0].x - vtx0[1].x;
+		for (int i = 0; i < 3; i++) {
+			xcnt[i] = vtx0[6+i*7].x;
+			ycnt[i] = vtx0[6+i*21].y;
+			zcnt[i] = 0.0;
+		}
+		cost = -1.0, sint = 0.0;
+	}
 }
 
 void AngRateIndicator::ResetVC (DEVMESHHANDLE hMesh)
@@ -42,8 +63,13 @@ void AngRateIndicator::ResetVC (DEVMESHHANDLE hMesh)
 			for (k = 0; k < 8; k++)
 				label[i][j][k] = ' ';
 
-	GROUPREQUESTSPEC grs = {vtx0, nvtx, 0, 0, 0, 0, 0, 0};
-	oapiGetMeshGroup(hMesh,	GRP_ANGVEL_DISP_OVR_VC, &grs);
+	static NTVERTEX *vtxbuf = 0;
+	if (!vtxbuf) {
+		vtxbuf = new NTVERTEX[nvtx];
+		GROUPREQUESTSPEC grs = {vtxbuf, nvtx, 0, 0, 0, 0, 0, 0};
+		oapiGetMeshGroup(hMesh,	GRP_ANGVEL_DISP_OVR_VC, &grs);
+	}
+	vtx0 = vtxbuf;
 	w0 = vtx0[0].x - vtx0[1].x;
 	for (i = 0; i < 3; i++) {
 		xcnt[i] = vtx0[6+i*7].x;
@@ -165,6 +191,46 @@ bool AngRateIndicator::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 	return false;
 }
 
+bool AngRateIndicator::Redraw2D (SURFHANDLE surf)
+{
+	double t = oapiGetSimTime();
+	if (t < upt && t > upt-1.0) return false;
+	upt = t + 0.1;
+	memcpy (grp->Vtx+vtxofs, vtx0, nvtx*sizeof(NTVERTEX));
+
+	int axis;
+	double v, av, phi;
+	VECTOR3 prm;
+	vessel->GetAngularVel(prm);
+	for (axis = 0; axis < 3; axis++) {
+		v = (axis == 0 ? -prm.y : axis == 1 ? prm.z : prm.x)*DEG;
+		if ((av = fabs(v)) > 1e-1) {
+			phi = min ((log10(av)+1.0)*40.0*RAD, 0.75*PI);
+			if (v < 0) phi = -phi;
+			UncoverScale (0, axis, phi, grp->Vtx+vtxofs);
+		}
+	}
+	vessel->GetAngularAcc(prm);
+	for (axis = 0; axis < 3; axis++) {
+		v = (axis == 0 ? -prm.y : axis == 1 ? prm.z : prm.x)*DEG;
+		if ((av = fabs(v)) > 1e-1) {
+			phi = min ((log10(av)+1.0)*40.0*RAD, 0.75*PI);
+			if (v < 0) phi = -phi;
+			UncoverScale (1, axis, phi, grp->Vtx+vtxofs);
+		}
+	}
+	vessel->GetAngularMoment(prm);
+	for (axis = 0; axis < 3; axis++) {
+		v = (axis == 0 ? -prm.y : axis == 1 ? prm.z : prm.x);
+		if ((av = fabs(v*1e-3)) > 1e-1) {
+			phi = min ((log10(av)+1.0)*40.0*RAD, 0.75*PI);
+			if (v < 0) phi = -phi;
+			UncoverScale (2, axis, phi, grp->Vtx+vtxofs);
+		}
+	}
+	return false;
+}
+
 void AngRateIndicator::ValStr (double v, char *str)
 {
 	char sgn = '+';
@@ -215,125 +281,4 @@ void AngRateIndicator::BlitReadout (int which, int axis, const char *str, SURFHA
 		}
 		tgtx += w;
 	}
-}
-
-
-
-
-SURFHANDLE MomentIndicator::srf[3] = {0,0,0};
-
-// ==============================================================
-
-MomentIndicator::MomentIndicator (VESSEL3 *v, int _axis, int yofs): PanelElement (v), axis(_axis)
-{
-	static int bmp_x0[3] = {133,66,0};
-	static int bmp_w0[3] = {40,50,50};
-	static int bmp_h0[3] = {49,40,40};
-	bmp_x = bmp_x0[axis];
-	bmp_y = yofs;
-	bmp_w = bmp_w0[axis];
-	bmp_h = bmp_h0[axis];
-	rotidx = -1;
-
-	extern GDIParams g_Param;
-	if (!srf[0]) srf[0] = oapiCreateSurface (LOADBMP (IDB_VPITCH));
-	if (!srf[1]) srf[1] = oapiCreateSurface (LOADBMP (IDB_VBANK));
-	if (!srf[2]) srf[2] = oapiCreateSurface (LOADBMP (IDB_VYAW));
-}
-
-void MomentIndicator::ResetVC (DEVMESHHANDLE hMesh)
-{
-	rotidx = -1;
-}
-
-bool MomentIndicator::Redraw (SURFHANDLE surf, double v, bool isvc)
-{
-	int x = (isvc ? 0:492+bmp_x);
-	int y = (isvc ? 0:190+bmp_y);
-	int idx;
-
-	double av = fabs(v*DEG);
-	if      (av <  1.0) idx = 0;
-	else if (av < 11.0) idx = 1 + (int)((av-1.0)*0.4);
-	else if (av < 45.0) idx = 5 + (int)((av-11.0)*3.0/34.0);
-	else                idx = 8;
-	if (v >= 0.0) idx  = 8-idx;
-	else          idx += 8;
-	if (idx == rotidx) return false;
-	rotidx = idx;
-	oapiBlt (surf, srf[axis], x, y, idx*bmp_w, 0, bmp_w, bmp_h);
-	return true;
-}
-
-// ==============================================================
-
-AngularVelocityIndicator::AngularVelocityIndicator (VESSEL3 *v, int _axis)
-: MomentIndicator (v, _axis, 0)
-{
-}
-
-bool AngularVelocityIndicator::Redraw2D (SURFHANDLE surf)
-{
-	VECTOR3 prm;
-	vessel->GetAngularVel(prm);
-	double v = (axis == 0 ? -prm.x : axis == 1 ? -prm.z : prm.y);
-	Redraw (surf, v, false);
-	return false;
-}
-
-bool AngularVelocityIndicator::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
-{
-	VECTOR3 prm;
-	vessel->GetAngularVel(prm);
-	double v = (axis == 0 ? -prm.x : axis == 1 ? -prm.z : prm.y);
-	return Redraw (surf, v, true);
-}
-
-
-// ==============================================================
-
-AngularAccelerationIndicator::AngularAccelerationIndicator (VESSEL3 *v, int _axis)
-: MomentIndicator (v, _axis, 73)
-{
-}
-
-bool AngularAccelerationIndicator::Redraw2D (SURFHANDLE surf)
-{
-	VECTOR3 prm;
-	vessel->GetAngularAcc(prm);
-	double v = (axis == 0 ? -prm.x : axis == 1 ? -prm.z : prm.y) * 2.0;
-	Redraw (surf, v, false);
-	return false;
-}
-
-bool AngularAccelerationIndicator::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
-{
-	VECTOR3 prm;
-	vessel->GetAngularAcc(prm);
-	double v = (axis == 0 ? -prm.x : axis == 1 ? -prm.z : prm.y) * 2.0;
-	return Redraw (surf, v, true);
-}
-
-// ==============================================================
-
-AngularMomentIndicator::AngularMomentIndicator (VESSEL3 *v, int _axis)
-: MomentIndicator (v, _axis, 146)
-{
-}
-
-bool AngularMomentIndicator::Redraw2D (SURFHANDLE surf)
-{
-	VECTOR3 prm;
-	vessel->GetAngularMoment(prm);
-	double v = (axis == 0 ? -prm.x : axis == 1 ? -prm.z : prm.y) * 1e-4;
-	Redraw (surf, v, false);
-	return false;
-}
-
-bool AngularMomentIndicator::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
-{
-	VECTOR3 prm;
-	vessel->GetAngularMoment(prm);
-	double v = (axis == 0 ? -prm.x : axis == 1 ? -prm.z : prm.y) * 1e-4;
-	return Redraw (surf, v, true);
 }
