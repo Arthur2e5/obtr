@@ -2,16 +2,10 @@
 // Microsoft Visual C++ generated include file.
 // Used by DeltaGlider.rc
 //
-#define IDB_DIAL1                       110
-#define IDB_NAVBUTTON                   111
 #define IDB_SWITCH1                     112
 #define IDB_LIGHT1                      113
-#define IDB_INDICATOR                   114
 #define IDB_SLIDER1                     116
 #define IDB_SWITCH2                     152
-#define IDB_VPITCH                      154
-#define IDB_VBANK                       155
-#define IDB_VYAW                        156
 #define IDB_LEVER1                      157
 #define IDB_SWITCH4                     158
 #define IDB_INDICATOR2                  159
@@ -21,7 +15,6 @@
 #define IDB_COVER2                      165
 #define IDD_CTRL                        166
 #define IDB_FONT2                       169
-#define IDB_WARN                        170
 #define IDD_DAMAGE                      172
 #define IDD_EDITOR1                     173
 #define IDD_EDITOR_PG1                  174

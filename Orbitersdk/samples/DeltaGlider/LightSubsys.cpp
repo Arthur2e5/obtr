@@ -12,6 +12,7 @@
 #define STRICT 1
 
 #include "LightSubsys.h"
+#include "meshres_p1.h"
 #include "meshres_vc.h"
 #include "dg_vc_anim.h"
 
@@ -406,6 +407,20 @@ bool LandDockLight::clbkParseScenarioLine (const char *line)
 
 // --------------------------------------------------------------
 
+bool LandDockLight::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
+{
+	if (panelid != 1) return false;
+
+	// Landing/docking light switch
+	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh1,1);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_SWITCH), _R(708,192,734,244), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, sw);
+	sw->DefineAnimation2D (DG()->panelmesh1, GRP_INSTRUMENTS_ABOVE_P1, 12);
+
+	return true;
+}
+
+// --------------------------------------------------------------
+
 bool LandDockLight::clbkLoadVC (int vcid)
 {
 	if (vcid != 0) return false;
@@ -434,6 +449,18 @@ LandDockLightSwitch::LandDockLightSwitch (LandDockLight *comp)
 
 // --------------------------------------------------------------
 
+bool LandDockLightSwitch::ProcessMouse2D (int event, int mx, int my)
+{
+	if (DGSwitch1::ProcessMouse2D (event, mx, my)) {
+		DGSwitch1::State state = GetState();
+		component->SetLight ((int)state);
+		return true;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
 bool LandDockLightSwitch::ProcessMouseVC (int event, VECTOR3 &p)
 {
 	if (DGSwitch1::ProcessMouseVC (event, p)) {
@@ -442,6 +469,14 @@ bool LandDockLightSwitch::ProcessMouseVC (int event, VECTOR3 &p)
 		return true;
 	}
 	return false;
+}
+
+// --------------------------------------------------------------
+
+void LandDockLightSwitch::Reset2D (MESHHANDLE hMesh)
+{
+	SetState ((DGSwitch1::State)component->GetLight());
+	DGSwitch1::Reset2D (hMesh);
 }
 
 // --------------------------------------------------------------
@@ -498,6 +533,20 @@ bool StrobeLight::clbkParseScenarioLine (const char *line)
 
 // --------------------------------------------------------------
 
+bool StrobeLight::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
+{
+	if (panelid != 1) return false;
+
+	// Landing/docking light switch
+	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh1,1);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_SWITCH), _R(754,192,780,244), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, sw);
+	sw->DefineAnimation2D (DG()->panelmesh1, GRP_INSTRUMENTS_ABOVE_P1, 16);
+
+	return true;
+}
+
+// --------------------------------------------------------------
+
 bool StrobeLight::clbkLoadVC (int vcid)
 {
 	if (vcid != 0) return false;
@@ -526,10 +575,30 @@ StrobeLightSwitch::StrobeLightSwitch (StrobeLight *comp)
 
 // --------------------------------------------------------------
 
+void StrobeLightSwitch::Reset2D (MESHHANDLE hMesh)
+{
+	SetState (component->GetLight() ? UP:DOWN);
+	DGSwitch1::Reset2D (hMesh);
+}
+
+// --------------------------------------------------------------
+
 void StrobeLightSwitch::ResetVC (DEVMESHHANDLE hMesh)
 {
 	SetState (component->GetLight() ? UP:DOWN);
 	DGSwitch1::ResetVC (hMesh);
+}
+
+// --------------------------------------------------------------
+
+bool StrobeLightSwitch::ProcessMouse2D (int event, int mx, int my)
+{
+	if (DGSwitch1::ProcessMouse2D (event, mx, my)) {
+		DGSwitch1::State state = GetState();
+		component->SetLight (state==UP);
+		return true;
+	}
+	return false;
 }
 
 // --------------------------------------------------------------
@@ -590,6 +659,20 @@ bool NavLight::clbkParseScenarioLine (const char *line)
 
 // --------------------------------------------------------------
 
+bool NavLight::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
+{
+	if (panelid != 1) return false;
+
+	// Nav light switch
+	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh1,1);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_SWITCH), _R(800,192,826,244), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, sw);
+	sw->DefineAnimation2D (DG()->panelmesh1, GRP_INSTRUMENTS_ABOVE_P1, 20);
+
+	return true;
+}
+
+// --------------------------------------------------------------
+
 bool NavLight::clbkLoadVC (int vcid)
 {
 	if (vcid != 0) return false;
@@ -618,10 +701,30 @@ NavLightSwitch::NavLightSwitch (NavLight *comp)
 
 // --------------------------------------------------------------
 
+void NavLightSwitch::Reset2D (MESHHANDLE hMesh)
+{
+	SetState (component->GetLight() ? UP:DOWN);
+	DGSwitch1::Reset2D (hMesh);
+}
+
+// --------------------------------------------------------------
+
 void NavLightSwitch::ResetVC (DEVMESHHANDLE hMesh)
 {
 	SetState (component->GetLight() ? UP:DOWN);
 	DGSwitch1::ResetVC (hMesh);
+}
+
+// --------------------------------------------------------------
+
+bool NavLightSwitch::ProcessMouse2D (int event, int mx, int my)
+{
+	if (DGSwitch1::ProcessMouse2D (event, mx, my)) {
+		DGSwitch1::State state = GetState();
+		component->SetLight (state==UP);
+		return true;
+	}
+	return false;
 }
 
 // --------------------------------------------------------------

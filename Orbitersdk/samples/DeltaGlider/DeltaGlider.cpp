@@ -12,12 +12,7 @@
 
 #include "DeltaGlider.h"
 #include "AAP.h"
-#include "Horizon.h"
-#include "InstrHsi.h"
-#include "InstrAoa.h"
-#include "InstrVs.h"
 #include "HudCtrl.h"
-#include "FuelMfd.h"
 #include "MainRetroSubsys.h"
 #include "HoverSubsys.h"
 #include "RcsSubsys.h"
@@ -27,14 +22,13 @@
 #include "DockingSubsys.h"
 #include "AvionicsSubsys.h"
 #include "MfdSubsys.h"
-#include "SwitchArray.h"
-#include "MwsButton.h"
 #include "MomentInd.h"
 #include "ScnEditorAPI.h"
 #include "PressureSubsys.h"
+#include "CoolingSubsys.h"
 #include "LightSubsys.h"
+#include "FailureSubsys.h"
 #include "DlgCtrl.h"
-#include "dg_vc_anim.h"
 #include "meshres.h"
 #include "meshres_vc.h"
 #include "meshres_p0.h"
@@ -160,18 +154,16 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	ssys.push_back (ssys_gear         = new GearSubsystem (this, ssys_id++));
 	ssys.push_back (ssys_hud          = new HUDControl (this, ssys_id++));
 	ssys.push_back (ssys_pressurectrl = new PressureSubsystem (this, ssys_id++));
+	ssys.push_back (ssys_cooling      = new CoolingSubsystem (this, ssys_id++));
 	ssys.push_back (ssys_docking      = new DockingCtrlSubsystem (this, ssys_id++));
 	ssys.push_back (ssys_light        = new LightCtrlSubsystem (this, ssys_id++));
 	ssys.push_back (ssys_avionics     = new AvionicsSubsystem (this, ssys_id++));
+	ssys.push_back (ssys_failure      = new FailureSubsystem (this, ssys_id++));
 	for (i = 0; i < 2; i++)
 		ssys.push_back (ssys_mfd[i] = new MfdSubsystem (this, ssys_id++, MFD_LEFT+i));
 	ssys_scram = 0; // creation deferred to clbkSetClassCaps
 
-	aoa_ind = PI;
-	slip_ind = PI*0.5;
 	load_ind = PI;
-	radiator_status   = DOOR_CLOSED;
-	radiator_proc     = 0.0;
 	visual            = NULL;
 	exmesh            = NULL;
 	vcmesh            = NULL;
@@ -197,11 +189,8 @@ DeltaGlider::DeltaGlider (OBJHANDLE hObj, int fmodel)
 	hbmode = hbswitch = 0;
 	mainTSFCidx = hoverflowidx = -1;
 	
-	ninstr = 0;
-
 	// damage parameters
 	bDamageEnabled = (GetDamageModel() != 0);
-	bMWSActive = false;
 	lwingstatus = rwingstatus = 1.0;
 	for (i = 0; i < 4; i++) aileronfail[i] = false;
 
@@ -218,10 +207,6 @@ DeltaGlider::~DeltaGlider ()
 	// delete subsystems
 	for (std::vector<DGSubsystem*>::iterator it = ssys.begin(); it != ssys.end(); ++it)
 		delete *it;
-
-	for (i = 0; i < ninstr; i++)
-		if (instr[i]) delete instr[i];
-	delete []instr;
 
 	delete aap;
 
@@ -249,21 +234,7 @@ void DeltaGlider::SetEmptyMass () const
 // --------------------------------------------------------------
 void DeltaGlider::CreatePanelElements ()
 {
-	int i;
-
-	ninstr = 50;
-
-	instr = new PanelElement*[ninstr];
-	memset (instr, 0, ninstr*sizeof(PanelElement*));
-	instr[0]  = new InstrAtt (this);
-	instr[1]  = new InstrHSI (this);
-	instr[2]  = new InstrAOA (this);
-	instr[3]  = new InstrVS (this);
-	instr[4]  = new FuelMFD (this);
-	instr[25] = new SwitchArray (this);
-	instr[27] = new MWSButton (this);
-
-	aap = new AAP (this);   aap->AttachHSI ((InstrHSI*)instr[1]);
+	aap = new AAP (this);   //aap->AttachHSI ((InstrHSI*)instr[1]);
 }
 
 // --------------------------------------------------------------
@@ -271,25 +242,6 @@ void DeltaGlider::CreatePanelElements ()
 // --------------------------------------------------------------
 void DeltaGlider::DefineAnimations ()
 {
-	// ***** Radiator animation *****
-	static UINT RaddoorGrp[2] = {GRP_Raddoor1,GRP_Raddoor2};
-	static MGROUP_ROTATE Raddoor (0, RaddoorGrp, 2,
-		_V(0,1.481,-3.986), _V(1,0,0), (float)(170*RAD));
-	static UINT RadiatorGrp[3] = {GRP_Radiator1,GRP_Radiator2,GRP_Radiator3};
-	static MGROUP_TRANSLATE Radiator (0, RadiatorGrp, 3,
-		_V(0,0.584,-0.157));
-	static UINT LRadiatorGrp[1] = {GRP_Radiator1};
-	static MGROUP_ROTATE LRadiator (0, LRadiatorGrp, 1,
-		_V(-0.88,1.94,-4.211), _V(0,0.260,0.966), (float)(135*RAD));
-	static UINT RRadiatorGrp[1] = {GRP_Radiator2};
-	static MGROUP_ROTATE RRadiator (0, RRadiatorGrp, 1,
-		_V(0.93,1.91,-4.211), _V(0,0.260,0.966), (float)(-135*RAD));
-	anim_radiator = CreateAnimation (0);
-	AddAnimationComponent (anim_radiator, 0, 0.33, &Raddoor);
-	AddAnimationComponent (anim_radiator, 0.25, 0.5, &Radiator);
-	AddAnimationComponent (anim_radiator, 0.5, 0.75, &RRadiator);
-	AddAnimationComponent (anim_radiator, 0.75, 1, &LRadiator);
-
 	// ***** Rudder animation *****
 	static UINT RRudderGrp[2] = {GRP_RRudder1,GRP_RRudder2};
 	static MGROUP_ROTATE RRudder (0, RRudderGrp, 2,
@@ -326,16 +278,6 @@ void DeltaGlider::DefineAnimations ()
 		_V(0,-0.4,-6.0), _V(1,0,0), (float)(20*RAD));
 	anim_raileron = CreateAnimation (0.5);
 	AddAnimationComponent (anim_raileron, 0, 1, &RAileron);
-
-	// ======================================================
-	// VC animation definitions
-	// ======================================================
-
-	static UINT RadiatorSwitchGrp = GRP_RADIATOR_SWITCH_VC;
-	static MGROUP_ROTATE RadiatorSwitch (1, &RadiatorSwitchGrp, 1,
-		_V(0.2592,0.9517,7.2252), _V(-0.7590,-0.231,0.6087), (float)(31*RAD));
-	anim_radiatorswitch = CreateAnimation (1);
-	AddAnimationComponent (anim_radiatorswitch, 0, 1, &RadiatorSwitch);
 }
 
 // --------------------------------------------------------------
@@ -403,9 +345,6 @@ void DeltaGlider::InitPanel (int panel)
 
 	switch (panel) {
 	case 0: // main panel
-		// reset state flags for panel instruments
-		for (i = 0; i < ninstr; i++) if (instr[i]) instr[i]->Reset2D (hPanelMesh);
-
 		for (i = 0; i < 2; i++)
 			mainflowidx[i] = retroflowidx[i] = scTSFCidx[i] = scflowidx[i] =
 			scrampropidx[i] = -1;
@@ -610,27 +549,6 @@ void DeltaGlider::SetGearParameters (double state)
 	}
 }
 
-void DeltaGlider::ActivateRadiator (DoorStatus action)
-{
-	bool close = (action == DOOR_CLOSED || action == DOOR_CLOSING);
-	radiator_status = action;
-	if (action <= DOOR_OPEN) {
-		radiator_proc = (action == DOOR_CLOSED ? 0.0 : 1.0);
-		SetAnimation (anim_radiator, radiator_proc);
-		UpdateStatusIndicators();
-	}
-	oapiTriggerPanelRedrawArea (1, AID_SWITCHARRAY);
-	SetAnimation (anim_radiatorswitch, close ? 0:1);
-	UpdateCtrlDialog (this);
-	RecordEvent ("RADIATOR", close ? "CLOSE" : "OPEN");
-}
-
-void DeltaGlider::RevertRadiator (void)
-{
-	ActivateRadiator (radiator_status == DOOR_CLOSED || radiator_status == DOOR_CLOSING ?
-		DOOR_OPENING : DOOR_CLOSING);
-}
-
 void DeltaGlider::SetMainRetroLevel (int which, double lmain, double lretro)
 {
 	if (which == 2) {   // set main thruster group
@@ -700,7 +618,7 @@ void DeltaGlider::TestDamage ()
 	}
 
 	if (newdamage) {
-		bMWSActive = true;
+		ssys_failure->MWSActivate();
 		ApplyDamage ();
 		//UpdateDamageDialog (this);
 	}
@@ -714,7 +632,8 @@ void DeltaGlider::ApplyDamage ()
 	double surf    = (rwingstatus+lwingstatus)*35.0 + 20.0;
 	EditAirfoil (hwing, 0x09, _V(balance,0,-0.3), 0, 0, surf, 0);
 
-	if (rwingstatus < 1 || lwingstatus < 1) bMWSActive = true;
+	if (rwingstatus < 1 || lwingstatus < 1)
+		ssys_failure->MWSActivate();
 
 	SetDamageVisuals();
 }
@@ -731,42 +650,9 @@ void DeltaGlider::RepairDamage ()
 	for (i = 0; i < 4; i++)
 		aileronfail[i] = false;
 	ssys_pressurectrl->RepairDamage ();
-	bMWSActive = false;
-	oapiTriggerRedrawArea (0,0, AID_MWS);
+	ssys_failure->MWSReset ();
 	//UpdateDamageDialog (this);
 	SetDamageVisuals();
-}
-
-bool DeltaGlider::RedrawPanel_AOA (SURFHANDLE surf, bool force)
-{
-	static const double dial_max = RAD*165.0;
-	static const double eps = 1e-2;
-
-	double aoa = GetAOA();
-	double dial_angle = PI - min (dial_max, max (-dial_max, aoa*7.7));
-	if (force || fabs(dial_angle-aoa_ind) > eps) {
-		oapiBltPanelAreaBackground (AID_AOAINSTR, surf);
-		HDC hDC = oapiGetDC (surf);
-		DrawNeedle (hDC, 28, 28, 26.0, dial_angle, &aoa_ind);
-		oapiReleaseDC (surf, hDC);
-		return true;
-	} else return false;
-}
-
-bool DeltaGlider::RedrawPanel_Slip (SURFHANDLE surf, bool force)
-{
-	static const double dial_max = RAD*165.0;
-	static const double eps = 1e-2;
-
-	double slip = GetSlipAngle();
-	double dial_angle = PI05 - min (dial_max, max (-dial_max, slip*7.7));
-	if (force || fabs(dial_angle-slip_ind) > eps) {
-		oapiBltPanelAreaBackground (AID_SLIPINSTR, surf);
-		HDC hDC = oapiGetDC (surf);
-		DrawNeedle (hDC, 28, 28, 26.0, dial_angle, &slip_ind);
-		oapiReleaseDC (surf, hDC);
-		return true;
-	} else return false;
 }
 
 bool DeltaGlider::RedrawPanel_Wingload (SURFHANDLE surf, bool force)
@@ -932,7 +818,7 @@ void DeltaGlider::UpdateStatusIndicators ()
 	vtx[0].tu = vtx[1].tu = x;
 
 	// retro cover indicator
-	x = (ssys_mainretro->RCoverStatus() == DOOR_CLOSED ? xoff : ssys_mainretro->RCoverStatus() == DOOR_OPEN ? xon : modf (oapiGetSimTime(), &d) < 0.5 ? xon : xoff);
+	x = (ssys_mainretro->RetroCoverState().IsClosed() ? xoff : ssys_mainretro->RetroCoverState().IsOpen() ? xon : modf (oapiGetSimTime(), &d) < 0.5 ? xon : xoff);
 	vtx[2].tu = vtx[3].tu = x;
 
 	// airbrake indicator
@@ -948,7 +834,7 @@ void DeltaGlider::UpdateStatusIndicators ()
 	vtx[8].tu = vtx[9].tu = x;
 
 	// radiator indicator
-	x = (radiator_status == DOOR_CLOSED ? xoff : radiator_status == DOOR_OPEN ? xon : modf (oapiGetSimTime(), &d) < 0.5 ? xon : xoff);
+	x = (ssys_cooling->RadiatorState().IsClosed() ? xoff : ssys_cooling->RadiatorState().IsOpen() ? xon : modf (oapiGetSimTime(), &d) < 0.5 ? xon : xoff);
 	vtx[10].tu = vtx[11].tu = x;
 
 	// outer airlock indicator
@@ -1036,8 +922,6 @@ void DeltaGlider::InitVCMesh()
 		ges.UsrFlag = 3;
 		oapiEditMeshGroup (vcmesh, GRP_PILOT_HEAD_VC, &ges);
 		oapiEditMeshGroup (vcmesh, GRP_PILOT_VISOR_VC, &ges);
-
-		for (DWORD i = 0; i < ninstr; i++) if (instr[i]) instr[i]->ResetVC (vcmesh);
 
 		for (std::vector<DGSubsystem*>::iterator it = ssys.begin(); it != ssys.end(); ++it)
 			(*it)->clbkResetVC (0, vcmesh);
@@ -1240,9 +1124,9 @@ void DeltaGlider::clbkSetClassCaps (FILEHANDLE cfg)
 	CreateControlSurface3 (AIRCTRL_ELEVATORTRIM, 0.3, 1.7, _V(   0,0,-7.2), AIRCTRL_AXIS_XPOS, 1.0, anim_elevatortrim);
 
 	CreateVariableDragElement (ssys_gear->GearPositionPtr(), 0.8, _V(0, -1, 0));     // landing gear
-	CreateVariableDragElement (ssys_mainretro->RCoverPositionPtr(), 0.2, _V(0,-0.5,6.5)); // retro covers
+	CreateVariableDragElement (ssys_mainretro->RetroCoverState().StatePtr(), 0.2, _V(0,-0.5,6.5)); // retro covers
 	CreateVariableDragElement (ssys_docking->NoseconePositionPtr(), 3, _V(0, 0, 8));        // nose cone
-	CreateVariableDragElement (&radiator_proc, 1, _V(0,1.5,-4));   // radiator
+	CreateVariableDragElement (ssys_cooling->RadiatorState().StatePtr(), 1, _V(0,1.5,-4));   // radiator
 	CreateVariableDragElement (ssys_aerodyn->AirbrakePositionPtr(), 4, _V(0,0,-8));        // airbrake
 
 	SetRotDrag (_V(0.10,0.13,0.04));
@@ -1279,7 +1163,7 @@ void DeltaGlider::clbkSetClassCaps (FILEHANDLE cfg)
 	SetMeshVisibilityMode (AddMesh (exmesh_tpl = oapiLoadMeshGlobal (ScramVersion() ? "DG\\deltaglider" : "DG\\deltaglider_ns")), MESHVIS_EXTERNAL);
 	//SetMeshVisibilityMode (AddMesh (vcmesh_tpl = oapiLoadMeshGlobal ("DG\\deltaglider_vc")), MESHVIS_VC);
 	panelmesh0 = oapiLoadMeshGlobal ("DG\\dg_2dpanel0");
-	panelmesh1 = NULL; // we create this one inline when needed
+	panelmesh1 = oapiLoadMeshGlobal ("DG\\dg_2dpanel1");
 
 	vcmesh_tpl = oapiLoadMeshGlobal ("DG\\deltaglider_vc");
 	SetMeshVisibilityMode (AddMesh (vcmesh_tpl), MESHVIS_VC);
@@ -1303,9 +1187,7 @@ void DeltaGlider::clbkLoadStateEx (FILEHANDLE scn, void *vs)
     char *line;
 
 	while (oapiReadScenario_nextline (scn, line)) {
-		if (!_strnicmp (line, "RADIATOR", 8)) {
-			sscanf (line+8, "%d%lf", &radiator_status, &radiator_proc);
-		} else if (!_strnicmp (line, "TANKCONFIG", 10)) {
+		if (!_strnicmp (line, "TANKCONFIG", 10)) {
 			if (ssys_scram) sscanf (line+10, "%d", &tankconfig);
 		} else if (!_strnicmp (line, "PSNGR", 5)) {
 			DWORD i, res, pi[4];
@@ -1328,13 +1210,6 @@ void DeltaGlider::clbkLoadStateEx (FILEHANDLE scn, void *vs)
 			}
 		} else if (!_strnicmp (line, "PANELCOL", 8)) {
 			sscanf (line+8, "%d", &panelcol);
-		} else if (!_strnicmp (line, "LIGHTS", 6)) {
-			int lgt[4];
-			sscanf (line+6, "%d%d%d%d", lgt+0, lgt+1, lgt+2, lgt+3);
-			//SetNavLight (lgt[0] != 0);
-			//SetBeacon (lgt[1] != 0);
-			//SetStrobeLight (lgt[2] != 0);
-			//SetDockingLight (lgt[3] != 0);
 		} else if (!_strnicmp (line, "AAP", 3)) {
 			aap->SetState (line);
         } else {
@@ -1369,10 +1244,6 @@ void DeltaGlider::clbkSaveState (FILEHANDLE scn)
 		(*it)->clbkSaveState (scn);
 
 	// Write custom parameters
-	if (radiator_status) {
-		sprintf (cbuf, "%d %0.4f", radiator_status, radiator_proc);
-		oapiWriteScenario_string (scn, "RADIATOR", cbuf);
-	}
 	for (i = 0; i < 4; i++)
 		if (psngr[i]) {
 			sprintf (cbuf, "%d", i+1);
@@ -1429,10 +1300,6 @@ void DeltaGlider::clbkPostCreation ()
 		}
 	}
 
-	// update animation states
-	SetAnimation (anim_radiator, radiator_proc);
-	SetAnimation (anim_radiatorswitch, radiator_status & 1);
-
 	if (insignia_tex)
 		PaintMarkings (insignia_tex);
 }
@@ -1449,10 +1316,12 @@ bool DeltaGlider::clbkPlaybackEvent (double simt, double event_t, const char *ev
 		ssys_docking->ActivateNosecone (!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
 		return true;
 	} else if (!_stricmp (event_type, "RCOVER")) {
-		ssys_mainretro->ActivateRCover (!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
+		if (!_stricmp (event, "CLOSE")) ssys_mainretro->CloseRetroCover();
+		else                            ssys_mainretro->OpenRetroCover();
 		return true;
 	} else if (!_stricmp (event_type, "RADIATOR")) {
-		ActivateRadiator (!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
+		if (!_stricmp (event, "CLOSE")) ssys_cooling->CloseRadiator();
+		else                            ssys_cooling->OpenRadiator();
 		return true;
 	} else if (!_stricmp (event_type, "AIRBRAKE")) {
 		ssys_aerodyn->ActivateAirbrake(!_stricmp (event, "CLOSE") ? DOOR_CLOSING : DOOR_OPENING);
@@ -1588,30 +1457,8 @@ void DeltaGlider::clbkPostStep (double simt, double simdt, double mjd)
 {
 	th_main_level = GetThrusterGroupLevel (THGROUP_MAIN);
 
-	// animate radiator
-	if (radiator_status >= DOOR_CLOSING) {
-		double da = simdt * RADIATOR_OPERATING_SPEED;
-		if (radiator_status == DOOR_CLOSING) { // retract radiator
-			if (radiator_proc > 0.0) radiator_proc = max (0.0, radiator_proc-da);
-			else                     radiator_status = DOOR_CLOSED;
-		} else {                               // deploy radiator
-			if (radiator_proc < 1.0) radiator_proc = min (1.0, radiator_proc+da);
-			else                     radiator_status = DOOR_OPEN;
-		}
-		SetAnimation (anim_radiator, radiator_proc);
-		UpdateStatusIndicators();
-	}
-
 	// damage/failure system
 	if (bDamageEnabled) TestDamage ();
-	if (bMWSActive) {
-		double di;
-		bool mwson = (modf (simt, &di) < 0.5);
-		if (mwson != bMWSOn) {
-			bMWSOn = mwson;
-			oapiTriggerRedrawArea (0, 0, AID_MWS);
-		}
-	}
 
 	for (std::vector<DGSubsystem*>::iterator it = ssys.begin(); it != ssys.end(); ++it)
 		(*it)->clbkPostStep (simt, simdt, mjd);
@@ -1667,10 +1514,8 @@ void DeltaGlider::DefinePanelMain (PANELHANDLE hPanel)
 {
 	hPanelMesh = panelmesh0;
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(hPanelMesh,1);
-	SURFHANDLE instr2dtex = oapiGetTextureHandle(hPanelMesh,2);
 
 	const DWORD panelw = PANEL2D_WIDTH, panelh = 572;
-	int xofs;
 
 	SetPanelBackground (hPanel, 0, 0, hPanelMesh, panelw, panelh, 190,
 		PANEL_ATTACH_BOTTOM | PANEL_MOVEOUT_BOTTOM);
@@ -1678,13 +1523,6 @@ void DeltaGlider::DefinePanelMain (PANELHANDLE hPanel)
 	// Define MFD layout (display and buttons)
 	RegisterPanelMFDGeometry (hPanel, MFD_LEFT, 0, GRP_LMFD_DISPLAY_P0);
 	RegisterPanelMFDGeometry (hPanel, MFD_RIGHT, 0, GRP_RMFD_DISPLAY_P0);
-
-	RegisterPanelArea (hPanel, AID_HORIZON,  _R(0,0,0,0),        PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, 0, instr[0]);
-	RegisterPanelArea (hPanel, AID_HSIINSTR, _R(0,0,0,0),        PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, 0, instr[1]);
-	RegisterPanelArea (hPanel, AID_AOAINSTR, _R(0,0,0,0),        PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[2]);
-	RegisterPanelArea (hPanel, AID_VSINSTR,  _R(0,0,0,0),        PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instr[3]);
-	RegisterPanelArea (hPanel, AID_FUELMFD,  _R(0,0,0,0),        PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, instr2dtex, instr[4]);
-	RegisterPanelArea (hPanel, AID_MWS,      _R(1071,6,1098,32), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN, panel2dtex, instr[27]);
 
 	if (ScramVersion()) {
 	} else {
@@ -1698,46 +1536,12 @@ void DeltaGlider::DefinePanelMain (PANELHANDLE hPanel)
 
 void DeltaGlider::DefinePanelOverhead (PANELHANDLE hPanel)
 {
-	DWORD i;
-
-	MESHGROUP grp;
-	memset (&grp, 0, sizeof(MESHGROUP));
-	SURFHANDLE panel2dtex = oapiGetTextureHandle(panelmesh0,1);
-
-	const DWORD NVTX = 8, NIDX = 12;
-	const DWORD texw = PANEL2D_TEXW, texh = PANEL2D_TEXH;
-	const DWORD panelw = PANEL2D_WIDTH, panelh = 283, panelh2 = 136, panely0 = PANEL2D_TEXH-855;
-
-	// panel billboard definition
-	static NTVERTEX VTX[NVTX] = {
-		{         0,      0,0,  0,0,0,  0,                               (float)panely0/(float)texh},
-		{    panelw,      0,0,  0,0,0,  (float)panelw/(float)texw,       (float)panely0/(float)texh},
-		{         0,panelh2,0,  0,0,0,  0,                               (float)(panely0+panelh2)/(float)texh},
-		{    panelw,panelh2,0,  0,0,0,  (float)panelw/(float)texw,       (float)(panely0+panelh2)/(float)texh},
-		{       255,panelh2,0,  0,0,0,  255.0f/(float)texw,              (float)(panely0+panelh2)/(float)texh},
-		{panelw-255,panelh2,0,  0,0,0,  (float)(panelw-255)/(float)texw, (float)(panely0+panelh2)/(float)texh},
-		{       425, panelh,0,  0,0,0,  425.0f/(float)texw,              (float)(panely0+panelh)/(float)texh},
-		{panelw-425, panelh,0,  0,0,0,  (float)(panelw-425)/(float)texw, (float)(panely0+panelh)/(float)texh}
-	};
-	static WORD IDX[NIDX] = {
-		0,1,2, 3,2,1, 4,5,6, 7,6,5
-	};
-
-	// Create the mesh for defining the panel geometry
-	if (!panelmesh1) {
-		panelmesh1 = oapiCreateMesh (0, 0);
-		for (i = 0; i < 2; i++)
-			oapiAddMeshGroup (panelmesh1, &grp);
-
-		// Define overhead panel background
-		oapiAddMeshGroupBlock (panelmesh1, 0, VTX, NVTX, IDX, NIDX);
-	}
 	hPanelMesh = panelmesh1;
-	SetPanelBackground (hPanel, &panel2dtex, 1, hPanelMesh, panelw, panelh, 0,
+	const DWORD panelw = PANEL2D_WIDTH, panelh = 283;
+
+	SetPanelBackground (hPanel, 0, 0, hPanelMesh, panelw, panelh, 0,
 		PANEL_ATTACH_TOP | PANEL_MOVEOUT_TOP);
 
-	//RegisterPanelArea (hPanel, AID_AIRLOCKSWITCH, _R(240,30, 390,68), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN, panel2dtex, instr[instr_ovhd0+0]);
-	RegisterPanelArea (hPanel, AID_SWITCHARRAY,   _R(797,38,1048,76), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN, panel2dtex, instr[25]);
 	InitPanel (1);
 }
 
@@ -1777,7 +1581,6 @@ bool DeltaGlider::clbkLoadVC (int id)
 	SURFHANDLE tex1 = oapiGetTextureHandle (vcmesh_tpl, 16);
 	SURFHANDLE tex2 = oapiGetTextureHandle (vcmesh_tpl, 18);
 	SURFHANDLE tex3 = oapiGetTextureHandle (vcmesh_tpl, 14);
-	intex = oapiGetTextureHandle (vcmesh_tpl, 19);
 	vctex = oapiGetTextureHandle (vcmesh_tpl, 20);
 
 	InitVC (id);
@@ -1793,24 +1596,13 @@ bool DeltaGlider::clbkLoadVC (int id)
 		SetCameraShiftRange (_V(0,0,0.1), _V(-0.2,0,0), _V(0.2,0,0));
 		oapiVCSetNeighbours (1, 2, -1, -1);
 
-		// artificial horizon
-		oapiVCRegisterArea (AID_HORIZON, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
-
-		// HSI indicator
-		oapiVCRegisterArea (AID_HSIINSTR, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
-
-		// Propellant status display
-		oapiVCRegisterArea (AID_FUELMFD, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
-
 		// main/retro/hover engine indicators
 		oapiVCRegisterArea (AID_MAINDISP1, _R( 50,16, 63,89), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex1);
 		oapiVCRegisterArea (AID_MAINDISP2, _R( 85,16, 98,89), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex1);
 		oapiVCRegisterArea (AID_MAINDISP3, _R(120,16,133,89), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex1);
 		oapiVCRegisterArea (AID_MAINDISP4, _R( 23,16, 29,89), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex1);
 
-		// AOA/slip/slope+range indicators
-		oapiVCRegisterArea (AID_AOAINSTR,   _R( 17,181, 73,237), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex2);
-		oapiVCRegisterArea (AID_SLIPINSTR,  _R(109,181,165,237), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex2);
+		// slip/slope+range indicators
 		oapiVCRegisterArea (AID_LOADINSTR,  _R(111, 17,167, 73), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_BGONREQUEST, tex2);
 
 		// scram engine indicators
@@ -1822,15 +1614,6 @@ bool DeltaGlider::clbkLoadVC (int id)
 
 		//oapiVCRegisterArea (AID_MWS, PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
 		//oapiVCSetAreaClickmode_Spherical (AID_MWS, _V(0.0755,1.2185,7.3576), 0.013);
-
-		// Button row 1
-		oapiVCRegisterArea (AID_BUTTONROW1, PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (AID_BUTTONROW1, _V(0.3014,0.8519,6.9562), _V(0.3679,0.8519,6.9562), _V(0.3014,0.8520,7.0163), _V(0.3679,0.8520,7.0163));
-
-		oapiVCRegisterArea (AID_RADIATOREX, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Spherical (AID_RADIATOREX, _V(0.2582,0.9448,7.22),0.01);
-		oapiVCRegisterArea (AID_RADIATORIN, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Spherical (AID_RADIATORIN, _V(0.2582,0.9618,7.22),0.01);
 
 		campos = CAM_VCPILOT;
 		break;
@@ -1880,10 +1663,7 @@ bool DeltaGlider::clbkLoadVC (int id)
 // --------------------------------------------------------------
 bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 {
-	static int ctrl = 0, mode = 0;
-	static double py = 0;
-
-	// distribute to subsystem
+	// distribute to subsystems
 	int subsys, localid;
 	localid = Subsystem::LocalElId (id, subsys);
 	if (subsys >= 0) {
@@ -1899,17 +1679,6 @@ bool DeltaGlider::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 	case AID_MFD2_PWR:
 		oapiToggleMFD_on (MFD_RIGHT);
 		return true;
-	case AID_BUTTONROW1:
-		return instr[25]->ProcessMouseVC (event, p);
-	case AID_RADIATOREX:
-		ActivateRadiator (DOOR_OPENING);
-		return true;
-	case AID_RADIATORIN:
-		ActivateRadiator (DOOR_CLOSING);
-		return true;
-	case AID_MWS:
-		bMWSActive = bMWSOn = false;
-		return true;
 	}
 
 	return false;
@@ -1922,7 +1691,7 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 {
 	if (!vcmesh) return false;
 
-	// distribute to subsystem
+	// distribute to subsystems
 	int subsys, localid;
 	localid = Subsystem::LocalElId (id, subsys);
 	if (subsys >= 0) {
@@ -1932,8 +1701,6 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 
 	// standalone id
 	switch (id) {
-	case AID_FUELMFD:
-		return instr[4]->RedrawVC (vcmesh, intex);
 	case AID_MAINDISP1:
 		return RedrawPanel_MainFlow (surf);
 	case AID_MAINDISP2:
@@ -1942,10 +1709,6 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 		return RedrawPanel_HoverFlow (surf);
 	case AID_MAINDISP4:
 		return RedrawPanel_MainTSFC (surf);
-	//case AID_AOAINSTR:
-	//	return RedrawPanel_AOA (surf, event == PANEL_REDRAW_INIT);
-	case AID_SLIPINSTR:
-		return RedrawPanel_Slip (surf, event == PANEL_REDRAW_INIT);
 	case AID_LOADINSTR:
 		return RedrawPanel_Wingload (surf, event == PANEL_REDRAW_INIT);
 	case AID_SCRAMDISP2:
@@ -1954,12 +1717,6 @@ bool DeltaGlider::clbkVCRedrawEvent (int id, int event, SURFHANDLE surf)
 		return RedrawPanel_ScramTSFC (surf);
 	case AID_SCRAMTEMPDISP:
 		return RedrawPanel_ScramTempDisp (surf);
-	case AID_HORIZON:
-		return (vcmesh ? instr[0]->RedrawVC (vcmesh, surf) : false);
-	case AID_HSIINSTR:
-		return instr[1]->RedrawVC (vcmesh, surf);
-	case AID_MWS:
-		return (vcmesh ? instr[27]->RedrawVC (vcmesh, 0) : false);
 	}
 
 	return false;
@@ -2015,7 +1772,7 @@ int DeltaGlider::clbkConsumeBufferedKey (DWORD key, bool down, char *kstate)
 	} else {
 		switch (key) {
 		case OAPI_KEY_D:  // "operate radiator"
-			RevertRadiator ();
+			ssys_cooling->RevertRadiator ();
 			return 1;
 		case OAPI_KEY_G:  // "operate landing gear"
 			ssys_gear->RevertGear ();
@@ -2156,10 +1913,10 @@ BOOL CALLBACK EdPg1Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			GetDG(hTab)->SubsysGear()->ActivateGear (DeltaGlider::DOOR_OPEN);
 			return TRUE;
 		case IDC_RETRO_CLOSE:
-			GetDG(hTab)->SubsysMainRetro()->ActivateRCover (DeltaGlider::DOOR_CLOSED);
+			GetDG(hTab)->SubsysMainRetro()->CloseRetroCover();
 			return TRUE;
 		case IDC_RETRO_OPEN:
-			GetDG(hTab)->SubsysMainRetro()->ActivateRCover (DeltaGlider::DOOR_OPEN);
+			GetDG(hTab)->SubsysMainRetro()->OpenRetroCover();
 			return TRUE;
 		case IDC_OLOCK_CLOSE:
 			GetDG(hTab)->SubsysPressure()->ActivateOuterAirlock (DeltaGlider::DOOR_CLOSED);
@@ -2192,10 +1949,10 @@ BOOL CALLBACK EdPg1Proc (HWND hTab, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			GetDG(hTab)->SubsysPressure()->ActivateHatch (DeltaGlider::DOOR_OPEN);
 			return TRUE;
 		case IDC_RADIATOR_RETRACT:
-			GetDG(hTab)->ActivateRadiator (DeltaGlider::DOOR_CLOSED);
+			GetDG(hTab)->SubsysCooling()->CloseRadiator ();
 			return TRUE;
 		case IDC_RADIATOR_EXTEND:
-			GetDG(hTab)->ActivateRadiator (DeltaGlider::DOOR_OPEN);
+			GetDG(hTab)->SubsysCooling()->OpenRadiator ();
 			return TRUE;
 		}
 		break;
@@ -2332,10 +2089,10 @@ BOOL CALLBACK Ctrl_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			dg->SubsysGear()->ActivateGear (DeltaGlider::DOOR_OPENING);
 			return 0;
 		case IDC_RETRO_CLOSE:
-			dg->SubsysMainRetro()->ActivateRCover (DeltaGlider::DOOR_CLOSING);
+			dg->SubsysMainRetro()->CloseRetroCover();
 			return 0;
 		case IDC_RETRO_OPEN:
-			dg->SubsysMainRetro()->ActivateRCover (DeltaGlider::DOOR_OPENING);
+			dg->SubsysMainRetro()->OpenRetroCover();
 			return 0;
 		case IDC_NCONE_CLOSE:
 			dg->SubsysDocking()->ActivateNosecone (DeltaGlider::DOOR_CLOSING);
@@ -2368,10 +2125,10 @@ BOOL CALLBACK Ctrl_DlgProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			dg->SubsysPressure()->ActivateHatch (DeltaGlider::DOOR_OPENING);
 			return 0;
 		case IDC_RADIATOR_RETRACT:
-			dg->ActivateRadiator (DeltaGlider::DOOR_CLOSING);
+			dg->SubsysCooling()->CloseRadiator ();
 			return 0;
 		case IDC_RADIATOR_EXTEND:
-			dg->ActivateRadiator (DeltaGlider::DOOR_OPENING);
+			dg->SubsysCooling()->OpenRadiator ();
 			return 0;
 		//case IDC_NAVLIGHT:
 		//	dg->SetNavLight (SendDlgItemMessage (hWnd, IDC_NAVLIGHT, BM_GETCHECK, 0, 0) == BST_CHECKED);
@@ -2407,7 +2164,7 @@ void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd)
 	SendDlgItemMessage (hWnd, IDC_GEAR_DOWN, BM_SETCHECK, bstatus[op], 0);
 	SendDlgItemMessage (hWnd, IDC_GEAR_UP, BM_SETCHECK, bstatus[1-op], 0);
 
-	op = dg->SubsysMainRetro()->RCoverStatus() & 1;
+	op = (dg->SubsysMainRetro()->RetroCoverState().IsOpen() || dg->SubsysMainRetro()->RetroCoverState().IsOpening() ? 1 : 0);
 	SendDlgItemMessage (hWnd, IDC_RETRO_OPEN, BM_SETCHECK, bstatus[op], 0);
 	SendDlgItemMessage (hWnd, IDC_RETRO_CLOSE, BM_SETCHECK, bstatus[1-op], 0);
 
@@ -2431,7 +2188,7 @@ void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd)
 	SendDlgItemMessage (hWnd, IDC_HATCH_OPEN, BM_SETCHECK, bstatus[op], 0);
 	SendDlgItemMessage (hWnd, IDC_HATCH_CLOSE, BM_SETCHECK, bstatus[1-op], 0);
 
-	op = dg->radiator_status & 1;
+	op = (dg->SubsysCooling()->RadiatorState().IsOpen() || dg->SubsysCooling()->RadiatorState().IsOpening() ? 1 : 0);
 	SendDlgItemMessage (hWnd, IDC_RADIATOR_EXTEND, BM_SETCHECK, bstatus[op], 0);
 	SendDlgItemMessage (hWnd, IDC_RADIATOR_RETRACT, BM_SETCHECK, bstatus[1-op], 0);
 

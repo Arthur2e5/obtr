@@ -39,14 +39,14 @@ public:
 	State Down (); // move to next state down and return new state
 
 private:
-	Mode mode;         // switch mode
-	State state;       // logical state
-	State vstate;      // current visual state
-	VECTOR3 rf, ax;    // rotation reference point, axis
-	DWORD mgrp;        // group index
-	int vofs;          // vertex offset
-	const static int nvtx;   // number of vertices in switch lever
-	static double travel; // switch lever angle from center to up position [rad]
+	Mode mode;             // switch mode
+	State state;           // logical state
+	State vstate, vstate2; // current visual state for VC and 2D panel
+	VECTOR3 rf, ax;        // rotation reference point, axis
+	DWORD mgrp;            // group index
+	int vofs;              // vertex offset
+	const static int nvtx; // number of vertices in switch lever
+	static double travel;  // switch lever angle from center to up position [rad]
 	const static float tu0[3], tv0, tw, th;
 };
 

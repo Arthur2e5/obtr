@@ -29,9 +29,9 @@ class MainRetroSubsystem: public DGSubsystem {
 public:
 	MainRetroSubsystem (DeltaGlider *v, int ident);
 	~MainRetroSubsystem ();
-	void ActivateRCover (DeltaGlider::DoorStatus action);
-	DeltaGlider::DoorStatus RCoverStatus() const;
-	double *RCoverPositionPtr();
+	void OpenRetroCover ();
+	void CloseRetroCover ();
+	const AnimState2 &RetroCoverState() const;
 	void clbkReset2D (int panelid, MESHHANDLE hMesh);
 	void clbkResetVC (int vcid, DEVMESHHANDLE hMesh);
 
@@ -212,9 +212,9 @@ class RetroCoverControl: public DGSubsystemComponent {
 
 public:
 	RetroCoverControl (MainRetroSubsystem *_subsys);
-	void Activate (DeltaGlider::DoorStatus action);
-	inline DeltaGlider::DoorStatus Status() const { return rcover_status; }
-	inline double *RCoverPositionPtr() { return &rcover_proc; }
+	void OpenRetroCover ();
+	void CloseRetroCover ();
+	inline const AnimState2 &State() const { return rcover_state; }
 	void clbkPostCreation();
 	void clbkSaveState (FILEHANDLE scn);
 	bool clbkParseScenarioLine (const char *line);
@@ -223,10 +223,9 @@ public:
 	bool clbkLoadVC (int vcid);
 
 private:
+	AnimState2 rcover_state;
 	RetroCoverSwitch *sw;
 	int ELID_SWITCH;
-	DeltaGlider::DoorStatus rcover_status;
-	double rcover_proc;
 	UINT anim_rcover;           // handle for retro cover animation
 };
 

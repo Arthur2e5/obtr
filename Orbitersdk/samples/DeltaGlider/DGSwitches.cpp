@@ -25,7 +25,7 @@ const float DGSwitch1::th  =  52.0f/1024.0f;
 DGSwitch1::DGSwitch1 (VESSEL3 *v, Mode m)
 : PanelElement(v), mode(m)
 {
-	state = vstate = CENTER; // we always initiate as centered, even for 2state switches
+	state = vstate = vstate2 = CENTER; // we always initiate as centered, even for 2state switches
 }
 
 // --------------------------------------------------------------
@@ -73,7 +73,7 @@ bool DGSwitch1::ProcessMouse2D (int event, int mx, int my)
 		if (mode == SPRING)
 			SetState (CENTER);
 	}
-	return (state != vstate);
+	return (state != vstate2);
 }
 
 // --------------------------------------------------------------
@@ -121,12 +121,12 @@ bool DGSwitch1::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 
 bool DGSwitch1::Redraw2D (SURFHANDLE surf)
 {
-	if (state != vstate) {
+	if (state != vstate2) {
 		const int nvtx = 4;
 		for (int i = 0; i < nvtx; i++) {
 			grp->Vtx[vofs+i].tu = tu0[state] + (i&1 ? tw:0);
 		}
-		vstate = state;
+		vstate2 = state;
 	}
 	return false;
 }

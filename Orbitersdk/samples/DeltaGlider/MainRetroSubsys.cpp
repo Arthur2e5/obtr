@@ -55,23 +55,23 @@ MainRetroSubsystem::~MainRetroSubsystem ()
 
 // --------------------------------------------------------------
 
-void MainRetroSubsystem::ActivateRCover (DeltaGlider::DoorStatus action)
+void MainRetroSubsystem::OpenRetroCover ()
 {
-	retrocover->Activate (action);
+	retrocover->OpenRetroCover();
 }
 
 // --------------------------------------------------------------
 
-DeltaGlider::DoorStatus MainRetroSubsystem::RCoverStatus() const
+void MainRetroSubsystem::CloseRetroCover ()
 {
-	return retrocover->Status();
+	retrocover->CloseRetroCover();
 }
 
 // --------------------------------------------------------------
 
-double *MainRetroSubsystem::RCoverPositionPtr()
+const AnimState2 &MainRetroSubsystem::RetroCoverState() const
 {
-	return retrocover->RCoverPositionPtr();
+	return retrocover->State();
 }
 
 // --------------------------------------------------------------
@@ -975,9 +975,7 @@ bool YMainGimbalCtrl::ProcessMouseVC (int event, VECTOR3 &p)
 RetroCoverControl::RetroCoverControl (MainRetroSubsystem *_subsys)
 : DGSubsystemComponent(_subsys)
 {
-	rcover_status = DeltaGlider::DOOR_CLOSED;
-	rcover_proc   = 0.0;
-
+	rcover_state.SetOperatingSpeed(RCOVER_OPERATING_SPEED);
 	ELID_SWITCH = AddElement (sw = new RetroCoverSwitch (this));
 
 	// Retro cover animation
@@ -1003,39 +1001,43 @@ RetroCoverControl::RetroCoverControl (MainRetroSubsystem *_subsys)
 
 // --------------------------------------------------------------
 
-void RetroCoverControl::Activate (DeltaGlider::DoorStatus action)
+void RetroCoverControl::OpenRetroCover ()
 {
 	void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd = 0);
 
-	bool close = (action == DeltaGlider::DOOR_CLOSED || action == DeltaGlider::DOOR_CLOSING);
-	rcover_status = action;
-	if (action <= DeltaGlider::DOOR_OPEN) {
-		rcover_proc = (action == DeltaGlider::DOOR_CLOSED ? 0.0 : 1.0);
-		DG()->SetAnimation (anim_rcover, rcover_proc);
-		DG()->UpdateStatusIndicators();
-	}
-	DG()->EnableRetroThrusters (action == DeltaGlider::DOOR_OPEN);
-	oapiTriggerPanelRedrawArea (1, AID_SWITCHARRAY);
+	rcover_state.Open();
+	DG()->UpdateStatusIndicators();
 	UpdateCtrlDialog (DG());
-	DG()->RecordEvent ("RCOVER", close ? "CLOSE" : "OPEN");
+	DG()->RecordEvent ("RCOVER", "OPEN");
+}
+
+// --------------------------------------------------------------
+
+void RetroCoverControl::CloseRetroCover ()
+{
+	void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd = 0);
+
+	rcover_state.Close();
+	DG()->UpdateStatusIndicators();
+	UpdateCtrlDialog (DG());
+	DG()->RecordEvent ("RCOVER", "Close");
 }
 
 // --------------------------------------------------------------
 
 void RetroCoverControl::clbkPostCreation ()
 {
-	DG()->EnableRetroThrusters (rcover_status == DeltaGlider::DOOR_OPEN);
-	DG()->SetAnimation (anim_rcover, rcover_proc);
+	DG()->EnableRetroThrusters (rcover_state.IsOpen());
+	DG()->SetAnimation (anim_rcover, rcover_state.State());
 }
 
 // --------------------------------------------------------------
 
 void RetroCoverControl::clbkSaveState (FILEHANDLE scn)
 {
-	char cbuf[256];
-
-	if (rcover_status) {
-		sprintf (cbuf, "%d %0.4f", rcover_status, rcover_proc);
+	if (!rcover_state.IsClosed()) {
+		char cbuf[256];
+		sprintf (cbuf, "%0.4lf %0.4f", rcover_state.State(), rcover_state.Speed());
 		oapiWriteScenario_string (scn, "RCOVER", cbuf);
 	}
 }
@@ -1045,7 +1047,9 @@ void RetroCoverControl::clbkSaveState (FILEHANDLE scn)
 bool RetroCoverControl::clbkParseScenarioLine (const char *line)
 {
 	if (!_strnicmp (line, "RCOVER", 6)) {
-		sscanf (line+6, "%d%lf", &rcover_status, &rcover_proc);
+		double state, speed;
+		sscanf (line+6, "%lf%lf", &state, &speed);
+		rcover_state.SetState (state, speed);
 		return true;
 	}
 	return false;
@@ -1056,23 +1060,8 @@ bool RetroCoverControl::clbkParseScenarioLine (const char *line)
 void RetroCoverControl::clbkPostStep (double simt, double simdt, double mjd)
 {
 	// animate retro covers
-	if (rcover_status >= DeltaGlider::DOOR_CLOSING) {
-		double da = simdt * RCOVER_OPERATING_SPEED;
-		if (rcover_status == DeltaGlider::DOOR_CLOSING) {
-			if (rcover_proc > 0.0)
-				rcover_proc = max (0.0, rcover_proc-da);
-			else {
-				rcover_status = DeltaGlider::DOOR_CLOSED;
-			}
-		} else {
-			if (rcover_proc < 1.0)
-				rcover_proc = min (1.0, rcover_proc+da);
-			else {
-				rcover_status = DeltaGlider::DOOR_OPEN;
-				DG()->EnableRetroThrusters (true);
-			}
-		}
-		DG()->SetAnimation (anim_rcover, rcover_proc);
+	if (rcover_state.Process (simdt)) {
+		DG()->SetAnimation (anim_rcover, rcover_state.State());
 		DG()->UpdateStatusIndicators();
 	}
 
@@ -1119,8 +1108,8 @@ bool RetroCoverSwitch::ProcessMouse2D (int event, int mx, int my)
 	if (DGSwitch1::ProcessMouse2D (event, mx, my)) {
 		DGSwitch1::State state = GetState();
 		switch (state) {
-			case DGSwitch1::UP: component->Activate (DeltaGlider::DOOR_CLOSING); break;
-			case DGSwitch1::DOWN: component->Activate (DeltaGlider::DOOR_OPENING); break;
+			case DGSwitch1::UP:   component->CloseRetroCover(); break;
+			case DGSwitch1::DOWN: component->OpenRetroCover(); break;
 		}
 		return true;
 	}
@@ -1134,8 +1123,8 @@ bool RetroCoverSwitch::ProcessMouseVC (int event, VECTOR3 &p)
 	if (DGSwitch1::ProcessMouseVC (event, p)) {
 		DGSwitch1::State state = GetState();
 		switch (state) {
-			case DGSwitch1::UP: component->Activate (DeltaGlider::DOOR_CLOSING); break;
-			case DGSwitch1::DOWN: component->Activate (DeltaGlider::DOOR_OPENING); break;
+			case DGSwitch1::UP:   component->CloseRetroCover(); break;
+			case DGSwitch1::DOWN: component->OpenRetroCover(); break;
 		}
 		return true;
 	}

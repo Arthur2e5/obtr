@@ -18,6 +18,11 @@
 // Avionics subsystem
 // ==============================================================
 
+class InstrAtt;
+class InstrHSI;
+class InstrAOA;
+class InstrVS;
+class FuelMFD;
 class AngRateIndicator;
 
 class AvionicsSubsystem: public DGSubsystem {
@@ -27,7 +32,17 @@ public:
 	bool clbkLoadVC (int vcid);
 
 private:
+	InstrAtt *instratt;
+	InstrHSI *instrhsi;
+	InstrAOA *instraoa;
+	InstrVS  *instrvs;
+	FuelMFD  *fuelmfd;
 	AngRateIndicator *angrateind;
+	int ELID_INSTRATT;
+	int ELID_INSTRHSI;
+	int ELID_INSTRAOA;
+	int ELID_INSTRVS;
+	int ELID_FUELMFD;
 	int ELID_ANGRATEIND;
 };
 

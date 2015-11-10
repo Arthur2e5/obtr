@@ -21,11 +21,8 @@
 #define STRICT 1
 
 #include "orbitersdk.h"
-#include "..\Common\Vessel\Instrument.h"
 #include "resource.h"
 #include <vector>
-
-#define LOADBMP(id) (LoadBitmap (g_Param.hDLL, MAKEINTRESOURCE (id)))
 
 // ==============================================================
 // Some vessel class caps
@@ -153,8 +150,6 @@ const DWORD INSTR1_TEXW   =  176;
 const DWORD INSTR1_TEXH   = 1152;
 const DWORD INSTR2_TEXW   =   84;
 const DWORD INSTR2_TEXH   =  512;
-const DWORD INSTR3_TEXW   =  268;
-const DWORD INSTR3_TEXH   =  188;
 
 // ==========================================================
 // Forward declarations
@@ -172,8 +167,10 @@ class GearSubsystem;
 class AvionicsSubsystem;
 class MfdSubsystem;
 class PressureSubsystem;
+class CoolingSubsystem;
 class DockingCtrlSubsystem;
 class LightCtrlSubsystem;
+class FailureSubsystem;
 
 // ==========================================================
 // Interface for derived vessel class: DeltaGlider
@@ -182,7 +179,6 @@ class LightCtrlSubsystem;
 class DeltaGlider: public VESSEL4 {
 	friend class AAP;
 	friend class FuelMFD;
-	friend class ThrottleScram;
 
 public:
 	DeltaGlider (OBJHANDLE hObj, int fmodel);
@@ -202,8 +198,6 @@ public:
 	void SetPanelScale (PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	void DefinePanelMain (PANELHANDLE hPanel);
 	void DefinePanelOverhead (PANELHANDLE hPanel);
-	bool RedrawPanel_AOA (SURFHANDLE surf, bool force = false);
-	bool RedrawPanel_Slip (SURFHANDLE surf, bool force = false);
 	bool RedrawPanel_Wingload (SURFHANDLE surf, bool force = false);
 	bool RedrawPanel_ScramTempDisp (SURFHANDLE surf);
 	bool RedrawPanel_MainFlow (SURFHANDLE surf);
@@ -227,8 +221,6 @@ public:
 	void TestDamage ();
 	void ApplyDamage ();
 	void RepairDamage ();
-	bool MWSActive() const { return bMWSActive; }
-	void MWSReset() { bMWSActive = false; }
 
 	// Overloaded callback functions
 	void clbkSetClassCaps (FILEHANDLE cfg);
@@ -259,42 +251,34 @@ public:
 	bool clbkVCRedrawEvent (int id, int event, SURFHANDLE surf);
 	int  clbkGeneric (int msgid, int prm, void *context);
 
-	double aoa_ind;   // angle of AOA needle (NOT AOA!)
-	double slip_ind;  // angle of slip indicator needle
-	double load_ind;  // angle of load indicator needle
+	double load_ind;            // angle of load indicator needle
 	int hbswitch, hbmode;       // hover balance slider position
-	bool psngr[4];                           // passengers?
-	bool bDamageEnabled;                     // damage/failure testing?
+	bool psngr[4];              // passengers?
+	bool bDamageEnabled;        // damage/failure testing?
 
 	// parameters for failure modelling
 	double lwingstatus, rwingstatus;
 	bool aileronfail[4];
 
-	enum DoorStatus { DOOR_CLOSED, DOOR_OPEN, DOOR_CLOSING, DOOR_OPENING }
-		radiator_status;
-	void ActivateRadiator (DoorStatus action);
-	void RevertRadiator ();
+	enum DoorStatus { DOOR_CLOSED, DOOR_OPEN, DOOR_CLOSING, DOOR_OPENING };
 	void SetGearParameters (double state);
-	double radiator_proc;     // logical status
 
 	// Animation handles
-	UINT anim_radiator;         // handle for radiator animation
 	UINT anim_rudder;           // handle for rudder animation
 	UINT anim_elevator;         // handle for elevator animation
 	UINT anim_elevatortrim;     // handle for elevator trim animation
 	UINT anim_laileron;         // handle for left aileron animation
 	UINT anim_raileron;         // handle for right aileron animation
-	UINT anim_radiatorswitch;   // VC radiator switch animation
 
-	SURFHANDLE insignia_tex;        // vessel-specific fuselage markings
-	SURFHANDLE contrail_tex;        // contrail particle texture
-	SURFHANDLE vctex, intex;
-	MESHHANDLE exmesh_tpl;          // vessel mesh: global template
-	MESHHANDLE vcmesh_tpl;          // VC mesh: global template
-	MESHHANDLE panelmesh0;          // 2D main panel
-	MESHHANDLE panelmesh1;          // 2D overhead panel
-	DEVMESHHANDLE exmesh;           // vessel mesh: instance
-	DEVMESHHANDLE vcmesh;           // VC mesh: instance
+	SURFHANDLE insignia_tex;    // vessel-specific fuselage markings
+	SURFHANDLE contrail_tex;    // contrail particle texture
+	SURFHANDLE vctex;
+	MESHHANDLE exmesh_tpl;      // vessel mesh: global template
+	MESHHANDLE vcmesh_tpl;      // VC mesh: global template
+	MESHHANDLE panelmesh0;      // 2D main panel
+	MESHHANDLE panelmesh1;      // 2D overhead panel
+	DEVMESHHANDLE exmesh;       // vessel mesh: instance
+	DEVMESHHANDLE vcmesh;       // VC mesh: instance
 	THGROUP_HANDLE thg_main;
 	THGROUP_HANDLE thg_retro;
 	THGROUP_HANDLE thg_hover;
@@ -312,6 +296,7 @@ public:
 	inline DockingCtrlSubsystem *SubsysDocking() { return ssys_docking; }
 	inline AerodynCtrlSubsystem *SubsysAerodyn() { return ssys_aerodyn; }
 	inline PressureSubsystem *SubsysPressure() { return ssys_pressurectrl; }
+	inline CoolingSubsystem *SubsysCooling() { return ssys_cooling; }
 
 	// script interface-related methods
 	int Lua_InitInterpreter (void *context);
@@ -330,18 +315,16 @@ private:
 	AerodynCtrlSubsystem *ssys_aerodyn;          // aerodynamic control subsystem
 	GearSubsystem        *ssys_gear;             // landing gear control subsystem
 	PressureSubsystem    *ssys_pressurectrl;     // pressure control system
+	CoolingSubsystem     *ssys_cooling;          // cooling subsystem
 	DockingCtrlSubsystem *ssys_docking;          // docking control subsystem
 	AvionicsSubsystem    *ssys_avionics;         // avionics subsystem
 	MfdSubsystem         *ssys_mfd[2];           // MFD instruments
 	LightCtrlSubsystem   *ssys_light;            // cockpit/external light controls
+	FailureSubsystem     *ssys_failure;          // failure/warning controls
 	std::vector<DGSubsystem*> ssys;              // list of subsystems
 
 	AAP *aap;                                    // atmospheric autopilot
 
-	PanelElement **instr;                        // panel instrument objects
-	DWORD ninstr;                                // total number of instruments
-
-	bool bMWSActive, bMWSOn;                     // master warning flags
 	bool bGearIsDown;                            // touchdown point state flag
 	int modelidx;                                // flight model index
 	int tankconfig;                              // 0=rocket fuel only, 1=scramjet fuel only, 2=both
@@ -359,7 +342,6 @@ private:
 	CTRLSURFHANDLE hlaileron, hraileron;         // control surface handles
 	int panelcol;                                // panel light colour index, 0=default
 
-	UINT wbrake_pos[2];
 	int mainflowidx[2], retroflowidx[2], hoverflowidx, scflowidx[2];
 	int mainTSFCidx, scTSFCidx[2];
 	int scrampropidx[2];
@@ -378,35 +360,20 @@ typedef struct {
 
 // Panel area identifiers:
 // Panel 0
-#define AID_PROPELLANTSTATUS     0
-#define AID_AOAINSTR             9
-#define AID_VSINSTR             10
-#define AID_SLIPINSTR           11
 #define AID_LOADINSTR           12
-#define AID_HSIINSTR            13
-#define AID_HORIZON             14
 #define AID_MAINDISP1           32
 #define AID_MAINDISP2           33
 #define AID_MAINDISP3           34
 #define AID_MAINDISP4           35
 #define AID_SCRAMDISP2          36
 #define AID_SCRAMDISP3          37
-#define AID_FUELMFD             38
-#define AID_RADIATORSWITCH      49
-#define AID_HATCHSWITCH         51
-#define AID_MWS                 53
-#define AID_SWITCHARRAY         55
 #define AID_AAP                 56
 
 // Panel 1
-#define AID_BEACONBUTTON       103
 #define AID_SCRAMTEMPDISP      114
 
 // Virtual cockpit-specific area identifiers:
 #define AID_MFD1_PWR           300
 #define AID_MFD2_PWR           301
-#define AID_BUTTONROW1         304
-#define AID_RADIATOREX         305
-#define AID_RADIATORIN         306
 
 #endif // !__DELTAGLIDER_H

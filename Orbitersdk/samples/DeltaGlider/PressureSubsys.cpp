@@ -12,6 +12,7 @@
 #include "DockingSubsys.h"
 #include "DeltaGlider.h"
 #include "meshres.h"
+#include "meshres_p1.h"
 #include "meshres_vc.h"
 #include "dg_vc_anim.h"
 
@@ -201,6 +202,28 @@ void PressureSubsystem::clbkPostStep (double simt, double simdt, double mjd)
 		pa = min (pa, p_target);
 		p_airlock = pa;
 	}
+}
+
+// --------------------------------------------------------------
+
+bool PressureSubsystem::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
+{
+	bool res = DGSubsystem::clbkLoadPanel2D (panelid, hPanel, viewW, viewH);
+
+	if (panelid != 1) return res;
+
+	// Pressure indicator display
+	SURFHANDLE surf = oapiGetTextureHandle(DG()->panelmesh1,2);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_DISPLAY), _R(0,0,0,0), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, surf, pind);
+
+	// Pressure valve switches
+	surf = oapiGetTextureHandle(DG()->panelmesh1,1);
+	for (int i = 0; i < 5; i++) {
+		DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_PVALVESWITCH[i]), _R(388+i*46,42,414+i*46,94), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, surf, valve_switch[i]);
+		valve_switch[i]->DefineAnimation2D (DG()->panelmesh1, GRP_INSTRUMENTS_ABOVE_P1, 24+i*4);
+	}
+
+	return true;
 }
 
 // --------------------------------------------------------------
@@ -419,6 +442,25 @@ void AirlockCtrl::clbkPostStep (double simt, double simdt, double mjd)
 
 // --------------------------------------------------------------
 
+bool AirlockCtrl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
+{
+	if (panelid != 1) return false;
+
+	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh1,1);
+
+	// Inner airlock open/close switch
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_ISWITCH), _R(480,192,506,244), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, isw);
+	isw->DefineAnimation2D (DG()->panelmesh1, GRP_INSTRUMENTS_ABOVE_P1, 4);
+
+	// Outer airlock open/close switch
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_OSWITCH), _R(526,192,552,244), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, osw);
+	osw->DefineAnimation2D (DG()->panelmesh1, GRP_INSTRUMENTS_ABOVE_P1, 8);
+
+	return true;
+}
+
+// --------------------------------------------------------------
+
 bool AirlockCtrl::clbkLoadVC (int vcid)
 {
 	if (vcid != 0) return false;
@@ -445,10 +487,30 @@ OuterLockSwitch::OuterLockSwitch (AirlockCtrl *comp)
 
 // --------------------------------------------------------------
 
+void OuterLockSwitch::Reset2D (MESHHANDLE hMesh)
+{
+	SetState (component->olock_status == DeltaGlider::DOOR_CLOSED ||
+			  component->olock_status == DeltaGlider::DOOR_CLOSING ? DOWN:UP);
+}
+
+// --------------------------------------------------------------
+
 void OuterLockSwitch::ResetVC (DEVMESHHANDLE hMesh)
 {
 	SetState (component->olock_status == DeltaGlider::DOOR_CLOSED ||
 			  component->olock_status == DeltaGlider::DOOR_CLOSING ? DOWN:UP);
+}
+
+// --------------------------------------------------------------
+
+bool OuterLockSwitch::ProcessMouse2D (int event, int mx, int my)
+{
+	if (DGSwitch1::ProcessMouse2D (event, mx, my)) {
+		DGSwitch1::State state = GetState();
+		component->ActivateOuterLock (state==UP ? DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
+		return true;
+	}
+	return false;
 }
 
 // --------------------------------------------------------------
@@ -472,10 +534,30 @@ InnerLockSwitch::InnerLockSwitch (AirlockCtrl *comp)
 
 // --------------------------------------------------------------
 
+void InnerLockSwitch::Reset2D (MESHHANDLE hMesh)
+{
+	SetState (component->ilock_status == DeltaGlider::DOOR_CLOSED ||
+			  component->ilock_status == DeltaGlider::DOOR_CLOSING ? DOWN:UP);
+}
+
+// --------------------------------------------------------------
+
 void InnerLockSwitch::ResetVC (DEVMESHHANDLE hMesh)
 {
 	SetState (component->ilock_status == DeltaGlider::DOOR_CLOSED ||
 			  component->ilock_status == DeltaGlider::DOOR_CLOSING ? DOWN:UP);
+}
+
+// --------------------------------------------------------------
+
+bool InnerLockSwitch::ProcessMouse2D (int event, int mx, int my)
+{
+	if (DGSwitch1::ProcessMouse2D (event, mx, my)) {
+		DGSwitch1::State state = GetState();
+		component->ActivateInnerLock (state==UP ? DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
+		return true;
+	}
+	return false;
 }
 
 // --------------------------------------------------------------
@@ -659,6 +741,20 @@ void TophatchCtrl::clbkPostStep (double simt, double simdt, double mjd)
 
 // --------------------------------------------------------------
 
+bool TophatchCtrl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
+{
+	if (panelid != 1) return false;
+
+	// Hatch open/close switch
+	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh1,1);
+	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_SWITCH), _R(434,192,460,244), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, sw);
+	sw->DefineAnimation2D (DG()->panelmesh1, GRP_INSTRUMENTS_ABOVE_P1, 0);
+
+	return true;
+}
+
+// --------------------------------------------------------------
+
 bool TophatchCtrl::clbkLoadVC (int vcid)
 {
 	if (vcid != 0) return false;
@@ -695,10 +791,30 @@ HatchCtrlSwitch::HatchCtrlSwitch (TophatchCtrl *comp)
 
 // --------------------------------------------------------------
 
+void HatchCtrlSwitch::Reset2D (MESHHANDLE hMesh)
+{
+	SetState (component->hatch_status == DeltaGlider::DOOR_CLOSED ||
+			  component->hatch_status == DeltaGlider::DOOR_CLOSING ? DOWN:UP);
+}
+
+// --------------------------------------------------------------
+
 void HatchCtrlSwitch::ResetVC (DEVMESHHANDLE hMesh)
 {
 	SetState (component->hatch_status == DeltaGlider::DOOR_CLOSED ||
 			  component->hatch_status == DeltaGlider::DOOR_CLOSING ? DOWN:UP);
+}
+
+// --------------------------------------------------------------
+
+bool HatchCtrlSwitch::ProcessMouse2D (int event, int mx, int my)
+{
+	if (DGSwitch1::ProcessMouse2D (event, mx, my)) {
+		DGSwitch1::State state = GetState();
+		component->Activate (state==UP ? DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
+		return true;
+	}
+	return false;
 }
 
 // --------------------------------------------------------------
@@ -723,9 +839,28 @@ PValveSwitch::PValveSwitch (PressureSubsystem *_subsys, int id)
 
 // --------------------------------------------------------------
 
+void PValveSwitch::Reset2D (MESHHANDLE hMesh)
+{
+	SetState (subsys->GetPValve(vid) ? UP:DOWN);
+}
+
+// --------------------------------------------------------------
+
 void PValveSwitch::ResetVC (DEVMESHHANDLE hMesh)
 {
 	SetState (subsys->GetPValve(vid) ? UP:DOWN);
+}
+
+// --------------------------------------------------------------
+
+bool PValveSwitch::ProcessMouse2D (int event, int mx, int my)
+{
+	if (DGSwitch1::ProcessMouse2D (event, mx, my)) {
+		DGSwitch1::State state = GetState();
+		subsys->SetPValve (vid, state==UP ? 1:0);
+		return true;
+	}
+	return false;
 }
 
 // --------------------------------------------------------------
@@ -761,7 +896,7 @@ void PressureIndicator::ResetVC (DEVMESHHANDLE hMesh)
 
 // --------------------------------------------------------------
 
-bool PressureIndicator::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
+bool PressureIndicator::Redraw ()
 {
 	if (!btgt) return false;
 
@@ -780,6 +915,21 @@ bool PressureIndicator::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 	BlitReadout (3, cbuf);
 
 	return false;
+}
+
+// --------------------------------------------------------------
+
+bool PressureIndicator::Redraw2D (SURFHANDLE surf)
+{
+	btgt = surf;
+	return Redraw();
+}
+
+// --------------------------------------------------------------
+
+bool PressureIndicator::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
+{
+	return Redraw();
 }
 
 // --------------------------------------------------------------

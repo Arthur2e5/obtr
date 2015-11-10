@@ -1,4 +1,4 @@
-// Created by deltaglider_vc.m 21-Oct-2015
+// Created by deltaglider_vc.m 09-Nov-2015
 
 #ifndef __DG_VC_ANIM_H
 #define __DG_VC_ANIM_H
@@ -378,6 +378,15 @@ const VECTOR3 VC_NAVLIGHT_SWITCH_ref = {0.14519,1.66028,6.91550};
 // NAVLIGHT_SWITCH (VC): rotation axis
 const VECTOR3 VC_NAVLIGHT_SWITCH_axis = {1.00000,0.00000,0.00000};
 
+// RADIATOR_SWITCH (VC): mouse catch area
+const VECTOR3 VC_RADIATOR_SWITCH_mousearea[4] = {{0.16945,1.65220,6.93405},{0.18945,1.65220,6.93405},{0.16945,1.66256,6.89541},{0.18945,1.66256,6.89541}};
+
+// RADIATOR_SWITCH (VC): rotation reference
+const VECTOR3 VC_RADIATOR_SWITCH_ref = {0.17945,1.66028,6.91550};
+
+// RADIATOR_SWITCH (VC): rotation axis
+const VECTOR3 VC_RADIATOR_SWITCH_axis = {1.00000,0.00000,0.00000};
+
 // HATCH_SWITCH (VC): mouse catch area
 const VECTOR3 VC_HATCH_SWITCH_mousearea[4] = {{-0.15855,1.66582,6.88325},{-0.13855,1.66582,6.88325},{-0.15855,1.67617,6.84461},{-0.13855,1.67617,6.84461}};
 
@@ -550,20 +559,22 @@ const int VC_STROBELIGHT_SWITCH_vofs = 198;
 
 const int VC_NAVLIGHT_SWITCH_vofs = 231;
 
-const int VC_HATCH_SWITCH_vofs = 264;
+const int VC_RADIATOR_SWITCH_vofs = 264;
 
-const int VC_ILOCK_SWITCH_vofs = 297;
+const int VC_HATCH_SWITCH_vofs = 297;
 
-const int VC_OLOCK_SWITCH_vofs = 330;
+const int VC_ILOCK_SWITCH_vofs = 330;
 
-const int VC_CABIN_O2_SWITCH_vofs = 363;
+const int VC_OLOCK_SWITCH_vofs = 363;
 
-const int VC_VALVE1_SWITCH_vofs = 396;
+const int VC_CABIN_O2_SWITCH_vofs = 396;
 
-const int VC_VALVE2_SWITCH_vofs = 429;
+const int VC_VALVE1_SWITCH_vofs = 429;
 
-const int VC_VALVE3_SWITCH_vofs = 462;
+const int VC_VALVE2_SWITCH_vofs = 462;
 
-const int VC_LOCK_O2_SWITCH_vofs = 495;
+const int VC_VALVE3_SWITCH_vofs = 495;
+
+const int VC_LOCK_O2_SWITCH_vofs = 528;
 
 #endif // !__DG_VC_ANIM_H

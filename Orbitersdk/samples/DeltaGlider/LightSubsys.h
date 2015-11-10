@@ -157,6 +157,7 @@ public:
 	inline int GetLight () const { return light_mode; }
 	void clbkSaveState (FILEHANDLE scn);
 	bool clbkParseScenarioLine (const char *line);
+	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);
 	void clbkResetVC (int vcid, DEVMESHHANDLE hMesh);
 
@@ -172,7 +173,9 @@ private:
 class LandDockLightSwitch: public DGSwitch1 {
 public:
 	LandDockLightSwitch (LandDockLight *comp);
+	void Reset2D (MESHHANDLE hMesh);
 	void ResetVC (DEVMESHHANDLE hMesh);
+	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 
 private:
@@ -192,6 +195,7 @@ public:
 	inline bool GetLight () const { return light_on; }
 	void clbkSaveState (FILEHANDLE scn);
 	bool clbkParseScenarioLine (const char *line);
+	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);
 	void clbkResetVC (int vcid, DEVMESHHANDLE hMesh);
 
@@ -206,7 +210,9 @@ private:
 class StrobeLightSwitch: public DGSwitch1 {
 public:
 	StrobeLightSwitch (StrobeLight *comp);
+	void Reset2D (MESHHANDLE hMesh);
 	void ResetVC (DEVMESHHANDLE hMesh);
+	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 
 private:
@@ -226,6 +232,7 @@ public:
 	void SetLight (bool on);
 	void clbkSaveState (FILEHANDLE scn);
 	bool clbkParseScenarioLine (const char *line);
+	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);
 	void clbkResetVC (int vcid, DEVMESHHANDLE hMesh);
 
@@ -240,7 +247,9 @@ private:
 class NavLightSwitch: public DGSwitch1 {
 public:
 	NavLightSwitch (NavLight *comp);
+	void Reset2D (MESHHANDLE hMesh);
 	void ResetVC (DEVMESHHANDLE hMesh);
+	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 
 private:

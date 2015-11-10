@@ -180,3 +180,107 @@ bool Subsystem::clbkVCMouseEvent (int id, int event, VECTOR3 &p)
 {
 	return (id < nelement ? element[id]->ProcessMouseVC (event, p) : false);
 }
+
+
+// ==============================================================
+
+AnimState2::AnimState2 ()
+{
+	state = 0.0;
+	speed = 0.0;
+	inc_speed =  1.0;
+	dec_speed = -1.0;
+}
+
+// --------------------------------------------------------------
+
+AnimState2::AnimState2 (double operating_speed, double initial_state)
+{
+	state = initial_state;
+	speed = 0.0;
+	inc_speed =  operating_speed;
+	dec_speed = -operating_speed;
+}
+
+// --------------------------------------------------------------
+
+void AnimState2::SetOperatingSpeed (double opspeed)
+{
+	inc_speed =  opspeed;
+	dec_speed = -opspeed;
+}
+
+// --------------------------------------------------------------
+
+void AnimState2::SetState (double _state, double _speed)
+{
+	state = _state;
+	speed = _speed;
+	if (state >= 1.0) {
+		state = 1.0;
+		if (speed > 0.0)
+			speed = 0.0;
+	} else if (state <= 0.0) {
+		state = 0.0;
+		if (speed < 0.0)
+			speed = 0.0;
+	}
+}
+
+// --------------------------------------------------------------
+
+void AnimState2::Open ()
+{
+	if (state < 1.0)
+		speed = inc_speed;
+}
+
+// --------------------------------------------------------------
+
+void AnimState2::Close ()
+{
+	if (state > 0.0)
+		speed = dec_speed;
+}
+
+// --------------------------------------------------------------
+
+void AnimState2::Stop ()
+{
+	speed = 0.0;
+}
+
+// --------------------------------------------------------------
+
+void AnimState2::SetOpened ()
+{
+	state = 1.0;
+	speed = 0.0;
+}
+
+// --------------------------------------------------------------
+
+void AnimState2::SetClosed ()
+{
+	state = 0.0;
+	speed = 0.0;
+}
+
+// --------------------------------------------------------------
+
+bool AnimState2::Process (double dt)
+{
+	if (speed) {
+		state += speed * dt;
+		if (state <= 0.0) {
+			state = 0.0;
+			speed = 0.0;
+		} else if (state >= 1.0) {
+			state = 1.0;
+			speed = 0.0;
+		}
+		return true;
+	} else {
+		return false;
+	}
+}

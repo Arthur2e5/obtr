@@ -45,6 +45,7 @@ public:
 	DeltaGlider::DoorStatus HatchStatus () const;
 	void RepairDamage ();
 	void clbkPostStep (double simt, double simdt, double mjd);
+	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);     // create the VC elements for this module
 
 private:
@@ -85,6 +86,7 @@ public:
 	bool clbkParseScenarioLine (const char *line);
 	void clbkPostCreation ();
 	void clbkPostStep (double simt, double simdt, double mjd);
+	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);
 
 private:
@@ -106,7 +108,9 @@ private:
 class OuterLockSwitch: public DGSwitch1 {
 public:
 	OuterLockSwitch (AirlockCtrl *comp);
+	void Reset2D (MESHHANDLE hMesh);
 	void ResetVC (DEVMESHHANDLE hMesh);
+	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 
 private:
@@ -118,7 +122,9 @@ private:
 class InnerLockSwitch: public DGSwitch1 {
 public:
 	InnerLockSwitch (AirlockCtrl *comp);
+	void Reset2D (MESHHANDLE hMesh);
 	void ResetVC (DEVMESHHANDLE hMesh);
+	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 
 private:
@@ -143,6 +149,7 @@ public:
 	bool clbkParseScenarioLine (const char *line);
 	void clbkPostCreation ();
 	void clbkPostStep (double simt, double simdt, double mjd);
+	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);     // create the VC elements for this module
 
 private:
@@ -161,7 +168,9 @@ private:
 class HatchCtrlSwitch: public DGSwitch1 {
 public:
 	HatchCtrlSwitch (TophatchCtrl *comp);
+	void Reset2D (MESHHANDLE hMesh);
 	void ResetVC (DEVMESHHANDLE hMesh);
+	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 
 private:
@@ -174,7 +183,9 @@ private:
 class PValveSwitch: public DGSwitch1 {
 public:
 	PValveSwitch (PressureSubsystem *_subsys, int id);
+	void Reset2D (MESHHANDLE hMesh);
 	void ResetVC (DEVMESHHANDLE hMesh);
+	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 
 private:
@@ -189,9 +200,11 @@ class PressureIndicator: public PanelElement {
 public:
 	PressureIndicator (PressureSubsystem *_subsys, SURFHANDLE blitsrc);
 	void ResetVC (DEVMESHHANDLE hMesh);
+	bool Redraw2D (SURFHANDLE surf);
 	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
 
 private:
+	bool Redraw ();
 	void ValStr (double p, char *cbuf);
 	void BlitReadout (int which, const char *str);
 	PressureSubsystem *subsys;

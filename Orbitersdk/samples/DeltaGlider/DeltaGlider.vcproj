@@ -17,6 +17,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(ProjectDir)..\..\resources\Orbiter vessel.vsprops;$(ProjectDir)..\..\resources\Orbiter debug.vsprops"
 			UseOfMFC="0"
@@ -216,23 +218,11 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="Bitmaps\Dial1.bmp"
-				>
-			</File>
-			<File
 				RelativePath="Bitmaps\font1.bmp"
 				>
 			</File>
 			<File
 				RelativePath="Bitmaps\font2.bmp"
-				>
-			</File>
-			<File
-				RelativePath="Bitmaps\Horizon.bmp"
-				>
-			</File>
-			<File
-				RelativePath="Bitmaps\Indicator.bmp"
 				>
 			</File>
 			<File
@@ -245,22 +235,6 @@
 			</File>
 			<File
 				RelativePath="Bitmaps\Light2.bmp"
-				>
-			</File>
-			<File
-				RelativePath="Bitmaps\Navbutton.bmp"
-				>
-			</File>
-			<File
-				RelativePath="Bitmaps\Panel1.bmp"
-				>
-			</File>
-			<File
-				RelativePath="Bitmaps\Panel2.bmp"
-				>
-			</File>
-			<File
-				RelativePath="Bitmaps\Panel3.bmp"
 				>
 			</File>
 			<File
@@ -293,22 +267,6 @@
 			</File>
 			<File
 				RelativePath="Bitmaps\Switch4r.bmp"
-				>
-			</File>
-			<File
-				RelativePath="Bitmaps\Vbank.bmp"
-				>
-			</File>
-			<File
-				RelativePath="Bitmaps\Vpitch.bmp"
-				>
-			</File>
-			<File
-				RelativePath="Bitmaps\Vyaw.bmp"
-				>
-			</File>
-			<File
-				RelativePath="Bitmaps\warn.bmp"
 				>
 			</File>
 		</Filter>
@@ -481,22 +439,6 @@
 					RelativePath=".\MomentInd.h"
 					>
 				</File>
-				<File
-					RelativePath=".\MwsButton.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\MwsButton.h"
-					>
-				</File>
-				<File
-					RelativePath=".\SwitchArray.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\SwitchArray.h"
-					>
-				</File>
 			</Filter>
 			<Filter
 				Name="Subsystems"
@@ -518,6 +460,14 @@
 					>
 				</File>
 				<File
+					RelativePath=".\CoolingSubsys.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\CoolingSubsys.h"
+					>
+				</File>
+				<File
 					RelativePath=".\DGSubsys.cpp"
 					>
 				</File>
@@ -531,6 +481,14 @@
 				</File>
 				<File
 					RelativePath=".\DockingSubsys.h"
+					>
+				</File>
+				<File
+					RelativePath=".\FailureSubsys.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\FailureSubsys.h"
 					>
 				</File>
 				<File
@@ -651,6 +609,28 @@
 						Name="VCCustomBuildTool"
 						CommandLine="echo $(InputPath) _P0 meshres_p0.h | $(SDKDir)\utils\meshc.exe&#x0D;&#x0A;"
 						Outputs="meshres_p0.h"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\..\Meshes\DG\dg_2dpanel1.msh"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="echo $(InputPath) _P1 meshres_p1.h | $(SDKDir)\utils\meshc.exe&#x0D;&#x0A;"
+						Outputs="meshres_p1.h"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCustomBuildTool"
+						CommandLine="echo $(InputPath) _P1 meshres_p1.h | $(SDKDir)\utils\meshc.exe&#x0D;&#x0A;"
+						Outputs="meshres_p1.h"
 					/>
 				</FileConfiguration>
 			</File>

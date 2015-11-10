@@ -1441,7 +1441,8 @@ typedef struct {
 	DWORD nmesh, ngroup;
 } VCMFDSPEC;
 
-#define MFD_SHOWMODELABELS 1
+#define MFD_SHOWMODELABELS       0x0001
+#define MFD_TRANSPARENT_WHEN_OFF 0x0002
 
 typedef struct {
 	RECT pos;

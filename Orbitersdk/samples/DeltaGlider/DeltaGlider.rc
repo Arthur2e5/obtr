@@ -26,16 +26,10 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
 // Bitmap
 //
 
-IDB_DIAL1               BITMAP                  "Bitmaps\\Dial1.bmp"
-IDB_NAVBUTTON           BITMAP                  "Bitmaps\\Navbutton.bmp"
 IDB_SWITCH1             BITMAP                  "Bitmaps\\Switch1.bmp"
 IDB_LIGHT1              BITMAP                  "Bitmaps\\Light1.bmp"
-IDB_INDICATOR           BITMAP                  "Bitmaps\\Indicator.bmp"
 IDB_SLIDER1             BITMAP                  "Bitmaps\\Slider1.bmp"
 IDB_SWITCH2             BITMAP                  "Bitmaps\\Switch2.bmp"
-IDB_VPITCH              BITMAP                  "Bitmaps\\Vpitch.bmp"
-IDB_VBANK               BITMAP                  "Bitmaps\\Vbank.bmp"
-IDB_VYAW                BITMAP                  "Bitmaps\\Vyaw.bmp"
 IDB_LEVER1              BITMAP                  "Bitmaps\\Lever1.bmp"
 IDB_SWITCH4             BITMAP                  "Bitmaps\\Switch4.bmp"
 IDB_INDICATOR2          BITMAP                  "Bitmaps\\Slider2.bmp"
@@ -44,7 +38,6 @@ IDB_LIGHT2              BITMAP                  "Bitmaps\\Light2.bmp"
 IDB_COVER1              BITMAP                  "Bitmaps\\Cover1.bmp"
 IDB_COVER2              BITMAP                  "Bitmaps\\Cover2.bmp"
 IDB_FONT2               BITMAP                  "Bitmaps\\font2.bmp"
-IDB_WARN                BITMAP                  "Bitmaps\\warn.bmp"
 IDB_SWITCH3             BITMAP                  "Bitmaps\\Switch3.bmp"
 IDB_MFDBUTTON           BITMAP                  "Bitmaps\\MFDButton.bmp"
 

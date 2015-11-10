@@ -4,6 +4,7 @@
 #include "DockingSubsys.h"
 #include "AerodynSubsys.h"
 #include "PressureSubsys.h"
+#include "CoolingSubsys.h"
 #include <stdio.h>
 
 extern "C" {
@@ -136,8 +137,10 @@ static int dgRetro (lua_State *L)
 {
 	DeltaGlider *dg = lua_toDG (L, 1);
 	int action = lua_tointeger (L, 2);
-	if (dg && action >= 0 && action < 2)
-		dg->SubsysMainRetro()->ActivateRCover (DGaction[action]);
+	if (dg && action >= 0 && action < 2) {
+		if (action == 0) dg->SubsysMainRetro()->CloseRetroCover();
+		else             dg->SubsysMainRetro()->OpenRetroCover();
+	}
 	return 0;
 }
 
@@ -163,8 +166,10 @@ static int dgRadiator (lua_State *L)
 {
 	DeltaGlider *dg = lua_toDG (L, 1);
 	int action = lua_tointeger (L, 2);
-	if (dg && action >= 0 && action < 2)
-		dg->ActivateRadiator (DGaction[action]);
+	if (dg && action >= 0 && action < 2) {
+		if (action == 0) dg->SubsysCooling()->CloseRadiator();
+		else             dg->SubsysCooling()->OpenRadiator();
+	}
 	return 0;
 }
 
