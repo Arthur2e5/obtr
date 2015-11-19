@@ -1,10 +1,22 @@
-// Created by deltaglider_vc.m 09-Nov-2015
+// Created by deltaglider_vc.m 19-Nov-2015
 
 #ifndef __DG_VC_ANIM_H
 #define __DG_VC_ANIM_H
 
 // Lower front panel: tilt from vertical
 const double vc_lpanel_tilt = 0.622165;
+
+// AOA (VC): rotation reference
+const VECTOR3 VC_AOA_ref = {0.00000,1.24000,7.30000};
+
+// AOA (VC): rotation axis
+const VECTOR3 VC_AOA_axis = {0.00000,0.34202,-0.93969};
+
+// VS (VC): rotation reference
+const VECTOR3 VC_VS_ref = {0.00000,1.24000,7.30000};
+
+// VS (VC): rotation axis
+const VECTOR3 VC_VS_axis = {0.00000,0.34202,-0.93969};
 
 // AF_DIAL (VC): mouse catch area
 const VECTOR3 VC_AF_DIAL_mousearea[4] = {{-0.32300,1.07786,7.23673},{-0.29300,1.07786,7.23673},{-0.32300,1.10605,7.24699},{-0.29300,1.10605,7.24699}};
@@ -14,6 +26,12 @@ const VECTOR3 VC_AF_DIAL_ref = {-0.30800,1.09196,7.24186};
 
 // AF_DIAL (VC): rotation axis
 const VECTOR3 VC_AF_DIAL_axis = {0.00000,-0.34202,0.93969};
+
+// HSI (VC): rotation reference
+const VECTOR3 VC_HSI_ref = {0.00000,1.00610,7.20195};
+
+// HSI (VC): rotation axis
+const VECTOR3 VC_HSI_axis = {0.00000,0.58280,-0.81262};
 
 // GIMBAL_DIAL (VC): mouse catch area
 const VECTOR3 VC_GIMBAL_DIAL_mousearea[4] = {{-0.27440,1.00130,7.19359},{-0.24440,1.00130,7.19359},{-0.27440,1.02568,7.21107},{-0.24440,1.02568,7.21107}};
@@ -459,6 +477,14 @@ const VECTOR3 VC_LOCK_O2_SWITCH_ref = {-0.06740,1.69530,6.78479};
 // LOCK_O2_SWITCH (VC): rotation axis
 const VECTOR3 VC_LOCK_O2_SWITCH_axis = {1.00000,0.00000,0.00000};
 
+const int VC_AOA_vofs = 0;
+
+const int VC_AOA_READOUT_vofs = 8;
+
+const int VC_VSTAPE_vofs = 24;
+
+const int VC_VS_READOUT_vofs = 28;
+
 const int VC_AF_DIAL_vofs = 0;
 
 const int VC_GIMBAL_DIAL_vofs = 76;
@@ -475,25 +501,25 @@ const int VC_HOVER_RSWITCH_vofs = 140;
 
 const int VC_HOVER_HOLDALT_SWITCH_vofs = 168;
 
-const int VC_GIMBAL_INDICATOR_LEFT_vofs = 0;
+const int VC_GIMBAL_INDICATOR_LEFT_vofs = 48;
 
-const int VC_GIMBAL_INDICATOR_RIGHT_vofs = 8;
+const int VC_GIMBAL_INDICATOR_RIGHT_vofs = 56;
 
-const int VC_HOVER_INDICATOR_vofs = 16;
+const int VC_HOVER_INDICATOR_vofs = 64;
 
 const int VC_BTN_HOVER_HOLDALT_vofs = 0;
 
-const int VC_BTN_HOVER_HOLDALT_LABEL_vofs = 0;
+const int VC_BTN_HOVER_HOLDALT_LABEL_vofs = 8;
 
 const int VC_BTN_HOVER_HOLDALT_CUR_vofs = 0;
 
 const int VC_BTN_HOVERMODE_1_vofs = 20;
 
-const int VC_BTN_HOVERMODE_1_LABEL_vofs = 8;
+const int VC_BTN_HOVERMODE_1_LABEL_vofs = 16;
 
 const int VC_BTN_HOVERMODE_2_vofs = 40;
 
-const int VC_BTN_HOVERMODE_2_LABEL_vofs = 16;
+const int VC_BTN_HOVERMODE_2_LABEL_vofs = 24;
 
 const int VC_GEAR_INDICATOR_vofs = 8;
 
@@ -511,41 +537,41 @@ const int VC_RCS_DIAL_vofs = 228;
 
 const int VC_BTN_HUDMODE_1_vofs = 60;
 
-const int VC_BTN_HUDMODE_1_LABEL_vofs = 24;
+const int VC_BTN_HUDMODE_1_LABEL_vofs = 32;
 
 const int VC_BTN_HUDMODE_2_vofs = 80;
 
-const int VC_BTN_HUDMODE_2_LABEL_vofs = 32;
+const int VC_BTN_HUDMODE_2_LABEL_vofs = 40;
 
 const int VC_BTN_HUDMODE_3_vofs = 100;
 
-const int VC_BTN_HUDMODE_3_LABEL_vofs = 40;
+const int VC_BTN_HUDMODE_3_LABEL_vofs = 48;
 
 const int VC_HUD_COLBUTTON_vofs = 20;
 
 const int VC_BTN_NAVMODE_1_vofs = 120;
 
-const int VC_BTN_NAVMODE_1_LABEL_vofs = 48;
+const int VC_BTN_NAVMODE_1_LABEL_vofs = 56;
 
 const int VC_BTN_NAVMODE_2_vofs = 140;
 
-const int VC_BTN_NAVMODE_2_LABEL_vofs = 56;
+const int VC_BTN_NAVMODE_2_LABEL_vofs = 64;
 
 const int VC_BTN_NAVMODE_3_vofs = 160;
 
-const int VC_BTN_NAVMODE_3_LABEL_vofs = 64;
+const int VC_BTN_NAVMODE_3_LABEL_vofs = 72;
 
 const int VC_BTN_NAVMODE_4_vofs = 180;
 
-const int VC_BTN_NAVMODE_4_LABEL_vofs = 72;
+const int VC_BTN_NAVMODE_4_LABEL_vofs = 80;
 
 const int VC_BTN_NAVMODE_5_vofs = 200;
 
-const int VC_BTN_NAVMODE_5_LABEL_vofs = 80;
+const int VC_BTN_NAVMODE_5_LABEL_vofs = 88;
 
 const int VC_BTN_NAVMODE_6_vofs = 220;
 
-const int VC_BTN_NAVMODE_6_LABEL_vofs = 88;
+const int VC_BTN_NAVMODE_6_LABEL_vofs = 96;
 
 const int VC_INSTRLIGHT_SWITCH_vofs = 66;
 

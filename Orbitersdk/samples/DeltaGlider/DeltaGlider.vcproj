@@ -190,10 +190,6 @@
 			Name="Resources"
 			>
 			<File
-				RelativePath="Bitmaps\Cover1.bmp"
-				>
-			</File>
-			<File
 				RelativePath="Bitmaps\Cover2.bmp"
 				>
 			</File>
@@ -218,23 +214,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="Bitmaps\font1.bmp"
-				>
-			</File>
-			<File
-				RelativePath="Bitmaps\font2.bmp"
-				>
-			</File>
-			<File
 				RelativePath="Bitmaps\Lever1.bmp"
-				>
-			</File>
-			<File
-				RelativePath="Bitmaps\Light1.bmp"
-				>
-			</File>
-			<File
-				RelativePath="Bitmaps\Light2.bmp"
 				>
 			</File>
 			<File

@@ -3,18 +3,14 @@
 // Used by DeltaGlider.rc
 //
 #define IDB_SWITCH1                     112
-#define IDB_LIGHT1                      113
 #define IDB_SLIDER1                     116
 #define IDB_SWITCH2                     152
 #define IDB_LEVER1                      157
 #define IDB_SWITCH4                     158
 #define IDB_INDICATOR2                  159
 #define IDB_SWITCH4R                    161
-#define IDB_LIGHT2                      163
-#define IDB_COVER1                      164
 #define IDB_COVER2                      165
 #define IDD_CTRL                        166
-#define IDB_FONT2                       169
 #define IDD_DAMAGE                      172
 #define IDD_EDITOR1                     173
 #define IDD_EDITOR_PG1                  174

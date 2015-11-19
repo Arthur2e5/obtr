@@ -23,7 +23,7 @@ class MfdButtonCol;
 
 class MfdSubsystem: public DGSubsystem {
 public:
-	MfdSubsystem (DeltaGlider *v, int ident, int mfdident);
+	MfdSubsystem (DeltaGlider *v, int mfdident);
 	inline int MfdId() const { return mfdid; }
 	inline SURFHANDLE VcTex() const { return vctex; }
 	void ModeChanged ();

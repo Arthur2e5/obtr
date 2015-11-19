@@ -21,23 +21,13 @@
 // Aerodynamic control subsystem
 // ==============================================================
 
-AerodynCtrlSubsystem::AerodynCtrlSubsystem (DeltaGlider *v, int ident)
-: DGSubsystem (v, ident)
+AerodynCtrlSubsystem::AerodynCtrlSubsystem (DeltaGlider *v)
+: DGSubsystem (v)
 {
 	// create component instances
-	AddComponent (selector = new AerodynSelector (this));
-	AddComponent (airbrake = new Airbrake (this));
-	AddComponent (elevtrim = new ElevatorTrim (this));
-}
-
-// --------------------------------------------------------------
-
-AerodynCtrlSubsystem::~AerodynCtrlSubsystem ()
-{
-	// delete components
-	delete selector;
-	delete airbrake;
-	delete elevtrim;
+	AddSubsystem (selector = new AerodynSelector (this));
+	AddSubsystem (airbrake = new Airbrake (this));
+	AddSubsystem (elevtrim = new ElevatorTrim (this));
 }
 
 // --------------------------------------------------------------
@@ -49,23 +39,23 @@ void AerodynCtrlSubsystem::SetMode (DWORD mode)
 
 // --------------------------------------------------------------
 
-void AerodynCtrlSubsystem::ActivateAirbrake (DeltaGlider::DoorStatus action, bool half_step)
+void AerodynCtrlSubsystem::ExtendAirbrake ()
 {
-	airbrake->Activate (action, half_step);
+	airbrake->Extend();
 }
 
 // --------------------------------------------------------------
 
-DeltaGlider::DoorStatus AerodynCtrlSubsystem::AirbrakeStatus () const
+void AerodynCtrlSubsystem::RetractAirbrake ()
 {
-	return airbrake->Status();
+	airbrake->Retract();
 }
 
 // --------------------------------------------------------------
 
-const double *AerodynCtrlSubsystem::AirbrakePositionPtr () const
+const AnimState2 &AerodynCtrlSubsystem::AirbrakeState() const
 {
-	return airbrake->PositionPtr();
+	return airbrake->State();
 }
 
 // ==============================================================
@@ -73,7 +63,7 @@ const double *AerodynCtrlSubsystem::AirbrakePositionPtr () const
 // ==============================================================
 
 AerodynSelector::AerodynSelector (AerodynCtrlSubsystem *_subsys)
-: DGSubsystemComponent(_subsys)
+: DGSubsystem(_subsys)
 {
 	ELID_DIAL = AddElement (dial = new AerodynSelectorDial (this));
 }
@@ -84,7 +74,7 @@ void AerodynSelector::SetMode (DWORD mode)
 {
 	DWORD curmode = DG()->GetADCtrlMode();
 	if (curmode != mode) DG()->SetADCtrlMode (mode);
-	oapiTriggerRedrawArea (0, 0, GlobalElId(ELID_DIAL));
+	oapiTriggerRedrawArea (0, 0, ELID_DIAL);
 
 }
 
@@ -118,7 +108,7 @@ bool AerodynSelector::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD vi
 
 	// mode dial
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_DIAL), _R(23,69,63,113), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN, panel2dtex, dial);
+	DG()->RegisterPanelArea (hPanel, ELID_DIAL, _R(23,69,63,113), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN, panel2dtex, dial);
 
 	return true;
 }
@@ -130,8 +120,8 @@ bool AerodynSelector::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// mode dial
-	oapiVCRegisterArea (GlobalElId(ELID_DIAL), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_DIAL), VC_AF_DIAL_mousearea[0], VC_AF_DIAL_mousearea[1], VC_AF_DIAL_mousearea[2], VC_AF_DIAL_mousearea[3]);
+	oapiVCRegisterArea (ELID_DIAL, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_DIAL, VC_AF_DIAL_mousearea[0], VC_AF_DIAL_mousearea[1], VC_AF_DIAL_mousearea[2], VC_AF_DIAL_mousearea[3]);
 	dial->DefineAnimationVC (VC_AF_DIAL_ref, VC_AF_DIAL_axis, GRP_DIAL1_VC, VC_AF_DIAL_vofs);
 
 	return true;
@@ -203,14 +193,12 @@ bool AerodynSelectorDial::ProcessMouseVC (int event, VECTOR3 &p)
 // ==============================================================
 
 Airbrake::Airbrake (AerodynCtrlSubsystem *_subsys)
-: DGSubsystemComponent(_subsys)
+: DGSubsystem(_subsys)
 {
+	brake_state.SetOperatingSpeed (AIRBRAKE_OPERATING_SPEED);
+	lever_state.SetOperatingSpeed (4.0);
+	airbrake_tgt = 0;
 	ELID_LEVER = AddElement (lever = new AirbrakeLever (this));
-	brake_status         = DeltaGlider::DOOR_CLOSED;
-	brake_proc           = 0.0;
-	airbrakelever_status = DeltaGlider::DOOR_CLOSED;
-	airbrakelever_proc   = 0.0;
-	airbrake_tgt         = 0;
 
 	// Airbrake animation
 	static UINT RRudderGrp[2] = {GRP_RRudder1,GRP_RRudder2};
@@ -242,28 +230,26 @@ Airbrake::Airbrake (AerodynCtrlSubsystem *_subsys)
 
 // --------------------------------------------------------------
 
-void Airbrake::Activate (DeltaGlider::DoorStatus action, bool half_step)
+void Airbrake::Extend ()
 {
 	const double eps = 1e-8;
-	brake_status = airbrakelever_status = action;
-	if (action <= DeltaGlider::DOOR_OPEN) {
-		brake_proc = airbrakelever_proc = (action == DeltaGlider::DOOR_CLOSED ? 0.0 : 1.0);
-		DG()->SetAnimation (anim_brake, brake_proc);
-		DG()->SetAnimation (anim_airbrakelever, airbrakelever_proc);
-	} else if (action == DeltaGlider::DOOR_OPENING) {
-		airbrake_tgt = (airbrakelever_proc < 0.5-eps ? 1:2);
-	} else {
-		airbrake_tgt = (airbrakelever_proc > 0.5+eps ? 1:0);
-	}
-	oapiTriggerPanelRedrawArea (0, GlobalElId(ELID_LEVER));
-	DG()->RecordEvent ("AIRBRAKE", action == DeltaGlider::DOOR_CLOSING ? "CLOSE" : "OPEN");
+	brake_state.Open();
+	lever_state.Open();
+	airbrake_tgt = (lever_state.State() < 0.5-eps ? 1:2);
+	oapiTriggerPanelRedrawArea (0, ELID_LEVER);
+	DG()->RecordEvent ("AIRBRAKE", "OPEN");
 }
 
 // --------------------------------------------------------------
 
-DeltaGlider::DoorStatus Airbrake::Status () const
+void Airbrake::Retract ()
 {
-	return brake_status;
+	const double eps = 1e-8;
+	brake_state.Close();
+	lever_state.Close();
+	airbrake_tgt = (lever_state.State() > 0.5+eps ? 1:0);
+	oapiTriggerPanelRedrawArea (0, ELID_LEVER);
+	DG()->RecordEvent ("AIRBRAKE", "CLOSE");
 }
 
 // --------------------------------------------------------------
@@ -271,40 +257,24 @@ DeltaGlider::DoorStatus Airbrake::Status () const
 void Airbrake::clbkPostStep (double simt, double simdt, double mjd)
 {
 	// animate airbrake
-	if (brake_status >= DeltaGlider::DOOR_CLOSING) {
-		double tgt, da = simdt * AIRBRAKE_OPERATING_SPEED;
-		if (brake_status == DeltaGlider::DOOR_CLOSING) { // retract brake
-			tgt = (airbrake_tgt == 1 ? 0.5:0.0);
-			if (brake_proc > tgt) brake_proc = max (tgt, brake_proc-da);
-			else                  brake_status = DeltaGlider::DOOR_CLOSED;
-		} else {                            // deploy brake
-			tgt = (airbrake_tgt == 1 ? 0.5:1.0);
-			if (brake_proc < tgt) brake_proc = min (tgt, brake_proc+da);
-			else                  brake_status = DeltaGlider::DOOR_OPEN;
+	if (brake_state.Process (simdt)) {
+		if (airbrake_tgt == 1) { // intermediate position
+			if ((brake_state.IsClosing() && brake_state.State() < 0.5) ||
+				(brake_state.IsOpening() && brake_state.State() > 0.5))
+				brake_state.SetState (0.5, 0.0);
 		}
-		DG()->SetAnimation (anim_brake, brake_proc);
+		DG()->SetAnimation (anim_brake, brake_state.State());
 		DG()->UpdateStatusIndicators();
 	}
 
 	// animate airbrake lever
-	if (airbrakelever_status >= DeltaGlider::DOOR_CLOSING) {
-		double tgt, da = simdt * 4.0;
-		if (airbrakelever_status == DeltaGlider::DOOR_CLOSING) {
-			tgt = (airbrake_tgt == 1 ? 0.5:0.0);
-			if (airbrakelever_proc > tgt)
-				airbrakelever_proc = max (tgt, airbrakelever_proc-da);
-			else {
-				airbrakelever_status = DeltaGlider::DOOR_CLOSED;
-			}
-		} else  { // door opening
-			tgt = (airbrake_tgt == 1 ? 0.5:1.0);
-			if (airbrakelever_proc < tgt)
-				airbrakelever_proc = min (tgt, airbrakelever_proc+da);
-			else {
-				airbrakelever_status = DeltaGlider::DOOR_OPEN;
-			}
+	if (lever_state.Process (simdt)) {
+		if (airbrake_tgt == 1) { // intermediate position
+			if ((lever_state.IsClosing() && lever_state.State() < 0.5) ||
+				(lever_state.IsOpening() && lever_state.State() > 0.5))
+				lever_state.SetState (0.5, 0.0);
 		}
-		DG()->SetAnimation (anim_airbrakelever, airbrakelever_proc);
+		DG()->SetAnimation (anim_airbrakelever, lever_state.State());
 	}
 }
 
@@ -316,7 +286,7 @@ bool Airbrake::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DW
 
 	// airbrake lever
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_LEVER), _R( 141,153, 161,213), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN, panel2dtex, lever);
+	DG()->RegisterPanelArea (hPanel, ELID_LEVER, _R( 141,153, 161,213), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN, panel2dtex, lever);
 
 	return true;
 }
@@ -328,8 +298,8 @@ bool Airbrake::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// Airbrake lever
-	oapiVCRegisterArea (GlobalElId(ELID_LEVER), PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_LEVER), VC_AIRBRAKELEVER_mousearea[0], VC_AIRBRAKELEVER_mousearea[1], VC_AIRBRAKELEVER_mousearea[2], VC_AIRBRAKELEVER_mousearea[3]);
+	oapiVCRegisterArea (ELID_LEVER, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_LEVER, VC_AIRBRAKELEVER_mousearea[0], VC_AIRBRAKELEVER_mousearea[1], VC_AIRBRAKELEVER_mousearea[2], VC_AIRBRAKELEVER_mousearea[3]);
 
 	return true;
 }
@@ -338,29 +308,24 @@ bool Airbrake::clbkLoadVC (int vcid)
 
 void Airbrake::clbkSaveState (FILEHANDLE scn)
 {
-	if (brake_status || brake_proc) {
-		char cbuf[256];
-		sprintf (cbuf, "%d %0.4f", brake_status, brake_proc);
-		oapiWriteScenario_string (scn, "AIRBRAKE", cbuf);
-	}
+	brake_state.SaveState (scn, "AIRBRAKE");
 }
 
 // --------------------------------------------------------------
 
 bool Airbrake::clbkParseScenarioLine (const char *line)
 {
-	if (!_strnicmp (line, "AIRBRAKE", 8)) {
-		sscanf (line+8, "%d%lf", &brake_status, &brake_proc);
-		if (fabs (brake_proc-0.5) < 0.1 && brake_status <= DeltaGlider::DOOR_OPEN) {
+	static const double eps = 1e-8;
+
+	if (brake_state.ParseScenarioLine (line, "AIRBRAKE")) {
+		if ((!brake_state.IsActive() && fabs(brake_state.State()-0.5) < eps) ||
+			(brake_state.IsClosing() && brake_state.State() > 0.5) ||
+			(brake_state.IsOpening() && brake_state.State() < 0.5))
 			airbrake_tgt = 1;
-			airbrakelever_status = DeltaGlider::DOOR_CLOSED; airbrakelever_proc = 0.5;
-		} else if (brake_status == DeltaGlider::DOOR_OPEN || brake_status == DeltaGlider::DOOR_OPENING) {
-			airbrake_tgt = 2;
-			airbrakelever_status = DeltaGlider::DOOR_OPEN; airbrakelever_proc = 1.0;
-		} else {
+		else if (brake_state.State() < 0.5)
 			airbrake_tgt = 0;
-			airbrakelever_status = DeltaGlider::DOOR_CLOSED; airbrakelever_proc = 0.0;
-		}
+		else
+			airbrake_tgt = 1;
 		return true;
 	}
 	return false;
@@ -370,8 +335,18 @@ bool Airbrake::clbkParseScenarioLine (const char *line)
 
 void Airbrake::clbkPostCreation ()
 {
-	DG()->SetAnimation (anim_brake, brake_proc);
-	DG()->SetAnimation (anim_airbrakelever, airbrakelever_status & 1);
+	DG()->SetAnimation (anim_brake, brake_state.State());
+	DG()->SetAnimation (anim_airbrakelever, lever_state.State());
+}
+
+bool Airbrake::clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event)
+{
+	if (!_stricmp (event_type, "AIRBRAKE")) {
+		if (!_stricmp (event, "CLOSE")) Retract();
+		else                            Extend();
+		return true;
+	}
+	return false;
 }
 
 // ==============================================================
@@ -395,7 +370,7 @@ void AirbrakeLever::Reset2D (MESHHANDLE hMesh)
 void AirbrakeLever::ResetVC (DEVMESHHANDLE hMesh)
 {
 	DeltaGlider *dg = component->DG();
-	dg->SetAnimation (component->anim_airbrakelever, component->airbrakelever_proc);
+	dg->SetAnimation (component->anim_airbrakelever, component->lever_state.State());
 }
 
 // --------------------------------------------------------------
@@ -407,7 +382,6 @@ bool AirbrakeLever::Redraw2D (SURFHANDLE surf)
 	static const float bb_dy =    7.0f;
 
 	DeltaGlider* dg = component->DG();
-	DeltaGlider::DoorStatus ds = component->brake_status;
 	int newstate = component->airbrake_tgt;
 	if (newstate != state) {
 		state = newstate;
@@ -423,8 +397,8 @@ bool AirbrakeLever::Redraw2D (SURFHANDLE surf)
 
 bool AirbrakeLever::ProcessMouse2D (int event, int mx, int my)
 {
-	DeltaGlider *dg = component->DG();
-	component->Activate (my > 30 ? DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
+	if (my > 30) component->Extend();
+	else         component->Retract();
 	return false;
 }
 
@@ -432,8 +406,8 @@ bool AirbrakeLever::ProcessMouse2D (int event, int mx, int my)
 
 bool AirbrakeLever::ProcessMouseVC (int event, VECTOR3 &p)
 {
-	DeltaGlider *dg = component->DG();
-	component->Activate (p.y > 0.5 ? DeltaGlider::DOOR_CLOSING : DeltaGlider::DOOR_OPENING);
+	if (p.y > 0.5) component->Retract();
+	else           component->Extend();
 	return false;
 }
 
@@ -442,7 +416,7 @@ bool AirbrakeLever::ProcessMouseVC (int event, VECTOR3 &p)
 // ==============================================================
 
 ElevatorTrim::ElevatorTrim (AerodynCtrlSubsystem *_subsys)
-: DGSubsystemComponent(_subsys)
+: DGSubsystem(_subsys)
 {
 	ELID_TRIMWHEEL = AddElement (trimwheel = new ElevatorTrimWheel (this));
 
@@ -483,7 +457,7 @@ bool ElevatorTrim::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW
 
 	// elevator trim wheel
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_TRIMWHEEL), _R( 141,258, 161,318), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, trimwheel);
+	DG()->RegisterPanelArea (hPanel, ELID_TRIMWHEEL, _R( 141,258, 161,318), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, trimwheel);
 
 	return true;
 }
@@ -495,8 +469,8 @@ bool ElevatorTrim::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// Elevator trim wheel
-	oapiVCRegisterArea (GlobalElId(ELID_TRIMWHEEL), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_TRIMWHEEL), VC_ETRIMWHEEL_mousearea[0], VC_ETRIMWHEEL_mousearea[1], VC_ETRIMWHEEL_mousearea[2], VC_ETRIMWHEEL_mousearea[3]);
+	oapiVCRegisterArea (ELID_TRIMWHEEL, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_TRIMWHEEL, VC_ETRIMWHEEL_mousearea[0], VC_ETRIMWHEEL_mousearea[1], VC_ETRIMWHEEL_mousearea[2], VC_ETRIMWHEEL_mousearea[3]);
 
 	return true;
 }

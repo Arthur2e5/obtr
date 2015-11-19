@@ -22,8 +22,7 @@ class RadiatorControl;
 
 class CoolingSubsystem: public DGSubsystem {
 public:
-	CoolingSubsystem (DeltaGlider *v, int ident);
-	~CoolingSubsystem ();
+	CoolingSubsystem (DeltaGlider *v);
 	void OpenRadiator ();
 	void CloseRadiator ();
 	void RevertRadiator ();
@@ -37,7 +36,7 @@ private:
 // Radiator control
 // ==============================================================
 
-class RadiatorControl: public DGSubsystemComponent {
+class RadiatorControl: public DGSubsystem {
 	friend class RadiatorSwitch;
 
 public:
@@ -54,6 +53,7 @@ public:
 	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);
 	void clbkResetVC (int vcid, DEVMESHHANDLE hMesh);
+	bool clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event);
 
 private:
 	bool radiator_extend;

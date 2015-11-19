@@ -79,8 +79,8 @@ const int lbly[6] = {texh-467,texh-426,texh-385,texh-344,texh-303,texh-262};
 // MFD subsystem
 // ==============================================================
 
-MfdSubsystem::MfdSubsystem (DeltaGlider *v, int ident, int mfdident)
-: DGSubsystem(v, ident), mfdid(mfdident)
+MfdSubsystem::MfdSubsystem (DeltaGlider *v, int mfdident)
+: DGSubsystem(v), mfdid(mfdident)
 {
 	ELID_BTNROW = AddElement (btnrow = new MfdButtonRow (this));
 	for (int i = 0; i < 2; i++)
@@ -92,7 +92,7 @@ MfdSubsystem::MfdSubsystem (DeltaGlider *v, int ident, int mfdident)
 void MfdSubsystem::ModeChanged ()
 {
 	for (int i = 0; i < 2; i++)
-		oapiTriggerRedrawArea (0, 0, GlobalElId(ELID_BTNCOL[i]));
+		oapiTriggerRedrawArea (0, 0, ELID_BTNCOL[i]);
 }
 
 // --------------------------------------------------------------
@@ -103,9 +103,9 @@ bool MfdSubsystem::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW
 
 	const int xofs = (mfdid == MFD_LEFT ? 173:736);
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_BTNROW), _R( 51+xofs,359,321+xofs,377), PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_ONREPLAY, panel2dtex, btnrow); // bottom button row
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_BTNCOL[0]), _R(    xofs,100, 25+xofs,323), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY, panel2dtex, btncol[0]); // left button column
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_BTNCOL[1]), _R(348+xofs,100,373+xofs,323), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY, panel2dtex, btncol[1]); // right button column
+	DG()->RegisterPanelArea (hPanel, ELID_BTNROW, _R( 51+xofs,359,321+xofs,377), PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_ONREPLAY, panel2dtex, btnrow); // bottom button row
+	DG()->RegisterPanelArea (hPanel, ELID_BTNCOL[0], _R(    xofs,100, 25+xofs,323), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY, panel2dtex, btncol[0]); // left button column
+	DG()->RegisterPanelArea (hPanel, ELID_BTNCOL[1], _R(348+xofs,100,373+xofs,323), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY, panel2dtex, btncol[1]); // right button column
 
 	return true;
 }
@@ -119,14 +119,14 @@ bool MfdSubsystem::clbkLoadVC (int vcid)
 	vctex = oapiGetTextureHandle (DG()->vcmesh_tpl, 20);
 	const double xofs = (mfdid == MFD_LEFT ? -0.2684 : 0.0616);
 
-	oapiVCRegisterArea (GlobalElId(ELID_BTNROW), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_BTNROW), _V(0.0840+xofs, 1.0745, 7.2238), _V(0.1228+xofs, 1.0745, 7.2238), _V(0.0840+xofs, 1.0587, 7.2180), _V(0.1228+xofs, 1.0587, 7.2180));
+	oapiVCRegisterArea (ELID_BTNROW, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_BTNROW, _V(0.0840+xofs, 1.0745, 7.2238), _V(0.1228+xofs, 1.0745, 7.2238), _V(0.0840+xofs, 1.0587, 7.2180), _V(0.1228+xofs, 1.0587, 7.2180));
 
-	oapiVCRegisterArea (GlobalElId(ELID_BTNCOL[0]), PANEL_REDRAW_MOUSE|PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_BTNCOL[0]), _V(0+xofs, 1.2155, 7.2751), _V(0.0168+xofs, 1.2155, 7.2751), _V(0+xofs, 1.0963, 7.2317), _V(0.0168+xofs, 1.0963, 7.2317));
+	oapiVCRegisterArea (ELID_BTNCOL[0], PANEL_REDRAW_MOUSE|PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_BTNCOL[0], _V(0+xofs, 1.2155, 7.2751), _V(0.0168+xofs, 1.2155, 7.2751), _V(0+xofs, 1.0963, 7.2317), _V(0.0168+xofs, 1.0963, 7.2317));
 
-	oapiVCRegisterArea (GlobalElId(ELID_BTNCOL[1]), PANEL_REDRAW_MOUSE|PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_BTNCOL[1]), _V(0.1900+xofs, 1.2155, 7.2751), _V(0.2068+xofs, 1.2155, 7.2751), _V(0.1900+xofs, 1.0963, 7.2317), _V(0.2068+xofs, 1.0963, 7.2317));
+	oapiVCRegisterArea (ELID_BTNCOL[1], PANEL_REDRAW_MOUSE|PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_BTNCOL[1], _V(0.1900+xofs, 1.2155, 7.2751), _V(0.2068+xofs, 1.2155, 7.2751), _V(0.1900+xofs, 1.0963, 7.2317), _V(0.2068+xofs, 1.0963, 7.2317));
 
 	return true;
 }

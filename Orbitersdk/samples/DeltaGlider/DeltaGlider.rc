@@ -27,17 +27,13 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_UK
 //
 
 IDB_SWITCH1             BITMAP                  "Bitmaps\\Switch1.bmp"
-IDB_LIGHT1              BITMAP                  "Bitmaps\\Light1.bmp"
 IDB_SLIDER1             BITMAP                  "Bitmaps\\Slider1.bmp"
 IDB_SWITCH2             BITMAP                  "Bitmaps\\Switch2.bmp"
 IDB_LEVER1              BITMAP                  "Bitmaps\\Lever1.bmp"
 IDB_SWITCH4             BITMAP                  "Bitmaps\\Switch4.bmp"
 IDB_INDICATOR2          BITMAP                  "Bitmaps\\Slider2.bmp"
 IDB_SWITCH4R            BITMAP                  "Bitmaps\\Switch4r.bmp"
-IDB_LIGHT2              BITMAP                  "Bitmaps\\Light2.bmp"
-IDB_COVER1              BITMAP                  "Bitmaps\\Cover1.bmp"
 IDB_COVER2              BITMAP                  "Bitmaps\\Cover2.bmp"
-IDB_FONT2               BITMAP                  "Bitmaps\\font2.bmp"
 IDB_SWITCH3             BITMAP                  "Bitmaps\\Switch3.bmp"
 IDB_MFDBUTTON           BITMAP                  "Bitmaps\\MFDButton.bmp"
 

@@ -96,6 +96,11 @@ DLLCLBK void opcPreStep (double simt, double simdt, double mjd)
 			g_Data.sample = (g_Data.sample+1) % ndata;
 			g_Data.tnext += sample_dt;
 		}
+
+		// DEBUG
+		ELEMENTS el;
+		double mjd;
+		OBJHANDLE hRef = v->GetElements (el, mjd);
 	}
 }
 

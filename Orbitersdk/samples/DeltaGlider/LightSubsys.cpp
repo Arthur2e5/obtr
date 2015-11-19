@@ -20,27 +20,15 @@
 // Light control subsystem
 // ==============================================================
 
-LightCtrlSubsystem::LightCtrlSubsystem (DeltaGlider *v, int ident)
-: DGSubsystem (v, ident)
+LightCtrlSubsystem::LightCtrlSubsystem (DeltaGlider *v)
+: DGSubsystem (v)
 {
 	// create component instances
-	AddComponent (instrlight = new InstrumentLight (this));
-	AddComponent (cockpitlight = new CockpitLight (this));
-	AddComponent (landdocklight = new LandDockLight (this));
-	AddComponent (strobelight = new StrobeLight (this));
-	AddComponent (navlight = new NavLight (this));
-}
-
-// --------------------------------------------------------------
-
-LightCtrlSubsystem::~LightCtrlSubsystem ()
-{
-	// delete components
-	delete instrlight;
-	delete cockpitlight;
-	delete landdocklight;
-	delete strobelight;
-	delete navlight;
+	AddSubsystem (instrlight = new InstrumentLight (this));
+	AddSubsystem (cockpitlight = new CockpitLight (this));
+	AddSubsystem (landdocklight = new LandDockLight (this));
+	AddSubsystem (strobelight = new StrobeLight (this));
+	AddSubsystem (navlight = new NavLight (this));
 }
 
 // ==============================================================
@@ -48,7 +36,7 @@ LightCtrlSubsystem::~LightCtrlSubsystem ()
 // ==============================================================
 
 InstrumentLight::InstrumentLight (LightCtrlSubsystem *_subsys)
-: DGSubsystemComponent(_subsys)
+: DGSubsystem(_subsys)
 {
 	light_on   = false;
 	brightness = 0.5;
@@ -137,13 +125,13 @@ bool InstrumentLight::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// Instrument light switch
-	oapiVCRegisterArea (GlobalElId(ELID_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_SWITCH), VC_INSTRLIGHT_SWITCH_mousearea[0], VC_INSTRLIGHT_SWITCH_mousearea[1], VC_INSTRLIGHT_SWITCH_mousearea[2], VC_INSTRLIGHT_SWITCH_mousearea[3]);
+	oapiVCRegisterArea (ELID_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_SWITCH, VC_INSTRLIGHT_SWITCH_mousearea[0], VC_INSTRLIGHT_SWITCH_mousearea[1], VC_INSTRLIGHT_SWITCH_mousearea[2], VC_INSTRLIGHT_SWITCH_mousearea[3]);
 	sw->DefineAnimationVC (VC_INSTRLIGHT_SWITCH_ref, VC_INSTRLIGHT_SWITCH_axis, GRP_SWITCH1_VC, VC_INSTRLIGHT_SWITCH_vofs);
 
 	// Instrument brightness dial
-	oapiVCRegisterArea (GlobalElId(ELID_DIAL), PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_DIAL), VC_INSTR_BRIGHTNESS_mousearea[0], VC_INSTR_BRIGHTNESS_mousearea[1], VC_INSTR_BRIGHTNESS_mousearea[2], VC_INSTR_BRIGHTNESS_mousearea[3]);
+	oapiVCRegisterArea (ELID_DIAL, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_DIAL, VC_INSTR_BRIGHTNESS_mousearea[0], VC_INSTR_BRIGHTNESS_mousearea[1], VC_INSTR_BRIGHTNESS_mousearea[2], VC_INSTR_BRIGHTNESS_mousearea[3]);
 
 	return true;
 }
@@ -203,7 +191,7 @@ bool InstrumentBrightnessDial::ProcessMouseVC (int event, VECTOR3 &p)
 // ==============================================================
 
 CockpitLight::CockpitLight (LightCtrlSubsystem *_subsys)
-: DGSubsystemComponent(_subsys)
+: DGSubsystem(_subsys)
 {
 	light = NULL;
 	light_mode = 0;
@@ -290,13 +278,13 @@ bool CockpitLight::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// Floodlight switch
-	oapiVCRegisterArea (GlobalElId(ELID_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_SWITCH), VC_FLOODLIGHT_SWITCH_mousearea[0], VC_FLOODLIGHT_SWITCH_mousearea[1], VC_FLOODLIGHT_SWITCH_mousearea[2], VC_FLOODLIGHT_SWITCH_mousearea[3]);
+	oapiVCRegisterArea (ELID_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_SWITCH, VC_FLOODLIGHT_SWITCH_mousearea[0], VC_FLOODLIGHT_SWITCH_mousearea[1], VC_FLOODLIGHT_SWITCH_mousearea[2], VC_FLOODLIGHT_SWITCH_mousearea[3]);
 	sw->DefineAnimationVC (VC_FLOODLIGHT_SWITCH_ref, VC_FLOODLIGHT_SWITCH_axis, GRP_SWITCH1_VC, VC_FLOODLIGHT_SWITCH_vofs);
 
 	// Floodlight brightness dial
-	oapiVCRegisterArea (GlobalElId(ELID_DIAL), PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_DIAL), VC_FLOOD_BRIGHTNESS_mousearea[0], VC_FLOOD_BRIGHTNESS_mousearea[1], VC_FLOOD_BRIGHTNESS_mousearea[2], VC_FLOOD_BRIGHTNESS_mousearea[3]);
+	oapiVCRegisterArea (ELID_DIAL, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_DIAL, VC_FLOOD_BRIGHTNESS_mousearea[0], VC_FLOOD_BRIGHTNESS_mousearea[1], VC_FLOOD_BRIGHTNESS_mousearea[2], VC_FLOOD_BRIGHTNESS_mousearea[3]);
 
 	return true;
 }
@@ -356,7 +344,7 @@ bool CockpitBrightnessDial::ProcessMouseVC (int event, VECTOR3 &p)
 // ==============================================================
 
 LandDockLight::LandDockLight (LightCtrlSubsystem *_subsys)
-: DGSubsystemComponent(_subsys)
+: DGSubsystem(_subsys)
 {
 	light_mode = 0;
 	light = NULL;
@@ -413,7 +401,7 @@ bool LandDockLight::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD view
 
 	// Landing/docking light switch
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh1,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_SWITCH), _R(708,192,734,244), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, sw);
+	DG()->RegisterPanelArea (hPanel, ELID_SWITCH, _R(708,192,734,244), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, sw);
 	sw->DefineAnimation2D (DG()->panelmesh1, GRP_INSTRUMENTS_ABOVE_P1, 12);
 
 	return true;
@@ -426,8 +414,8 @@ bool LandDockLight::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// Landing/docking light switch
-	oapiVCRegisterArea (GlobalElId(ELID_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_SWITCH), VC_LANDINGLIGHT_SWITCH_mousearea[0], VC_LANDINGLIGHT_SWITCH_mousearea[1], VC_LANDINGLIGHT_SWITCH_mousearea[2], VC_LANDINGLIGHT_SWITCH_mousearea[3]);
+	oapiVCRegisterArea (ELID_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_SWITCH, VC_LANDINGLIGHT_SWITCH_mousearea[0], VC_LANDINGLIGHT_SWITCH_mousearea[1], VC_LANDINGLIGHT_SWITCH_mousearea[2], VC_LANDINGLIGHT_SWITCH_mousearea[3]);
 	sw->DefineAnimationVC (VC_LANDINGLIGHT_SWITCH_ref, VC_LANDINGLIGHT_SWITCH_axis, GRP_SWITCH1_VC, VC_LANDINGLIGHT_SWITCH_vofs);
 
 	return true;
@@ -492,7 +480,7 @@ void LandDockLightSwitch::ResetVC (DEVMESHHANDLE hMesh)
 // ==============================================================
 
 StrobeLight::StrobeLight (LightCtrlSubsystem *_subsys)
-: DGSubsystemComponent(_subsys)
+: DGSubsystem(_subsys)
 {
 	light_on = false;
 	ELID_SWITCH = AddElement (sw = new StrobeLightSwitch (this));
@@ -539,7 +527,7 @@ bool StrobeLight::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW,
 
 	// Landing/docking light switch
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh1,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_SWITCH), _R(754,192,780,244), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, sw);
+	DG()->RegisterPanelArea (hPanel, ELID_SWITCH, _R(754,192,780,244), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, sw);
 	sw->DefineAnimation2D (DG()->panelmesh1, GRP_INSTRUMENTS_ABOVE_P1, 16);
 
 	return true;
@@ -552,8 +540,8 @@ bool StrobeLight::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// Strobe light switch
-	oapiVCRegisterArea (GlobalElId(ELID_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_SWITCH), VC_STROBELIGHT_SWITCH_mousearea[0], VC_STROBELIGHT_SWITCH_mousearea[1], VC_STROBELIGHT_SWITCH_mousearea[2], VC_STROBELIGHT_SWITCH_mousearea[3]);
+	oapiVCRegisterArea (ELID_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_SWITCH, VC_STROBELIGHT_SWITCH_mousearea[0], VC_STROBELIGHT_SWITCH_mousearea[1], VC_STROBELIGHT_SWITCH_mousearea[2], VC_STROBELIGHT_SWITCH_mousearea[3]);
 	sw->DefineAnimationVC (VC_STROBELIGHT_SWITCH_ref, VC_STROBELIGHT_SWITCH_axis, GRP_SWITCH1_VC, VC_STROBELIGHT_SWITCH_vofs);
 
 	return true;
@@ -618,7 +606,7 @@ bool StrobeLightSwitch::ProcessMouseVC (int event, VECTOR3 &p)
 // ==============================================================
 
 NavLight::NavLight (LightCtrlSubsystem *_subsys)
-: DGSubsystemComponent(_subsys)
+: DGSubsystem(_subsys)
 {
 	light_on = false;
 	ELID_SWITCH = AddElement (sw = new NavLightSwitch (this));
@@ -632,7 +620,6 @@ void NavLight::SetLight (bool on)
 
 	light_on = on;
 	for (int i = 0; i <= 2; i++) DG()->beacon[i].active = on;
-	//oapiTriggerPanelRedrawArea (1, AID_SWITCHARRAY);
 	UpdateCtrlDialog (DG());
 }
 
@@ -665,7 +652,7 @@ bool NavLight::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DW
 
 	// Nav light switch
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh1,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_SWITCH), _R(800,192,826,244), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, sw);
+	DG()->RegisterPanelArea (hPanel, ELID_SWITCH, _R(800,192,826,244), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, sw);
 	sw->DefineAnimation2D (DG()->panelmesh1, GRP_INSTRUMENTS_ABOVE_P1, 20);
 
 	return true;
@@ -678,8 +665,8 @@ bool NavLight::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// Nav light switch
-	oapiVCRegisterArea (GlobalElId(ELID_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_SWITCH), VC_NAVLIGHT_SWITCH_mousearea[0], VC_NAVLIGHT_SWITCH_mousearea[1], VC_NAVLIGHT_SWITCH_mousearea[2], VC_NAVLIGHT_SWITCH_mousearea[3]);
+	oapiVCRegisterArea (ELID_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_SWITCH, VC_NAVLIGHT_SWITCH_mousearea[0], VC_NAVLIGHT_SWITCH_mousearea[1], VC_NAVLIGHT_SWITCH_mousearea[2], VC_NAVLIGHT_SWITCH_mousearea[3]);
 	sw->DefineAnimationVC (VC_NAVLIGHT_SWITCH_ref, VC_NAVLIGHT_SWITCH_axis, GRP_SWITCH1_VC, VC_NAVLIGHT_SWITCH_vofs);
 
 	return true;

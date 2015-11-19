@@ -18,11 +18,11 @@
 // Reaction control subsystem
 // ==============================================================
 
-RcsSubsystem::RcsSubsystem (DeltaGlider *dg, int ident)
-: DGSubsystem (dg, ident)
+RcsSubsystem::RcsSubsystem (DeltaGlider *dg)
+: DGSubsystem (dg)
 {
 	// create component instances
-	AddComponent (modeselector = new RcsModeSelector (this));
+	AddSubsystem (modeselector = new RcsModeSelector (this));
 
 	ELID_PROGBUTTONS = AddElement (progbuttons = new RcsProgButtons(this));
 }
@@ -31,8 +31,6 @@ RcsSubsystem::RcsSubsystem (DeltaGlider *dg, int ident)
 
 RcsSubsystem::~RcsSubsystem ()
 {
-	// delete components
-	delete modeselector;
 }
 
 // --------------------------------------------------------------
@@ -47,7 +45,7 @@ void RcsSubsystem::SetMode (int mode)
 void RcsSubsystem::SetProg (int prog, bool active)
 {
 	progbuttons->SetMode (prog, active);
-	oapiTriggerRedrawArea (0, 0, GlobalElId(ELID_PROGBUTTONS));
+	oapiTriggerRedrawArea (0, 0, ELID_PROGBUTTONS);
 }
 
 // --------------------------------------------------------------
@@ -57,7 +55,7 @@ bool RcsSubsystem::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW
 	if (panelid != 0) return false;
 
 	// RCS program buttons
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_PROGBUTTONS), _R(1124,62,1272,110), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN, 0, progbuttons);
+	DG()->RegisterPanelArea (hPanel, ELID_PROGBUTTONS, _R(1124,62,1272,110), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN, 0, progbuttons);
 
 	return DGSubsystem::clbkLoadPanel2D (panelid, hPanel, viewW, viewH);
 }
@@ -69,8 +67,8 @@ bool RcsSubsystem::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// Navmode indicator/selector on the top right of the front panel
-	oapiVCRegisterArea (GlobalElId(ELID_PROGBUTTONS), PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_PROGBUTTONS), VC_NAV_BUTTONS_mousearea[0], VC_NAV_BUTTONS_mousearea[1], VC_NAV_BUTTONS_mousearea[2], VC_NAV_BUTTONS_mousearea[3]);
+	oapiVCRegisterArea (ELID_PROGBUTTONS, PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_PROGBUTTONS, VC_NAV_BUTTONS_mousearea[0], VC_NAV_BUTTONS_mousearea[1], VC_NAV_BUTTONS_mousearea[2], VC_NAV_BUTTONS_mousearea[3]);
 	{
 		static DWORD navbtn_vofs[6] = {VC_BTN_NAVMODE_1_vofs, VC_BTN_NAVMODE_2_vofs, VC_BTN_NAVMODE_3_vofs,
 			                           VC_BTN_NAVMODE_4_vofs, VC_BTN_NAVMODE_5_vofs, VC_BTN_NAVMODE_6_vofs}; 
@@ -88,7 +86,7 @@ bool RcsSubsystem::clbkLoadVC (int vcid)
 // ==============================================================
 
 RcsModeSelector::RcsModeSelector (RcsSubsystem *_subsys)
-: DGSubsystemComponent(_subsys)
+: DGSubsystem(_subsys)
 {
 	ELID_DIAL = AddElement (dial = new RcsModeDial (this));
 }
@@ -106,7 +104,7 @@ void RcsModeSelector::SetMode (int mode)
 {
 	int curmode = GetMode();
 	if (curmode != mode) DG()->SetAttitudeMode (mode);
-	oapiTriggerRedrawArea (0, 0, GlobalElId(ELID_DIAL));
+	oapiTriggerRedrawArea (0, 0, ELID_DIAL);
 }
 
 // --------------------------------------------------------------
@@ -139,7 +137,7 @@ bool RcsModeSelector::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD vi
 
 	// RCS mode dial
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_DIAL), _R(100, 69,140,113), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, 0, dial);
+	DG()->RegisterPanelArea (hPanel, ELID_DIAL, _R(100, 69,140,113), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, 0, dial);
 
 	return true;
 }
@@ -151,8 +149,8 @@ bool RcsModeSelector::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// RCS mode dial
-	oapiVCRegisterArea (GlobalElId(ELID_DIAL), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_DIAL), VC_RCS_DIAL_mousearea[0], VC_RCS_DIAL_mousearea[1], VC_RCS_DIAL_mousearea[2], VC_RCS_DIAL_mousearea[3]);
+	oapiVCRegisterArea (ELID_DIAL, PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_DIAL, VC_RCS_DIAL_mousearea[0], VC_RCS_DIAL_mousearea[1], VC_RCS_DIAL_mousearea[2], VC_RCS_DIAL_mousearea[3]);
 	dial->DefineAnimationVC (VC_RCS_DIAL_ref, VC_RCS_DIAL_axis, GRP_DIAL1_VC, VC_RCS_DIAL_vofs);
 
 	return true;

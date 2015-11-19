@@ -139,8 +139,8 @@ double Scramjet::TSFC (UINT idx) const
 // Scramjet subsystem
 // ==============================================================
 
-ScramSubsystem::ScramSubsystem (DeltaGlider *dg, int ident)
-: DGSubsystem (dg, ident)
+ScramSubsystem::ScramSubsystem (DeltaGlider *dg)
+: DGSubsystem (dg)
 {
 	modelidx = dg->FlightModel();
 	scram = new Scramjet (dg);
@@ -161,14 +161,13 @@ ScramSubsystem::ScramSubsystem (DeltaGlider *dg, int ident)
 		scram_max[i] = scram_intensity[i] = 0.0;
 	}
 
-	AddComponent (throttle = new ScramThrottle (this));
+	AddSubsystem (throttle = new ScramThrottle (this));
 }
 
 // --------------------------------------------------------------
 
 ScramSubsystem::~ScramSubsystem ()
 {
-	delete throttle;
 	delete scram;
 }
 
@@ -233,7 +232,7 @@ void ScramSubsystem::clbkPostStep (double simt, double simdt, double mjd)
 // ==============================================================
 
 ScramThrottle::ScramThrottle (DGSubsystem *_subsys)
-: DGSubsystemComponent(_subsys)
+: DGSubsystem(_subsys)
 {
 	ELID_LEVER = AddElement (lever = new ScramThrottleLever (this));
 
@@ -259,7 +258,7 @@ bool ScramThrottle::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD view
 	if (panelid != 0) return false;
 
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_LEVER), _R(4,456,57,558), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, lever);
+	DG()->RegisterPanelArea (hPanel, ELID_LEVER, _R(4,456,57,558), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, lever);
 
 	return true;
 }
@@ -271,8 +270,8 @@ bool ScramThrottle::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// Throttle lever animations
-	oapiVCRegisterArea (GlobalElId(ELID_LEVER), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_LEVER), _V(-0.45,0.98,6.94), _V(-0.39,0.98,6.94), _V(-0.45,0.95,7.07), _V(-0.39,0.95,7.07));
+	oapiVCRegisterArea (ELID_LEVER, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_LEVER, _V(-0.45,0.98,6.94), _V(-0.39,0.98,6.94), _V(-0.45,0.95,7.07), _V(-0.39,0.95,7.07));
 
 	return true;
 }
@@ -313,7 +312,7 @@ bool ScramThrottleLever::Redraw2D (SURFHANDLE surf)
 	static const float sy[4] = {bb_y0,bb_y0,bb_y0+tx_dy,bb_y0+tx_dy};
 
 	for (i = 0; i < 2; i++) {
-		double level = ((ScramSubsystem*)component->Subsys())->GetThrusterLevel(i);
+		double level = ((ScramSubsystem*)component->Parent())->GetThrusterLevel(i);
 		pos = (float)(-level*84.0);
 		if (pos != ppos[i]) {
 			vofs = vtxofs+i*4;
@@ -334,7 +333,7 @@ bool ScramThrottleLever::ProcessMouse2D (int event, int mx, int my)
 		else if (mx >= 37) ctrl = 1; // right engine
 		else               ctrl = 2; // both
 	}
-	((ScramSubsystem*)component->Subsys())->SetThrusterLevel (ctrl, max (0.0, min (1.0, 1.0-my/84.0)));
+	((ScramSubsystem*)component->Parent())->SetThrusterLevel (ctrl, max (0.0, min (1.0, 1.0-my/84.0)));
 	return true;
 }
 
@@ -345,7 +344,7 @@ bool ScramThrottleLever::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE hSurf)
 	UINT i, pos;
 
 	for (i = 0; i < 2; i++) {
-		double level = ((ScramSubsystem*)component->Subsys())->GetThrusterLevel (i);
+		double level = ((ScramSubsystem*)component->Parent())->GetThrusterLevel (i);
 		UINT pos = (UINT)(level*500.0);
 		if (pos != sliderpos[i]) {
 			component->DG()->SetAnimation (component->anim_lever[i], level);
@@ -370,10 +369,10 @@ bool ScramThrottleLever::ProcessMouseVC (int event, VECTOR3 &p)
 	} else {
 		for (int i = 0; i < 2; i++) {
 			if (ctrl == i || ctrl == 2) {
-				double lvl = ((ScramSubsystem*)component->Subsys())->GetThrusterLevel (i);
+				double lvl = ((ScramSubsystem*)component->Parent())->GetThrusterLevel (i);
 				lvl = max (0.0, min (1.0, lvl + (p.y-py)));
 				if (lvl < 0.01) lvl = 0.0;
-				((ScramSubsystem*)component->Subsys())->SetThrusterLevel (i, lvl);
+				((ScramSubsystem*)component->Parent())->SetThrusterLevel (i, lvl);
 			}
 		}
 		py = p.y;

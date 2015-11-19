@@ -24,12 +24,11 @@ class Wheelbrake;
 
 class GearSubsystem: public DGSubsystem {
 public:
-	GearSubsystem (DeltaGlider *v, int ident);
-	~GearSubsystem ();
-	void ActivateGear (DeltaGlider::DoorStatus action);
+	GearSubsystem (DeltaGlider *v);
+	void LowerGear ();
+	void RaiseGear ();
 	void RevertGear ();
-	DeltaGlider::DoorStatus GearStatus() const;
-	const double *GearPositionPtr() const;
+	const AnimState2 &GearState() const;
 
 private:
 	GearControl *gearctrl;
@@ -43,23 +42,24 @@ private:
 class GearLever;
 class GearIndicator;
 
-class GearControl: public DGSubsystemComponent {
+class GearControl: public DGSubsystem {
 public:
 	GearControl (GearSubsystem *_subsys);
-	void ActivateGear (DeltaGlider::DoorStatus action);
+	void LowerGear ();
+	void RaiseGear ();
 	void RevertGear ();
-	inline DeltaGlider::DoorStatus GearStatus() const { return gear_status; }
-	inline const double *GearPositionPtr() const { return &gear_proc; }
+	inline const AnimState2 &GearState() const { return gear_state; }
 	void clbkPostStep (double simt, double simdt, double mjd);
 	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);
 	void clbkSaveState (FILEHANDLE scn);
 	bool clbkParseScenarioLine (const char *line);
 	void clbkPostCreation ();
+	bool clbkDrawHUD (int mode, const HUDPAINTSPEC *hps, oapi::Sketchpad *skp);
+	bool clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event);
 
 private:
-	DeltaGlider::DoorStatus gear_status, gearlever_status;
-	double gear_proc, gearlever_proc;
+	AnimState2 gear_state, glever_state;
 	UINT anim_gear;             // handle for landing gear animation
 	UINT anim_gearlever;        // VC gear lever
 
@@ -105,7 +105,7 @@ private:
 
 class WheelbrakeLever;
 
-class Wheelbrake: public DGSubsystemComponent {
+class Wheelbrake: public DGSubsystem {
 public:
 	Wheelbrake (GearSubsystem *_subsys);
 	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);

@@ -15,8 +15,8 @@
 // Failure subsystem
 // ==============================================================
 
-FailureSubsystem::FailureSubsystem (DeltaGlider *v, int ident)
-: DGSubsystem (v, ident)
+FailureSubsystem::FailureSubsystem (DeltaGlider *v)
+: DGSubsystem (v)
 {
 	bMWSActive = false;
 	ELID_MWS = AddElement (mws = new MwsButton (this));
@@ -43,7 +43,7 @@ bool FailureSubsystem::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD v
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
 
 	// MWS button
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_MWS), _R(1071,6,1098,32), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN, panel2dtex, mws);
+	DG()->RegisterPanelArea (hPanel, ELID_MWS, _R(1071,6,1098,32), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN, panel2dtex, mws);
 
 	return true;
 }

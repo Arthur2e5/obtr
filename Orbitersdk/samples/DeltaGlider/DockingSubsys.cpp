@@ -18,74 +18,63 @@
 // Docking control subsystem
 // ==============================================================
 
-DockingCtrlSubsystem::DockingCtrlSubsystem (DeltaGlider *v, int ident)
-: DGSubsystem (v, ident)
+DockingCtrlSubsystem::DockingCtrlSubsystem (DeltaGlider *v)
+: DGSubsystem (v)
 {
 	// create component instances
-	AddComponent (noseconectrl = new NoseconeCtrl (this));
-	AddComponent (undockctrl = new UndockCtrl (this));
-	AddComponent (eladderctrl = new EscapeLadderCtrl (this));
-	AddComponent (dsealctrl = new DocksealCtrl (this));
+	AddSubsystem (noseconectrl = new NoseconeCtrl (this));
+	AddSubsystem (undockctrl = new UndockCtrl (this));
+	AddSubsystem (eladderctrl = new EscapeLadderCtrl (this));
+	AddSubsystem (dsealctrl = new DocksealCtrl (this));
 }
 
 // --------------------------------------------------------------
 
-DockingCtrlSubsystem::~DockingCtrlSubsystem ()
+const AnimState2 &DockingCtrlSubsystem::NconeState() const
 {
-	// delete components
-	delete noseconectrl;
-	delete undockctrl;
-	delete eladderctrl;
-	delete dsealctrl;
+	return noseconectrl->NconeState();
 }
 
 // --------------------------------------------------------------
 
-DeltaGlider::DoorStatus DockingCtrlSubsystem::NoseconeStatus () const
+void DockingCtrlSubsystem::OpenNcone ()
 {
-	return noseconectrl->Status();
+	noseconectrl->OpenNcone();
 }
 
 // --------------------------------------------------------------
 
-double DockingCtrlSubsystem::NoseconePosition () const
+void DockingCtrlSubsystem::CloseNcone ()
 {
-	return noseconectrl->Position();
+	noseconectrl->CloseNcone();
 }
 
 // --------------------------------------------------------------
 
-const double *DockingCtrlSubsystem::NoseconePositionPtr() const
+void DockingCtrlSubsystem::RevertNcone ()
 {
-	return noseconectrl->PositionPtr();
+	noseconectrl->RevertNcone();
 }
 
 // --------------------------------------------------------------
 
-void DockingCtrlSubsystem::ActivateNosecone (DeltaGlider::DoorStatus action)
+void DockingCtrlSubsystem::ExtendLadder ()
 {
-	noseconectrl->Activate (action);
+	eladderctrl->ExtendLadder();
 }
 
 // --------------------------------------------------------------
 
-void DockingCtrlSubsystem::RevertNosecone ()
+void DockingCtrlSubsystem::RetractLadder ()
 {
-	noseconectrl->Revert();
+	eladderctrl->RetractLadder();
 }
 
 // --------------------------------------------------------------
 
-void DockingCtrlSubsystem::ActivateLadder (DeltaGlider::DoorStatus action)
+const AnimState2 &DockingCtrlSubsystem::LadderState () const
 {
-	eladderctrl->Activate (action);
-}
-
-// --------------------------------------------------------------
-
-DeltaGlider::DoorStatus DockingCtrlSubsystem::LadderStatus () const
-{
-	return eladderctrl->Status();
+	return eladderctrl->State();
 }
 
 // --------------------------------------------------------------
@@ -100,12 +89,10 @@ void DockingCtrlSubsystem::clbkDockEvent (int dock, OBJHANDLE mate)
 // ==============================================================
 
 NoseconeCtrl::NoseconeCtrl (DockingCtrlSubsystem *_subsys)
-: DGSubsystemComponent(_subsys)
+: DGSubsystem(_subsys)
 {
-	nose_status       = DeltaGlider::DOOR_CLOSED;
-	nose_proc         = 0.0;
-	noselever_status  = DeltaGlider::DOOR_CLOSED;
-	noselever_proc    = 0.0;
+	ncone_state.SetOperatingSpeed (NOSE_OPERATING_SPEED);
+	nlever_state.SetOperatingSpeed (4.0);
 
 	ELID_LEVER = AddElement (lever = new NoseconeLever (this));
 	ELID_INDICATOR = AddElement (indicator = new NoseconeIndicator (this));
@@ -152,34 +139,46 @@ NoseconeCtrl::NoseconeCtrl (DockingCtrlSubsystem *_subsys)
 
 // --------------------------------------------------------------
 
-void NoseconeCtrl::Activate (DeltaGlider::DoorStatus action)
+void NoseconeCtrl::OpenNcone ()
 {
 	extern void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd=0);
 
-	bool close = (action == DeltaGlider::DOOR_CLOSED || action == DeltaGlider::DOOR_CLOSING);
-	nose_status = noselever_status = action;
-	if (action <= DeltaGlider::DOOR_OPEN) {
-		nose_proc = noselever_proc = (action == DeltaGlider::DOOR_CLOSED ? 0.0 : 1.0);
-		DG()->SetAnimation (anim_nose, nose_proc);
-		DG()->SetAnimation (anim_noselever, noselever_proc);
-		DG()->UpdateStatusIndicators();
-	}
-	oapiTriggerPanelRedrawArea (0, GlobalElId(ELID_LEVER));
-	oapiTriggerRedrawArea (0, 0, GlobalElId(ELID_INDICATOR));
-
-	if (close && ((DockingCtrlSubsystem*)Subsys())->LadderStatus() != DeltaGlider::DOOR_CLOSED)
-		((DockingCtrlSubsystem*)Subsys())->ActivateLadder (action); // retract ladder before closing the nose cone
-
+	ncone_state.Open();
+	nlever_state.Open();
+	DG()->UpdateStatusIndicators();
+	oapiTriggerPanelRedrawArea (0, ELID_LEVER);
+	oapiTriggerRedrawArea (0, 0, ELID_INDICATOR);
 	UpdateCtrlDialog (DG());
-	DG()->RecordEvent ("NOSECONE", close ? "CLOSE" : "OPEN");
+	DG()->RecordEvent ("NOSECONE", "OPEN");
 }
 
 // --------------------------------------------------------------
 
-void NoseconeCtrl::Revert ()
+void NoseconeCtrl::CloseNcone ()
 {
-	Activate (nose_status == DeltaGlider::DOOR_CLOSED || nose_status == DeltaGlider::DOOR_CLOSING ?
-		DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
+	extern void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd=0);
+
+	ncone_state.Close();
+	nlever_state.Close();
+	DG()->UpdateStatusIndicators();
+	oapiTriggerPanelRedrawArea (0, ELID_LEVER);
+	oapiTriggerRedrawArea (0, 0, ELID_INDICATOR);
+
+	if (!((DockingCtrlSubsystem*)Parent())->LadderState().IsClosed())
+		((DockingCtrlSubsystem*)Parent())->RetractLadder(); // retract ladder before closing the nose cone
+
+	UpdateCtrlDialog (DG());
+	DG()->RecordEvent ("NOSECONE", "CLOSE");
+}
+
+// --------------------------------------------------------------
+
+void NoseconeCtrl::RevertNcone ()
+{
+	if (ncone_state.IsOpen() || ncone_state.IsOpening())
+		CloseNcone();
+	else
+		OpenNcone();
 }
 
 // --------------------------------------------------------------
@@ -187,39 +186,15 @@ void NoseconeCtrl::Revert ()
 void NoseconeCtrl::clbkPostStep (double simt, double simdt, double mjd)
 {
 	// animate nose cone
-	if (nose_status >= DeltaGlider::DOOR_CLOSING) {
-		double da = simdt * NOSE_OPERATING_SPEED;
-		if (nose_status == DeltaGlider::DOOR_CLOSING) {
-			if (nose_proc > 0.0)
-				nose_proc = max (0.0, nose_proc-da);
-			else
-				nose_status = DeltaGlider::DOOR_CLOSED;
-		} else { // door opening
-			if (nose_proc < 1.0)
-				nose_proc = min (1.0, nose_proc+da);
-			else
-				nose_status = DeltaGlider::DOOR_OPEN;
-		}
-		DG()->SetAnimation (anim_nose, nose_proc);
-		oapiTriggerRedrawArea (0, 0, GlobalElId(ELID_INDICATOR));
+	if (ncone_state.Process (simdt)) {
+		DG()->SetAnimation (anim_nose, ncone_state.State());
+		oapiTriggerRedrawArea (0, 0, ELID_INDICATOR);
 		DG()->UpdateStatusIndicators();
 	}
 
 	// animate VC nosecone lever
-	if (noselever_status >= DeltaGlider::DOOR_CLOSING) {
-		double da = simdt * 4.0;
-		if (noselever_status == DeltaGlider::DOOR_CLOSING) {
-			if (noselever_proc > 0.0)
-				noselever_proc = max (0.0, noselever_proc-da);
-			else
-				noselever_status = DeltaGlider::DOOR_CLOSED;
-		} else  { // door opening
-			if (noselever_proc < 1.0)
-				noselever_proc = min (1.0, noselever_proc+da);
-			else
-				noselever_status = DeltaGlider::DOOR_OPEN;
-		}
-		DG()->SetAnimation (anim_noselever, noselever_proc);
+	if (nlever_state.Process (simdt)) {
+		DG()->SetAnimation (anim_noselever, nlever_state.State());
 	}
 }
 
@@ -230,8 +205,8 @@ bool NoseconeCtrl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW
 	if (panelid != 0) return false;
 
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_LEVER), _R(1221,347,1260,461), PANEL_REDRAW_USER,  PANEL_MOUSE_LBDOWN, panel2dtex, lever);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_INDICATOR), _R(0,0,0,0), PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, indicator);
+	DG()->RegisterPanelArea (hPanel, ELID_LEVER, _R(1221,347,1260,461), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN, panel2dtex, lever);
+	DG()->RegisterPanelArea (hPanel, ELID_INDICATOR, _R(0,0,0,0), PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE, panel2dtex, indicator);
 
 	return true;
 }
@@ -243,11 +218,11 @@ bool NoseconeCtrl::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// Nosecone lever
-	oapiVCRegisterArea (GlobalElId(ELID_LEVER), PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_LEVER), VC_NCONELEVER_mousearea[0], VC_NCONELEVER_mousearea[1], VC_NCONELEVER_mousearea[2], VC_NCONELEVER_mousearea[3]);
+	oapiVCRegisterArea (ELID_LEVER, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_LEVER, VC_NCONELEVER_mousearea[0], VC_NCONELEVER_mousearea[1], VC_NCONELEVER_mousearea[2], VC_NCONELEVER_mousearea[3]);
 
 	// Nosecone indicator
-	oapiVCRegisterArea (GlobalElId(ELID_INDICATOR), PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE);
+	oapiVCRegisterArea (ELID_INDICATOR, PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE);
 
 	return true;
 }
@@ -256,23 +231,18 @@ bool NoseconeCtrl::clbkLoadVC (int vcid)
 
 void NoseconeCtrl::clbkSaveState (FILEHANDLE scn)
 {
-	if (nose_status) {
-		char cbuf[256];
-		sprintf (cbuf, "%d %0.4f", nose_status, nose_proc);
-		oapiWriteScenario_string (scn, "NOSECONE", cbuf);
-	}
+	ncone_state.SaveState (scn, "NOSECONE");
 }
 
 // --------------------------------------------------------------
 
 bool NoseconeCtrl::clbkParseScenarioLine (const char *line)
 {
-	if (!_strnicmp (line, "NOSECONE", 8)) {
-		sscanf (line+8, "%d%lf", &nose_status, &nose_proc);
-		if (nose_status == DeltaGlider::DOOR_OPEN || nose_status == DeltaGlider::DOOR_OPENING) {
-			noselever_status = DeltaGlider::DOOR_OPEN; noselever_proc = 1.0;
+	if (ncone_state.ParseScenarioLine (line, "NOSECONE")) {
+		if (ncone_state.IsOpen() || ncone_state.IsOpening()) {
+			nlever_state.SetOpened();
 		} else {
-			noselever_status = DeltaGlider::DOOR_CLOSED; noselever_proc = 0.0;
+			nlever_state.SetClosed();
 		}
 		return true;
 	}
@@ -283,8 +253,20 @@ bool NoseconeCtrl::clbkParseScenarioLine (const char *line)
 
 void NoseconeCtrl::clbkPostCreation ()
 {
-	DG()->SetAnimation (anim_nose, nose_proc);
-	DG()->SetAnimation (anim_noselever, nose_status & 1);
+	DG()->SetAnimation (anim_nose, ncone_state.State());
+	DG()->SetAnimation (anim_noselever, nlever_state.State());
+}
+
+// --------------------------------------------------------------
+
+bool NoseconeCtrl::clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event)
+{
+	if (!_stricmp (event_type, "NOSECONE")) {
+		if (!_stricmp (event, "CLOSE")) CloseNcone();
+		else                            OpenNcone();
+		return true;
+	}
+	return false;
 }
 
 // ==============================================================
@@ -307,10 +289,7 @@ void NoseconeLever::Reset2D (MESHHANDLE hMesh)
 bool NoseconeLever::Redraw2D (SURFHANDLE surf)
 {
 	static const float texh = (float)PANEL2D_TEXH; // texture height
-
-	DeltaGlider::DoorStatus action = component->nose_status;
-	bool leverdown = (action == DeltaGlider::DOOR_OPENING || action == DeltaGlider::DOOR_OPEN);
-
+	bool leverdown = (component->NconeState().IsOpen() || component->NconeState().IsOpening());
 	float y0, dy, tv0;
 	if (leverdown) y0 = 420.5f, dy = 21.0f, tv0 = texh-677.5f;
 	else           y0 = 346.5f, dy = 19.0f, tv0 = texh-696.5f;
@@ -326,12 +305,10 @@ bool NoseconeLever::Redraw2D (SURFHANDLE surf)
 
 bool NoseconeLever::ProcessMouse2D (int event, int mx, int my)
 {
-	DeltaGlider *dg = component->DG();
-	DeltaGlider::DoorStatus action = component->nose_status;
-	if (action == DeltaGlider::DOOR_CLOSED || action == DeltaGlider::DOOR_CLOSING) {
-		if (my < 58) component->Activate (DeltaGlider::DOOR_OPENING);
+	if (component->NconeState().IsClosed() || component->NconeState().IsClosing()) {
+		if (my < 58) component->OpenNcone();
 	} else {
-		if (my > 36) component->Activate (DeltaGlider::DOOR_CLOSING);
+		if (my > 36) component->CloseNcone();
 	}
 	return false;
 }
@@ -340,7 +317,8 @@ bool NoseconeLever::ProcessMouse2D (int event, int mx, int my)
 
 bool NoseconeLever::ProcessMouseVC (int event, VECTOR3 &p)
 {
-	component->Activate (p.y > 0.5 ? DeltaGlider::DOOR_CLOSING : DeltaGlider::DOOR_OPENING);
+	if (p.y > 0.5) component->CloseNcone();
+	else           component->OpenNcone();
 	return false;
 }
 
@@ -368,14 +346,11 @@ bool NoseconeIndicator::Redraw2D (SURFHANDLE surf)
 {
 	static const float texw = (float)PANEL2D_TEXW; // texture width
 
-	int i, j, xofs;
+	int i, j;
 	double d;
-	DeltaGlider::DoorStatus action = component->nose_status;
-	switch (action) {
-		case DeltaGlider::DOOR_CLOSED: xofs = 1014; break;
-		case DeltaGlider::DOOR_OPEN:   xofs = 1027; break;
-		default: xofs = (modf (oapiGetSimTime()+tofs, &d) < 0.5 ? 1040 : 1014); break;
-	}
+	int xofs = (component->NconeState().IsClosed() ? 1014 :
+		        component->NconeState().IsOpen()   ? 1027 :
+                (modf (oapiGetSimTime()+tofs, &d) < 0.5 ? 1040 : 1014));
 	for (i = 0; i < 4; i++) {
 		for (j = 0; j < 3; j++)
 			grp->Vtx[vtxofs+i*3+j].tu = (xofs + (j%2)*12)/texw;
@@ -389,14 +364,10 @@ bool NoseconeIndicator::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 {
 	if (!hMesh) return false;
 
-	DeltaGlider::DoorStatus action = component->nose_status;
-	bool showlights;
 	double d;
-	switch (action) {
-		case DeltaGlider::DOOR_CLOSED: showlights = false; break;
-		case DeltaGlider::DOOR_OPEN:   showlights = true; break;
-		default: showlights = (modf (oapiGetSimTime()+tofs, &d) < 0.5); break;
-	}
+	bool showlights = (component->NconeState().IsClosed() ? false :
+		               component->NconeState().IsOpen() ? true :
+                       (modf (oapiGetSimTime()+tofs, &d) < 0.5));
 	if (showlights != light) {
 		GROUPEDITSPEC ges;
 		static WORD vtxofs = VC_NCONE_INDICATOR_vofs;
@@ -422,14 +393,12 @@ bool NoseconeIndicator::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 // ==============================================================
 
 UndockCtrl::UndockCtrl (DockingCtrlSubsystem *_subsys)
-: DGSubsystemComponent(_subsys)
+: DGSubsystem(_subsys)
 {
-	undock_status     = DeltaGlider::DOOR_CLOSED;
-	undock_proc       = 0.0;
-
+	undock_state.SetOperatingSpeed (10.0);
 	ELID_LEVER = AddElement (lever = new UndockLever (this));
 
-	// Undock lever
+	// Undock lever animation
 	static UINT UndockLeverGrp = GRP_UNDOCK_LEVER_VC;
 	static MGROUP_ROTATE UndockLeverTransform (1, &UndockLeverGrp, 1,
 		VC_UNDOCKLEVER_ref, VC_UNDOCKLEVER_axis, (float)(-90*RAD));
@@ -439,10 +408,17 @@ UndockCtrl::UndockCtrl (DockingCtrlSubsystem *_subsys)
 
 // --------------------------------------------------------------
 
-void UndockCtrl::Activate (DeltaGlider::DoorStatus action)
+void UndockCtrl::PullLever ()
 {
-	undock_status = action;
-	if (action == DeltaGlider::DOOR_OPENING) DG()->Undock(0);
+	undock_state.Open();
+	DG()->Undock(0);
+}
+
+// --------------------------------------------------------------
+
+void UndockCtrl::ReleaseLever ()
+{
+	undock_state.Close();
 }
 
 // --------------------------------------------------------------
@@ -450,22 +426,8 @@ void UndockCtrl::Activate (DeltaGlider::DoorStatus action)
 void UndockCtrl::clbkPostStep (double simt, double simdt, double mjd)
 {
 	// animate undock lever
-	if (undock_status >= DeltaGlider::DOOR_CLOSING) {
-		if (undock_status == DeltaGlider::DOOR_CLOSING) {
-			double da = simdt * 10.0;
-			if (undock_proc > 0.0)
-				undock_proc = max (0.0, undock_proc-da);
-			else
-				undock_status = DeltaGlider::DOOR_CLOSED;
-		} else { // door opening
-			double da = simdt * 5.0;
-			if (undock_proc < 1.0)
-				undock_proc = min (1.0, undock_proc+da);
-			else
-				undock_status = DeltaGlider::DOOR_OPEN;
-		}
-		DG()->SetAnimation (anim_undocklever, undock_proc);
-	}
+	if (undock_state.Process (simdt))
+		DG()->SetAnimation (anim_undocklever, undock_state.State());
 }
 
 // --------------------------------------------------------------
@@ -475,7 +437,7 @@ bool UndockCtrl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, 
 	if (panelid != 0) return false;
 
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_LEVER), _R(1151,355,1193,436), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, lever);
+	DG()->RegisterPanelArea (hPanel, ELID_LEVER, _R(1151,355,1193,436), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, lever);
 
 	return true;
 }
@@ -487,8 +449,8 @@ bool UndockCtrl::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// Undock lever
-	oapiVCRegisterArea (GlobalElId(ELID_LEVER), PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_LEVER), VC_UNDOCKLEVER_mousearea[0], VC_UNDOCKLEVER_mousearea[1], VC_UNDOCKLEVER_mousearea[2], VC_UNDOCKLEVER_mousearea[3]);
+	oapiVCRegisterArea (ELID_LEVER, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_LEVER, VC_UNDOCKLEVER_mousearea[0], VC_UNDOCKLEVER_mousearea[1], VC_UNDOCKLEVER_mousearea[2], VC_UNDOCKLEVER_mousearea[3]);
 
 	return true;
 }
@@ -539,7 +501,8 @@ bool UndockLever::ProcessMouse2D (int event, int mx, int my)
 
 bool UndockLever::ProcessMouseVC (int event, VECTOR3 &p)
 {
-	component->Activate (event & PANEL_MOUSE_LBDOWN ? DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
+	if (event & PANEL_MOUSE_LBDOWN) component->PullLever();
+	else                            component->ReleaseLever();
 	return false;
 }
 
@@ -549,11 +512,9 @@ bool UndockLever::ProcessMouseVC (int event, VECTOR3 &p)
 // ==============================================================
 
 EscapeLadderCtrl::EscapeLadderCtrl (DockingCtrlSubsystem *_subsys)
-: DGSubsystemComponent(_subsys)
+: DGSubsystem(_subsys)
 {
-	ladder_status     = DeltaGlider::DOOR_CLOSED;
-	ladder_proc       = 0.0;
-
+	ladder_state.SetOperatingSpeed (LADDER_OPERATING_SPEED);
 	ELID_SWITCH = AddElement (sw = new LadderSwitch (this));
 
 	// Escape ladder animation
@@ -568,28 +529,34 @@ EscapeLadderCtrl::EscapeLadderCtrl (DockingCtrlSubsystem *_subsys)
 
 // --------------------------------------------------------------
 
-void EscapeLadderCtrl::Activate (DeltaGlider::DoorStatus action)
+void EscapeLadderCtrl::ExtendLadder ()
 {
 	extern void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd=0);
 
-	bool close = (action == DeltaGlider::DOOR_CLOSED || action == DeltaGlider::DOOR_CLOSING);
-	if (!close && ((DockingCtrlSubsystem*)Subsys())->NoseconeStatus() != DeltaGlider::DOOR_OPEN) return;
+	if (!((DockingCtrlSubsystem*)Parent())->NconeState().IsOpen()) return;
 	// don't extend ladder if nosecone is closed
 
-	ladder_status = action;
-	if (action <= DeltaGlider::DOOR_OPEN) {
-		ladder_proc = (action == DeltaGlider::DOOR_CLOSED ? 0.0 : 1.0);
-		DG()->SetAnimation (anim_ladder, ladder_proc);
-	}
+	ladder_state.Open();
 	UpdateCtrlDialog(DG());
-	DG()->RecordEvent ("LADDER", close ? "CLOSE" : "OPEN");
+	DG()->RecordEvent ("LADDER", "OPEN");
+}
+
+// --------------------------------------------------------------
+
+void EscapeLadderCtrl::RetractLadder ()
+{
+	extern void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd=0);
+
+	ladder_state.Close();
+	UpdateCtrlDialog(DG());
+	DG()->RecordEvent ("LADDER", "CLOSE");
 }
 
 // --------------------------------------------------------------
 
 void EscapeLadderCtrl::clbkPostCreation ()
 {
-	DG()->SetAnimation (anim_ladder, ladder_proc);
+	DG()->SetAnimation (anim_ladder, ladder_state.State());
 }
 
 // --------------------------------------------------------------
@@ -597,42 +564,31 @@ void EscapeLadderCtrl::clbkPostCreation ()
 void EscapeLadderCtrl::clbkPostStep (double simt, double simdt, double mjd)
 {
 	// animate escape ladder
-	if (ladder_status >= DeltaGlider::DOOR_CLOSING) {
-		double da = simdt * LADDER_OPERATING_SPEED;
-		if (ladder_status == DeltaGlider::DOOR_CLOSING) {
-			if (ladder_proc > 0.0)
-				ladder_proc = max (0.0, ladder_proc-da);
-			else {
-				ladder_status = DeltaGlider::DOOR_CLOSED;
-			}
-		} else {
-			if (ladder_proc < 1.0)
-				ladder_proc = min (1.0, ladder_proc+da);
-			else {
-				ladder_status = DeltaGlider::DOOR_OPEN;
-			}
-		}
-		DG()->SetAnimation (anim_ladder, ladder_proc);
-	}
+	if (ladder_state.Process (simdt))
+		DG()->SetAnimation (anim_ladder, ladder_state.State());
 }
 
 // --------------------------------------------------------------
 
 void EscapeLadderCtrl::clbkSaveState (FILEHANDLE scn)
 {
-	if (ladder_status) {
-		char cbuf[256];
-		sprintf (cbuf, "%d %0.4f", ladder_status, ladder_proc);
-		oapiWriteScenario_string (scn, "LADDER", cbuf);
-	}
+	ladder_state.SaveState (scn, "LADDER");
 }
 
 // --------------------------------------------------------------
 
 bool EscapeLadderCtrl::clbkParseScenarioLine (const char *line)
 {
-	if (!_strnicmp (line, "LADDER", 6)) {
-		sscanf (line+6, "%d%lf", &ladder_status, &ladder_proc);
+	return ladder_state.ParseScenarioLine (line, "LADDER");
+}
+
+// --------------------------------------------------------------
+
+bool EscapeLadderCtrl::clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event)
+{
+	if (!_stricmp (event_type, "LADDER")) {
+		if (!_stricmp (event, "CLOSE")) RetractLadder();
+		else                            ExtendLadder();
 		return true;
 	}
 	return false;
@@ -645,7 +601,7 @@ bool EscapeLadderCtrl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD v
 	if (panelid != 0) return false;
 
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_SWITCH), _R(1171,496,1197,548), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, sw);
+	DG()->RegisterPanelArea (hPanel, ELID_SWITCH, _R(1171,496,1197,548), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, sw);
 	sw->DefineAnimation2D (DG()->panelmesh0, GRP_INSTRUMENTS_ABOVE_P0, 44);
 
 	return true;
@@ -658,8 +614,8 @@ bool EscapeLadderCtrl::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// Ladder extend/retract switch
-	oapiVCRegisterArea (GlobalElId(ELID_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_SWITCH), VC_ELADDER_SWITCH_mousearea[0], VC_ELADDER_SWITCH_mousearea[1], VC_ELADDER_SWITCH_mousearea[2], VC_ELADDER_SWITCH_mousearea[3]);
+	oapiVCRegisterArea (ELID_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_SWITCH, VC_ELADDER_SWITCH_mousearea[0], VC_ELADDER_SWITCH_mousearea[1], VC_ELADDER_SWITCH_mousearea[2], VC_ELADDER_SWITCH_mousearea[3]);
 	sw->DefineAnimationVC (VC_ELADDER_SWITCH_ref, VC_ELADDER_SWITCH_axis, GRP_SWITCH1_VC, VC_ELADDER_SWITCH_vofs);
 
 	return true;
@@ -677,11 +633,8 @@ LadderSwitch::LadderSwitch (EscapeLadderCtrl *comp)
 bool LadderSwitch::ProcessMouse2D (int event, int mx, int my)
 {
 	if (DGSwitch1::ProcessMouse2D (event, mx, my)) {
-		DGSwitch1::State state = GetState();
-		switch (state) {
-			case DGSwitch1::UP: component->Activate (DeltaGlider::DOOR_CLOSING); break;
-			case DGSwitch1::DOWN: component->Activate (DeltaGlider::DOOR_OPENING); break;
-		}
+		if (GetState() == UP) component->RetractLadder();
+		else                  component->ExtendLadder();
 		return true;
 	}
 	return false;
@@ -692,11 +645,8 @@ bool LadderSwitch::ProcessMouse2D (int event, int mx, int my)
 bool LadderSwitch::ProcessMouseVC (int event, VECTOR3 &p)
 {
 	if (DGSwitch1::ProcessMouseVC (event, p)) {
-		DGSwitch1::State state = GetState();
-		switch (state) {
-			case DGSwitch1::UP:   component->Activate (DeltaGlider::DOOR_CLOSING); break;
-			case DGSwitch1::DOWN: component->Activate (DeltaGlider::DOOR_OPENING); break;
-		}
+		if (GetState() == UP) component->RetractLadder();
+		else                  component->ExtendLadder();
 		return true;
 	}
 	return false;
@@ -708,7 +658,7 @@ bool LadderSwitch::ProcessMouseVC (int event, VECTOR3 &p)
 // ==============================================================
 
 DocksealCtrl::DocksealCtrl (DockingCtrlSubsystem *_subsys)
-: DGSubsystemComponent (_subsys)
+: DGSubsystem (_subsys)
 {
 	isDocked = false;
 	dockTime = -1e10;
@@ -726,7 +676,7 @@ void DocksealCtrl::SetDockStatus (bool docked)
 		dockTime -= 1e10;
 		isSealing = false;
 	} else isSealing = true;
-	oapiTriggerRedrawArea (0, 0, GlobalElId(ELID_INDICATOR));
+	oapiTriggerRedrawArea (0, 0, ELID_INDICATOR);
 }
 
 // --------------------------------------------------------------
@@ -734,7 +684,7 @@ void DocksealCtrl::SetDockStatus (bool docked)
 void DocksealCtrl::clbkPostStep (double simt, double simdt, double mjd)
 {
 	if (isSealing) {
-		oapiTriggerRedrawArea (0, 0, GlobalElId(ELID_INDICATOR));
+		oapiTriggerRedrawArea (0, 0, ELID_INDICATOR);
 		isSealing = (simt-simdt-dockTime <= 10.0);
 	}
 }
@@ -747,7 +697,7 @@ void DocksealCtrl::clbkPostCreation ()
 	OBJHANDLE mate = DG()->GetDockStatus(hDock);
 	if (mate) {
 		isDocked = true;
-		oapiTriggerRedrawArea (0, 0, GlobalElId(ELID_INDICATOR));
+		oapiTriggerRedrawArea (0, 0, ELID_INDICATOR);
 	}
 }
 
@@ -758,7 +708,7 @@ bool DocksealCtrl::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// dock seal indicator
-	oapiVCRegisterArea (GlobalElId(ELID_INDICATOR), PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE);
+	oapiVCRegisterArea (ELID_INDICATOR, PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE);
 
 	return false;
 }

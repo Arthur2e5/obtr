@@ -26,17 +26,15 @@ class DocksealCtrl;
 
 class DockingCtrlSubsystem: public DGSubsystem {
 public:
-	DockingCtrlSubsystem (DeltaGlider *v, int ident);
-	~DockingCtrlSubsystem ();
+	DockingCtrlSubsystem (DeltaGlider *v);
+	const AnimState2 &NconeState() const;
+	void OpenNcone ();
+	void CloseNcone ();
+	void RevertNcone ();
 
-	DeltaGlider::DoorStatus NoseconeStatus () const;
-	double NoseconePosition () const;
-	const double *NoseconePositionPtr() const;
-	void ActivateNosecone (DeltaGlider::DoorStatus action);
-	void RevertNosecone ();
-
-	DeltaGlider::DoorStatus LadderStatus () const;
-	void ActivateLadder (DeltaGlider::DoorStatus action);
+	const AnimState2 &LadderState() const;
+	void ExtendLadder();
+	void RetractLadder();
 
 	void clbkDockEvent (int dock, OBJHANDLE mate);
 
@@ -52,23 +50,23 @@ private:
 // Nosecone control
 // ==============================================================
 
-class NoseconeCtrl: public DGSubsystemComponent {
+class NoseconeCtrl: public DGSubsystem {
 	friend class NoseconeLever;
 	friend class NoseconeIndicator;
 
 public:
 	NoseconeCtrl (DockingCtrlSubsystem *_subsys);
-	inline DeltaGlider::DoorStatus Status () const { return nose_status; }
-	inline double Position () const { return nose_proc; }
-	inline const double *PositionPtr() const { return &nose_proc; }
-	void Activate (DeltaGlider::DoorStatus action);
-	void Revert ();
+	inline const AnimState2 &NconeState() const { return ncone_state; }
+	void OpenNcone();
+	void CloseNcone();
+	void RevertNcone ();
 	void clbkPostStep (double simt, double simdt, double mjd);
 	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);
 	void clbkSaveState (FILEHANDLE scn);
 	bool clbkParseScenarioLine (const char *line);
 	void clbkPostCreation ();
+	bool clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event);
 
 private:
 	NoseconeLever *lever;
@@ -80,8 +78,7 @@ private:
 	UINT anim_nose;             // handle for nose cone animation
 	UINT anim_noselever;        // handle for nose cone lever animation
 
-	DeltaGlider::DoorStatus nose_status, noselever_status;
-	double nose_proc, noselever_proc;
+	AnimState2 ncone_state, nlever_state;
 };
 
 // ==============================================================
@@ -118,25 +115,22 @@ private:
 // Undock control
 // ==============================================================
 
-class UndockCtrl: public DGSubsystemComponent {
+class UndockCtrl: public DGSubsystem {
 	friend class UndockLever;
 
 public:
 	UndockCtrl (DockingCtrlSubsystem *_subsys);
-	void Activate (DeltaGlider::DoorStatus action);
+	void PullLever ();
+	void ReleaseLever ();
 	void clbkPostStep (double simt, double simdt, double mjd);
 	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);
 
 private:
 	UndockLever *lever;
-
 	int ELID_LEVER;
-
 	UINT anim_undocklever;      // handle for undock lever animation
-
-	DeltaGlider::DoorStatus undock_status;
-	double undock_proc;
+	AnimState2 undock_state;
 };
 
 // ==============================================================
@@ -159,26 +153,27 @@ private:
 // Escape ladder control
 // ==============================================================
 
-class EscapeLadderCtrl: public DGSubsystemComponent {
+class EscapeLadderCtrl: public DGSubsystem {
 	friend class LadderSwitch;
 
 public:
 	EscapeLadderCtrl (DockingCtrlSubsystem *_subsys);
-	void Activate (DeltaGlider::DoorStatus action);
-	inline DeltaGlider::DoorStatus Status () const { return ladder_status; }
+	void ExtendLadder ();
+	void RetractLadder ();
+	inline const AnimState2 &State() const { return ladder_state; }
 	void clbkPostCreation ();
 	void clbkPostStep (double simt, double simdt, double mjd);
 	void clbkSaveState (FILEHANDLE scn);
 	bool clbkParseScenarioLine (const char *line);
+	bool clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event);
 	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);
 
 private:
 	LadderSwitch *sw;
 	int ELID_SWITCH;
-	DeltaGlider::DoorStatus ladder_status;
-	double ladder_proc;
 	UINT anim_ladder;           // handle for front escape ladder animation
+	AnimState2 ladder_state;
 };
 
 // ==============================================================
@@ -199,7 +194,7 @@ private:
 // Dock seal control
 // ==============================================================
 
-class DocksealCtrl: public DGSubsystemComponent {
+class DocksealCtrl: public DGSubsystem {
 	friend class DocksealIndicator;
 
 public:

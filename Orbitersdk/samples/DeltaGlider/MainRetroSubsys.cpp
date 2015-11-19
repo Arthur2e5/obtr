@@ -34,23 +34,13 @@ static const float sc_y0 = 431.5f;
 // Main and retro engine control subsystem
 // ==============================================================
 
-MainRetroSubsystem::MainRetroSubsystem (DeltaGlider *v, int ident)
-: DGSubsystem (v, ident)
+MainRetroSubsystem::MainRetroSubsystem (DeltaGlider *v)
+: DGSubsystem (v)
 {
 	// create component instances
-	AddComponent (throttle = new MainRetroThrottle (this));
-	AddComponent (gimbalctrl = new GimbalControl (this));
-	AddComponent (retrocover = new RetroCoverControl (this));
-}
-
-// --------------------------------------------------------------
-
-MainRetroSubsystem::~MainRetroSubsystem ()
-{
-	// delete components
-	delete throttle;
-	delete gimbalctrl;
-	delete retrocover;
+	AddSubsystem (throttle = new MainRetroThrottle (this));
+	AddSubsystem (gimbalctrl = new GimbalControl (this));
+	AddSubsystem (retrocover = new RetroCoverControl (this));
 }
 
 // --------------------------------------------------------------
@@ -96,7 +86,7 @@ void MainRetroSubsystem::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
 // ==============================================================
 
 MainRetroThrottle::MainRetroThrottle (MainRetroSubsystem *_subsys)
-: DGSubsystemComponent(_subsys)
+: DGSubsystem(_subsys)
 {
 	ELID_LEVERS = AddElement (levers = new MainRetroThrottleLevers (this));
 
@@ -122,7 +112,7 @@ bool MainRetroThrottle::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD 
 	if (panelid != 0) return false;
 
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_LEVERS), _R(4,122,57,297), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, levers);
+	DG()->RegisterPanelArea (hPanel, ELID_LEVERS, _R(4,122,57,297), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED, panel2dtex, levers);
 
 	return true;
 }
@@ -134,8 +124,8 @@ bool MainRetroThrottle::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// Throttle lever animations
-	oapiVCRegisterArea (GlobalElId(ELID_LEVERS), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_LEVERS), _V(-0.372,0.918,6.905), _V(-0.279,0.918,6.905), _V(-0.372,0.885,7.11), _V(-0.279,0.885,7.11));
+	oapiVCRegisterArea (ELID_LEVERS, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_LEVERS, _V(-0.372,0.918,6.905), _V(-0.279,0.918,6.905), _V(-0.372,0.885,7.11), _V(-0.279,0.885,7.11));
 
 	return true;
 }
@@ -274,7 +264,7 @@ bool MainRetroThrottleLevers::ProcessMouseVC (int event, VECTOR3 &p)
 // ==============================================================
 
 GimbalControl::GimbalControl (MainRetroSubsystem *_subsys)
-: DGSubsystemComponent(_subsys)
+: DGSubsystem(_subsys)
 {
 	mode = 0;
 	mpmode = mymode = 0;
@@ -421,7 +411,7 @@ void GimbalControl::TrackMainGimbal ()
 			dir.x = mygimbal[i];
 			DG()->SetMainThrusterDir (i, unit(dir));
 		}
-		oapiTriggerRedrawArea (0, 0, GlobalElId (ELID_DISPLAY));
+		oapiTriggerRedrawArea (0, 0, ELID_DISPLAY);
 	}
 }
 
@@ -473,14 +463,14 @@ bool GimbalControl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD view
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
 
 	// Gimbal control dial
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_MODEDIAL),      _R(203,426,243,470), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, panel2dtex, modedial);
+	DG()->RegisterPanelArea (hPanel, ELID_MODEDIAL,      _R(203,426,243,470), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, panel2dtex, modedial);
 
 	// Gimbal manual switches
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_PGIMBALSWITCH), _R(285,433,320,477), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, pgimbalswitch);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_YGIMBALSWITCH), _R(280,502,324,537), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, ygimbalswitch);
+	DG()->RegisterPanelArea (hPanel, ELID_PGIMBALSWITCH, _R(285,433,320,477), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, pgimbalswitch);
+	DG()->RegisterPanelArea (hPanel, ELID_YGIMBALSWITCH, _R(280,502,324,537), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, ygimbalswitch);
 
 	// Gimbal display
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_DISPLAY),       _R(  0,  0,  0,  0), PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, gimbaldisp);
+	DG()->RegisterPanelArea (hPanel, ELID_DISPLAY,       _R(  0,  0,  0,  0), PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, gimbaldisp);
 
 	return true;
 }
@@ -492,18 +482,18 @@ bool GimbalControl::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// Gimbal control dial
-	oapiVCRegisterArea (GlobalElId(ELID_MODEDIAL), PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_MODEDIAL), VC_GIMBAL_DIAL_mousearea[0], VC_GIMBAL_DIAL_mousearea[1], VC_GIMBAL_DIAL_mousearea[2], VC_GIMBAL_DIAL_mousearea[3]);
+	oapiVCRegisterArea (ELID_MODEDIAL, PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_MODEDIAL, VC_GIMBAL_DIAL_mousearea[0], VC_GIMBAL_DIAL_mousearea[1], VC_GIMBAL_DIAL_mousearea[2], VC_GIMBAL_DIAL_mousearea[3]);
 	modedial->DefineAnimationVC (VC_GIMBAL_DIAL_ref, VC_GIMBAL_DIAL_axis, GRP_DIAL1_VC, VC_GIMBAL_DIAL_vofs);
 
 	// Gimbal manual switches
-	oapiVCRegisterArea (GlobalElId(ELID_PGIMBALSWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_PGIMBALSWITCH), VC_GIMBAL_PSWITCH_mousearea[0], VC_GIMBAL_PSWITCH_mousearea[1], VC_GIMBAL_PSWITCH_mousearea[2], VC_GIMBAL_PSWITCH_mousearea[3]);
-	oapiVCRegisterArea (GlobalElId(ELID_YGIMBALSWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_YGIMBALSWITCH), VC_GIMBAL_YSWITCH_mousearea[0], VC_GIMBAL_YSWITCH_mousearea[1], VC_GIMBAL_YSWITCH_mousearea[2], VC_GIMBAL_YSWITCH_mousearea[3]);
+	oapiVCRegisterArea (ELID_PGIMBALSWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_PGIMBALSWITCH, VC_GIMBAL_PSWITCH_mousearea[0], VC_GIMBAL_PSWITCH_mousearea[1], VC_GIMBAL_PSWITCH_mousearea[2], VC_GIMBAL_PSWITCH_mousearea[3]);
+	oapiVCRegisterArea (ELID_YGIMBALSWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_YGIMBALSWITCH, VC_GIMBAL_YSWITCH_mousearea[0], VC_GIMBAL_YSWITCH_mousearea[1], VC_GIMBAL_YSWITCH_mousearea[2], VC_GIMBAL_YSWITCH_mousearea[3]);
 
 	// Gimbal status display
-	oapiVCRegisterArea (GlobalElId(ELID_DISPLAY), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
+	oapiVCRegisterArea (ELID_DISPLAY, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
 
 	return true;
 }
@@ -592,6 +582,8 @@ MainGimbalDisp::MainGimbalDisp (GimbalControl *gc)
 		pofs_cmd[i] = yofs_cmd[i] = 0;
 	}
 	memset (&vc_grp, 0, sizeof(GROUPREQUESTSPEC));
+	for (int i = 0; i < 16; i++)
+		vperm[i] = (WORD)(i+VC_GIMBAL_INDICATOR_LEFT_vofs);
 }
 
 // --------------------------------------------------------------
@@ -708,11 +700,7 @@ bool MainGimbalDisp::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 			Vtx[i].y = (float)(cnt[0].y + y*cosa - z*sina);
 			Vtx[i].z = (float)(cnt[0].z + y*sina + z*cosa);
 		}
-		GROUPEDITSPEC ges;
-		ges.flags = GRPEDIT_VTXCRD;
-		ges.nVtx = vc_grp.nVtx;
-		ges.Vtx  = vc_grp.Vtx;
-		ges.vIdx = 0;
+		GROUPEDITSPEC ges = {GRPEDIT_VTXCRD, 0, vc_grp.Vtx, vc_grp.nVtx, vperm};
 		oapiEditMeshGroup (hMesh, GRP_VC_INSTR_VC, &ges);
 
 	}
@@ -973,7 +961,7 @@ bool YMainGimbalCtrl::ProcessMouseVC (int event, VECTOR3 &p)
 // ==============================================================
 
 RetroCoverControl::RetroCoverControl (MainRetroSubsystem *_subsys)
-: DGSubsystemComponent(_subsys)
+: DGSubsystem(_subsys)
 {
 	rcover_state.SetOperatingSpeed(RCOVER_OPERATING_SPEED);
 	ELID_SWITCH = AddElement (sw = new RetroCoverSwitch (this));
@@ -1020,6 +1008,7 @@ void RetroCoverControl::CloseRetroCover ()
 	rcover_state.Close();
 	DG()->UpdateStatusIndicators();
 	UpdateCtrlDialog (DG());
+	DG()->EnableRetroThrusters (false);
 	DG()->RecordEvent ("RCOVER", "Close");
 }
 
@@ -1035,24 +1024,14 @@ void RetroCoverControl::clbkPostCreation ()
 
 void RetroCoverControl::clbkSaveState (FILEHANDLE scn)
 {
-	if (!rcover_state.IsClosed()) {
-		char cbuf[256];
-		sprintf (cbuf, "%0.4lf %0.4f", rcover_state.State(), rcover_state.Speed());
-		oapiWriteScenario_string (scn, "RCOVER", cbuf);
-	}
+	rcover_state.SaveState (scn, "RCOVER");
 }
 
 // --------------------------------------------------------------
 
 bool RetroCoverControl::clbkParseScenarioLine (const char *line)
 {
-	if (!_strnicmp (line, "RCOVER", 6)) {
-		double state, speed;
-		sscanf (line+6, "%lf%lf", &state, &speed);
-		rcover_state.SetState (state, speed);
-		return true;
-	}
-	return false;
+	return rcover_state.ParseScenarioLine (line, "RCOVER");
 }
 
 // --------------------------------------------------------------
@@ -1063,6 +1042,8 @@ void RetroCoverControl::clbkPostStep (double simt, double simdt, double mjd)
 	if (rcover_state.Process (simdt)) {
 		DG()->SetAnimation (anim_rcover, rcover_state.State());
 		DG()->UpdateStatusIndicators();
+		if (rcover_state.IsOpen())
+			DG()->EnableRetroThrusters(true);
 	}
 
 }
@@ -1074,7 +1055,7 @@ bool RetroCoverControl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD 
 	if (panelid != 0) return false;
 
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_SWITCH), _R(1129,496,1155,548), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, sw);
+	DG()->RegisterPanelArea (hPanel, ELID_SWITCH, _R(1129,496,1155,548), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, sw);
 	sw->DefineAnimation2D (DG()->panelmesh0, GRP_INSTRUMENTS_ABOVE_P0, 180);
 
 	return true;
@@ -1087,11 +1068,23 @@ bool RetroCoverControl::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// Retro engine cover switch
-	oapiVCRegisterArea (GlobalElId(ELID_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_SWITCH), VC_RCOVER_SWITCH_mousearea[0], VC_RCOVER_SWITCH_mousearea[1], VC_RCOVER_SWITCH_mousearea[2], VC_RCOVER_SWITCH_mousearea[3]);
+	oapiVCRegisterArea (ELID_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_SWITCH, VC_RCOVER_SWITCH_mousearea[0], VC_RCOVER_SWITCH_mousearea[1], VC_RCOVER_SWITCH_mousearea[2], VC_RCOVER_SWITCH_mousearea[3]);
 	sw->DefineAnimationVC (VC_RCOVER_SWITCH_ref, VC_RCOVER_SWITCH_axis, GRP_SWITCH1_VC, VC_RCOVER_SWITCH_vofs);
 
 	return true;
+}
+
+// --------------------------------------------------------------
+
+bool RetroCoverControl::clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event)
+{
+	if (!_stricmp (event_type, "RCOVER")) {
+		if (!_stricmp (event, "CLOSE")) CloseRetroCover();
+		else                            OpenRetroCover();
+		return true;
+	}
+	return false;
 }
 
 // ==============================================================

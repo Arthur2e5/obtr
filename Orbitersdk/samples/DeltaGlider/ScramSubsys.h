@@ -88,7 +88,7 @@ class ScramThrottle;
 
 class ScramSubsystem: public DGSubsystem {
 public:
-	ScramSubsystem (DeltaGlider *dg, int ident);
+	ScramSubsystem (DeltaGlider *dg);
 	~ScramSubsystem ();
 	void SetPropellantMaxMass (double mass);
 	double GetPropellantMaxMass () const { return fuel_maxmass; }
@@ -118,7 +118,7 @@ private:
 // Throttle control
 // ==============================================================
 
-class ScramThrottle: public DGSubsystemComponent {
+class ScramThrottle: public DGSubsystem {
 	friend class ScramThrottleLever;
 
 public:

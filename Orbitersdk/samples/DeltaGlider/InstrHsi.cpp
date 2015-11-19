@@ -13,6 +13,7 @@
 #include "DeltaGlider.h"
 #include "meshres_vc.h"
 #include "meshres_p0.h"
+#include "dg_vc_anim.h"
 
 // ==============================================================
 
@@ -238,11 +239,10 @@ bool InstrHSI::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 		Redraw (Vtx);
 
 		// transform vertices to VC location
-		static const double rad = 0.06;       // display size param
-		static const double tilt = 20.0*RAD;  // display tilt around x-axis
-		static const double ycnt = 1.0903;    // y-position of display centre (x is assumed 0)
-		static const double zcnt = 7.2491;    // z-position of display centre
-		static const double cosa = cos(tilt), sina = sin(tilt);
+		static const double rad = 0.06;           // display size param
+		static const double ycnt = VC_HSI_ref.y;  // y-position of display centre (x is assumed 0)
+		static const double zcnt = VC_HSI_ref.z;  // z-position of display centre
+		static const double cosa = VC_HSI_axis.z, sina = VC_HSI_axis.y;
 		static const float scale = (float)(rad/108.0);
 		double y, z;
 		for (int i = 0; i < 32; i++) {
@@ -252,8 +252,8 @@ bool InstrHSI::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 				y = Vtx[i].y*scale;
 				z = (i < 8 ? 0.0 : i < 20 ? -0.0005 : -0.001);
 				// tilt to panel inclination
-				Vtx[i].y = (float)(ycnt + y*cosa - z*sina);
-				Vtx[i].z = (float)(zcnt + y*sina + z*cosa);
+				Vtx[i].y = (float)(ycnt - y*cosa - z*sina);
+				Vtx[i].z = (float)(zcnt + y*sina - z*cosa);
 			}
 		}
 

@@ -99,19 +99,12 @@ DeltaGlider *lua_toDG (lua_State *L, int idx)
 	return dg;
 }
 
-static DeltaGlider::DoorStatus DGaction[4] = {
-	DeltaGlider::DOOR_CLOSING,
-	DeltaGlider::DOOR_OPENING,
-	DeltaGlider::DOOR_CLOSING,
-	DeltaGlider::DOOR_OPENING
-};
-
 static int dgGear (lua_State *L)
 {
 	DeltaGlider *dg = lua_toDG (L, 1);
 	int action = lua_tointeger (L, 2);
-	if (dg && action >= 2 && action < 4)
-		dg->SubsysGear()->ActivateGear (DGaction[action]);
+	if (action & 1) dg->SubsysGear()->LowerGear();
+	else            dg->SubsysGear()->RaiseGear();
 	return 0;
 }
 
@@ -119,8 +112,10 @@ static int dgNosecone (lua_State *L)
 {
 	DeltaGlider *dg = lua_toDG (L, 1);
 	int action = lua_tointeger (L, 2);
-	if (dg && action >= 0 && action < 2)
-		dg->SubsysDocking()->ActivateNosecone (DGaction[action]);
+	if (dg && action >= 0 && action < 2) {
+		if (action == 0) dg->SubsysDocking()->CloseNcone();
+		else             dg->SubsysDocking()->OpenNcone();
+	}
 	return 0;
 }
 
@@ -128,8 +123,10 @@ static int dgHatch (lua_State *L)
 {
 	DeltaGlider *dg = lua_toDG (L, 1);
 	int action = lua_tointeger (L, 2);
-	if (dg && action >= 0 && action < 2)
-		dg->SubsysPressure()->ActivateHatch (DGaction[action]);
+	if (dg && action >= 0 && action < 2) {
+		if (action == 0) dg->SubsysPressure()->CloseHatch();
+		else             dg->SubsysPressure()->OpenHatch();
+	}
 	return 0;
 }
 
@@ -148,8 +145,10 @@ static int dgOLock (lua_State *L)
 {
 	DeltaGlider *dg = lua_toDG (L, 1);
 	int action = lua_tointeger (L, 2);
-	if (dg && action >= 0 && action < 2)
-		dg->SubsysPressure()->ActivateOuterAirlock (DGaction[action]);
+	if (dg && action >= 0 && action < 2) {
+		if (action == 0) dg->SubsysPressure()->CloseOuterAirlock();
+		else             dg->SubsysPressure()->OpenOuterAirlock();
+	}
 	return 0;
 }
 
@@ -157,8 +156,10 @@ static int dgILock (lua_State *L)
 {
 	DeltaGlider *dg = lua_toDG (L, 1);
 	int action = lua_tointeger (L, 2);
-	if (dg && action >= 0 && action < 2)
-		dg->SubsysPressure()->ActivateInnerAirlock (DGaction[action]);
+	if (dg && action >= 0 && action < 2) {
+		if (action == 0) dg->SubsysPressure()->CloseInnerAirlock();
+		else             dg->SubsysPressure()->OpenInnerAirlock();
+	}
 	return 0;
 }
 
@@ -177,7 +178,9 @@ static int dgABrake (lua_State *L)
 {
 	DeltaGlider *dg = lua_toDG (L, 1);
 	int action = lua_tointeger (L, 2);
-	if (dg && action >= 0 && action < 2)
-		dg->SubsysAerodyn()->ActivateAirbrake (DGaction[action]);
+	if (dg && action >= 0 && action < 2) {
+		if (action == 0) dg->SubsysAerodyn()->RetractAirbrake();
+		else             dg->SubsysAerodyn()->ExtendAirbrake();
+	}
 	return 0;
 }

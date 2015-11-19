@@ -16,14 +16,23 @@
 class InstrAOA: public PanelElement {
 public:
 	InstrAOA (VESSEL3 *v);
+	~InstrAOA ();
 	void Reset2D (MESHHANDLE hMesh);
+	void ResetVC (DEVMESHHANDLE hMesh);
 
 	void AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx);
 
 	bool Redraw2D (SURFHANDLE surf);
+	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
 
 private:
+	void Redraw (NTVERTEX *vtx, NTVERTEX *vtxr);
 	double paoa; // previous AOA value
+	GROUPREQUESTSPEC vc_grp;         ///< Buffered VC vertex data (tape)
+	GROUPREQUESTSPEC vc_grp_readout; ///< Buffered VC vertex data (readout)
+	WORD vperm[8];
+	WORD vperm_readout[16];
+	float ycnt, disph; // display geometry
 };
 
 #endif // !__INSTRAOA_H

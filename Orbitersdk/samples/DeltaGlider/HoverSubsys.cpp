@@ -21,26 +21,16 @@ static const float texw = (float)PANEL2D_TEXW; // texture width
 // Hover control subsystem
 // ==============================================================
 
-HoverSubsystem::HoverSubsystem (DeltaGlider *dg, int ident)
-: DGSubsystem (dg, ident)
+HoverSubsystem::HoverSubsystem (DeltaGlider *dg)
+: DGSubsystem (dg)
 {
 	// create the subsystem components
-	AddComponent (attctrl = new HoverAttitudeComponent (this));
-	AddComponent (holdctrl = new HoverHoldComponent (this));
-	AddComponent (manctrl = new HoverManualComponent (this));
+	AddSubsystem (attctrl = new HoverAttitudeComponent (this));
+	AddSubsystem (holdctrl = new HoverHoldComponent (this));
+	AddSubsystem (manctrl = new HoverManualComponent (this));
 
 	for (int i = 0; i < 3; i++)
 		hoverlevel[i] = 0.0;
-}
-
-// --------------------------------------------------------------
-
-HoverSubsystem::~HoverSubsystem ()
-{
-	// delete the subsystem components
-	delete attctrl;
-	delete holdctrl;
-	delete manctrl;
 }
 
 // --------------------------------------------------------------
@@ -97,7 +87,7 @@ void HoverSubsystem::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
 // ==============================================================
 
 HoverSubsystemComponent::HoverSubsystemComponent (HoverSubsystem *_subsys)
-: DGSubsystemComponent(_subsys)
+: DGSubsystem(_subsys)
 {
 }
 
@@ -233,7 +223,7 @@ void HoverAttitudeComponent::TrackHoverAtt ()
 	} else {
 		phover = rhover = phover_cmd = rhover_cmd = 0.0;
 	}
-	oapiTriggerRedrawArea (0, 0, GlobalElId (ELID_DISPLAY));
+	oapiTriggerRedrawArea (0, 0, ELID_DISPLAY);
 }
 
 // --------------------------------------------------------------
@@ -282,16 +272,16 @@ bool HoverAttitudeComponent::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, D
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
 
 	// Hover control dial
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_MODEDIAL),     _R(356,426,396,470), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, panel2dtex, modedial);
+	DG()->RegisterPanelArea (hPanel, ELID_MODEDIAL,     _R(356,426,396,470), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN, panel2dtex, modedial);
 
 	// Hover manual switches
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_PHOVERSWITCH), _R(436,434,452,478), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, phoverswitch);
+	DG()->RegisterPanelArea (hPanel, ELID_PHOVERSWITCH, _R(436,434,452,478), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, phoverswitch);
 	phoverswitch->DefineAnimation2D (DGSwitch2::VERT, GRP_INSTRUMENTS_ABOVE_P0, 160);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_RHOVERSWITCH), _R(423,513,467,529), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, rhoverswitch);
+	DG()->RegisterPanelArea (hPanel, ELID_RHOVERSWITCH, _R(423,513,467,529), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, rhoverswitch);
 	rhoverswitch->DefineAnimation2D (DGSwitch2::HORZ, GRP_INSTRUMENTS_ABOVE_P0, 164);
 
 	// Hover balance display
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_DISPLAY),      _R( 0,  0, 0,  0), PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, hoverdisp);
+	DG()->RegisterPanelArea (hPanel, ELID_DISPLAY,      _R( 0,  0, 0,  0), PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, hoverdisp);
 
 	return true;
 }
@@ -303,20 +293,20 @@ bool HoverAttitudeComponent::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// Hover control dial
-	oapiVCRegisterArea (GlobalElId(ELID_MODEDIAL), PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_MODEDIAL), VC_HOVER_DIAL_mousearea[0], VC_HOVER_DIAL_mousearea[1], VC_HOVER_DIAL_mousearea[2], VC_HOVER_DIAL_mousearea[3]);
+	oapiVCRegisterArea (ELID_MODEDIAL, PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_MODEDIAL, VC_HOVER_DIAL_mousearea[0], VC_HOVER_DIAL_mousearea[1], VC_HOVER_DIAL_mousearea[2], VC_HOVER_DIAL_mousearea[3]);
 	modedial->DefineAnimationVC (VC_HOVER_DIAL_ref, VC_HOVER_DIAL_axis, GRP_DIAL1_VC, VC_HOVER_DIAL_vofs);
 
 	// Hover manual switches
-	oapiVCRegisterArea (GlobalElId(ELID_PHOVERSWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_PHOVERSWITCH), VC_HOVER_PSWITCH_mousearea[0], VC_HOVER_PSWITCH_mousearea[1], VC_HOVER_PSWITCH_mousearea[2], VC_HOVER_PSWITCH_mousearea[3]);
+	oapiVCRegisterArea (ELID_PHOVERSWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_PHOVERSWITCH, VC_HOVER_PSWITCH_mousearea[0], VC_HOVER_PSWITCH_mousearea[1], VC_HOVER_PSWITCH_mousearea[2], VC_HOVER_PSWITCH_mousearea[3]);
 	phoverswitch->DefineAnimationVC (VC_HOVER_PSWITCH_ref, VC_HOVER_PSWITCH_axis, GRP_SWITCH2_VC, VC_HOVER_PSWITCH_vofs);
-	oapiVCRegisterArea (GlobalElId(ELID_RHOVERSWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_RHOVERSWITCH), VC_HOVER_RSWITCH_mousearea[0], VC_HOVER_RSWITCH_mousearea[1], VC_HOVER_RSWITCH_mousearea[2], VC_HOVER_RSWITCH_mousearea[3]);
+	oapiVCRegisterArea (ELID_RHOVERSWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_RHOVERSWITCH, VC_HOVER_RSWITCH_mousearea[0], VC_HOVER_RSWITCH_mousearea[1], VC_HOVER_RSWITCH_mousearea[2], VC_HOVER_RSWITCH_mousearea[3]);
 	rhoverswitch->DefineAnimationVC (VC_HOVER_RSWITCH_ref, VC_HOVER_RSWITCH_axis, GRP_SWITCH2_VC, VC_HOVER_RSWITCH_vofs);
 
 	// Hover balance display
-	oapiVCRegisterArea (GlobalElId(ELID_DISPLAY), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
+	oapiVCRegisterArea (ELID_DISPLAY, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
 
 	return true;
 }
@@ -352,7 +342,7 @@ void HoverHoldComponent::Activate (bool ison)
 		active = ison;
 
 		holdbtn->SetState(active ? DGButton3::ON : DGButton3::OFF);
-		oapiTriggerRedrawArea (0, 0, GlobalElId(ELID_HOLDBTN));
+		oapiTriggerRedrawArea (0, 0, ELID_HOLDBTN);
 
 		if (hovermode == HOLD_ALT) {  // use default VESSEL method for altitude hold
 			if (active) DG()->SetHoverHoldAltitude (holdalt, altmode);
@@ -499,21 +489,21 @@ bool HoverHoldComponent::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
 
 	// readouts
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_DISPLAY), _R(486,442,543,466), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, holddisp);
+	DG()->RegisterPanelArea (hPanel, ELID_DISPLAY, _R(486,442,543,466), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, holddisp);
 
 	// Hover hold activate button
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_HOLDBTN), _R(491,415,533,445), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP, panel2dtex, holdbtn);
+	DG()->RegisterPanelArea (hPanel, ELID_HOLDBTN, _R(491,415,533,445), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP, panel2dtex, holdbtn);
 	holdbtn->DefineAnimation2D (GRP_INSTRUMENTS_ABOVE_P0, 172);
 
 	// Hover hold select switch
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_ALTSET), _R(484,491,528,507), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, altset);
+	DG()->RegisterPanelArea (hPanel, ELID_ALTSET, _R(484,491,528,507), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP, panel2dtex, altset);
 	altset->DefineAnimation2D (DGSwitch2::HORZ, GRP_INSTRUMENTS_ABOVE_P0, 168);
 
 	// Hover hold reset button
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_ALTRESET), _R(532,492,546,506), PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP, panel2dtex, altreset);
+	DG()->RegisterPanelArea (hPanel, ELID_ALTRESET, _R(532,492,546,506), PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP, panel2dtex, altreset);
 
 	// Hover hold mode selector buttons
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_MODEBUTTONS), _R(487,520,541,544), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN, panel2dtex, modebuttons);
+	DG()->RegisterPanelArea (hPanel, ELID_MODEBUTTONS, _R(487,520,541,544), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN, panel2dtex, modebuttons);
 	modebuttons->DefineAnimation2D (GRP_INSTRUMENTS_ABOVE_P0, 176);
 
 	return true;
@@ -526,26 +516,26 @@ bool HoverHoldComponent::clbkLoadVC (int vcid)
 	switch (vcid) {
 	case 0: // VC pilot position
 		// readouts
-		oapiVCRegisterArea (GlobalElId(ELID_DISPLAY), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
+		oapiVCRegisterArea (ELID_DISPLAY, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
 
 		// Hover hold activate button
-		oapiVCRegisterArea (GlobalElId(ELID_HOLDBTN), PANEL_REDRAW_MOUSE | PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Spherical (GlobalElId(ELID_HOLDBTN), VC_BTN_HOVER_HOLDALT_ref, VC_BTN_HOVER_HOLDALT_mouserad);
+		oapiVCRegisterArea (ELID_HOLDBTN, PANEL_REDRAW_MOUSE | PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
+		oapiVCSetAreaClickmode_Spherical (ELID_HOLDBTN, VC_BTN_HOVER_HOLDALT_ref, VC_BTN_HOVER_HOLDALT_mouserad);
 		holdbtn->DefineAnimationVC (VC_BTN_HOVER_HOLDALT_axis, GRP_BUTTON3_VC, GRP_LIT_SURF_VC, VC_BTN_HOVER_HOLDALT_vofs, VC_BTN_HOVER_HOLDALT_LABEL_vofs);
 
 		// Hover hold select switch
-		oapiVCRegisterArea (GlobalElId(ELID_ALTSET), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_ALTSET), VC_HOVER_HOLDALT_SWITCH_mousearea[0], VC_HOVER_HOLDALT_SWITCH_mousearea[1], VC_HOVER_HOLDALT_SWITCH_mousearea[2], VC_HOVER_HOLDALT_SWITCH_mousearea[3]);
+		oapiVCRegisterArea (ELID_ALTSET, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
+		oapiVCSetAreaClickmode_Quadrilateral (ELID_ALTSET, VC_HOVER_HOLDALT_SWITCH_mousearea[0], VC_HOVER_HOLDALT_SWITCH_mousearea[1], VC_HOVER_HOLDALT_SWITCH_mousearea[2], VC_HOVER_HOLDALT_SWITCH_mousearea[3]);
 		altset->DefineAnimationVC (VC_HOVER_HOLDALT_SWITCH_ref, VC_HOVER_HOLDALT_SWITCH_axis, GRP_SWITCH2_VC, VC_HOVER_HOLDALT_SWITCH_vofs);
 
 		// Hover hold reset button
-		oapiVCRegisterArea (GlobalElId(ELID_ALTRESET), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Spherical (GlobalElId(ELID_ALTRESET), VC_BTN_HOVER_HOLDALT_CUR_ref, VC_BTN_HOVER_HOLDALT_CUR_mouserad);
+		oapiVCRegisterArea (ELID_ALTRESET, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
+		oapiVCSetAreaClickmode_Spherical (ELID_ALTRESET, VC_BTN_HOVER_HOLDALT_CUR_ref, VC_BTN_HOVER_HOLDALT_CUR_mouserad);
 		altreset->DefineAnimationVC (VC_BTN_HOVER_HOLDALT_CUR_axis, GRP_BUTTON2_VC, VC_BTN_HOVER_HOLDALT_CUR_vofs);
 
 		// Hover mode selector buttons
-		oapiVCRegisterArea (GlobalElId(ELID_MODEBUTTONS), PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
-		oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_MODEBUTTONS), VC_HOVERMODE_BUTTONS_mousearea[0], VC_HOVERMODE_BUTTONS_mousearea[1], VC_HOVERMODE_BUTTONS_mousearea[2], VC_HOVERMODE_BUTTONS_mousearea[3]);
+		oapiVCRegisterArea (ELID_MODEBUTTONS, PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
+		oapiVCSetAreaClickmode_Quadrilateral (ELID_MODEBUTTONS, VC_HOVERMODE_BUTTONS_mousearea[0], VC_HOVERMODE_BUTTONS_mousearea[1], VC_HOVERMODE_BUTTONS_mousearea[2], VC_HOVERMODE_BUTTONS_mousearea[3]);
 		{
 			static DWORD hoverbtn_vofs[2] = {VC_BTN_HOVERMODE_1_vofs,VC_BTN_HOVERMODE_2_vofs};
 			static DWORD hoverbtn_label_vofs[2] = {VC_BTN_HOVERMODE_1_LABEL_vofs, VC_BTN_HOVERMODE_2_LABEL_vofs};
@@ -584,7 +574,7 @@ bool HoverManualComponent::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWO
 
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
 
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_THROTTLE),  _R( 4,304, 57,444), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBPRESSED, panel2dtex, throttle);
+	DG()->RegisterPanelArea (hPanel, ELID_THROTTLE,  _R( 4,304, 57,444), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBPRESSED, panel2dtex, throttle);
 
 	return true;
 }
@@ -596,8 +586,8 @@ bool HoverManualComponent::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// Hover throttle
-	oapiVCRegisterArea (GlobalElId(ELID_THROTTLE), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_THROTTLE), _V(-0.44,0.87,6.81), _V(-0.35,0.87,6.81), _V(-0.44,0.95,6.91), _V(-0.35,0.95,6.91));
+	oapiVCRegisterArea (ELID_THROTTLE, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_THROTTLE, _V(-0.44,0.87,6.81), _V(-0.35,0.87,6.81), _V(-0.44,0.95,6.91), _V(-0.35,0.95,6.91));
 
 	return true;
 }
@@ -687,7 +677,7 @@ HoverDisp::HoverDisp (HoverAttitudeComponent *_ctrl)
 	pofs_cmd = rofs_cmd = 0;
 	memset (&vc_grp, 0, sizeof(GROUPREQUESTSPEC));
 	for (int i = 0; i < 8; i++)
-		vperm[i] = (WORD)(i+16);
+		vperm[i] = (WORD)(i+VC_HOVER_INDICATOR_vofs);
 }
 
 // --------------------------------------------------------------

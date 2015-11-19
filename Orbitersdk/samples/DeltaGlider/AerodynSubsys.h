@@ -25,12 +25,11 @@ class ElevatorTrim;
 
 class AerodynCtrlSubsystem: public DGSubsystem {
 public:
-	AerodynCtrlSubsystem (DeltaGlider *v, int ident);
-	~AerodynCtrlSubsystem ();
+	AerodynCtrlSubsystem (DeltaGlider *v);
 	void SetMode (DWORD mode);
-	void ActivateAirbrake (DeltaGlider::DoorStatus action, bool half_step = false);
-	DeltaGlider::DoorStatus AirbrakeStatus () const;
-	const double *AirbrakePositionPtr () const;
+	void ExtendAirbrake ();
+	void RetractAirbrake ();
+	const AnimState2 &AirbrakeState() const;
 
 private:
 	AerodynSelector *selector;
@@ -42,7 +41,7 @@ private:
 // Control selector dial
 // ==============================================================
 
-class AerodynSelector: public DGSubsystemComponent {
+class AerodynSelector: public DGSubsystem {
 	friend class AerodynSelectorDial;
 
 public:
@@ -79,31 +78,29 @@ private:
 // Airbrake
 // ==============================================================
 
-class Airbrake: public DGSubsystemComponent {
+class Airbrake: public DGSubsystem {
 	friend class AirbrakeLever;
 
 public:
 	Airbrake (AerodynCtrlSubsystem *_subsys);
-	void Activate (DeltaGlider::DoorStatus action, bool half_step = false);
-	DeltaGlider::DoorStatus Status() const;
-	inline const double *PositionPtr() const { return &brake_proc; }
+	void Extend ();
+	void Retract ();
+	inline const AnimState2 &State() const { return brake_state; }
 	void clbkPostStep (double simt, double simdt, double mjd);
 	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);
 	void clbkSaveState (FILEHANDLE scn);
 	bool clbkParseScenarioLine (const char *line);
 	void clbkPostCreation ();
+	bool clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event);
 
 private:
 	AirbrakeLever *lever;
 	int ELID_LEVER;
-
-	DeltaGlider::DoorStatus brake_status, airbrakelever_status;
 	int airbrake_tgt;
-
 	UINT anim_brake;            // handle for airbrake animation
 	UINT anim_airbrakelever;    // VC airbrake lever
-	double brake_proc, airbrakelever_proc;
+	AnimState2 brake_state, lever_state;
 };
 
 // ==============================================================
@@ -126,7 +123,7 @@ private:
 // Elevator trim control
 // ==============================================================
 
-class ElevatorTrim: public DGSubsystemComponent {
+class ElevatorTrim: public DGSubsystem {
 	friend class ElevatorTrimWheel;
 
 public:

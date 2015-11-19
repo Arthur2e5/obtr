@@ -21,8 +21,7 @@
 #define STRICT 1
 
 #include "orbitersdk.h"
-#include "resource.h"
-#include <vector>
+#include "..\Common\Vessel\Instrument.h"
 
 // ==============================================================
 // Some vessel class caps
@@ -146,10 +145,6 @@ const DWORD PANEL2D_TEXW  = 2048;  // texture width
 const DWORD PANEL2D_TEXH  = 1024;  // texture height
 const DWORD INSTR3D_TEXW  =  512;
 const DWORD INSTR3D_TEXH  = 1024;
-const DWORD INSTR1_TEXW   =  176;
-const DWORD INSTR1_TEXH   = 1152;
-const DWORD INSTR2_TEXW   =   84;
-const DWORD INSTR2_TEXH   =  512;
 
 // ==========================================================
 // Forward declarations
@@ -176,7 +171,7 @@ class FailureSubsystem;
 // Interface for derived vessel class: DeltaGlider
 // ==========================================================
 
-class DeltaGlider: public VESSEL4 {
+class DeltaGlider: public ComponentVessel {
 	friend class AAP;
 	friend class FuelMFD;
 
@@ -198,14 +193,11 @@ public:
 	void SetPanelScale (PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	void DefinePanelMain (PANELHANDLE hPanel);
 	void DefinePanelOverhead (PANELHANDLE hPanel);
-	bool RedrawPanel_Wingload (SURFHANDLE surf, bool force = false);
 	bool RedrawPanel_ScramTempDisp (SURFHANDLE surf);
 	bool RedrawPanel_MainFlow (SURFHANDLE surf);
 	bool RedrawPanel_RetroFlow (SURFHANDLE surf);
 	bool RedrawPanel_HoverFlow (SURFHANDLE surf);
 	bool RedrawPanel_ScramFlow (SURFHANDLE surf);
-	bool RedrawPanel_MainTSFC (SURFHANDLE surf);
-	bool RedrawPanel_ScramTSFC (SURFHANDLE surf);
 	void InitVCMesh ();
 
 	double GetMainThrusterLevel (int which) const { return GetThrusterLevel (th_main[which]); }
@@ -230,7 +222,6 @@ public:
 	void clbkVisualCreated (VISHANDLE vis, int refcount);
 	void clbkVisualDestroyed (VISHANDLE vis, int refcount);
 	void clbkPostStep (double simt, double simdt, double mjd);
-	bool clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event);
 	bool clbkDrawHUD (int mode, const HUDPAINTSPEC *hps, oapi::Sketchpad *skp);
 	void clbkRenderHUD (int mode, const HUDPAINTSPEC *hps, SURFHANDLE hTex);
 	void clbkRCSMode (int mode);
@@ -251,8 +242,6 @@ public:
 	bool clbkVCRedrawEvent (int id, int event, SURFHANDLE surf);
 	int  clbkGeneric (int msgid, int prm, void *context);
 
-	double load_ind;            // angle of load indicator needle
-	int hbswitch, hbmode;       // hover balance slider position
 	bool psngr[4];              // passengers?
 	bool bDamageEnabled;        // damage/failure testing?
 
@@ -260,7 +249,6 @@ public:
 	double lwingstatus, rwingstatus;
 	bool aileronfail[4];
 
-	enum DoorStatus { DOOR_CLOSED, DOOR_OPEN, DOOR_CLOSING, DOOR_OPENING };
 	void SetGearParameters (double state);
 
 	// Animation handles
@@ -321,7 +309,6 @@ private:
 	MfdSubsystem         *ssys_mfd[2];           // MFD instruments
 	LightCtrlSubsystem   *ssys_light;            // cockpit/external light controls
 	FailureSubsystem     *ssys_failure;          // failure/warning controls
-	std::vector<DGSubsystem*> ssys;              // list of subsystems
 
 	AAP *aap;                                    // atmospheric autopilot
 
@@ -344,29 +331,23 @@ private:
 
 	int mainflowidx[2], retroflowidx[2], hoverflowidx, scflowidx[2];
 	int mainTSFCidx, scTSFCidx[2];
-	int scrampropidx[2];
 };
 
 // ==============================================================
 
 typedef struct {
 	HINSTANCE hDLL;
-	HFONT font[2];
 	DWORD col[4];
-	HBRUSH brush[4];
 	HPEN pen[2];
 	SURFHANDLE surf;
 } GDIParams;
 
 // Panel area identifiers:
 // Panel 0
-#define AID_LOADINSTR           12
 #define AID_MAINDISP1           32
 #define AID_MAINDISP2           33
 #define AID_MAINDISP3           34
-#define AID_MAINDISP4           35
 #define AID_SCRAMDISP2          36
-#define AID_SCRAMDISP3          37
 #define AID_AAP                 56
 
 // Panel 1

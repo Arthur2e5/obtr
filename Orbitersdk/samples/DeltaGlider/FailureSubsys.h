@@ -21,7 +21,7 @@ class FailureSubsystem: public DGSubsystem {
 	friend class MwsButton;
 
 public:
-	FailureSubsystem (DeltaGlider *v, int ident);
+	FailureSubsystem (DeltaGlider *v);
 	inline bool MWSActive() const { return bMWSActive; }
 	inline void MWSActivate() { bMWSActive = true; }
 	inline void MWSReset() { bMWSActive = false; }

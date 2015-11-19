@@ -24,8 +24,8 @@ double PressureSubsystem::p_target = 100e3;
 
 // --------------------------------------------------------------
 
-PressureSubsystem::PressureSubsystem (DeltaGlider *vessel, int ident)
-: DGSubsystem(vessel, ident)
+PressureSubsystem::PressureSubsystem (DeltaGlider *vessel)
+: DGSubsystem(vessel)
 {
 	extern GDIParams g_Param;
 
@@ -33,8 +33,8 @@ PressureSubsystem::PressureSubsystem (DeltaGlider *vessel, int ident)
 	p_ext_hatch = p_ext_lock = 0.0;
 	docked = false;
 
-	AddComponent (airlockctrl = new AirlockCtrl (this));
-	AddComponent (hatchctrl = new TophatchCtrl (this));
+	AddSubsystem (airlockctrl = new AirlockCtrl (this));
+	AddSubsystem (hatchctrl = new TophatchCtrl (this));
 
 	for (int i = 0; i < 5; i++) {
 		ELID_PVALVESWITCH[i] = AddElement (valve_switch[i] = new PValveSwitch (this, i));
@@ -47,36 +47,48 @@ PressureSubsystem::PressureSubsystem (DeltaGlider *vessel, int ident)
 
 PressureSubsystem::~PressureSubsystem ()
 {
-	delete airlockctrl;
-	delete hatchctrl;
 }
 
 // --------------------------------------------------------------
 
-DeltaGlider::DoorStatus PressureSubsystem::OLockStatus () const
+const AnimState2 &PressureSubsystem::OLockState () const
 {
-	return airlockctrl->olock_status;
+	return airlockctrl->OLockState();
 }
 
 // --------------------------------------------------------------
 
-DeltaGlider::DoorStatus PressureSubsystem::ILockStatus () const
+const AnimState2 &PressureSubsystem::ILockState () const
 {
-	return airlockctrl->ilock_status;
+	return airlockctrl->ILockState();
 }
 
 // --------------------------------------------------------------
 
-void PressureSubsystem::ActivateOuterAirlock (DeltaGlider::DoorStatus action)
+void PressureSubsystem::OpenOuterAirlock ()
 {
-	airlockctrl->ActivateOuterLock (action);
+	airlockctrl->OpenOuterLock ();
 }
 
 // --------------------------------------------------------------
 
-void PressureSubsystem::ActivateInnerAirlock (DeltaGlider::DoorStatus action)
+void PressureSubsystem::CloseOuterAirlock ()
 {
-	airlockctrl->ActivateInnerLock (action);
+	airlockctrl->CloseOuterLock ();
+}
+
+// --------------------------------------------------------------
+
+void PressureSubsystem::OpenInnerAirlock ()
+{
+	airlockctrl->OpenInnerLock ();
+}
+
+// --------------------------------------------------------------
+
+void PressureSubsystem::CloseInnerAirlock ()
+{
+	airlockctrl->CloseInnerLock ();
 }
 
 // --------------------------------------------------------------
@@ -88,16 +100,23 @@ void PressureSubsystem::RevertOuterAirlock ()
 
 // --------------------------------------------------------------
 
-void PressureSubsystem::ActivateHatch (DeltaGlider::DoorStatus action)
+void PressureSubsystem::OpenHatch ()
 {
-	hatchctrl->Activate (action);
+	hatchctrl->OpenHatch();
 }
 
 // --------------------------------------------------------------
 
-DeltaGlider::DoorStatus PressureSubsystem::HatchStatus () const
+void PressureSubsystem::CloseHatch ()
 {
-	return hatchctrl->hatch_status;
+	hatchctrl->CloseHatch();
+}
+
+// --------------------------------------------------------------
+
+const AnimState2 &PressureSubsystem::HatchState () const
+{
+	return hatchctrl->State();
 }
 
 // --------------------------------------------------------------
@@ -118,8 +137,8 @@ void PressureSubsystem::clbkPostStep (double simt, double simdt, double mjd)
 	p_ext_hatch = p_static;
 	if (!docked) {
 		p_ext_lock = p_static;
-		if (DG()->SubsysDocking()->NoseconeStatus() != DeltaGlider::DOOR_CLOSED)
-			p_ext_lock += DG()->GetDynPressure() * DG()->SubsysDocking()->NoseconePosition();
+		if (!DG()->SubsysDocking()->NconeState().IsClosed())
+			p_ext_lock += DG()->GetDynPressure() * DG()->SubsysDocking()->NconeState().State();
 	}
 	else v_extdock = 2.0; // for now
 
@@ -127,9 +146,7 @@ void PressureSubsystem::clbkPostStep (double simt, double simdt, double mjd)
 
 	// exchange cabin - ext.hatch
 	cs = (valve_status[1] ? 2e-4:0.0);
-	if (hatchctrl->hatch_status != DeltaGlider::DOOR_CLOSED) {
-		cs += 0.1*hatchctrl->hatch_proc;
-	}
+	cs += 0.1*HatchState().State();
 	if (cs) {
 		pdiff = p_ext_hatch-p_cabin;
 		dvol = pdiff*cs*simdt*1e3;
@@ -142,9 +159,7 @@ void PressureSubsystem::clbkPostStep (double simt, double simdt, double mjd)
 
 	// exchange airlock - ext.lock
 	cs = (valve_status[3] ? 2e-4:0.0);
-	if (airlockctrl->olock_status != DeltaGlider::DOOR_CLOSED) {
-		cs += 1.0*airlockctrl->olock_proc;
-	}
+	cs += 1.0*OLockState().State();
 	if (cs) {
 		pdiff = p_ext_lock-p_airlock;
 		dvol = pdiff*cs*simdt*1e3;
@@ -165,9 +180,7 @@ void PressureSubsystem::clbkPostStep (double simt, double simdt, double mjd)
 
 	// exchange cabin - airlock
 	cs = (valve_status[2] ? 2e-4:0.0);
-	if (airlockctrl->ilock_status != DeltaGlider::DOOR_CLOSED) {
-		cs += 1.0*airlockctrl->ilock_proc;
-	}
+	cs += 1.0*ILockState().State();
 	if (cs) {
 		pdiff = p_cabin-p_airlock;
 		dvol = pdiff*cs*simdt*1e3;
@@ -214,12 +227,12 @@ bool PressureSubsystem::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD 
 
 	// Pressure indicator display
 	SURFHANDLE surf = oapiGetTextureHandle(DG()->panelmesh1,2);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_DISPLAY), _R(0,0,0,0), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, surf, pind);
+	DG()->RegisterPanelArea (hPanel, ELID_DISPLAY, _R(0,0,0,0), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, surf, pind);
 
 	// Pressure valve switches
 	surf = oapiGetTextureHandle(DG()->panelmesh1,1);
 	for (int i = 0; i < 5; i++) {
-		DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_PVALVESWITCH[i]), _R(388+i*46,42,414+i*46,94), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, surf, valve_switch[i]);
+		DG()->RegisterPanelArea (hPanel, ELID_PVALVESWITCH[i], _R(388+i*46,42,414+i*46,94), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, surf, valve_switch[i]);
 		valve_switch[i]->DefineAnimation2D (DG()->panelmesh1, GRP_INSTRUMENTS_ABOVE_P1, 24+i*4);
 	}
 
@@ -235,27 +248,27 @@ bool PressureSubsystem::clbkLoadVC (int vcid)
 	switch (vcid) {
 	case 0:
 		// Pressure indicator display
-		oapiVCRegisterArea (GlobalElId(ELID_DISPLAY), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
+		oapiVCRegisterArea (ELID_DISPLAY, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
 
 		// Pressure valve switches
-		oapiVCRegisterArea (GlobalElId(ELID_PVALVESWITCH[0]), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_PVALVESWITCH[0]), VC_CABIN_O2_SWITCH_mousearea[0], VC_CABIN_O2_SWITCH_mousearea[1], VC_CABIN_O2_SWITCH_mousearea[2], VC_CABIN_O2_SWITCH_mousearea[3]);
+		oapiVCRegisterArea (ELID_PVALVESWITCH[0], PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (ELID_PVALVESWITCH[0], VC_CABIN_O2_SWITCH_mousearea[0], VC_CABIN_O2_SWITCH_mousearea[1], VC_CABIN_O2_SWITCH_mousearea[2], VC_CABIN_O2_SWITCH_mousearea[3]);
 		valve_switch[0]->DefineAnimationVC (VC_CABIN_O2_SWITCH_ref, VC_CABIN_O2_SWITCH_axis, GRP_SWITCH1_VC, VC_CABIN_O2_SWITCH_vofs);
 
-		oapiVCRegisterArea (GlobalElId(ELID_PVALVESWITCH[1]), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_PVALVESWITCH[1]), VC_VALVE1_SWITCH_mousearea[0], VC_VALVE1_SWITCH_mousearea[1], VC_VALVE1_SWITCH_mousearea[2], VC_VALVE1_SWITCH_mousearea[3]);
+		oapiVCRegisterArea (ELID_PVALVESWITCH[1], PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (ELID_PVALVESWITCH[1], VC_VALVE1_SWITCH_mousearea[0], VC_VALVE1_SWITCH_mousearea[1], VC_VALVE1_SWITCH_mousearea[2], VC_VALVE1_SWITCH_mousearea[3]);
 		valve_switch[1]->DefineAnimationVC (VC_VALVE1_SWITCH_ref, VC_VALVE1_SWITCH_axis, GRP_SWITCH1_VC, VC_VALVE1_SWITCH_vofs);
 
-		oapiVCRegisterArea (GlobalElId(ELID_PVALVESWITCH[2]), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_PVALVESWITCH[2]), VC_VALVE2_SWITCH_mousearea[0], VC_VALVE2_SWITCH_mousearea[1], VC_VALVE2_SWITCH_mousearea[2], VC_VALVE2_SWITCH_mousearea[3]);
+		oapiVCRegisterArea (ELID_PVALVESWITCH[2], PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (ELID_PVALVESWITCH[2], VC_VALVE2_SWITCH_mousearea[0], VC_VALVE2_SWITCH_mousearea[1], VC_VALVE2_SWITCH_mousearea[2], VC_VALVE2_SWITCH_mousearea[3]);
 		valve_switch[2]->DefineAnimationVC (VC_VALVE2_SWITCH_ref, VC_VALVE2_SWITCH_axis, GRP_SWITCH1_VC, VC_VALVE2_SWITCH_vofs);
 
-		oapiVCRegisterArea (GlobalElId(ELID_PVALVESWITCH[3]), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_PVALVESWITCH[3]), VC_VALVE3_SWITCH_mousearea[0], VC_VALVE3_SWITCH_mousearea[1], VC_VALVE3_SWITCH_mousearea[2], VC_VALVE3_SWITCH_mousearea[3]);
+		oapiVCRegisterArea (ELID_PVALVESWITCH[3], PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (ELID_PVALVESWITCH[3], VC_VALVE3_SWITCH_mousearea[0], VC_VALVE3_SWITCH_mousearea[1], VC_VALVE3_SWITCH_mousearea[2], VC_VALVE3_SWITCH_mousearea[3]);
 		valve_switch[3]->DefineAnimationVC (VC_VALVE3_SWITCH_ref, VC_VALVE3_SWITCH_axis, GRP_SWITCH1_VC, VC_VALVE3_SWITCH_vofs);
 
-		oapiVCRegisterArea (GlobalElId(ELID_PVALVESWITCH[4]), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-		oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_PVALVESWITCH[4]), VC_LOCK_O2_SWITCH_mousearea[0], VC_LOCK_O2_SWITCH_mousearea[1], VC_LOCK_O2_SWITCH_mousearea[2], VC_LOCK_O2_SWITCH_mousearea[3]);
+		oapiVCRegisterArea (ELID_PVALVESWITCH[4], PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+		oapiVCSetAreaClickmode_Quadrilateral (ELID_PVALVESWITCH[4], VC_LOCK_O2_SWITCH_mousearea[0], VC_LOCK_O2_SWITCH_mousearea[1], VC_LOCK_O2_SWITCH_mousearea[2], VC_LOCK_O2_SWITCH_mousearea[3]);
 		valve_switch[4]->DefineAnimationVC (VC_LOCK_O2_SWITCH_ref, VC_LOCK_O2_SWITCH_axis, GRP_SWITCH1_VC, VC_LOCK_O2_SWITCH_vofs);
 		break;
 	}
@@ -267,12 +280,10 @@ bool PressureSubsystem::clbkLoadVC (int vcid)
 // ==============================================================
 
 AirlockCtrl::AirlockCtrl (PressureSubsystem *_subsys)
-: DGSubsystemComponent(_subsys)
+: DGSubsystem(_subsys)
 {
-	olock_status = DeltaGlider::DOOR_CLOSED;
-	olock_proc   = 0.0;
-	ilock_status = DeltaGlider::DOOR_CLOSED;
-	ilock_proc   = 0.0;
+	ostate.SetOperatingSpeed (AIRLOCK_OPERATING_SPEED);
+	istate.SetOperatingSpeed (AIRLOCK_OPERATING_SPEED);
 
 	ELID_OSWITCH = AddElement (osw = new OuterLockSwitch (this));
 	ELID_ISWITCH = AddElement (isw = new InnerLockSwitch (this));
@@ -303,92 +314,94 @@ AirlockCtrl::AirlockCtrl (PressureSubsystem *_subsys)
 
 // --------------------------------------------------------------
 
-void AirlockCtrl::ActivateOuterLock (DeltaGlider::DoorStatus action)
+void AirlockCtrl::OpenOuterLock ()
 {
 	extern void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd=0);
 
-	bool close = (action == DeltaGlider::DOOR_CLOSED || action == DeltaGlider::DOOR_CLOSING);
-	olock_status = action;
-	if (action <= DeltaGlider::DOOR_OPEN) {
-		olock_proc = (action == DeltaGlider::DOOR_CLOSED ? 0.0 : 1.0);
-		DG()->SetAnimation (anim_olock, olock_proc);
-		DG()->UpdateStatusIndicators();
-	}
-	//oapiTriggerPanelRedrawArea (1, AID_AIRLOCKSWITCH);
+	ostate.Open();
+	DG()->UpdateStatusIndicators();
 	UpdateCtrlDialog (DG());
-	DG()->RecordEvent ("OLOCK", close ? "CLOSE" : "OPEN");
+	DG()->RecordEvent ("OLOCK", "OPEN");
 }
 
 // --------------------------------------------------------------
 
-void AirlockCtrl::ActivateInnerLock (DeltaGlider::DoorStatus action)
+void AirlockCtrl::CloseOuterLock ()
 {
 	extern void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd=0);
 
-	bool close = (action == DeltaGlider::DOOR_CLOSED || action == DeltaGlider::DOOR_CLOSING);
-	ilock_status = action;
-	if (action <= DeltaGlider::DOOR_OPEN) {
-		ilock_proc = (action == DeltaGlider::DOOR_CLOSED ? 0.0 : 1.0);
-		DG()->SetAnimation (anim_ilock, ilock_proc);
-		DG()->UpdateStatusIndicators();
-	}
-	//oapiTriggerPanelRedrawArea (1, AID_AIRLOCKSWITCH);
+	ostate.Close();
+	DG()->UpdateStatusIndicators();
 	UpdateCtrlDialog (DG());
-	DG()->RecordEvent ("ILOCK", close ? "CLOSE" : "OPEN");
+	DG()->RecordEvent ("OLOCK", "CLOSE");
 }
 
 // --------------------------------------------------------------
 
 void AirlockCtrl::RevertOuterLock ()
 {
-	ActivateOuterLock (olock_status == DeltaGlider::DOOR_CLOSED || olock_status == DeltaGlider::DOOR_CLOSING ?
-		                  DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
+	if (ostate.IsOpen() || ostate.IsOpening())
+		CloseOuterLock();
+	else
+		OpenOuterLock();
+}
+
+// --------------------------------------------------------------
+
+void AirlockCtrl::OpenInnerLock ()
+{
+	extern void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd=0);
+
+	istate.Open();
+	DG()->UpdateStatusIndicators();
+	UpdateCtrlDialog (DG());
+	DG()->RecordEvent ("ILOCK", "OPEN");
+}
+
+// --------------------------------------------------------------
+
+void AirlockCtrl::CloseInnerLock ()
+{
+	extern void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd=0);
+
+	istate.Close();
+	DG()->UpdateStatusIndicators();
+	UpdateCtrlDialog (DG());
+	DG()->RecordEvent ("ILOCK", "CLOSE");
 }
 
 // --------------------------------------------------------------
 
 void AirlockCtrl::RevertInnerLock ()
 {
-	ActivateInnerLock (ilock_status == DeltaGlider::DOOR_CLOSED || ilock_status == DeltaGlider::DOOR_CLOSING ?
-		                  DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
+	if (istate.IsOpen() || istate.IsOpening())
+		CloseInnerLock();
+	else
+		OpenInnerLock();
 }
 
 // --------------------------------------------------------------
 
 void AirlockCtrl::clbkSaveState (FILEHANDLE scn)
 {
-	if (olock_status) {
-		char cbuf[256];
-		sprintf (cbuf, "%d %0.4f", olock_status, olock_proc);
-		oapiWriteScenario_string (scn, "AIRLOCK", cbuf);
-	}
-	if (ilock_status) {
-		char cbuf[256];
-		sprintf (cbuf, "%d %0.4f", ilock_status, ilock_proc);
-		oapiWriteScenario_string (scn, "IAIRLOCK", cbuf);
-	}
+	ostate.SaveState (scn, "AIRLOCK");
+	istate.SaveState (scn, "IAIRLOCK");
 }
 
 // --------------------------------------------------------------
 
 bool AirlockCtrl::clbkParseScenarioLine (const char *line)
 {
-	if (!_strnicmp (line, "AIRLOCK", 7)) {
-		sscanf (line+7, "%d%lf", &olock_status, &olock_proc);
-		return true;
-	} else if (!_strnicmp (line, "IAIRLOCK", 8)) {
-		sscanf (line+8, "%d%lf", &ilock_status, &ilock_proc);
-		return true;
-	}
-	return false;
+	return (ostate.ParseScenarioLine (line, "AIRLOCK") ||
+		    istate.ParseScenarioLine (line, "IAIRLOCK"));
 }
 
 // --------------------------------------------------------------
 
 void AirlockCtrl::clbkPostCreation ()
 {
-	DG()->SetAnimation (anim_olock, olock_proc);
-	DG()->SetAnimation (anim_ilock, ilock_proc);	
+	DG()->SetAnimation (anim_olock, ostate.State());
+	DG()->SetAnimation (anim_ilock, istate.State());	
 }
 
 // --------------------------------------------------------------
@@ -396,46 +409,14 @@ void AirlockCtrl::clbkPostCreation ()
 void AirlockCtrl::clbkPostStep (double simt, double simdt, double mjd)
 {
 	// animate outer airlock
-	if (olock_status >= DeltaGlider::DOOR_CLOSING) {
-		double da = simdt * AIRLOCK_OPERATING_SPEED;
-		if (olock_status == DeltaGlider::DOOR_CLOSING) {
-			if (olock_proc > 0.0)
-				olock_proc = max (0.0, olock_proc-da);
-			else {
-				olock_status = DeltaGlider::DOOR_CLOSED;
-				//oapiTriggerPanelRedrawArea (1, AID_AIRLOCKINDICATOR);
-			}
-		} else { // door opening
-			if (olock_proc < 1.0)
-				olock_proc = min (1.0, olock_proc+da);
-			else {
-				olock_status = DeltaGlider::DOOR_OPEN;
-				//oapiTriggerPanelRedrawArea (1, AID_AIRLOCKINDICATOR);
-			}
-		}
-		DG()->SetAnimation (anim_olock, olock_proc);
+	if (ostate.Process (simdt)) {
+		DG()->SetAnimation (anim_olock, ostate.State());
 		DG()->UpdateStatusIndicators();
 	}
 
 	// animate inner airlock
-	if (ilock_status >= DeltaGlider::DOOR_CLOSING) {
-		double da = simdt * AIRLOCK_OPERATING_SPEED;
-		if (ilock_status == DeltaGlider::DOOR_CLOSING) {
-			if (ilock_proc > 0.0)
-				ilock_proc = max (0.0, ilock_proc-da);
-			else {
-				ilock_status = DeltaGlider::DOOR_CLOSED;
-				//oapiTriggerPanelRedrawArea (1, AID_AIRLOCKINDICATOR);
-			}
-		} else { // door opening
-			if (ilock_proc < 1.0)
-				ilock_proc = min (1.0, ilock_proc+da);
-			else {
-				ilock_status = DeltaGlider::DOOR_OPEN;
-				//oapiTriggerPanelRedrawArea (1, AID_AIRLOCKINDICATOR);
-			}
-		}
-		DG()->SetAnimation (anim_ilock, ilock_proc);
+	if (istate.Process (simdt)) {
+		DG()->SetAnimation (anim_ilock, istate.State());
 		DG()->UpdateStatusIndicators();
 	}
 }
@@ -449,11 +430,11 @@ bool AirlockCtrl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW,
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh1,1);
 
 	// Inner airlock open/close switch
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_ISWITCH), _R(480,192,506,244), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, isw);
+	DG()->RegisterPanelArea (hPanel, ELID_ISWITCH, _R(480,192,506,244), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, isw);
 	isw->DefineAnimation2D (DG()->panelmesh1, GRP_INSTRUMENTS_ABOVE_P1, 4);
 
 	// Outer airlock open/close switch
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_OSWITCH), _R(526,192,552,244), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, osw);
+	DG()->RegisterPanelArea (hPanel, ELID_OSWITCH, _R(526,192,552,244), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, osw);
 	osw->DefineAnimation2D (DG()->panelmesh1, GRP_INSTRUMENTS_ABOVE_P1, 8);
 
 	return true;
@@ -466,16 +447,32 @@ bool AirlockCtrl::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// Outer airlock open/close switch
-	oapiVCRegisterArea (GlobalElId(ELID_OSWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_OSWITCH), VC_OLOCK_SWITCH_mousearea[0], VC_OLOCK_SWITCH_mousearea[1], VC_OLOCK_SWITCH_mousearea[2], VC_OLOCK_SWITCH_mousearea[3]);
+	oapiVCRegisterArea (ELID_OSWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_OSWITCH, VC_OLOCK_SWITCH_mousearea[0], VC_OLOCK_SWITCH_mousearea[1], VC_OLOCK_SWITCH_mousearea[2], VC_OLOCK_SWITCH_mousearea[3]);
 	osw->DefineAnimationVC (VC_OLOCK_SWITCH_ref, VC_OLOCK_SWITCH_axis, GRP_SWITCH1_VC, VC_OLOCK_SWITCH_vofs);
 
 	// Inner airlock open/close switch
-	oapiVCRegisterArea (GlobalElId(ELID_ISWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_ISWITCH), VC_ILOCK_SWITCH_mousearea[0], VC_ILOCK_SWITCH_mousearea[1], VC_ILOCK_SWITCH_mousearea[2], VC_ILOCK_SWITCH_mousearea[3]);
+	oapiVCRegisterArea (ELID_ISWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_ISWITCH, VC_ILOCK_SWITCH_mousearea[0], VC_ILOCK_SWITCH_mousearea[1], VC_ILOCK_SWITCH_mousearea[2], VC_ILOCK_SWITCH_mousearea[3]);
 	isw->DefineAnimationVC (VC_ILOCK_SWITCH_ref, VC_ILOCK_SWITCH_axis, GRP_SWITCH1_VC, VC_ILOCK_SWITCH_vofs);
 
 	return true;
+}
+
+// --------------------------------------------------------------
+
+bool AirlockCtrl::clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event)
+{
+	if (!_stricmp (event_type, "OLOCK")) {
+		if (!_stricmp (event, "CLOSE")) CloseOuterLock();
+		else                            OpenOuterLock();
+		return true;
+	} else if (!_stricmp (event_type, "ILOCK")) {
+		if (!_stricmp (event, "CLOSE")) CloseInnerLock();
+		else                            OpenInnerLock();
+		return true;
+	}
+	return false;
 }
 
 // ==============================================================
@@ -489,16 +486,16 @@ OuterLockSwitch::OuterLockSwitch (AirlockCtrl *comp)
 
 void OuterLockSwitch::Reset2D (MESHHANDLE hMesh)
 {
-	SetState (component->olock_status == DeltaGlider::DOOR_CLOSED ||
-			  component->olock_status == DeltaGlider::DOOR_CLOSING ? DOWN:UP);
+	SetState (component->ostate.IsClosed() || component->ostate.IsClosing() ?
+		DOWN : UP);
 }
 
 // --------------------------------------------------------------
 
 void OuterLockSwitch::ResetVC (DEVMESHHANDLE hMesh)
 {
-	SetState (component->olock_status == DeltaGlider::DOOR_CLOSED ||
-			  component->olock_status == DeltaGlider::DOOR_CLOSING ? DOWN:UP);
+	SetState (component->ostate.IsClosed() || component->ostate.IsClosing() ?
+		DOWN : UP);
 }
 
 // --------------------------------------------------------------
@@ -506,8 +503,8 @@ void OuterLockSwitch::ResetVC (DEVMESHHANDLE hMesh)
 bool OuterLockSwitch::ProcessMouse2D (int event, int mx, int my)
 {
 	if (DGSwitch1::ProcessMouse2D (event, mx, my)) {
-		DGSwitch1::State state = GetState();
-		component->ActivateOuterLock (state==UP ? DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
+		if (GetState() == UP) component->OpenOuterLock();
+		else                  component->CloseOuterLock();
 		return true;
 	}
 	return false;
@@ -518,8 +515,8 @@ bool OuterLockSwitch::ProcessMouse2D (int event, int mx, int my)
 bool OuterLockSwitch::ProcessMouseVC (int event, VECTOR3 &p)
 {
 	if (DGSwitch1::ProcessMouseVC (event, p)) {
-		DGSwitch1::State state = GetState();
-		component->ActivateOuterLock (state==UP ? DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
+		if (GetState() == UP) component->OpenOuterLock();
+		else                  component->CloseOuterLock();
 		return true;
 	}
 	return false;
@@ -536,16 +533,16 @@ InnerLockSwitch::InnerLockSwitch (AirlockCtrl *comp)
 
 void InnerLockSwitch::Reset2D (MESHHANDLE hMesh)
 {
-	SetState (component->ilock_status == DeltaGlider::DOOR_CLOSED ||
-			  component->ilock_status == DeltaGlider::DOOR_CLOSING ? DOWN:UP);
+	SetState (component->istate.IsClosed() || component->istate.IsClosing() ?
+		DOWN : UP);
 }
 
 // --------------------------------------------------------------
 
 void InnerLockSwitch::ResetVC (DEVMESHHANDLE hMesh)
 {
-	SetState (component->ilock_status == DeltaGlider::DOOR_CLOSED ||
-			  component->ilock_status == DeltaGlider::DOOR_CLOSING ? DOWN:UP);
+	SetState (component->istate.IsClosed() || component->istate.IsClosing() ?
+		DOWN : UP);
 }
 
 // --------------------------------------------------------------
@@ -553,8 +550,8 @@ void InnerLockSwitch::ResetVC (DEVMESHHANDLE hMesh)
 bool InnerLockSwitch::ProcessMouse2D (int event, int mx, int my)
 {
 	if (DGSwitch1::ProcessMouse2D (event, mx, my)) {
-		DGSwitch1::State state = GetState();
-		component->ActivateInnerLock (state==UP ? DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
+		if (GetState() == UP) component->OpenInnerLock();
+		else                  component->CloseInnerLock();
 		return true;
 	}
 	return false;
@@ -565,8 +562,8 @@ bool InnerLockSwitch::ProcessMouse2D (int event, int mx, int my)
 bool InnerLockSwitch::ProcessMouseVC (int event, VECTOR3 &p)
 {
 	if (DGSwitch1::ProcessMouseVC (event, p)) {
-		DGSwitch1::State state = GetState();
-		component->ActivateInnerLock (state==UP ? DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
+		if (GetState() == UP) component->OpenInnerLock();
+		else                  component->CloseInnerLock();
 		return true;
 	}
 	return false;
@@ -577,10 +574,9 @@ bool InnerLockSwitch::ProcessMouseVC (int event, VECTOR3 &p)
 // ==============================================================
 
 TophatchCtrl::TophatchCtrl (PressureSubsystem *_subsys)
-: DGSubsystemComponent(_subsys)
+: DGSubsystem(_subsys)
 {
-	hatch_status = DeltaGlider::DOOR_CLOSED;
-	hatch_proc   = 0.0;
+	hatch_state.SetOperatingSpeed (HATCH_OPERATING_SPEED);
 	hatch_vent   = NULL;
 	hatchfail    = 0;
 
@@ -624,12 +620,11 @@ TophatchCtrl::~TophatchCtrl ()
 
 // --------------------------------------------------------------
 
-void TophatchCtrl::Activate (DeltaGlider::DoorStatus action)
+void TophatchCtrl::OpenHatch ()
 {
 	extern void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd=0);
 
-	bool close = (action == DeltaGlider::DOOR_CLOSED || action == DeltaGlider::DOOR_CLOSING);
-	if (hatch_status == DeltaGlider::DOOR_CLOSED && !close && !hatch_vent && DG()->GetAtmPressure() < 10e3) {
+	if (hatch_state.IsClosed() && !hatch_vent && DG()->GetAtmPressure() < 10e3) {
 		static PARTICLESTREAMSPEC airvent = {
 			0, 1.0, 15, 0.5, 0.3, 2, 0.3, 1.0, PARTICLESTREAMSPEC::EMISSIVE,
 			PARTICLESTREAMSPEC::LVL_LIN, 0.1, 0.1,
@@ -641,53 +636,53 @@ void TophatchCtrl::Activate (DeltaGlider::DoorStatus action)
 		hatch_vent = DG()->AddParticleStream (&airvent, pos, dir, &lvl);
 		hatch_vent_t = oapiGetSimTime();
 	}
-
-	hatch_status = action;
-	if (action <= DeltaGlider::DOOR_OPEN) {
-		hatch_proc = (action == DeltaGlider::DOOR_CLOSED ? 0.0 : 1.0);
-		DG()->SetAnimation (anim_hatch, hatch_proc);
-		DG()->UpdateStatusIndicators();
-	}
-	//oapiTriggerPanelRedrawArea (1, AID_SWITCHARRAY);
+	hatch_state.Open();
+	DG()->UpdateStatusIndicators();
 	UpdateCtrlDialog (DG());
-	DG()->RecordEvent ("HATCH", close ? "CLOSE" : "OPEN");
+	DG()->RecordEvent ("HATCH", "OPEN");
+}
+
+// --------------------------------------------------------------
+
+void TophatchCtrl::CloseHatch ()
+{
+	extern void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd=0);
+
+	hatch_state.Close();
+	DG()->UpdateStatusIndicators();
+	UpdateCtrlDialog (DG());
+	DG()->RecordEvent ("HATCH", "CLOSE");
 }
 
 // --------------------------------------------------------------
 
 void TophatchCtrl::Revert ()
 {
-	Activate (hatch_status == DeltaGlider::DOOR_CLOSED || hatch_status == DeltaGlider::DOOR_CLOSING ?
-				   DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
+	if (hatch_state.IsOpen() || hatch_state.IsOpening())
+		CloseHatch();
+	else
+		OpenHatch();
 }
 
 // --------------------------------------------------------------
 
 void TophatchCtrl::clbkSaveState (FILEHANDLE scn)
 {
-	if (hatch_status) {
-		char cbuf[256];
-		sprintf (cbuf, "%d %0.4lf", hatch_status, hatch_proc);
-		oapiWriteScenario_string (scn, "HATCH", cbuf);
-	}
+	hatch_state.SaveState (scn, "HATCH");
 }
 
 // --------------------------------------------------------------
 
 bool TophatchCtrl::clbkParseScenarioLine (const char *line)
 {
-	if (!_strnicmp (line, "HATCH", 5)) {
-		sscanf (line+5, "%d%lf", &hatch_status, &hatch_proc);
-		return true;
-	}
-	return false;
+	return hatch_state.ParseScenarioLine (line, "HATCH");
 }
 
 // --------------------------------------------------------------
 
 void TophatchCtrl::clbkPostCreation ()
 {
-	DG()->SetAnimation (anim_hatch, hatch_proc);	
+	DG()->SetAnimation (anim_hatch, hatch_state.State());	
 }
 
 // --------------------------------------------------------------
@@ -695,24 +690,8 @@ void TophatchCtrl::clbkPostCreation ()
 void TophatchCtrl::clbkPostStep (double simt, double simdt, double mjd)
 {
 	// animate top hatch
-	if (!hatchfail && hatch_status >= DeltaGlider::DOOR_CLOSING) {
-		double da = simdt * HATCH_OPERATING_SPEED;
-		if (hatch_status == DeltaGlider::DOOR_CLOSING) {
-			if (hatch_proc > 0.0)
-				hatch_proc = max (0.0, hatch_proc-da);
-			else {
-				hatch_status = DeltaGlider::DOOR_CLOSED;
-				//oapiTriggerPanelRedrawArea (2, AID_NOSECONEINDICATOR);
-			}
-		} else {
-			if (hatch_proc < 1.0)
-				hatch_proc = min (1.0, hatch_proc+da);
-			else {
-				hatch_status = DeltaGlider::DOOR_OPEN;
-				//oapiTriggerPanelRedrawArea (2, AID_NOSECONEINDICATOR);
-			}
-		}
-		DG()->SetAnimation (anim_hatch, hatch_proc);
+	if (!hatchfail && hatch_state.Process (simdt)) {
+		DG()->SetAnimation (anim_hatch, hatch_state.State());
 		DG()->UpdateStatusIndicators();
 	}
 
@@ -723,10 +702,11 @@ void TophatchCtrl::clbkPostStep (double simt, double simdt, double mjd)
 	}
 
 	// test for damage condition
-	if (hatchfail < 2 && hatch_proc > 0.05 && DG()->GetDynPressure() > 30e3) {
+	if (hatchfail < 2 && hatch_state.State() > 0.05 && DG()->GetDynPressure() > 30e3) {
 		if (oapiRand() < 1.0 - exp(-simdt*0.2)) {
 			if (++hatchfail == 1) {  // jam hatch
-				DG()->SetAnimation(anim_hatch, hatch_proc = 0.2);
+				hatch_state.SetState (0.2, 0.0);
+				DG()->SetAnimation(anim_hatch, 0.2);
 			} else {                 // tear off hatch
 				static UINT HatchGrp[2] = {12,88};
 				GROUPEDITSPEC ges;
@@ -747,7 +727,7 @@ bool TophatchCtrl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW
 
 	// Hatch open/close switch
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh1,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_SWITCH), _R(434,192,460,244), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, sw);
+	DG()->RegisterPanelArea (hPanel, ELID_SWITCH, _R(434,192,460,244), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, sw);
 	sw->DefineAnimation2D (DG()->panelmesh1, GRP_INSTRUMENTS_ABOVE_P1, 0);
 
 	return true;
@@ -760,8 +740,8 @@ bool TophatchCtrl::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// Hatch open/close switch
-	oapiVCRegisterArea (GlobalElId(ELID_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_SWITCH), VC_HATCH_SWITCH_mousearea[0], VC_HATCH_SWITCH_mousearea[1], VC_HATCH_SWITCH_mousearea[2], VC_HATCH_SWITCH_mousearea[3]);
+	oapiVCRegisterArea (ELID_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_SWITCH, VC_HATCH_SWITCH_mousearea[0], VC_HATCH_SWITCH_mousearea[1], VC_HATCH_SWITCH_mousearea[2], VC_HATCH_SWITCH_mousearea[3]);
 	sw->DefineAnimationVC (VC_HATCH_SWITCH_ref, VC_HATCH_SWITCH_axis, GRP_SWITCH1_VC, VC_HATCH_SWITCH_vofs);
 
 	return true;
@@ -769,10 +749,23 @@ bool TophatchCtrl::clbkLoadVC (int vcid)
 
 // --------------------------------------------------------------
 
+bool TophatchCtrl::clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event)
+{
+	if (!_stricmp (event_type, "HATCH")) {
+		if (!_stricmp (event, "CLOSE")) CloseHatch();
+		else                            OpenHatch();
+		return true;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
 void TophatchCtrl::RepairDamage ()
 {
 	if (hatchfail) {
-		DG()->SetAnimation (anim_hatch, hatch_proc = 0.0);
+		hatch_state.SetState (0.0, 0.0);
+		DG()->SetAnimation (anim_hatch, 0.0);
 		static UINT HatchGrp[2] = {12,88};
 		GROUPEDITSPEC ges;
 		ges.flags = GRPEDIT_SETUSERFLAG;
@@ -793,16 +786,16 @@ HatchCtrlSwitch::HatchCtrlSwitch (TophatchCtrl *comp)
 
 void HatchCtrlSwitch::Reset2D (MESHHANDLE hMesh)
 {
-	SetState (component->hatch_status == DeltaGlider::DOOR_CLOSED ||
-			  component->hatch_status == DeltaGlider::DOOR_CLOSING ? DOWN:UP);
+	SetState (component->hatch_state.IsClosed() || component->hatch_state.IsClosing() ?
+		DOWN : UP);
 }
 
 // --------------------------------------------------------------
 
 void HatchCtrlSwitch::ResetVC (DEVMESHHANDLE hMesh)
 {
-	SetState (component->hatch_status == DeltaGlider::DOOR_CLOSED ||
-			  component->hatch_status == DeltaGlider::DOOR_CLOSING ? DOWN:UP);
+	SetState (component->hatch_state.IsClosed() || component->hatch_state.IsClosing() ?
+		DOWN : UP);
 }
 
 // --------------------------------------------------------------
@@ -810,8 +803,8 @@ void HatchCtrlSwitch::ResetVC (DEVMESHHANDLE hMesh)
 bool HatchCtrlSwitch::ProcessMouse2D (int event, int mx, int my)
 {
 	if (DGSwitch1::ProcessMouse2D (event, mx, my)) {
-		DGSwitch1::State state = GetState();
-		component->Activate (state==UP ? DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
+		if (GetState() == UP) component->OpenHatch();
+		else                  component->CloseHatch();
 		return true;
 	}
 	return false;
@@ -822,8 +815,8 @@ bool HatchCtrlSwitch::ProcessMouse2D (int event, int mx, int my)
 bool HatchCtrlSwitch::ProcessMouseVC (int event, VECTOR3 &p)
 {
 	if (DGSwitch1::ProcessMouseVC (event, p)) {
-		DGSwitch1::State state = GetState();
-		component->Activate (state==UP ? DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
+		if (GetState() == UP) component->OpenHatch();
+		else                  component->CloseHatch();
 		return true;
 	}
 	return false;

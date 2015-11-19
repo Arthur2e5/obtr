@@ -23,8 +23,8 @@
 // Avionics subsystem
 // ==============================================================
 
-AvionicsSubsystem::AvionicsSubsystem (DeltaGlider *v, int ident)
-: DGSubsystem (v, ident)
+AvionicsSubsystem::AvionicsSubsystem (DeltaGlider *v)
+: DGSubsystem (v)
 {
 	extern GDIParams g_Param;
 
@@ -47,20 +47,20 @@ bool AvionicsSubsystem::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD 
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
 
 	// Artifical horizon display
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_INSTRATT), _R(0,0,0,0), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, 0, instratt);
+	DG()->RegisterPanelArea (hPanel, ELID_INSTRATT, _R(0,0,0,0), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, 0, instratt);
 
 	// HSI indicator
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_INSTRHSI), _R(0,0,0,0), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, 0, instrhsi);
+	DG()->RegisterPanelArea (hPanel, ELID_INSTRHSI, _R(0,0,0,0), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, 0, instrhsi);
 
 	// AOA/VS tape
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_INSTRAOA), _R(0,0,0,0), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instraoa);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_INSTRVS),  _R(0,0,0,0), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instrvs);
+	DG()->RegisterPanelArea (hPanel, ELID_INSTRAOA, _R(0,0,0,0), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instraoa);
+	DG()->RegisterPanelArea (hPanel, ELID_INSTRVS,  _R(0,0,0,0), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, instrvs);
 
 	// Propellant status display
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_FUELMFD), _R(0,0,0,0), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, instr2dtex, fuelmfd);
+	DG()->RegisterPanelArea (hPanel, ELID_FUELMFD,  _R(0,0,0,0), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, instr2dtex, fuelmfd);
 
 	// angular rate indicators
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_ANGRATEIND), _R(0,0,0,0), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, angrateind);
+	DG()->RegisterPanelArea (hPanel, ELID_ANGRATEIND, _R(0,0,0,0), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, panel2dtex, angrateind);
 
 	return true;
 }
@@ -72,19 +72,20 @@ bool AvionicsSubsystem::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// Artifical horizon display
-	oapiVCRegisterArea (GlobalElId(ELID_INSTRATT), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
+	oapiVCRegisterArea (ELID_INSTRATT, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
 
 	// HSI indicator
-	oapiVCRegisterArea (GlobalElId(ELID_INSTRHSI), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
+	oapiVCRegisterArea (ELID_INSTRHSI, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
 
-	// AOA tape
-	oapiVCRegisterArea (GlobalElId(ELID_INSTRAOA), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
+	// AOA/VS tapes
+	oapiVCRegisterArea (ELID_INSTRAOA, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
+	oapiVCRegisterArea (ELID_INSTRVS, PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE);
 
 	// Propellant status display
-	oapiVCRegisterArea (GlobalElId(ELID_FUELMFD), _R(0,0,1,1), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_DIRECT, oapiGetTextureHandle (DG()->vcmesh_tpl, 19));
+	oapiVCRegisterArea (ELID_FUELMFD, _R(0,0,1,1), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_DIRECT, oapiGetTextureHandle (DG()->vcmesh_tpl, 19));
 
 	// angular rate indicators
-	oapiVCRegisterArea (GlobalElId(ELID_ANGRATEIND), _R(0,0,1,1), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_DIRECT, oapiGetTextureHandle (DG()->vcmesh_tpl, 14));
+	oapiVCRegisterArea (ELID_ANGRATEIND, _R(0,0,1,1), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_IGNORE, PANEL_MAP_DIRECT, oapiGetTextureHandle (DG()->vcmesh_tpl, 14));
 
 	return true;
 }

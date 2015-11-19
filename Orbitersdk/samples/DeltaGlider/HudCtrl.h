@@ -31,11 +31,12 @@ class HUDUpDownSwitch;
 
 class HUDControl: public DGSubsystem {
 public:
-	HUDControl (DeltaGlider *vessel, int ident);
+	HUDControl (DeltaGlider *vessel);
 	int GetHUDMode () const;
 	void SetHUDMode (int mode);
 	void ToggleHUDMode ();
-	void ActivateHud (DeltaGlider::DoorStatus action);
+	void RetractHud();
+	void ExtendHud();
 	void RevertHud ();
 	void ModHUDBrightness (bool increase);
 	void clbkPostStep (double simt, double simdt, double mjd);
@@ -45,8 +46,7 @@ public:
 
 private:
 	int last_mode;
-	DeltaGlider::DoorStatus hud_status;
-	double hud_proc;
+	AnimState2 hud_state;
 
 	HUDModeButtons *modebuttons;   // mode buttons object
 	HUDBrightnessDial *brightdial; // HUD brightness dial object

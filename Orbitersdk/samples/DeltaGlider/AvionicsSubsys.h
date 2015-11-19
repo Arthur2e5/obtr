@@ -27,7 +27,7 @@ class AngRateIndicator;
 
 class AvionicsSubsystem: public DGSubsystem {
 public:
-	AvionicsSubsystem (DeltaGlider *v, int ident);
+	AvionicsSubsystem (DeltaGlider *v);
 	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);
 

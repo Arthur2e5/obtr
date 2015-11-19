@@ -28,7 +28,7 @@ class PressureIndicator;
 
 class PressureSubsystem: public DGSubsystem {
 public:
-	PressureSubsystem (DeltaGlider *vessel, int ident);
+	PressureSubsystem (DeltaGlider *vessel);
 	~PressureSubsystem ();
 	inline double PCabin() const { return p_cabin; }
 	inline double PAirlock() const { return p_airlock; }
@@ -36,13 +36,16 @@ public:
 	inline double PExtLock() const { return p_ext_lock; }
 	inline int GetPValve (int i) const { return valve_status[i]; }
 	inline void SetPValve (int i, int status) { valve_status[i] = status; }
-	DeltaGlider::DoorStatus OLockStatus () const;
-	DeltaGlider::DoorStatus ILockStatus () const;
-	void ActivateOuterAirlock (DeltaGlider::DoorStatus action);
-	void ActivateInnerAirlock (DeltaGlider::DoorStatus action);
+	const AnimState2 &OLockState () const;
+	const AnimState2 &ILockState () const;
+	void OpenOuterAirlock ();
+	void CloseOuterAirlock ();
+	void OpenInnerAirlock ();
+	void CloseInnerAirlock ();
 	void RevertOuterAirlock ();
-	void ActivateHatch (DeltaGlider::DoorStatus action);
-	DeltaGlider::DoorStatus HatchStatus () const;
+	void OpenHatch ();
+	void CloseHatch ();
+	const AnimState2 &HatchState() const;
 	void RepairDamage ();
 	void clbkPostStep (double simt, double simdt, double mjd);
 	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
@@ -71,27 +74,31 @@ private:
 // Airlock controls
 // ==============================================================
 
-class AirlockCtrl: public DGSubsystemComponent {
+class AirlockCtrl: public DGSubsystem {
 	friend class PressureSubsystem;
 	friend class OuterLockSwitch;
 	friend class InnerLockSwitch;
 
 public:
 	AirlockCtrl (PressureSubsystem *_subsys);
-	void ActivateOuterLock (DeltaGlider::DoorStatus action);
-	void ActivateInnerLock (DeltaGlider::DoorStatus action);
+	void OpenOuterLock ();
+	void CloseOuterLock ();
 	void RevertOuterLock ();
+	void OpenInnerLock ();
+	void CloseInnerLock ();
 	void RevertInnerLock ();
+	inline const AnimState2 &OLockState() const { return ostate; }
+	inline const AnimState2 &ILockState() const { return istate; }
 	void clbkSaveState (FILEHANDLE scn);
 	bool clbkParseScenarioLine (const char *line);
 	void clbkPostCreation ();
 	void clbkPostStep (double simt, double simdt, double mjd);
 	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);
+	bool clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event);
 
 private:
-	DeltaGlider::DoorStatus olock_status, ilock_status;
-	double olock_proc, ilock_proc;
+	AnimState2 ostate, istate;
 
 	OuterLockSwitch *osw;
 	InnerLockSwitch *isw;
@@ -135,15 +142,17 @@ private:
 // Top hatch controls
 // ==============================================================
 
-class TophatchCtrl: public DGSubsystemComponent {
+class TophatchCtrl: public DGSubsystem {
 	friend class PressureSubsystem;
 	friend class HatchCtrlSwitch;
 
 public:
 	TophatchCtrl (PressureSubsystem *_subsys);
 	~TophatchCtrl ();
-	void Activate (DeltaGlider::DoorStatus action);
+	void OpenHatch();
+	void CloseHatch();
 	void Revert ();
+	inline const AnimState2 &State() const { return hatch_state; }
 	void RepairDamage();
 	void clbkSaveState (FILEHANDLE scn);
 	bool clbkParseScenarioLine (const char *line);
@@ -151,10 +160,10 @@ public:
 	void clbkPostStep (double simt, double simdt, double mjd);
 	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);     // create the VC elements for this module
+	bool clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event);
 
 private:
-	DeltaGlider::DoorStatus hatch_status;
-	double hatch_proc;
+	AnimState2 hatch_state;
 	HatchCtrlSwitch *sw;
 	int ELID_SWITCH;
 	PSTREAM_HANDLE hatch_vent;

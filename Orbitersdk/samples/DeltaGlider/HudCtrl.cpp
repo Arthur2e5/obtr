@@ -19,12 +19,11 @@
 // HUD control subsystem
 // ==============================================================
 
-HUDControl::HUDControl (DeltaGlider *vessel, int ident)
-: DGSubsystem (vessel, ident)
+HUDControl::HUDControl (DeltaGlider *vessel)
+: DGSubsystem (vessel)
 {
 	last_mode  = HUD_NONE;
-	hud_status = DeltaGlider::DOOR_CLOSED;
-	hud_proc   = 0.0;
+	hud_state.SetOperatingSpeed (HUD_OPERATING_SPEED);
 
 	ELID_MODEBUTTONS   = AddElement (modebuttons = new HUDModeButtons (this));
 	ELID_HUDBRIGHTNESS = AddElement (brightdial = new HUDBrightnessDial (this));
@@ -63,9 +62,9 @@ void HUDControl::SetHUDMode (int mode)
 {
 	if (mode != HUD_NONE) {
 		last_mode = mode;
-		if (oapiCockpitMode() != COCKPIT_VIRTUAL || hud_status == DeltaGlider::DOOR_CLOSED)
+		if (oapiCockpitMode() != COCKPIT_VIRTUAL || hud_state.IsClosed())
 			oapiSetHUDMode (mode);
-		oapiTriggerRedrawArea (0, 0, GlobalElId (ELID_MODEBUTTONS));
+		oapiTriggerRedrawArea (0, 0, ELID_MODEBUTTONS);
 		modebuttons->SetMode (mode);
 	}
 }
@@ -79,25 +78,33 @@ void HUDControl::ToggleHUDMode ()
 
 // --------------------------------------------------------------
 
-void HUDControl::ActivateHud (DeltaGlider::DoorStatus action)
+void HUDControl::RetractHud ()
 {
-	hud_status = action;
-	if (action == DeltaGlider::DOOR_OPENING) {
-		int hudmode = oapiGetHUDMode();
-		if (hudmode != HUD_NONE) {
-			last_mode = hudmode;
-			oapiSetHUDMode (HUD_NONE);
-		}
+	hud_state.Open();
+	int hudmode = oapiGetHUDMode();
+	if (hudmode != HUD_NONE) {
+		last_mode = hudmode;
+		oapiSetHUDMode (HUD_NONE);
 	}
-	DG()->RecordEvent ("HUD", action == DeltaGlider::DOOR_CLOSING ? "CLOSE" : "OPEN");
+	DG()->RecordEvent ("HUD", "RETRACT");
 }
 
 // --------------------------------------------------------------
 
-void HUDControl::RevertHud (void)
+void HUDControl::ExtendHud ()
 {
-	ActivateHud (hud_status == DeltaGlider::DOOR_CLOSED || hud_status == DeltaGlider::DOOR_CLOSING ?
-		DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
+	hud_state.Close();
+	DG()->RecordEvent ("HUD", "EXTEND");
+}
+
+// --------------------------------------------------------------
+
+void HUDControl::RevertHud ()
+{
+	if (hud_state.IsClosed() || hud_state.IsClosing())
+		RetractHud();
+	else
+		ExtendHud();
 }
 
 // --------------------------------------------------------------
@@ -115,7 +122,7 @@ void HUDControl::ModHUDBrightness (bool increase)
 			oapiSetHUDMode (HUD_NONE);
 		}
 	} else {
-		if (mode == HUD_NONE && hud_status == DeltaGlider::DOOR_CLOSED)
+		if (mode == HUD_NONE && hud_state.IsClosed())
 			oapiSetHUDMode (last_mode);
 	}
 	if (oapiCockpitMode() == COCKPIT_VIRTUAL)
@@ -127,21 +134,11 @@ void HUDControl::ModHUDBrightness (bool increase)
 void HUDControl::clbkPostStep (double simt, double simdt, double mjd)
 {
 	// animate HUD
-	if (hud_status >= DeltaGlider::DOOR_CLOSING) {
-		double da = simdt * HUD_OPERATING_SPEED;
-		if (hud_status == DeltaGlider::DOOR_CLOSING) { // fold up HUD
-			if (hud_proc > 0.0) hud_proc = max (0.0, hud_proc-da);
-			else {
-				hud_status = DeltaGlider::DOOR_CLOSED;
-				oapiSetHUDMode (last_mode);
-			}
-		} else {
-			if (hud_proc < 1.0) hud_proc = min (1.0, hud_proc+da);
-			else                hud_status = DeltaGlider::DOOR_OPEN;
-		}
-		DG()->SetAnimation (anim_vc_hud, hud_proc);
+	if (hud_state.Process (simdt)) {
+		DG()->SetAnimation (anim_vc_hud, hud_state.State());
+		if (hud_state.IsClosed())
+			oapiSetHUDMode (last_mode);
 	}
-
 }
 
 // --------------------------------------------------------------
@@ -152,7 +149,7 @@ bool HUDControl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, 
 
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
 
-	DG()->RegisterPanelArea (hPanel, GlobalElId (ELID_MODEBUTTONS), _R(  15, 18, 122, 33), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY, panel2dtex, modebuttons);
+	DG()->RegisterPanelArea (hPanel, ELID_MODEBUTTONS, _R(  15, 18, 122, 33), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBPRESSED|PANEL_MOUSE_ONREPLAY, panel2dtex, modebuttons);
 
 	return true;
 }
@@ -164,8 +161,8 @@ bool HUDControl::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// HUD mode indicator/selector buttons on the dash panel
-	oapiVCRegisterArea (GlobalElId(ELID_MODEBUTTONS), PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_MODEBUTTONS), VC_HUD_BUTTONS_mousearea[0], VC_HUD_BUTTONS_mousearea[1], VC_HUD_BUTTONS_mousearea[2], VC_HUD_BUTTONS_mousearea[3]);
+	oapiVCRegisterArea (ELID_MODEBUTTONS, PANEL_REDRAW_USER | PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_MODEBUTTONS, VC_HUD_BUTTONS_mousearea[0], VC_HUD_BUTTONS_mousearea[1], VC_HUD_BUTTONS_mousearea[2], VC_HUD_BUTTONS_mousearea[3]);
 	{
 		static DWORD hudbtn_vofs[3] = {VC_BTN_HUDMODE_1_vofs,VC_BTN_HUDMODE_2_vofs,VC_BTN_HUDMODE_3_vofs};
 		static DWORD hudbtn_label_vofs[3] = {VC_BTN_HUDMODE_1_LABEL_vofs, VC_BTN_HUDMODE_2_LABEL_vofs, VC_BTN_HUDMODE_3_LABEL_vofs};
@@ -173,17 +170,17 @@ bool HUDControl::clbkLoadVC (int vcid)
 	}
 
 	// HUD brightness dial
-	oapiVCRegisterArea (GlobalElId(ELID_HUDBRIGHTNESS), PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_HUDBRIGHTNESS), VC_HUD_BRIGHTNESS_mousearea[0], VC_HUD_BRIGHTNESS_mousearea[1], VC_HUD_BRIGHTNESS_mousearea[2], VC_HUD_BRIGHTNESS_mousearea[3]);
+	oapiVCRegisterArea (ELID_HUDBRIGHTNESS, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBPRESSED | PANEL_MOUSE_LBUP);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_HUDBRIGHTNESS, VC_HUD_BRIGHTNESS_mousearea[0], VC_HUD_BRIGHTNESS_mousearea[1], VC_HUD_BRIGHTNESS_mousearea[2], VC_HUD_BRIGHTNESS_mousearea[3]);
 
 	// HUD colour selector button
-	oapiVCRegisterArea (GlobalElId(ELID_HUDCOLOUR), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
-	oapiVCSetAreaClickmode_Spherical (GlobalElId(ELID_HUDCOLOUR), VC_HUD_COLBUTTON_ref, VC_HUD_COLBUTTON_mouserad);
+	oapiVCRegisterArea (ELID_HUDCOLOUR, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
+	oapiVCSetAreaClickmode_Spherical (ELID_HUDCOLOUR, VC_HUD_COLBUTTON_ref, VC_HUD_COLBUTTON_mouserad);
 	colbutton->DefineAnimationVC (VC_HUD_COLBUTTON_axis, GRP_BUTTON2_VC, VC_HUD_COLBUTTON_vofs);
 
 	// HUD extend/retract switch
-	oapiVCRegisterArea (GlobalElId(ELID_HUDRETRACT), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_HUDRETRACT), VC_HUDRETRACT_SWITCH_mousearea[0], VC_HUDRETRACT_SWITCH_mousearea[1], VC_HUDRETRACT_SWITCH_mousearea[2], VC_HUDRETRACT_SWITCH_mousearea[3]);
+	oapiVCRegisterArea (ELID_HUDRETRACT, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_HUDRETRACT, VC_HUDRETRACT_SWITCH_mousearea[0], VC_HUDRETRACT_SWITCH_mousearea[1], VC_HUDRETRACT_SWITCH_mousearea[2], VC_HUDRETRACT_SWITCH_mousearea[3]);
 	updownswitch->DefineAnimationVC (VC_HUDRETRACT_SWITCH_ref, VC_HUDRETRACT_SWITCH_axis, GRP_SWITCH1_VC, VC_HUDRETRACT_SWITCH_vofs);
 
 	return true;
@@ -195,8 +192,8 @@ void HUDControl::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
 {
 	DG()->SetAnimation (anim_vc_hudbdial, oapiGetHUDIntensity());
 	int hudmode = oapiGetHUDMode();
-	if (hudmode != HUD_NONE && hud_status != DeltaGlider::DOOR_CLOSED)
-		hud_status = DeltaGlider::DOOR_CLOSING, hud_proc = 0.0;
+	if (hudmode != HUD_NONE && !hud_state.IsClosed())
+		hud_state.SetState (0, -1);
 }
 
 // ==============================================================
@@ -358,11 +355,8 @@ HUDUpDownSwitch::HUDUpDownSwitch (HUDControl *hc)
 bool HUDUpDownSwitch::ProcessMouseVC (int event, VECTOR3 &p)
 {
 	if (DGSwitch1::ProcessMouseVC (event, p)) {
-		DGSwitch1::State state = GetState();
-		switch (state) {
-			case DGSwitch1::UP:   ctrl->ActivateHud (DeltaGlider::DOOR_OPENING); break;
-			case DGSwitch1::DOWN: ctrl->ActivateHud (DeltaGlider::DOOR_CLOSING); break;
-		}
+		if (GetState() == UP)        ctrl->RetractHud();
+		else if (GetState() == DOWN) ctrl->ExtendHud();
 		return true;
 	}
 	return false;

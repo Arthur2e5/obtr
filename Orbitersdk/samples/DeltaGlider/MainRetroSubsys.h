@@ -27,8 +27,7 @@ class RetroCoverControl;
 
 class MainRetroSubsystem: public DGSubsystem {
 public:
-	MainRetroSubsystem (DeltaGlider *v, int ident);
-	~MainRetroSubsystem ();
+	MainRetroSubsystem (DeltaGlider *v);
 	void OpenRetroCover ();
 	void CloseRetroCover ();
 	const AnimState2 &RetroCoverState() const;
@@ -46,7 +45,7 @@ private:
 // Main/retro engine throttle
 // ==============================================================
 
-class MainRetroThrottle: public DGSubsystemComponent {
+class MainRetroThrottle: public DGSubsystem {
 	friend class MainRetroThrottleLevers;
 
 public:
@@ -88,7 +87,7 @@ class PMainGimbalCtrl;
 class YMainGimbalCtrl;
 class MainGimbalDisp;
 
-class GimbalControl: public DGSubsystemComponent {
+class GimbalControl: public DGSubsystem {
 	friend class PMainGimbalCtrl;
 	friend class YMainGimbalCtrl;
 
@@ -161,6 +160,7 @@ private:
 	int pofs_cur[2], pofs_cmd[2];
 	int yofs_cur[2], yofs_cmd[2];
 	GROUPREQUESTSPEC vc_grp; ///< Buffered VC vertex data
+	WORD vperm[16];
 };
 
 // ==============================================================
@@ -207,7 +207,7 @@ private:
 // Retro cover control
 // ==============================================================
 
-class RetroCoverControl: public DGSubsystemComponent {
+class RetroCoverControl: public DGSubsystem {
 	friend class RetroCoverSwitch;
 
 public:
@@ -221,6 +221,7 @@ public:
 	void clbkPostStep (double simt, double simdt, double mjd);
 	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);
+	bool clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event);
 
 private:
 	AnimState2 rcover_state;

@@ -26,8 +26,7 @@ class HoverManualComponent;
 
 class HoverSubsystem: public DGSubsystem {
 public:
-	HoverSubsystem (DeltaGlider *dg, int ident);
-	~HoverSubsystem();
+	HoverSubsystem (DeltaGlider *dg);
 
 	inline double GetThrusterLevel (int i) const { return hoverlevel[i]; }
 	inline void   SetThrusterLevel (int i, double lvl) { hoverlevel[i] = lvl; }
@@ -52,10 +51,10 @@ private:
 // Base class for hover submodes
 // ==============================================================
 
-class HoverSubsystemComponent: public DGSubsystemComponent {
+class HoverSubsystemComponent: public DGSubsystem {
 public:
 	HoverSubsystemComponent (HoverSubsystem *_subsys);
-	inline HoverSubsystem *HoverSubsys() { return (HoverSubsystem*)Subsys(); }
+	inline HoverSubsystem *HoverSubsys() { return (HoverSubsystem*)Parent(); }
 };
 
 // ==============================================================

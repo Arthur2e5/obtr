@@ -20,28 +20,26 @@
 // Landing gear subsystem
 // ==============================================================
 
-GearSubsystem::GearSubsystem (DeltaGlider *v, int ident)
-: DGSubsystem (v, ident)
+GearSubsystem::GearSubsystem (DeltaGlider *v)
+: DGSubsystem (v)
 {
 	// create component instances
-	AddComponent (gearctrl = new GearControl (this));
-	AddComponent (wheelbrake = new Wheelbrake (this));
+	AddSubsystem (gearctrl = new GearControl (this));
+	AddSubsystem (wheelbrake = new Wheelbrake (this));
 }
 
 // --------------------------------------------------------------
 
-GearSubsystem::~GearSubsystem ()
+void GearSubsystem::LowerGear ()
 {
-	// delete components
-	delete gearctrl;
-	delete wheelbrake;
+	gearctrl->LowerGear ();
 }
 
 // --------------------------------------------------------------
 
-void GearSubsystem::ActivateGear (DeltaGlider::DoorStatus action)
+void GearSubsystem::RaiseGear ()
 {
-	gearctrl->ActivateGear (action);
+	gearctrl->RaiseGear ();
 }
 
 // --------------------------------------------------------------
@@ -53,16 +51,9 @@ void GearSubsystem::RevertGear ()
 
 // --------------------------------------------------------------
 
-DeltaGlider::DoorStatus GearSubsystem::GearStatus() const
+const AnimState2 &GearSubsystem::GearState() const
 {
-	return gearctrl->GearStatus();
-}
-
-// --------------------------------------------------------------
-
-const double *GearSubsystem::GearPositionPtr() const
-{
-	return gearctrl->GearPositionPtr();
+	return gearctrl->GearState();
 }
 
 // ==============================================================
@@ -70,12 +61,10 @@ const double *GearSubsystem::GearPositionPtr() const
 // ==============================================================
 
 GearControl::GearControl (GearSubsystem *_subsys)
-: DGSubsystemComponent(_subsys)
+: DGSubsystem(_subsys)
 {
-	gear_status       = DeltaGlider::DOOR_CLOSED;
-	gear_proc         = 0.0;
-	gearlever_status  = DeltaGlider::DOOR_CLOSED;
-	gearlever_proc    = 0.0;
+	gear_state.SetOperatingSpeed (GEAR_OPERATING_SPEED);
+	glever_state.SetOperatingSpeed (4.0);
 
 	ELID_LEVER = AddElement (lever = new GearLever (this));
 	ELID_INDICATOR = AddElement (indicator = new GearIndicator (this));
@@ -145,34 +134,45 @@ GearControl::GearControl (GearSubsystem *_subsys)
 
 // --------------------------------------------------------------
 
-void GearControl::ActivateGear (DeltaGlider::DoorStatus action)
+void GearControl::LowerGear ()
 {
-	if (action == DeltaGlider::DOOR_OPENING && DG()->GroundContact()) return;
+	extern void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd=0);
+
+	if (DG()->GroundContact()) return;
 	// we cannot deploy the landing gear if we are already sitting on the ground
 
-	bool close = (action == DeltaGlider::DOOR_CLOSED || action == DeltaGlider::DOOR_CLOSING);
-	gear_status = gearlever_status = action;
-	if (action <= DeltaGlider::DOOR_OPEN) {
-		gear_proc = gearlever_proc = (action == DeltaGlider::DOOR_CLOSED ? 0.0 : 1.0);
-		DG()->SetAnimation (anim_gear, gear_proc);
-		DG()->SetAnimation (anim_gearlever, gearlever_proc);
-		DG()->UpdateStatusIndicators();
-		DG()->SetGearParameters (gear_proc);
-	}
-	oapiTriggerPanelRedrawArea (0, GlobalElId(ELID_LEVER));
-	oapiTriggerRedrawArea (2, 0, GlobalElId(ELID_INDICATOR));
-	DG()->RecordEvent ("GEAR", close ? "UP" : "DOWN");
+	gear_state.Open();
+	glever_state.Open();
+	DG()->UpdateStatusIndicators();
+	oapiTriggerPanelRedrawArea (0, ELID_LEVER);
+	oapiTriggerRedrawArea (2, 0, ELID_INDICATOR);
+	UpdateCtrlDialog (DG());
+	DG()->RecordEvent ("GEAR", "DOWN");
+}
+
+// --------------------------------------------------------------
+
+void GearControl::RaiseGear ()
+{
+	extern void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd=0);
+
+	gear_state.Close();
+	glever_state.Close();
+	DG()->UpdateStatusIndicators();
+	oapiTriggerPanelRedrawArea (0, ELID_LEVER);
+	oapiTriggerRedrawArea (2, 0, ELID_INDICATOR);
+	UpdateCtrlDialog (DG());
+	DG()->RecordEvent ("GEAR", "UP");
 }
 
 // --------------------------------------------------------------
 
 void GearControl::RevertGear ()
 {
-	extern void UpdateCtrlDialog (DeltaGlider *dg, HWND hWnd=0);
-
-	ActivateGear (gear_status == DeltaGlider::DOOR_CLOSED || gear_status == DeltaGlider::DOOR_CLOSING ?
-				  DeltaGlider::DOOR_OPENING : DeltaGlider::DOOR_CLOSING);
-	UpdateCtrlDialog (DG());
+	if (gear_state.IsOpen() || gear_state.IsOpening())
+		RaiseGear();
+	else
+		LowerGear();
 }
 
 // --------------------------------------------------------------
@@ -180,44 +180,16 @@ void GearControl::RevertGear ()
 void GearControl::clbkPostStep (double simt, double simdt, double mjd)
 {
 	// animate landing gear
-	if (gear_status >= DeltaGlider::DOOR_CLOSING) {
-		double da = simdt * GEAR_OPERATING_SPEED;
-		if (gear_status == DeltaGlider::DOOR_CLOSING) {
-			if (gear_proc > 0.0)
-				gear_proc = max (0.0, gear_proc-da);
-			else {
-				gear_status = DeltaGlider::DOOR_CLOSED;
-			}
-		} else  { // door opening
-			if (gear_proc < 1.0)
-				gear_proc = min (1.0, gear_proc+da);
-			else {
-				gear_status = DeltaGlider::DOOR_OPEN;
-			}
-		}
-		DG()->SetAnimation (anim_gear, gear_proc);
-		DG()->SetGearParameters (gear_proc);
-		oapiTriggerRedrawArea (0, 0, GlobalElId(ELID_INDICATOR));
+	if (gear_state.Process (simdt)) {
+		DG()->SetAnimation (anim_gear, gear_state.State());
+		DG()->SetGearParameters (gear_state.State());
+		oapiTriggerRedrawArea (0, 0, ELID_INDICATOR);
 		DG()->UpdateStatusIndicators();
 	}
 
 	// animate gear lever
-	if (gearlever_status >= DeltaGlider::DOOR_CLOSING) {
-		double da = simdt * 4.0;
-		if (gearlever_status == DeltaGlider::DOOR_CLOSING) {
-			if (gearlever_proc > 0.0)
-				gearlever_proc = max (0.0, gearlever_proc-da);
-			else {
-				gearlever_status = DeltaGlider::DOOR_CLOSED;
-			}
-		} else  { // door opening
-			if (gearlever_proc < 1.0)
-				gearlever_proc = min (1.0, gearlever_proc+da);
-			else {
-				gearlever_status = DeltaGlider::DOOR_OPEN;
-			}
-		}
-		DG()->SetAnimation (anim_gearlever, gearlever_proc);
+	if (glever_state.Process (simdt)) {
+		DG()->SetAnimation (anim_gearlever, glever_state.State());
 	}
 }
 
@@ -228,8 +200,8 @@ bool GearControl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW,
 	if (panelid != 0) return false;
 
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_LEVER), _R(73,147,105,372), PANEL_REDRAW_USER,   PANEL_MOUSE_LBDOWN, panel2dtex, lever);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_INDICATOR), _R(0,0,0,0), PANEL_REDRAW_USER,   PANEL_MOUSE_IGNORE, panel2dtex, indicator);
+	DG()->RegisterPanelArea (hPanel, ELID_LEVER, _R(73,147,105,372), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN, panel2dtex, lever);
+	DG()->RegisterPanelArea (hPanel, ELID_INDICATOR, _R(0,0,0,0), PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE, panel2dtex, indicator);
 
 	return true;
 }
@@ -243,12 +215,12 @@ bool GearControl::clbkLoadVC (int vcid)
 	SURFHANDLE tex1 = oapiGetTextureHandle (DG()->vcmesh_tpl, 16);
 
 	// Gear lever
-	oapiVCRegisterArea (GlobalElId(ELID_LEVER), PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_LEVER), VC_GEARLEVER_mousearea[0], VC_GEARLEVER_mousearea[1], VC_GEARLEVER_mousearea[2], VC_GEARLEVER_mousearea[3]);
+	oapiVCRegisterArea (ELID_LEVER, PANEL_REDRAW_NEVER, PANEL_MOUSE_LBDOWN);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_LEVER, VC_GEARLEVER_mousearea[0], VC_GEARLEVER_mousearea[1], VC_GEARLEVER_mousearea[2], VC_GEARLEVER_mousearea[3]);
 
 	// Gear indicator
-	oapiVCRegisterArea (GlobalElId(ELID_INDICATOR), PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE);
-	oapiVCRegisterArea (GlobalElId(ELID_INDICATOR), _R(32,127,61,158), PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND, tex1);
+	oapiVCRegisterArea (ELID_INDICATOR, PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE);
+	oapiVCRegisterArea (ELID_INDICATOR, _R(32,127,61,158), PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE, PANEL_MAP_BACKGROUND, tex1);
 
 	return true;
 }
@@ -257,23 +229,18 @@ bool GearControl::clbkLoadVC (int vcid)
 
 void GearControl::clbkSaveState (FILEHANDLE scn)
 {
-	if (gear_status) {
-		char cbuf[256];
-		sprintf (cbuf, "%d %0.4f", gear_status, gear_proc);
-		oapiWriteScenario_string (scn, "GEAR", cbuf);
-	}
+	gear_state.SaveState (scn, "GEAR");
 }
 
 // --------------------------------------------------------------
 
 bool GearControl::clbkParseScenarioLine (const char *line)
 {
-	if (!_strnicmp (line, "GEAR", 4)) {
-		sscanf (line+4, "%d%lf", &gear_status, &gear_proc);
-		if (gear_status == DeltaGlider::DOOR_OPEN || gear_status == DeltaGlider::DOOR_OPENING) {
-			gearlever_status = DeltaGlider::DOOR_OPEN; gearlever_proc = 1.0;
+	if (gear_state.ParseScenarioLine (line, "GEAR")) {
+		if (gear_state.IsOpen() || gear_state.IsOpening()) {
+			glever_state.SetOpened();
 		} else {
-			gearlever_status = DeltaGlider::DOOR_CLOSED; gearlever_proc = 0.0;
+			glever_state.SetClosed();
 		}
 		return true;
 	}
@@ -284,9 +251,38 @@ bool GearControl::clbkParseScenarioLine (const char *line)
 
 void GearControl::clbkPostCreation ()
 {
-	DG()->SetAnimation (anim_gear, gear_proc);
-	DG()->SetAnimation (anim_gearlever, gear_status & 1);
-	DG()->SetGearParameters (gear_proc);
+	DG()->SetAnimation (anim_gear, gear_state.State());
+	DG()->SetAnimation (anim_gearlever, glever_state.State());
+	DG()->SetGearParameters (gear_state.State());
+}
+
+// --------------------------------------------------------------
+
+bool GearControl::clbkDrawHUD (int mode, const HUDPAINTSPEC *hps, oapi::Sketchpad *skp)
+{
+	// show gear deployment status
+	int cx = hps->CX, cy = hps->CY;
+	if (gear_state.IsOpen() || (!gear_state.IsClosed() && fmod (oapiGetSimTime(), 1.0) < 0.5)) {
+		int d = hps->Markersize/2;
+		if (cx >= -d*3 && cx < hps->W+d*3 && cy >= d && cy < hps->H+d*5) {
+			skp->Rectangle (cx-d/2, cy-d*5, cx+d/2, cy-d*4);
+			skp->Rectangle (cx-d*3, cy-d*2, cx-d*2, cy-d);
+			skp->Rectangle (cx+d*2, cy-d*2, cx+d*3, cy-d);
+		}
+	}
+	return true;
+}
+
+// --------------------------------------------------------------
+
+bool GearControl::clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event)
+{
+	if (!_stricmp (event_type, "GEAR")) {
+		if (!_stricmp (event, "UP")) RaiseGear();
+		else                         LowerGear();
+		return true;
+	}
+	return false;
 }
 
 // ==============================================================
@@ -310,8 +306,7 @@ bool GearLever::Redraw2D (SURFHANDLE surf)
 {
 	static const float tx_dx =  176.0f;
 	static const float bb_y0 =  187.0f;
-	DeltaGlider::DoorStatus action = component->GearStatus();
-	bool leverdown = (action == DeltaGlider::DOOR_OPENING || action == DeltaGlider::DOOR_OPEN);
+	bool leverdown = (component->GearState().IsOpen() || component->GearState().IsOpening());
 	float y = (leverdown ? bb_y0+tx_dx : bb_y0);
 	grp->Vtx[vtxofs+2].y = grp->Vtx[vtxofs+3].y = y;
 	return false;
@@ -321,11 +316,10 @@ bool GearLever::Redraw2D (SURFHANDLE surf)
 
 bool GearLever::ProcessMouse2D (int event, int mx, int my)
 {
-	DeltaGlider::DoorStatus action = component->GearStatus();
-	if (action == DeltaGlider::DOOR_CLOSED || action == DeltaGlider::DOOR_CLOSING) {
-		if (my < 151) component->ActivateGear (DeltaGlider::DOOR_OPENING);
+	if (component->GearState().IsClosed() || component->GearState().IsClosing()) {
+		if (my < 151) component->LowerGear();
 	} else {
-		if (my >  46) component->ActivateGear (DeltaGlider::DOOR_CLOSING);
+		if (my >  46) component->RaiseGear();
 	}
 	return false;
 }
@@ -334,8 +328,8 @@ bool GearLever::ProcessMouse2D (int event, int mx, int my)
 
 bool GearLever::ProcessMouseVC (int event, VECTOR3 &p)
 {
-	DeltaGlider *dg = (DeltaGlider*)vessel;
-	component->ActivateGear (p.y > 0.5 ? DeltaGlider::DOOR_CLOSING : DeltaGlider::DOOR_OPENING);
+	if (p.y > 0.5) component->RaiseGear();
+	else           component->LowerGear();
 	return false;
 }
 
@@ -361,14 +355,11 @@ void GearIndicator::Reset2D (MESHHANDLE hMesh)
 bool GearIndicator::Redraw2D (SURFHANDLE surf)
 {
 	static const float texw = (float)PANEL2D_TEXW; // texture width
-	int i, j, xofs;
+	int i, j;
 	double d;
-	DeltaGlider::DoorStatus action = component->GearStatus();
-	switch (action) {
-		case DeltaGlider::DOOR_CLOSED: xofs = 1018; break;
-		case DeltaGlider::DOOR_OPEN:   xofs = 1030; break;
-		default: xofs = (modf (oapiGetSimTime()+tofs, &d) < 0.5 ? 1042 : 1020); break;
-	}
+	int xofs = (component->GearState().IsClosed() ? 1018 :
+		        component->GearState().IsOpen() ? 1030 :
+			    (modf (oapiGetSimTime()+tofs, &d) < 0.5 ? 1042 : 1020));
 	for (i = 0; i < 3; i++) {
 		for (j = 0; j < 4; j++)
 			grp->Vtx[vtxofs+i*4+j].tu = (xofs + (j%2)*10)/texw;
@@ -382,14 +373,10 @@ bool GearIndicator::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 {
 	if (!hMesh) return false;
 
-	DeltaGlider::DoorStatus action = component->GearStatus();
-	bool showlights;
 	double d;
-	switch (action) {
-		case DeltaGlider::DOOR_CLOSED: showlights = false; break;
-		case DeltaGlider::DOOR_OPEN:   showlights = true; break;
-		default: showlights = (modf (oapiGetSimTime()+tofs, &d) < 0.5); break;
-	}
+	bool showlights = (component->GearState().IsClosed() ? false :
+		               component->GearState().IsOpen() ? true :
+					   (modf (oapiGetSimTime()+tofs, &d) < 0.5));
 	if (showlights != light) {
 		GROUPEDITSPEC ges;
 		static WORD vtxofs = VC_GEAR_INDICATOR_vofs;
@@ -415,7 +402,7 @@ bool GearIndicator::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 // ==============================================================
 
 Wheelbrake::Wheelbrake (GearSubsystem *_subsys)
-: DGSubsystemComponent(_subsys)
+: DGSubsystem(_subsys)
 {
 	ELID_LEVER = AddElement (lever = new WheelbrakeLever (this));
 }
@@ -427,7 +414,7 @@ bool Wheelbrake::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, 
 	if (panelid != 0) return false;
 
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_LEVER), _R(1221,494,1273,557), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP, panel2dtex, lever);
+	DG()->RegisterPanelArea (hPanel, ELID_LEVER, _R(1221,494,1273,557), PANEL_REDRAW_ALWAYS, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP, panel2dtex, lever);
 
 	return true;
 }

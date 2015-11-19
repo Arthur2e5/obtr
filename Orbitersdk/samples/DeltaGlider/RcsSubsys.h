@@ -23,7 +23,7 @@ class RcsProgButtons;
 
 class RcsSubsystem: public DGSubsystem {
 public:
-	RcsSubsystem (DeltaGlider *dg, int ident);
+	RcsSubsystem (DeltaGlider *dg);
 	~RcsSubsystem ();
 
 	void SetMode (int mode);
@@ -41,7 +41,7 @@ private:
 // Control selector dial
 // ==============================================================
 
-class RcsModeSelector: public DGSubsystemComponent {
+class RcsModeSelector: public DGSubsystem {
 	friend class RcsModeDial;
 
 public:

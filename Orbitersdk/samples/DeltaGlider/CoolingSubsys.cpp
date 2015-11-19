@@ -20,19 +20,11 @@
 // Cooling subsystem
 // ==============================================================
 
-CoolingSubsystem::CoolingSubsystem (DeltaGlider *v, int ident)
-: DGSubsystem (v, ident)
+CoolingSubsystem::CoolingSubsystem (DeltaGlider *v)
+: DGSubsystem (v)
 {
 	// create component instances
-	AddComponent (radiatorctrl = new RadiatorControl (this));
-}
-
-// --------------------------------------------------------------
-
-CoolingSubsystem::~CoolingSubsystem ()
-{
-	// delete components
-	delete radiatorctrl;
+	AddSubsystem (radiatorctrl = new RadiatorControl (this));
 }
 
 // --------------------------------------------------------------
@@ -68,7 +60,7 @@ const AnimState2 &CoolingSubsystem::RadiatorState() const
 // ==============================================================
 
 RadiatorControl::RadiatorControl (CoolingSubsystem *_subsys)
-: DGSubsystemComponent(_subsys)
+: DGSubsystem(_subsys)
 {
 	radiator_state.SetOperatingSpeed (RADIATOR_OPERATING_SPEED);
 	radiator_extend = false;
@@ -143,25 +135,14 @@ void RadiatorControl::clbkPostCreation ()
 
 void RadiatorControl::clbkSaveState (FILEHANDLE scn)
 {
-	if (!radiator_state.IsClosed()) {
-		char cbuf[256];
-		sprintf (cbuf, "%0.4lf %0.4lf", radiator_state.State(), radiator_state.Speed());
-		oapiWriteScenario_string (scn, "RADIATOR", cbuf);
-	}
+	radiator_state.SaveState (scn, "RADIATOR");
 }
 
 // --------------------------------------------------------------
 
 bool RadiatorControl::clbkParseScenarioLine (const char *line)
 {
-	if (!_strnicmp (line, "RADIATOR", 8)) {
-		double state, speed;
-		sscanf (line+8, "%lf%lf", &state, &speed);
-		radiator_state.SetState (state, speed);
-		radiator_extend = (radiator_state.IsOpen() || radiator_state.IsOpening());
-		return true;
-	}
-	return false;
+	return radiator_state.ParseScenarioLine (line, "RADIATOR");
 }
 
 // --------------------------------------------------------------
@@ -183,7 +164,7 @@ bool RadiatorControl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD vi
 
 	// Radiator switch
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh1,1);
-	DG()->RegisterPanelArea (hPanel, GlobalElId(ELID_SWITCH), _R(846,192,872,244), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, sw);
+	DG()->RegisterPanelArea (hPanel, ELID_SWITCH, _R(846,192,872,244), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, sw);
 	sw->DefineAnimation2D (DG()->panelmesh1, GRP_INSTRUMENTS_ABOVE_P1, 44);
 
 	return true;
@@ -197,8 +178,8 @@ bool RadiatorControl::clbkLoadVC (int vcid)
 	if (vcid != 0) return false;
 
 	// Radiator switch
-	oapiVCRegisterArea (GlobalElId(ELID_SWITCH), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
-	oapiVCSetAreaClickmode_Quadrilateral (GlobalElId(ELID_SWITCH), VC_RADIATOR_SWITCH_mousearea[0], VC_RADIATOR_SWITCH_mousearea[1], VC_RADIATOR_SWITCH_mousearea[2], VC_RADIATOR_SWITCH_mousearea[3]);
+	oapiVCRegisterArea (ELID_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
+	oapiVCSetAreaClickmode_Quadrilateral (ELID_SWITCH, VC_RADIATOR_SWITCH_mousearea[0], VC_RADIATOR_SWITCH_mousearea[1], VC_RADIATOR_SWITCH_mousearea[2], VC_RADIATOR_SWITCH_mousearea[3]);
 	sw->DefineAnimationVC (VC_RADIATOR_SWITCH_ref, VC_RADIATOR_SWITCH_axis, GRP_SWITCH1_VC, VC_RADIATOR_SWITCH_vofs);
 
 	return true;
@@ -210,6 +191,18 @@ void RadiatorControl::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
 {
 	if (radiator_extend) OpenRadiator();
 	else                 CloseRadiator();
+}
+
+// --------------------------------------------------------------
+
+bool RadiatorControl::clbkPlaybackEvent (double simt, double event_t, const char *event_type, const char *event)
+{
+	if (!_stricmp (event_type, "RADIATOR")) {
+		if (!_stricmp (event, "CLOSE")) CloseRadiator();
+		else                            OpenRadiator();
+		return true;
+	}
+	return false;
 }
 
 // ==============================================================

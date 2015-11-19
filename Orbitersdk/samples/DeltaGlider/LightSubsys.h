@@ -27,8 +27,7 @@ class NavLight;
 
 class LightCtrlSubsystem: public DGSubsystem {
 public:
-	LightCtrlSubsystem (DeltaGlider *v, int ident);
-	~LightCtrlSubsystem ();
+	LightCtrlSubsystem (DeltaGlider *v);
 
 private:
 	InstrumentLight *instrlight;
@@ -42,7 +41,7 @@ private:
 // Instrument lights
 // ==============================================================
 
-class InstrumentLight: public DGSubsystemComponent {
+class InstrumentLight: public DGSubsystem {
 	friend class InstrumentLightSwitch;
 	friend class InstrumentBrightnessDial;
 
@@ -95,7 +94,7 @@ private:
 // Cockpit floodlights
 // ==============================================================
 
-class CockpitLight: public DGSubsystemComponent {
+class CockpitLight: public DGSubsystem {
 	friend class CockpitLightSwitch;
 	friend class CockpitBrightnessDial;
 
@@ -148,7 +147,7 @@ private:
 // Landing/docking lights
 // ==============================================================
 
-class LandDockLight: public DGSubsystemComponent {
+class LandDockLight: public DGSubsystem {
 	friend class LandDockLightSwitch;
 
 public:
@@ -186,7 +185,7 @@ private:
 // Strobes
 // ==============================================================
 
-class StrobeLight: public DGSubsystemComponent {
+class StrobeLight: public DGSubsystem {
 	friend class StrobeLightSwitch;
 
 public:
@@ -223,7 +222,7 @@ private:
 // Navigation lights
 // ==============================================================
 
-class NavLight: public DGSubsystemComponent {
+class NavLight: public DGSubsystem {
 	friend class NavLightSwitch;
 
 public:
