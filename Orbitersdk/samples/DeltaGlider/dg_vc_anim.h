@@ -1,4 +1,4 @@
-// Created by deltaglider_vc.m 19-Nov-2015
+// Created by deltaglider_vc.m 04-Dec-2015
 
 #ifndef __DG_VC_ANIM_H
 #define __DG_VC_ANIM_H
@@ -529,9 +529,13 @@ const int VC_NCONE_INDICATOR_vofs = 19;
 
 const int VC_RCOVER_SWITCH_vofs = 0;
 
+const int VC_RCOVER_INDICATOR_vofs = 23;
+
 const int VC_ELADDER_SWITCH_vofs = 33;
 
-const int VC_SEAL_INDICATOR_vofs = 23;
+const int VC_ELADDER_INDICATOR_vofs = 27;
+
+const int VC_SEAL_INDICATOR_vofs = 31;
 
 const int VC_RCS_DIAL_vofs = 228;
 

@@ -146,6 +146,7 @@ void AerodynSelectorDial::Reset2D (MESHHANDLE hMesh)
 
 void AerodynSelectorDial::ResetVC (DEVMESHHANDLE hMesh)
 {
+	DGDial1::ResetVC (hMesh);
 	DWORD mode = vessel->GetADCtrlMode();
 	SetPosition (mode == 0 ? 0 : mode == 7 ? 1 : 2);
 }

@@ -41,6 +41,8 @@ AvionicsSubsystem::AvionicsSubsystem (DeltaGlider *v)
 
 bool AvionicsSubsystem::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
 {
+	DGSubsystem::clbkLoadPanel2D (panelid, hPanel, viewW, viewH);
+
 	if (panelid != 0) return false;
 
 	SURFHANDLE instr2dtex = oapiGetTextureHandle(DG()->panelmesh0,2);
@@ -69,6 +71,8 @@ bool AvionicsSubsystem::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD 
 
 bool AvionicsSubsystem::clbkLoadVC (int vcid)
 {
+	DGSubsystem::clbkLoadVC (vcid);
+
 	if (vcid != 0) return false;
 
 	// Artifical horizon display

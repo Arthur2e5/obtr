@@ -50,6 +50,14 @@ void DGSwitch1::DefineAnimation2D (MESHHANDLE hMesh, DWORD meshgrp, int vtxofs)
 
 // --------------------------------------------------------------
 
+void DGSwitch1::ResetVC (DEVMESHHANDLE hMesh)
+{
+	PanelElement::ResetVC (hMesh);
+	vstate = CENTER;
+}
+
+// --------------------------------------------------------------
+
 bool DGSwitch1::ProcessMouseVC (int event, VECTOR3 &p)
 {
 	if (event & PANEL_MOUSE_LBDOWN) {
@@ -319,6 +327,13 @@ void DGDial1::DefineAnimationVC (const VECTOR3 &ref, const VECTOR3 &axis, DWORD 
 
 // --------------------------------------------------------------
 
+void DGDial1::ResetVC (DEVMESHHANDLE hMesh)
+{
+	vpos = -1;
+}
+
+// --------------------------------------------------------------
+
 bool DGDial1::ProcessMouseVC (int event, VECTOR3 &p)
 {
 	if (event & PANEL_MOUSE_LBDOWN) {
@@ -505,6 +520,13 @@ void DGButton3::DefineAnimationVC (const VECTOR3 &axis, DWORD meshgrp, DWORD mes
 void DGButton3::Reset2D (MESHHANDLE hMesh)
 {
 	grp = oapiMeshGroup (hMesh, mgrp);
+}
+
+// --------------------------------------------------------------
+
+void DGButton3::ResetVC (DEVMESHHANDLE hMesh)
+{
+	vstate = OFF;
 }
 
 // --------------------------------------------------------------

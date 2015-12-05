@@ -66,8 +66,24 @@ void InstrAOA::ResetVC (DEVMESHHANDLE hMesh)
 		delete []vc_grp_readout.Vtx;
 		vc_grp_readout.Vtx = 0;
 	}
-	ycnt = (vc_grp.Vtx[0].y + vc_grp.Vtx[6].y)*0.5f;
-	disph = vc_grp.Vtx[0].y - vc_grp.Vtx[6].y;
+	//ycnt = (vc_grp.Vtx[0].y + vc_grp.Vtx[6].y)*0.5f;
+	//disph = vc_grp.Vtx[0].y - vc_grp.Vtx[6].y;
+}
+
+// --------------------------------------------------------------
+
+void InstrAOA::LoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
+{
+	ycnt = 311.0f;
+	disph = 118.0f;
+}
+
+// --------------------------------------------------------------
+
+void InstrAOA::LoadVC (int vcid)
+{
+	ycnt = 1.09597f;
+	disph = 0.069540024f;
 }
 
 // --------------------------------------------------------------

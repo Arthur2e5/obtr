@@ -100,6 +100,7 @@ private:
 class NoseconeIndicator: public PanelElement {
 public:
 	NoseconeIndicator (NoseconeCtrl *comp);
+	void ResetVC (DEVMESHHANDLE hMesh);
 	void Reset2D (MESHHANDLE hMesh);
 	bool Redraw2D (SURFHANDLE surf);
 	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
@@ -155,6 +156,7 @@ private:
 
 class EscapeLadderCtrl: public DGSubsystem {
 	friend class LadderSwitch;
+	friend class LadderIndicator;
 
 public:
 	EscapeLadderCtrl (DockingCtrlSubsystem *_subsys);
@@ -171,7 +173,9 @@ public:
 
 private:
 	LadderSwitch *sw;
+	LadderIndicator *indicator;
 	int ELID_SWITCH;
+	int ELID_INDICATOR;
 	UINT anim_ladder;           // handle for front escape ladder animation
 	AnimState2 ladder_state;
 };
@@ -189,6 +193,21 @@ private:
 	bool light;
 };
 
+// ==============================================================
+
+class LadderIndicator: public PanelElement {
+public:
+	LadderIndicator (EscapeLadderCtrl *comp);
+	void Reset2D (MESHHANDLE hMesh);
+	void ResetVC (DEVMESHHANDLE hMesh);
+	bool Redraw2D (SURFHANDLE surf);
+	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
+
+private:
+	EscapeLadderCtrl *component;
+	bool vlight_2D, vlight_VC;
+};
+
 
 // ==============================================================
 // Dock seal control
@@ -200,6 +219,7 @@ class DocksealCtrl: public DGSubsystem {
 public:
 	DocksealCtrl (DockingCtrlSubsystem *_subsys);
 	void SetDockStatus (bool docked);
+	bool clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	bool clbkLoadVC (int vcid);
 	void clbkPostStep (double simt, double simdt, double mjd);
 	void clbkPostCreation ();
@@ -217,11 +237,14 @@ private:
 class DocksealIndicator: public PanelElement {
 public:
 	DocksealIndicator (DocksealCtrl *comp);
+	void Reset2D (MESHHANDLE hMesh);
+	void ResetVC (DEVMESHHANDLE hMesh);
+	bool Redraw2D (SURFHANDLE surf);
 	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
 
 private:
 	DocksealCtrl *component;
-	bool light;
+	bool vlight_2D, vlight_VC;
 };
 
 #endif // !__DOCKINGSUBSYS_H

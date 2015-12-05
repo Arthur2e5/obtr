@@ -47,6 +47,18 @@ void PanelElement::ResetVC (DEVMESHHANDLE hMesh)
 
 // --------------------------------------------------------------
 
+void PanelElement::LoadVC (int vcid)
+{
+}
+
+// --------------------------------------------------------------
+
+void PanelElement::LoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
+{
+}
+
+// --------------------------------------------------------------
+
 bool PanelElement::Redraw2D (SURFHANDLE surf)
 {
 	return false;
@@ -330,6 +342,9 @@ void Subsystem::clbkPostStep (double simt, double simdt, double mjd)
 
 bool Subsystem::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
 {
+	for (std::vector<PanelElement*>::iterator it = element.begin(); it != element.end(); ++it)
+		(*it)->LoadPanel2D (panelid, hPanel, viewW, viewH);
+
 	bool b = false;
 	for (std::vector<Subsystem*>::iterator it = child.begin(); it != child.end(); ++it) {
 		bool bi = (*it)->clbkLoadPanel2D (panelid, hPanel, viewW, viewH);
@@ -342,6 +357,9 @@ bool Subsystem::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, D
 
 bool Subsystem::clbkLoadVC (int vcid)
 {
+	for (std::vector<PanelElement*>::iterator it = element.begin(); it != element.end(); ++it)
+		(*it)->LoadVC (vcid);
+
 	bool b = false;
 	for (std::vector<Subsystem*>::iterator it = child.begin(); it != child.end(); ++it) {
 		bool bi = (*it)->clbkLoadVC (vcid);

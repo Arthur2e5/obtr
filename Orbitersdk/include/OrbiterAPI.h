@@ -200,7 +200,7 @@ typedef void *NOTEHANDLE;
 typedef void *ELEVHANDLE;
 //@}
 
-typedef enum { FILE_IN, FILE_OUT, FILE_APP } FileAccessMode;
+typedef enum { FILE_IN, FILE_OUT, FILE_APP, FILE_IN_ZEROONFAIL } FileAccessMode;
 typedef enum { ROOT, CONFIG, SCENARIOS, TEXTURES, TEXTURES2, MESHES, MODULES } PathRoot;
 
 /// \defgroup surfid Identifiers for special render surfaces
@@ -5852,6 +5852,7 @@ OAPIFUNC bool oapiOpenLaunchpadHelp (HELPCONTEXT *hcontext);
 	* \return file handle
 	* \note The following access modes are supported:\n
 	*  - \c FILE_IN read\n
+	*  - \c FILE_IN_ZEROONFAIL read\n
 	*  - \c FILE_OUT write (overwrite)\n
 	*  - \c FILE_APP write (append)\n
 	* \note The file path defined in fname is relative to either the main Orbiter folder or
@@ -5866,6 +5867,10 @@ OAPIFUNC bool oapiOpenLaunchpadHelp (HELPCONTEXT *hcontext);
 	* \note You should always specify a standard Orbiter subfolder by the above
 	*  mechanism, rather than manually as a path in fname, because Orbiter
 	*  installations can redirect these directories.
+	* \note Access mode FILE_IN will always return a valid file handle, even if the file
+	*  doesn't exist or can't be opened for reading (in which case all subsequent read
+	*  attempts will fail). By contrast, FILE_IN_ZEROONFAIL will return 0 if the requested
+	*  file can't be opened for reading.
 	* \note Be careful when opening a file for writing in the standard Orbiter subfolders:
 	*  except for ROOT and SCENARIOS, all other standard folders may be readonly
 	*  (e.g. for CD installations)

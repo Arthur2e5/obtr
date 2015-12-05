@@ -612,6 +612,7 @@ void HoverCtrlDial::Reset2D (MESHHANDLE hMesh)
 
 void HoverCtrlDial::ResetVC (DEVMESHHANDLE hMesh)
 {
+	DGDial1::ResetVC (hMesh);
 	int mode = ctrl->Mode();
 	SetPosition (mode);
 }
@@ -999,6 +1000,8 @@ bool HoverAltModeButtons::ProcessMouseVC (int event, VECTOR3 &p)
 
 void HoverAltModeButtons::ResetVC (DEVMESHHANDLE hMesh)
 {
+	for (int i = 0; i < 2; i++)
+		btn[i]->ResetVC (hMesh);
 	if (vmode != ctrl->GetHoverMode()) {
 		vmode = ctrl->GetHoverMode();
 		for (int i = 0; i < 2; i++)

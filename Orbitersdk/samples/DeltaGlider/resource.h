@@ -9,7 +9,6 @@
 #define IDB_SWITCH4                     158
 #define IDB_INDICATOR2                  159
 #define IDB_SWITCH4R                    161
-#define IDB_COVER2                      165
 #define IDD_CTRL                        166
 #define IDD_DAMAGE                      172
 #define IDD_EDITOR1                     173

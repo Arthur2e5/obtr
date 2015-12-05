@@ -181,7 +181,6 @@ class bounds
 };
 class CW:public instrument
 {public:
-   int num_w;	//number of items to watch (max?)
    bounds b_list;
    bounds *last;
    char text[20];
@@ -266,13 +265,11 @@ class NAVFRQ:public instrument
 class ADI:public instrument
 {public:
 
-   void *void_hpbuffer;
    int init;
    float sphere_vert[256][3];
    float sphere_norm[256][3];
    float sphere_tex[256][2];
    unsigned int sphere_index[600];
-   void *p_tex;
    int tri; //number of triangle strip
    int list_name; //we store the rendering into a display list
    double radius;

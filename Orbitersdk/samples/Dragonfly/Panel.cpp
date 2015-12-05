@@ -98,7 +98,11 @@ void MoveTo(HDC PANEL_hdc, int x, int y)
   SelectObject(PANEL_hdc,oldp);
 };
 Panel::Panel()
-{instruments=NULL;};
+{
+	instruments=NULL;
+	screw_num = 0;
+};
+
 Panel::~Panel()
 { DeleteDC(hDC3);
   instrument_list *runner=instruments;
@@ -131,7 +135,7 @@ void Panel::MakeYourBackground()
 	
 }
 void Panel::NowPutScrews()
-{int di=5*sqrt(2)/2;
+{int di=5*sqrt(2.0)/2;
  SelectObject(hDC2,hPEN_White);
  SelectObject(hDC2,hBRUSH_Background);
  int x,y;

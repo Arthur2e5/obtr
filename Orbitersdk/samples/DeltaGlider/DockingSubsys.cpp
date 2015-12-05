@@ -128,7 +128,7 @@ NoseconeCtrl::NoseconeCtrl (DockingCtrlSubsystem *_subsys)
 	DG()->AddAnimationComponent (anim_nose, 0.015, 0.915, &NConeBR);
 	DG()->AddAnimationComponent (anim_nose, 0.8, 1, &NConeDock);
 
-	// Nosecone lever animatuion
+	// Nosecone lever VC animatuion
 	static UINT NoseconeLeverGrp = GRP_NOSECONE_LEVER_VC;
 	static MGROUP_ROTATE NoseconeLeverTransform (1, &NoseconeLeverGrp, 1,
 		VC_NCONELEVER_ref, VC_NCONELEVER_axis, (float)(-70*RAD));
@@ -205,7 +205,7 @@ bool NoseconeCtrl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW
 	if (panelid != 0) return false;
 
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, ELID_LEVER, _R(1221,347,1260,461), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN, panel2dtex, lever);
+	DG()->RegisterPanelArea (hPanel, ELID_LEVER, _R(1221,359,1260,473), PANEL_REDRAW_USER, PANEL_MOUSE_LBDOWN, panel2dtex, lever);
 	DG()->RegisterPanelArea (hPanel, ELID_INDICATOR, _R(0,0,0,0), PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE, panel2dtex, indicator);
 
 	return true;
@@ -291,8 +291,8 @@ bool NoseconeLever::Redraw2D (SURFHANDLE surf)
 	static const float texh = (float)PANEL2D_TEXH; // texture height
 	bool leverdown = (component->NconeState().IsOpen() || component->NconeState().IsOpening());
 	float y0, dy, tv0;
-	if (leverdown) y0 = 420.5f, dy = 21.0f, tv0 = texh-677.5f;
-	else           y0 = 346.5f, dy = 19.0f, tv0 = texh-696.5f;
+	if (leverdown) y0 = 432.5f, dy = 21.0f, tv0 = texh-677.5f;
+	else           y0 = 358.5f, dy = 19.0f, tv0 = texh-696.5f;
 	int j;
 	for (j = 0; j < 4; j++) {
 		grp->Vtx[vtxofs+j].y = y0 + (j/2)*dy;
@@ -338,6 +338,13 @@ void NoseconeIndicator::Reset2D (MESHHANDLE hMesh)
 {
 	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
 	vtxofs = 88;
+}
+
+// --------------------------------------------------------------
+
+void NoseconeIndicator::ResetVC (DEVMESHHANDLE hMesh)
+{
+	light = true;
 }
 
 // --------------------------------------------------------------
@@ -437,7 +444,7 @@ bool UndockCtrl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, 
 	if (panelid != 0) return false;
 
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
-	DG()->RegisterPanelArea (hPanel, ELID_LEVER, _R(1151,355,1193,436), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, lever);
+	DG()->RegisterPanelArea (hPanel, ELID_LEVER, _R(1151,369,1193,450), PANEL_REDRAW_MOUSE,  PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, lever);
 
 	return true;
 }
@@ -477,7 +484,7 @@ void UndockLever::Reset2D (MESHHANDLE hMesh)
 bool UndockLever::Redraw2D (SURFHANDLE surf)
 {
 	static const float texh = (float)PANEL2D_TEXH; // texture height
-	static const float bb_y0 =  354.0f;     // top edge of button block
+	static const float bb_y0 =  368.0f;     // top edge of button block
 	static const float tx_dy = 103.0f;       // texture block height
 	static const float tx_y0 = texh-356.0f; // top edge of texture block
 
@@ -516,6 +523,7 @@ EscapeLadderCtrl::EscapeLadderCtrl (DockingCtrlSubsystem *_subsys)
 {
 	ladder_state.SetOperatingSpeed (LADDER_OPERATING_SPEED);
 	ELID_SWITCH = AddElement (sw = new LadderSwitch (this));
+	ELID_INDICATOR = AddElement (indicator = new LadderIndicator (this));
 
 	// Escape ladder animation
 	static UINT LadderGrp[2] = {GRP_Ladder1,GRP_Ladder2};
@@ -564,8 +572,10 @@ void EscapeLadderCtrl::clbkPostCreation ()
 void EscapeLadderCtrl::clbkPostStep (double simt, double simdt, double mjd)
 {
 	// animate escape ladder
-	if (ladder_state.Process (simdt))
+	if (ladder_state.Process (simdt)) {
 		DG()->SetAnimation (anim_ladder, ladder_state.State());
+		oapiTriggerRedrawArea (0, 0, ELID_INDICATOR);
+	}
 }
 
 // --------------------------------------------------------------
@@ -601,8 +611,13 @@ bool EscapeLadderCtrl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD v
 	if (panelid != 0) return false;
 
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
+	// Ladder extend/retract switch
+
 	DG()->RegisterPanelArea (hPanel, ELID_SWITCH, _R(1171,496,1197,548), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, sw);
 	sw->DefineAnimation2D (DG()->panelmesh0, GRP_INSTRUMENTS_ABOVE_P0, 44);
+
+	// Ladder indicator
+	DG()->RegisterPanelArea (hPanel, ELID_INDICATOR, _R(0,0,0,0), PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE, panel2dtex, indicator);
 
 	return true;
 }
@@ -617,6 +632,9 @@ bool EscapeLadderCtrl::clbkLoadVC (int vcid)
 	oapiVCRegisterArea (ELID_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
 	oapiVCSetAreaClickmode_Quadrilateral (ELID_SWITCH, VC_ELADDER_SWITCH_mousearea[0], VC_ELADDER_SWITCH_mousearea[1], VC_ELADDER_SWITCH_mousearea[2], VC_ELADDER_SWITCH_mousearea[3]);
 	sw->DefineAnimationVC (VC_ELADDER_SWITCH_ref, VC_ELADDER_SWITCH_axis, GRP_SWITCH1_VC, VC_ELADDER_SWITCH_vofs);
+
+	// Ladder indicator
+	oapiVCRegisterArea (ELID_INDICATOR, PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE);
 
 	return true;
 }
@@ -633,8 +651,8 @@ LadderSwitch::LadderSwitch (EscapeLadderCtrl *comp)
 bool LadderSwitch::ProcessMouse2D (int event, int mx, int my)
 {
 	if (DGSwitch1::ProcessMouse2D (event, mx, my)) {
-		if (GetState() == UP) component->RetractLadder();
-		else                  component->ExtendLadder();
+		if (GetState() == UP)        component->RetractLadder();
+		else if (GetState() == DOWN) component->ExtendLadder();
 		return true;
 	}
 	return false;
@@ -645,13 +663,80 @@ bool LadderSwitch::ProcessMouse2D (int event, int mx, int my)
 bool LadderSwitch::ProcessMouseVC (int event, VECTOR3 &p)
 {
 	if (DGSwitch1::ProcessMouseVC (event, p)) {
-		if (GetState() == UP) component->RetractLadder();
-		else                  component->ExtendLadder();
+		if (GetState() == UP)        component->RetractLadder();
+		else if (GetState() == DOWN) component->ExtendLadder();
 		return true;
 	}
 	return false;
 }
 
+// ==============================================================
+
+LadderIndicator::LadderIndicator (EscapeLadderCtrl *comp)
+: PanelElement(comp->DG()), component(comp)
+{
+	vlight_2D = vlight_VC = false;
+}
+
+// --------------------------------------------------------------
+
+void LadderIndicator::Reset2D (MESHHANDLE hMesh)
+{
+	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
+	vtxofs = 192;
+	vlight_2D = false;
+}
+
+// --------------------------------------------------------------
+
+void LadderIndicator::ResetVC (DEVMESHHANDLE hMesh)
+{
+	vlight_VC = false;
+}
+
+// --------------------------------------------------------------
+
+bool LadderIndicator::Redraw2D (SURFHANDLE surf)
+{
+	const AnimState2 &state = component->State();
+	double d;
+	bool showlights = (state.State() == 1.0 || (state.Speed() && modf(oapiGetSimTime()*1.7, &d) < 0.5));
+	if (showlights != vlight_2D) {
+		float v = (showlights ? 420.0f : 412.0f)/1024.0f;
+		for (int i = 0; i < 4; i++)
+			grp->Vtx[vtxofs+i].tv = v;
+		vlight_2D = showlights;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
+bool LadderIndicator::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
+{
+	if (!hMesh) return false;
+
+	const AnimState2 &state = component->State();
+	double d;
+	bool showlights = (state.State() == 1.0 || (state.Speed() && modf(oapiGetSimTime()*1.7, &d) < 0.5));
+	if (showlights != vlight_VC) {
+		GROUPEDITSPEC ges;
+		static const WORD vtxofs = VC_ELADDER_INDICATOR_vofs;
+		static const DWORD nvtx = 4;
+		static WORD vidx[nvtx] = {vtxofs,vtxofs+1,vtxofs+2,vtxofs+3};
+		static const float u[2] = {0.0586f,0.0713f};
+		NTVERTEX vtx[nvtx];
+		for (DWORD i = 0; i < nvtx; i++)
+			vtx[i].tu = u[showlights ? 1:0];
+		ges.flags = GRPEDIT_VTXTEXU;
+		ges.Vtx = vtx;
+		ges.vIdx = vidx;
+		ges.nVtx = nvtx;
+		oapiEditMeshGroup (hMesh, GRP_VC4_LIT_VC, &ges);
+		vlight_VC = showlights;
+	}
+	return false;
+}
 
 // ==============================================================
 // Dock seal control
@@ -703,6 +788,18 @@ void DocksealCtrl::clbkPostCreation ()
 
 // --------------------------------------------------------------
 
+bool DocksealCtrl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH)
+{
+	if (panelid != 0) return false;
+
+	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
+	DG()->RegisterPanelArea (hPanel, ELID_INDICATOR, _R(0,0,0,0), PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE, panel2dtex, indicator);
+
+	return true;
+}
+
+// --------------------------------------------------------------
+
 bool DocksealCtrl::clbkLoadVC (int vcid)
 {
 	if (vcid != 0) return false;
@@ -718,7 +815,43 @@ bool DocksealCtrl::clbkLoadVC (int vcid)
 DocksealIndicator::DocksealIndicator (DocksealCtrl *comp)
 : PanelElement(comp->DG()), component(comp)
 {
-	light = false;
+	vlight_2D = vlight_VC = false;
+}
+
+// --------------------------------------------------------------
+
+void DocksealIndicator::Reset2D (MESHHANDLE hMesh)
+{
+	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
+	vtxofs = 196;
+}
+
+// --------------------------------------------------------------
+
+void DocksealIndicator::ResetVC (DEVMESHHANDLE hMesh)
+{
+	vlight_VC = false;
+}
+
+// --------------------------------------------------------------
+
+bool DocksealIndicator::Redraw2D (SURFHANDLE surf)
+{
+	bool showlights = false;
+	double d, dt;
+	if (component->isDocked) {
+		if ((dt = oapiGetSimTime()-component->dockTime) > 10.0)
+			showlights = true;
+		else
+			showlights = (modf (dt, &d) < 0.5);
+	}
+	if (showlights != vlight_2D) {
+		float v = (showlights ? 420.0f : 412.0f)/1024.0f;
+		for (int i = 0; i < 4; i++)
+			grp->Vtx[vtxofs+i].tv = v;
+		vlight_2D = showlights;
+	}
+	return false;
 }
 
 // --------------------------------------------------------------
@@ -735,12 +868,12 @@ bool DocksealIndicator::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 		else
 			showlights = (modf (dt, &d) < 0.5);
 	}
-	if (showlights != light) {
+	if (showlights != vlight_VC) {
 		GROUPEDITSPEC ges;
-		static WORD vtxofs = VC_SEAL_INDICATOR_vofs;
+		static const WORD vtxofs = VC_SEAL_INDICATOR_vofs;
 		static const DWORD nvtx = 4;
 		static WORD vidx[nvtx] = {vtxofs,vtxofs+1,vtxofs+2,vtxofs+3};
-		static float u[2] = {0.0586f,0.0713f};
+		static const float u[2] = {0.0586f,0.0713f};
 		NTVERTEX vtx[nvtx];
 		for (DWORD i = 0; i < nvtx; i++)
 			vtx[i].tu = u[showlights ? 1:0];
@@ -749,7 +882,7 @@ bool DocksealIndicator::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
 		ges.vIdx = vidx;
 		ges.nVtx = nvtx;
 		oapiEditMeshGroup (hMesh, GRP_VC4_LIT_VC, &ges);
-		light = showlights;
+		vlight_VC = showlights;
 	}
 	return false;
 }

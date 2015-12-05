@@ -178,6 +178,7 @@ void RcsModeDial::Reset2D (MESHHANDLE hMesh)
 
 void RcsModeDial::ResetVC (DEVMESHHANDLE hMesh)
 {
+	DGDial1::ResetVC (hMesh);
 	DWORD mode = component->DG()->GetAttitudeMode();
 	SetPosition (mode);
 }
@@ -277,6 +278,14 @@ void RcsProgButtons::Reset2D (MESHHANDLE hMesh)
 {
 	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
 	vtxofs = 20;
+}
+
+// --------------------------------------------------------------
+
+void RcsProgButtons::ResetVC (DEVMESHHANDLE hMesh)
+{
+	for (int i = 0; i < 6; i++)
+		btn[i]->ResetVC (hMesh);
 }
 
 // --------------------------------------------------------------

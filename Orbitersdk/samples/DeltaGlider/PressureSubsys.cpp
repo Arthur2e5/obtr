@@ -494,6 +494,7 @@ void OuterLockSwitch::Reset2D (MESHHANDLE hMesh)
 
 void OuterLockSwitch::ResetVC (DEVMESHHANDLE hMesh)
 {
+	DGSwitch1::ResetVC (hMesh);
 	SetState (component->ostate.IsClosed() || component->ostate.IsClosing() ?
 		DOWN : UP);
 }
@@ -541,6 +542,7 @@ void InnerLockSwitch::Reset2D (MESHHANDLE hMesh)
 
 void InnerLockSwitch::ResetVC (DEVMESHHANDLE hMesh)
 {
+	DGSwitch1::ResetVC (hMesh);
 	SetState (component->istate.IsClosed() || component->istate.IsClosing() ?
 		DOWN : UP);
 }
@@ -794,6 +796,7 @@ void HatchCtrlSwitch::Reset2D (MESHHANDLE hMesh)
 
 void HatchCtrlSwitch::ResetVC (DEVMESHHANDLE hMesh)
 {
+	DGSwitch1::ResetVC (hMesh);
 	SetState (component->hatch_state.IsClosed() || component->hatch_state.IsClosing() ?
 		DOWN : UP);
 }
@@ -841,6 +844,7 @@ void PValveSwitch::Reset2D (MESHHANDLE hMesh)
 
 void PValveSwitch::ResetVC (DEVMESHHANDLE hMesh)
 {
+	DGSwitch1::ResetVC (hMesh);
 	SetState (subsys->GetPValve(vid) ? UP:DOWN);
 }
 

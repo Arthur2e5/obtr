@@ -73,6 +73,8 @@ public:
 		DWORD vofs[3], DWORD vofs_label[3]);
 	void SetMode (int mode);
 	void Reset2D (MESHHANDLE hMesh);
+	void ResetVC (DEVMESHHANDLE hMesh);
+	void LoadVC (int vcid);
 	bool Redraw2D (SURFHANDLE surf);
 	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
 	bool ProcessMouse2D (int event, int mx, int my);

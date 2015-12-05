@@ -28,6 +28,7 @@ public:
 	void DefineAnimationVC (const VECTOR3 &ref, const VECTOR3 &axis,
 		DWORD meshgrp, int vtxofs);
 	void DefineAnimation2D (MESHHANDLE hMesh, DWORD meshgrp, int vtxofs);
+	void ResetVC (DEVMESHHANDLE hMesh);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 	bool ProcessMouse2D (int event, int mx, int my);
 	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
@@ -90,6 +91,7 @@ public:
 	void DefineAnimationVC (const VECTOR3 &ref, const VECTOR3 &axis,
 		DWORD meshgrp, int vtxofs);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
+	void ResetVC (DEVMESHHANDLE hMesh);
 	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
 
 	inline int GetPosition() const { return pos; }
@@ -140,6 +142,7 @@ public:
 	void DefineAnimationVC (const VECTOR3 &axis, DWORD meshgrp, DWORD meshgrp_label,
 		DWORD vofs, DWORD vofs_label);
 	void Reset2D (MESHHANDLE hMesh);
+	void ResetVC (DEVMESHHANDLE hMesh);
 	bool ProcessMouse2D (int event, int mx, int my);
 	bool ProcessMouseVC (int event, VECTOR3 &p);
 	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);

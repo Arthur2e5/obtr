@@ -352,6 +352,13 @@ void GearIndicator::Reset2D (MESHHANDLE hMesh)
 
 // --------------------------------------------------------------
 
+void GearIndicator::ResetVC (DEVMESHHANDLE hMesh)
+{
+	light = true;
+}
+
+// --------------------------------------------------------------
+
 bool GearIndicator::Redraw2D (SURFHANDLE surf)
 {
 	static const float texw = (float)PANEL2D_TEXW; // texture width

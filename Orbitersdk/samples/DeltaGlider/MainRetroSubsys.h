@@ -209,6 +209,7 @@ private:
 
 class RetroCoverControl: public DGSubsystem {
 	friend class RetroCoverSwitch;
+	friend class RetroCoverIndicator;
 
 public:
 	RetroCoverControl (MainRetroSubsystem *_subsys);
@@ -226,7 +227,9 @@ public:
 private:
 	AnimState2 rcover_state;
 	RetroCoverSwitch *sw;
+	RetroCoverIndicator *indicator;
 	int ELID_SWITCH;
+	int ELID_INDICATOR;
 	UINT anim_rcover;           // handle for retro cover animation
 };
 
@@ -240,6 +243,21 @@ public:
 
 private:
 	RetroCoverControl *component;
+};
+
+// ==============================================================
+
+class RetroCoverIndicator: public PanelElement {
+public:
+	RetroCoverIndicator (RetroCoverControl *comp);
+	void Reset2D (MESHHANDLE hMesh);
+	void ResetVC (DEVMESHHANDLE hMesh);
+	bool Redraw2D (SURFHANDLE surf);
+	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
+
+private:
+	RetroCoverControl *component;
+	bool vlight_2D, vlight_VC;
 };
 
 #endif // !__MAINRETROSUBSYS_H

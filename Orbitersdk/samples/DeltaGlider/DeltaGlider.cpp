@@ -840,7 +840,7 @@ void DeltaGlider::InitVCMesh()
 		oapiEditMeshGroup (vcmesh, GRP_PILOT_HEAD_VC, &ges);
 		oapiEditMeshGroup (vcmesh, GRP_PILOT_VISOR_VC, &ges);
 
-		ComponentVessel::clbkResetVC (0, vcmesh);
+		//ComponentVessel::clbkResetVC (0, vcmesh);
 	}
 }
 
@@ -1232,6 +1232,9 @@ void DeltaGlider::clbkVisualCreated (VISHANDLE vis, int refcount)
 		if (oapiCockpitMode() == COCKPIT_VIRTUAL)
 			InitVCMesh();
 	//}
+		if (vcmesh)
+			ComponentVessel::clbkResetVC (0, vcmesh);
+
 }
 
 // --------------------------------------------------------------

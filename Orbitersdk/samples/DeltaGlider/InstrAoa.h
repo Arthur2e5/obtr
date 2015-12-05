@@ -19,6 +19,8 @@ public:
 	~InstrAOA ();
 	void Reset2D (MESHHANDLE hMesh);
 	void ResetVC (DEVMESHHANDLE hMesh);
+	void LoadVC (int vcid);
+	void LoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 
 	void AddMeshData2D (MESHHANDLE hMesh, DWORD grpidx);
 

@@ -517,6 +517,7 @@ void MainGimbalDial::Reset2D (MESHHANDLE hMesh)
 
 void MainGimbalDial::ResetVC (DEVMESHHANDLE hMesh)
 {
+	DGDial1::ResetVC (hMesh);
 	int mode = ctrl->Mode();
 	SetPosition (mode);
 }
@@ -965,6 +966,7 @@ RetroCoverControl::RetroCoverControl (MainRetroSubsystem *_subsys)
 {
 	rcover_state.SetOperatingSpeed(RCOVER_OPERATING_SPEED);
 	ELID_SWITCH = AddElement (sw = new RetroCoverSwitch (this));
+	ELID_INDICATOR = AddElement (indicator = new RetroCoverIndicator(this));
 
 	// Retro cover animation
 	static UINT RCoverTLGrp[2] = {GRP_RCoverTL1,GRP_RCoverTL2};
@@ -1044,6 +1046,7 @@ void RetroCoverControl::clbkPostStep (double simt, double simdt, double mjd)
 		DG()->UpdateStatusIndicators();
 		if (rcover_state.IsOpen())
 			DG()->EnableRetroThrusters(true);
+		oapiTriggerRedrawArea (0, 0, ELID_INDICATOR);
 	}
 
 }
@@ -1055,8 +1058,13 @@ bool RetroCoverControl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD 
 	if (panelid != 0) return false;
 
 	SURFHANDLE panel2dtex = oapiGetTextureHandle(DG()->panelmesh0,1);
+
+	// Retro engine cover switch
 	DG()->RegisterPanelArea (hPanel, ELID_SWITCH, _R(1129,496,1155,548), PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN|PANEL_MOUSE_LBUP, panel2dtex, sw);
 	sw->DefineAnimation2D (DG()->panelmesh0, GRP_INSTRUMENTS_ABOVE_P0, 180);
+
+	// Retro engine cover indicator
+	DG()->RegisterPanelArea (hPanel, ELID_INDICATOR, _R(0,0,0,0), PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE, panel2dtex, indicator);
 
 	return true;
 }
@@ -1071,6 +1079,9 @@ bool RetroCoverControl::clbkLoadVC (int vcid)
 	oapiVCRegisterArea (ELID_SWITCH, PANEL_REDRAW_MOUSE, PANEL_MOUSE_LBDOWN | PANEL_MOUSE_LBUP);
 	oapiVCSetAreaClickmode_Quadrilateral (ELID_SWITCH, VC_RCOVER_SWITCH_mousearea[0], VC_RCOVER_SWITCH_mousearea[1], VC_RCOVER_SWITCH_mousearea[2], VC_RCOVER_SWITCH_mousearea[3]);
 	sw->DefineAnimationVC (VC_RCOVER_SWITCH_ref, VC_RCOVER_SWITCH_axis, GRP_SWITCH1_VC, VC_RCOVER_SWITCH_vofs);
+
+	// Retro engine cover indicator
+	oapiVCRegisterArea (ELID_INDICATOR, PANEL_REDRAW_USER, PANEL_MOUSE_IGNORE);
 
 	return true;
 }
@@ -1120,6 +1131,74 @@ bool RetroCoverSwitch::ProcessMouseVC (int event, VECTOR3 &p)
 			case DGSwitch1::DOWN: component->OpenRetroCover(); break;
 		}
 		return true;
+	}
+	return false;
+}
+
+// ==============================================================
+
+RetroCoverIndicator::RetroCoverIndicator (RetroCoverControl *comp)
+: PanelElement(comp->DG()), component(comp)
+{
+	vlight_2D = vlight_VC = false;
+}
+
+// --------------------------------------------------------------
+
+void RetroCoverIndicator::Reset2D (MESHHANDLE hMesh)
+{
+	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
+	vtxofs = 188;
+	vlight_2D = false;
+}
+
+// --------------------------------------------------------------
+
+void RetroCoverIndicator::ResetVC (DEVMESHHANDLE hMesh)
+{
+	vlight_VC = false;
+}
+
+// --------------------------------------------------------------
+
+bool RetroCoverIndicator::Redraw2D (SURFHANDLE surf)
+{
+	const AnimState2 &state = component->State();
+	double d;
+	bool showlights = (state.State() == 1.0 || (state.Speed() && modf(oapiGetSimTime()*1.7, &d) < 0.5));
+	if (showlights != vlight_2D) {
+		float v = (showlights ? 420.0f : 412.0f)/1024.0f;
+		for (int i = 0; i < 4; i++)
+			grp->Vtx[vtxofs+i].tv = v;
+		vlight_2D = showlights;
+	}
+	return false;
+}
+
+// --------------------------------------------------------------
+
+bool RetroCoverIndicator::RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf)
+{
+	if (!hMesh) return false;
+
+	const AnimState2 &state = component->State();
+	double d;
+	bool showlights = (state.State() == 1.0 || (state.Speed() && modf(oapiGetSimTime()*1.7, &d) < 0.5));
+	if (showlights != vlight_VC) {
+		GROUPEDITSPEC ges;
+		static const WORD vtxofs = VC_RCOVER_INDICATOR_vofs;
+		static const DWORD nvtx = 4;
+		static WORD vidx[nvtx] = {vtxofs,vtxofs+1,vtxofs+2,vtxofs+3};
+		static const float u[2] = {0.0586f,0.0713f};
+		NTVERTEX vtx[nvtx];
+		for (DWORD i = 0; i < nvtx; i++)
+			vtx[i].tu = u[showlights ? 1:0];
+		ges.flags = GRPEDIT_VTXTEXU;
+		ges.Vtx = vtx;
+		ges.vIdx = vidx;
+		ges.nVtx = nvtx;
+		oapiEditMeshGroup (hMesh, GRP_VC4_LIT_VC, &ges);
+		vlight_VC = showlights;
 	}
 	return false;
 }

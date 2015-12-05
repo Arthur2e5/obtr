@@ -32,6 +32,8 @@ public:
 	virtual void Reset2D ();
 	virtual void Reset2D (MESHHANDLE hMesh);
 	virtual void ResetVC (DEVMESHHANDLE hMesh);
+	virtual void LoadVC (int vcid);
+	virtual void LoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, DWORD viewH);
 	virtual bool Redraw2D (SURFHANDLE surf);
 	virtual bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
 	virtual bool ProcessMouse2D (int event, int mx, int my);

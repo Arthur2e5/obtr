@@ -173,7 +173,7 @@ void SFSwitch::RegisterMe(int index)
  idx=index;
 };
 void SFSwitch::PaintMe()
-{ int lng=24/sqrt(3);
+{ int lng=24/sqrt(3.0);
 
 HDC hDC=oapiGetDC(parent->surf);
 SelectObject(hDC,hBRUSH_Background);SelectObject(hDC,hPEN_NULL);
@@ -263,7 +263,7 @@ type=37;//Egauge
  };
 
 void screwdraw(HDC h,int x, int y)
-{int di=5*sqrt(2)/2;
+{int di=5*sqrt(2.0)/2;
  SelectObject(h,hPEN_White);
  SelectObject(h,hBRUSH_Background);
  Ellipse(h,x-5,y-5,x+5,y+5);
@@ -506,6 +506,7 @@ DigClock::DigClock(int x, int y, char *i_SRC,int i_lng,Panel *i_parent):instrume
 {SRC=i_SRC;
  len=i_lng;
  init=false;
+ local[0] = '\0';
   //strcpy(local,SRC);
  //temps= oapiCreateSurface (LoadBitmap(parent->hModule,MAKEINTRESOURCE(IDB_BITMAP1)));
  type=40;//digclock
@@ -656,23 +657,27 @@ oapiReleaseDC(hMFDSRF,hDC2);
 
 
 void inst_MFD::LBD(int x, int y)
-{ y-=55;
- int bt;
-if (y%34 <18)  bt=(int)(y/34);//which button
-if ((bt>=0)&&(bt<=6)) {
-	if ((x>19)&&(x<47)) 
-	{					oapiProcessMFDButton(type,bt,PANEL_MOUSE_LBDOWN); return;}
-	bt+=6;
-	if ((x>309)&&(x<337)) 
-	{					oapiProcessMFDButton(type,bt,PANEL_MOUSE_LBDOWN);return;}
-}
+{
+	y-=55;
 
-if ((y>213)&&(y<227))
-{ if ((x>107)&&(x<147)) {oapiToggleMFD_on(type);return;}
-  if ((x>156)&&(x<196)) {oapiSendMFDKey(type,OAPI_KEY_F1);return;};
-  if ((x>205)&&(x<245)) {oapiSendMFDKey(type,OAPI_KEY_GRAVE);return;};
-}
+	if ((y>213)&&(y<227)) {
+		if ((x>107)&&(x<147)) {oapiToggleMFD_on(type);return;}
+		if ((x>156)&&(x<196)) {oapiSendMFDKey(type,OAPI_KEY_F1);return;};
+		if ((x>205)&&(x<245)) {oapiSendMFDKey(type,OAPI_KEY_GRAVE);return;};
+	}
 
+	if (y%34 <18) {
+		int bt=(int)(y/34);//which button
+		if ((bt>=0)&&(bt<=6)) {
+			if ((x>19)&&(x<47)) {
+				oapiProcessMFDButton(type,bt,PANEL_MOUSE_LBDOWN); return;
+			}
+			bt+=6;
+			if ((x>309)&&(x<337)) {
+				oapiProcessMFDButton(type,bt,PANEL_MOUSE_LBDOWN);return;
+			}
+		}
+	}
 }
 
 Bitmap::Bitmap(int x, int y, int w, int h, int index, Panel *i_parent):instrument(x,y,i_parent)
@@ -723,6 +728,7 @@ cgswitch=0;               // -1=left, 0=center, 1=right
 sensormode=0;             // docking sensor mode (local/remote)
 portnr=0;             // activep port
 cgofs=0;               // longitudinal offset of CG when attached to other object
+vs = 0;
 }
 void Docker::RegisterMe(int index)
 {idx=index;
@@ -991,7 +997,7 @@ init=0;
 radius=10;
 int i;
 float trad;
-float Pi=acos(-1);
+float Pi=acos(-1.0);
 int indx;
 function_mode=0;//GDC;
 orbital_ecliptic=-1; //orbital GDC;
@@ -1006,8 +1012,8 @@ for (i=0;i<16;i++)
   for (int j=0;j<16;j++)
 		{ trad=cos(-Pi/2+Pi/15*i)*radius;
 		  indx=i*16+j;
-		 sphere_vert[indx][0]=cos(2*acos(-1)/16*j)*trad;
-		 sphere_vert[indx][1]=sin(2*acos(-1)/16*j)*trad;
+		 sphere_vert[indx][0]=cos(2*acos(-1.0)/16*j)*trad;
+		 sphere_vert[indx][1]=sin(2*acos(-1.0)/16*j)*trad;
 		 sphere_vert[indx][2]=sin(-Pi/2+Pi/15*i)*radius;
 		 sphere_tex[indx][0]=j/16.0;
 		 sphere_tex[indx][1]=i/15.0;
@@ -1171,7 +1177,7 @@ vector3 Vpos,Vvel,Vnorm;
  vector3 local_front=Vnorm*_vector3(0,0,1);
  
  Vnorm.z=0;Vnorm.selfnormalize();//all we need from here is roll now
- float Pi=acos(-1);
+ float Pi=acos(-1.0);
  // ***********************
  float roll=Pi-atan2(Vnorm.x,Vnorm.y);
  // ************************
@@ -1190,9 +1196,9 @@ vector3 Vpos,Vvel,Vnorm;
 
 
 void ADI::SetEcliptic()
-{	float Pi=acos(-1);
+{	float Pi=acos(-1.0);
     VESSELSTATUS vstat;parent->v->GetStatus(vstat);
-	vstat.arot.z+=acos(-1)/2; //roll is referenced to horizontal ?!!?
+	vstat.arot.z+=acos(-1.0)/2; //roll is referenced to horizontal ?!!?
 	vstat.arot.x+=Pi/2;
 	vstat.arot.x=2*Pi-vstat.arot.x;
 	target.x=vstat.arot.x;
@@ -1201,9 +1207,9 @@ void ADI::SetEcliptic()
 
 };
 void ADI::SetReference()
-{	float Pi=acos(-1);
+{	float Pi=acos(-1.0);
 	VESSELSTATUS vstat;parent->v->GetStatus(vstat);
-	vstat.arot.z+=acos(-1)/2; //roll is referenced to horizontal ?!!?
+	vstat.arot.z+=acos(-1.0)/2; //roll is referenced to horizontal ?!!?
 	vstat.arot.x+=Pi/2;
 	vstat.arot.x=2*Pi-vstat.arot.x;
 	vstat.arot.x-=reference.x;vstat.arot.y-=reference.y;vstat.arot.z-=reference.z;
@@ -1213,7 +1219,7 @@ void ADI::SetReference()
 
 };
 void ADI::SetEquatorial()
-{ float Pi=acos(-1);
+{ float Pi=acos(-1.0);
   float pitch=parent->v->GetPitch();
   double heading;
   oapiGetHeading(parent->v->GetHandle(),&heading);
@@ -1231,9 +1237,9 @@ void ADI::SetEquatorial()
 
 }
 void ADI::GetReference()
-{	float Pi=acos(-1);
+{	float Pi=acos(-1.0);
 	VESSELSTATUS vstat;parent->v->GetStatus(vstat);
-	vstat.arot.z+=acos(-1)/2;
+	vstat.arot.z+=acos(-1.0)/2;
 	//vstat.arot.x+=Pi/2;
 	vstat.arot.x=2*Pi-vstat.arot.x;
 	reference.x=vstat.arot.x;
@@ -1243,7 +1249,7 @@ void ADI::GetReference()
 }
 void ADI::MoveBall()
 {   float delta;
-	float Pi=acos(-1);
+	float Pi=acos(-1.0);
     over_rate=0.0;
     delta=target.z-now.z;
 	if (delta>0.05) {if (delta>Pi) {now.z+=2*Pi;MoveBall();
@@ -1412,8 +1418,8 @@ if (*(((Dragonfly*)parent->v)->DC_power)>0)
 		Rectangle(hDC,0,0,101,101);
 		last_antena_yaw=((Dragonfly*)parent->v)->UY_pos;
 		float yaw=150.0 - ((Dragonfly*)parent->v)->UY_pos*300+15.0;
-		yaw=yaw/180.0*acos(-1);
-		float yaw1=yaw - 30.0/180.0 *acos(-1);
+		yaw=yaw/180.0*acos(-1.0);
+		float yaw1=yaw - 30.0/180.0 *acos(-1.0);
 		float py1=cos(yaw)*45;
 		float  px1=sin(yaw)*45;
 

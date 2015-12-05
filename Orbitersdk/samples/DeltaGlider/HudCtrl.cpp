@@ -158,6 +158,8 @@ bool HUDControl::clbkLoadPanel2D (int panelid, PANELHANDLE hPanel, DWORD viewW, 
 
 bool HUDControl::clbkLoadVC (int vcid)
 {
+	DGSubsystem::clbkLoadVC (vcid);
+
 	if (vcid != 0) return false;
 
 	// HUD mode indicator/selector buttons on the dash panel
@@ -194,6 +196,7 @@ void HUDControl::clbkResetVC (int vcid, DEVMESHHANDLE hMesh)
 	int hudmode = oapiGetHUDMode();
 	if (hudmode != HUD_NONE && !hud_state.IsClosed())
 		hud_state.SetState (0, -1);
+	modebuttons->ResetVC (hMesh);
 }
 
 // ==============================================================
@@ -229,6 +232,21 @@ void HUDModeButtons::Reset2D (MESHHANDLE hMesh)
 {
 	grp = oapiMeshGroup (hMesh, GRP_INSTRUMENTS_ABOVE_P0);
 	vtxofs = 8;
+}
+
+// --------------------------------------------------------------
+
+void HUDModeButtons::ResetVC (DEVMESHHANDLE hMesh)
+{
+	for (int i = 0; i < 3; i++)
+		btn[i]->ResetVC (hMesh);
+}
+
+// --------------------------------------------------------------
+
+void HUDModeButtons::LoadVC (int vcid)
+{
+	SetMode (oapiGetHUDMode());
 }
 
 // --------------------------------------------------------------

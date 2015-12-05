@@ -90,6 +90,7 @@ class GearIndicator: public PanelElement {
 public:
 	GearIndicator (GearControl *comp);
 	void Reset2D (MESHHANDLE hMesh);
+	void ResetVC (DEVMESHHANDLE hMesh);
 	bool Redraw2D (SURFHANDLE surf);
 	bool RedrawVC (DEVMESHHANDLE hMesh, SURFHANDLE surf);
 

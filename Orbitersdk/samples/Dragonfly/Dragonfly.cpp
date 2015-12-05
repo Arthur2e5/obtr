@@ -58,7 +58,7 @@ void Dragonfly::RegisterAnimations()
 		Latch1, 1, 0.0, 0.6,
 		0.25,0,3.06,
 		0,1,0,
-		(float)(45.0/180.0*acos(-1)),
+		(float)(45.0/180.0*acos(-1.0)),
 		0,
 		0,
 		MESHGROUP_TRANSFORM::ROTATE
@@ -67,7 +67,7 @@ void Dragonfly::RegisterAnimations()
 		Latch2, 1, 0.0, 0.6,
 		-0.25,0,3.06,
 		0,1,0,
-		(float)(-45.0/180.0*acos(-1)),
+		(float)(-45.0/180.0*acos(-1.0)),
 		0,
 		0,
 		MESHGROUP_TRANSFORM::ROTATE
@@ -83,7 +83,7 @@ void Dragonfly::RegisterAnimations()
 	    U_Antena, 2, 0.0, 1.0,
 		0,0,0,
 		0,1,0,
-		(float)(300.0/180.0*acos(-1)),
+		(float)(300.0/180.0*acos(-1.0)),
 		0,
 		0,
 		MESHGROUP_TRANSFORM::ROTATE
@@ -92,7 +92,7 @@ void Dragonfly::RegisterAnimations()
 	    U_Antena, 2, 0.0, 1.0,
 		0,3.18,0,
 		1,0,0,
-		(float)(-75.0/180.0*acos(-1)),
+		(float)(-75.0/180.0*acos(-1.0)),
 		0,
 		0,
 		MESHGROUP_TRANSFORM::ROTATE
@@ -104,7 +104,7 @@ void Dragonfly::RegisterAnimations()
 	    L_Antena, 2, 0.0, 1.0,
 		0,0,0,
 		0,1,0,
-		(float)(300.0/180.0*acos(-1)),
+		(float)(300.0/180.0*acos(-1.0)),
 		0,
 		0,
 		MESHGROUP_TRANSFORM::ROTATE
@@ -113,7 +113,7 @@ void Dragonfly::RegisterAnimations()
 	    L_Antena, 2, 0.0, 1.0,
 		0,-3.18,0,
 		1,0,0,
-		(float)(75.0/180.0*acos(-1)),
+		(float)(75.0/180.0*acos(-1.0)),
 		0,
 		0,
 		MESHGROUP_TRANSFORM::ROTATE
@@ -224,12 +224,12 @@ void Dragonfly::LoadState (FILEHANDLE scn, void *vs)
     }
 
 	    SetAnimState (anim_UY_ant, UY_pos);
-		float ang=(150-UY_pos*300.0)/180.0*acos(-1);
+		float ang=(150-UY_pos*300.0)/180.0*acos(-1.0);
 	    Upper_ant_pitch.trans.P.rotparam.axis=_V(cos(ang),0,-sin(ang));	 
         SetAnimState (anim_UP_ant, UP_pos);		
 	    
 		SetAnimState (anim_LY_ant, LY_pos);
-		ang=(150-LY_pos*300.0)/180.0*acos(-1);
+		ang=(150-LY_pos*300.0)/180.0*acos(-1.0);
 	    Lower_ant_pitch.trans.P.rotparam.axis=_V(cos(ang),0,-sin(ang));	 
         SetAnimState (anim_LP_ant, LP_pos);		
 
@@ -485,12 +485,12 @@ void Dragonfly::Timestep (double simt)
 		oapiGetGlobalPos(Dock_target_object,&dist);
 		Global2Local(dist,pos);//now we have a position w.r.t ship
 		line=_vector3(pos.x,pos.y,pos.z).mod();
-		UP_trg=1-acos(pos.y/line)/acos(-1)*180.0/75.0;
+		UP_trg=1-acos(pos.y/line)/acos(-1.0)*180.0/75.0;
 		UY_trg=atan2(pos.x/line,pos.z/line);
-		if (UY_trg>acos(-1)) UY_trg-=2*acos(-1);
-		   UY_trg=0.5-UY_trg/acos(-1)*180.0/300.0;
+		if (UY_trg>acos(-1.0)) UY_trg-=2*acos(-1.0);
+		   UY_trg=0.5-UY_trg/acos(-1.0)*180.0/300.0;
 		
-		LP_trg=acos(pos.y/line)/acos(-1)*180.0/75.0-1;
+		LP_trg=acos(pos.y/line)/acos(-1.0)*180.0/75.0-1;
 		LY_trg=UY_trg;//same azimuth;
 
 	if (UAnt_handle==-1) {//Aquire & Track
@@ -547,7 +547,7 @@ void Dragonfly::Timestep (double simt)
 		 if (UY_pos<0) UY_pos=0;
 		 if (UY_pos>1) UY_pos=1;
 		SetAnimState (anim_UY_ant, UY_pos);
-		float ang=(150-UY_pos*300.0)/180.0*acos(-1);
+		float ang=(150-UY_pos*300.0)/180.0*acos(-1.0);
 	    Upper_ant_pitch.trans.P.rotparam.axis=_V(cos(ang),0,-sin(ang));	 
 	};
 	if ((*AC_power>0)&&(UP_handle))
@@ -563,7 +563,7 @@ void Dragonfly::Timestep (double simt)
 		 if (LY_pos<0) LY_pos=0;
 		 if (LY_pos>1) LY_pos=1;
 		SetAnimState (anim_LY_ant, LY_pos);
-		float ang=(150-LY_pos*300.0)/180.0*acos(-1);
+		float ang=(150-LY_pos*300.0)/180.0*acos(-1.0);
 	    Lower_ant_pitch.trans.P.rotparam.axis=_V(cos(ang),0,-sin(ang));	 
 	};
 	if ((*AC_power>0)&&(LP_handle))

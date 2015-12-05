@@ -46,7 +46,6 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				FavorSizeOrSpeed="0"
 				AdditionalIncludeDirectories=""
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				PrecompiledHeaderFile=""
@@ -189,10 +188,6 @@
 		<Filter
 			Name="Resources"
 			>
-			<File
-				RelativePath="Bitmaps\Cover2.bmp"
-				>
-			</File>
 			<File
 				RelativePath="DeltaGlider.rc"
 				>
